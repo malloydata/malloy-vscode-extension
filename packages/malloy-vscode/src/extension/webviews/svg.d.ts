@@ -11,8 +11,7 @@
  * GNU General Public License for more details.
  */
 
-export { Spinner } from "./Spinner";
-export { VSCodeButton } from "@vscode/webview-ui-toolkit/react";
-export { TextField } from "./TextField";
-export { Dropdown } from "./Dropdown";
-export { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react";
+declare module "*.svg" {
+  const content: JSX.IntrinsicElements.svg;
+  export default content;
+}
