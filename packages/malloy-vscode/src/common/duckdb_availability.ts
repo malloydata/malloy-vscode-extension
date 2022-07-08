@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Google LLC
+ * Copyright 2022 Google LLC
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -10,18 +10,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-
-import { URLReader } from "@malloydata/malloy";
-import * as vscode from "vscode";
-
-export async function fetchFile(uri: string): Promise<string> {
-  return (
-    await vscode.workspace.openTextDocument(uri.replace(/^file:\/\//, ""))
-  ).getText();
-}
-
-export class VSCodeURLReader implements URLReader {
-  async readURL(url: URL): Promise<string> {
-    return fetchFile(url.toString());
-  }
-}
+/**
+ * Whether or not DuckDB is available for the current build/architecture.
+ * This is set to true here, but may be overridden during the actual build.
+ * See the build script for details.
+ */
+export const isDuckDBAvailable = true;
