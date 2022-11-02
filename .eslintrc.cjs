@@ -24,11 +24,15 @@ module.exports = {
     "plugin:@typescript-eslint/eslint-recommended",
     "plugin:@typescript-eslint/recommended",
   ],
+<<<<<<< HEAD
   ignorePatterns: [
     "*.d.ts",
     "node_modules/",
     "packages/malloy/src/lang/lib/Malloy",
   ],
+=======
+  ignorePatterns: ["*.d.ts", "node_modules/"],
+>>>>>>> 3b0dee4 (cloudbuild)
   parser: "@typescript-eslint/parser",
   parserOptions: {
     warnOnUnsupportedTypeScriptVersion: false,
