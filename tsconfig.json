@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "esModuleInterop": true,
+    "jsx": "react",
+    "moduleResolution": "node",
+    "outDir": "out",
+    "resolveJsonModule": true,
+    "rootDir": "src",
+    "skipLibCheck": true,
+    "target": "es2019",
+  },
+  "include": ["./src", "src/malloy.tmGrammar.json"],
+  "exclude": ["node_modules", ".vscode-test", "out"],
+}
