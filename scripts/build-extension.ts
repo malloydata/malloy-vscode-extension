@@ -206,7 +206,6 @@ export async function doBuild(target?: Target): Promise<void> {
   if (target) {
     fs.copyFileSync(
       path.join(
-        "..",
         "malloy-third-party",
         "third_party",
         "github.com",
@@ -221,7 +220,6 @@ export async function doBuild(target?: Target): Promise<void> {
     if (isDuckDBAvailable) {
       fs.copyFileSync(
         path.join(
-          "..",
           "malloy-third-party",
           "third_party",
           "github.com",
