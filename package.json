@@ -334,7 +334,8 @@
     "styled-components": "^5.3.3",
     "vscode-languageclient": "^7.0.0",
     "vscode-languageserver": "^7.0.0",
-    "vscode-languageserver-textdocument": "^1.0.1"
+    "vscode-languageserver-textdocument": "^1.0.1",
+    "yargs": "~17.6.0"
   },
   "dependenciesComments": {
     "esbuild": "READ THIS! esbuild is pinned to 0.14.13 because some version after that introduces 'use strict' to bundled js files. Consider this before upgrading"
