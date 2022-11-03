@@ -68,7 +68,7 @@ export async function doPackage(
       target,
       packagePath,
       dependencies: false,
-    } as ICreateVSIXOptions);
+    });
   } finally {
     fs.copyFileSync("package.json.original", "package.json");
     fs.rmSync("package.json.original");
