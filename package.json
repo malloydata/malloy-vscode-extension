@@ -10,6 +10,7 @@
   },
   "scripts": {
     "build": "tsc --build && npm run build-extension",
+    "lint": "eslint src scripts",
     "test": "jest --config=jest.config.js",
     "build-extension": "ts-node scripts/build-extension build",
     "build-extension-dev": "NODE_ENV=development ts-node scripts/build-extension build",
@@ -333,15 +334,18 @@
     "styled-components": "^5.3.3",
     "vscode-languageclient": "^7.0.0",
     "vscode-languageserver": "^7.0.0",
-    "vscode-languageserver-textdocument": "^1.0.1"
+    "vscode-languageserver-textdocument": "^1.0.1",
+    "yargs": "~17.6.0"
   },
   "dependenciesComments": {
     "esbuild": "READ THIS! esbuild is pinned to 0.14.13 because some version after that introduces 'use strict' to bundled js files. Consider this before upgrading"
   },
   "devDependencies": {
+    "@jest/globals": "^26.6.2",
     "@types/glob": "^7.1.3",
+    "@types/jest": "^29.2.1",
+    "@types/jest-expect-message": "^1.0.3",
     "@types/jsdom": "^16.2.11",
-    "@types/mocha": "^8.2.2",
     "@types/node-fetch": "^3.0.3",
     "@types/prismjs": "^1.26.0",
     "@types/react": "^17.0.38",
@@ -351,10 +355,18 @@
     "@types/uuid": "^8.3.4",
     "@types/vscode": "1.56.0",
     "@types/vscode-webview": "^1.57.0",
+    "@typescript-eslint/eslint-plugin": "^4.9.1",
+    "@typescript-eslint/parser": "^4.18.0",
     "esbuild": "0.14.13",
     "esbuild-plugin-svgr": "^1.0.1",
+    "eslint": "^7.28.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^3.4.0",
     "glob": "^7.1.7",
-    "mocha": "^9.0.0",
+    "jest": "^26.6.0",
+    "jest-diff": "^27.0.6",
+    "jest-expect-message": "^1.0.2",
+    "jest-silent-reporter": "^0.5.0",
     "node-fetch": "^3.2.0",
     "prismjs": "^1.28.0",
     "react-dom": "^17.0.2",

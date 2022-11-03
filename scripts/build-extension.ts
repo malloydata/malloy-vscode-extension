@@ -203,13 +203,6 @@ export async function doBuild(target?: Target): Promise<void> {
     execSync("git rev-parse HEAD")
   );
 
-  // copy the README.md from the root to this package. vsce does not provide a way to specifiy a readme path in the "manifest",
-  // the only option is to put a readme file at the root of the package :(
-  fs.copyFileSync(path.join("README.md"), "README.md");
-
-  // same story as README, but this time it's CHANGELOG
-  fs.copyFileSync(path.join("CHANGELOG.md"), "CHANGELOG.md");
-
   if (target) {
     fs.copyFileSync(
       path.join(
