@@ -6,6 +6,6 @@ nix-shell --pure --keep VSCE_PAT --keep GA_API_SECRET --keep GA_MEASUREMENT_ID -
   git submodule init
   git submodule update
   npm ci --loglevel error
-  npm run build && npm run vscode-publish-extensions patch
+  npm run build && npm run publish-extensions patch
 NIXCMD
 )"
