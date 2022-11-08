@@ -5,6 +5,15 @@
   "description": "Malloy is an experimental language for describing data relationships and transformations",
   "version": "0.2.0",
   "private": true,
+  "config": {
+    "malloy_packages": [
+      "@malloydata/malloy",
+      "@malloydata/db-bigquery",
+      "@malloydata/db-duckdb",
+      "@malloydata/db-postgres",
+      "@malloydata/render"
+    ]
+  },
   "engines": {
     "vscode": "^1.63.0"
   },
@@ -15,7 +24,11 @@
     "build-extension": "ts-node scripts/build-extension build",
     "build-extension-dev": "NODE_ENV=development ts-node scripts/build-extension build",
     "package-extension": "ts-node scripts/package-extension package",
-    "publish-extensions": "ts-node scripts/publish-extensions"
+    "publish-extensions": "ts-node scripts/publish-extensions",
+    "malloy-install": "npm --no-fund --no-audit install --save-exact $npm_package_config_malloy_packages",
+    "malloy-update": "npm --no-fund --no-audit unlink $npm_package_config_malloy_packages && npm run malloy-install",
+    "malloy-link": "npm --no-fund --no-audit link $npm_package_config_malloy_packages",
+    "malloy-unlink": "npm --no-fund --no-save --no-audit unlink $npm_package_config_malloy_packages && npm --no-fund --no-audit install --force"
   },
   "icon": "img/logo.png",
   "license": "GPL-2.0",
