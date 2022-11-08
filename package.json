@@ -25,7 +25,7 @@
     "build-extension-dev": "NODE_ENV=development ts-node scripts/build-extension build",
     "package-extension": "ts-node scripts/package-extension package",
     "publish-extensions": "ts-node scripts/publish-extensions",
-    "malloy-install": "npm --no-fund --no-audit install --save-exact $npm_package_config_malloy_packages",
+    "malloy-install": "npm --no-fund --no-audit install --save-exact $npm_package_config_malloy_packages --tag next",
     "malloy-update": "npm --no-fund --no-audit unlink $npm_package_config_malloy_packages && npm run malloy-install",
     "malloy-link": "npm --no-fund --no-audit link $npm_package_config_malloy_packages",
     "malloy-unlink": "npm --no-fund --no-save --no-audit unlink $npm_package_config_malloy_packages && npm --no-fund --no-audit install --force"
