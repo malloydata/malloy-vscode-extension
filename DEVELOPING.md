@@ -22,7 +22,7 @@ Next, in VSCode _EITHER_:
 
 _OR_
 
-2. Open thefolder root directory in VSCode, right click on `dist/malloy-vscode-x.x.x.vsix` and select "Install Extension VSIX".
+2. Open the folder root directory in VSCode, right click on `dist/malloy-vscode-x.x.x.vsix` and select "Install Extension VSIX".
 
 # Malloy and Extension Development
 
@@ -36,6 +36,14 @@ Optional: To additionally debug the language server, run the "Attach to Language
 launch profile from the "Run and Debug" panel.
 
 ![open_vsix3](https://user-images.githubusercontent.com/7178946/130678501-cd5cf79b-0d48-42a6-a4d5-602f1b0d563d.gif)
+
+## Running against a local version of Malloy
+
+1. In your local Malloy repository, run `npm link -ws`. That will make your development packages locally available for development.
+2. In your VS Code extension repository, run `npm run malloy-link` to use your local Malloy packages.
+3. If you make changes to Malloy that are required by the extension, merges those into main, and that will trigger an automatic developer release of Malloy.
+4. Once that release completes, run `npm run malloy-update` to update dependencies to that release. This will break the link to your local version of Malloy, so if you want to resume local development, re-run `npm run malloy-link`
+5. To manually unlink without updating, you may run `npm run malloy-unlink`
 
 ## Telemetry
 
