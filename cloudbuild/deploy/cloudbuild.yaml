@@ -5,10 +5,11 @@ steps:
     args:
       - -c
       - "./cloudbuild/deploy/$TRIGGER_NAME.sh"
-    timeout: "1600s"
+    timeout: "1800s"
     secretEnv: ["VSCE_PAT", "GA_API_SECRET", "GA_MEASUREMENT_ID"]
-logsBucket: "gs://malloy-cloudbuild-logs"
-timeout: "1600s"
+options:
+  logging: CLOUD_LOGGING_ONLY
+timeout: "1800s"
 availableSecrets:
   secretManager:
     - versionName: projects/malloy-303216/secrets/marketplace-prerelease-CI/versions/latest
