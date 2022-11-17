@@ -108,8 +108,7 @@
       {
         "command": "malloy.copyFieldPath",
         "title": "Copy Field Path",
-        "category": "Malloy",
-        "enablement": "false"
+        "category": "Malloy"
       },
       {
         "command": "malloy.refreshSchema",
