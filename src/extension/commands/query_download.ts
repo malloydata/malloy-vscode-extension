@@ -114,7 +114,7 @@ export async function queryDownload(
 The worker process has died, and has been restarted.
 This is possibly the result of a database bug. \
 Please consider filing an issue with as much detail as possible at \
-https://github.com/looker-open-source/malloy/issues.`
+https://github.com/malloydata/malloy/issues.`
               );
 
               worker.off("message", listener);

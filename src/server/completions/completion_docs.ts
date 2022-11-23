@@ -11,7 +11,7 @@
  * GNU General Public License for more details.
  */
 
-const DOCS_ROOT = "https://looker-open-source.github.io/malloy/documentation";
+const DOCS_ROOT = "https://malloydata.github.io/malloy/documentation";
 
 const MODEL_SOURCE_DOC = `Use \`source\` to name, describe, and augment a data source.
 
