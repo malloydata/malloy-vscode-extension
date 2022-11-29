@@ -1,7 +1,7 @@
 {
   "scopeName": "source.malloy",
   "patterns": [
-    { "include": "#sql-statement" },
+    { "include": "#sql-string" },
     { "include": "#comments" },
     { "include": "#strings" },
     { "include": "#numbers" },
@@ -16,9 +16,9 @@
     { "include": "#identifiers-unquoted" }
   ],
   "repository": {
-    "sql-statement": {
-      "begin": "\\|\\|",
-      "end": ";;",
+    "sql-string": {
+      "begin": "\"\"\"",
+      "end": "\"\"\"",
       "beginCaptures": {
         "0": { "name": "punctuation.sql-block.open" }
       },
@@ -220,6 +220,14 @@
         {
           "match": "(?i)\\bsql\\b",
           "name": "keyword.control.sql"
+        },
+        {
+          "match": "(?i)\\bselect\\b",
+          "name": "keyword.control.select"
+        },
+        {
+          "match": "(?i)\\bconnection\\b",
+          "name": "keyword.control.connection"
         },
         {
           "match": "(?i)\\baggregate\\b",
