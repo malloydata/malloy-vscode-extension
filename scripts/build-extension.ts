@@ -192,11 +192,15 @@ export async function doBuild(target?: Target): Promise<void> {
   if (fs.existsSync(fullLicenseFilePath)) {
     fs.rmSync(fullLicenseFilePath);
   }
-  generateDisclaimer(
-    path.join(__dirname, "..", "package.json"),
-    path.join(__dirname, "..", "node_modules"),
-    fullLicenseFilePath
-  );
+  if (!development) {
+    generateDisclaimer(
+      path.join(__dirname, "..", "package.json"),
+      path.join(__dirname, "..", "node_modules"),
+      fullLicenseFilePath
+    );
+  } else {
+    fs.writeFileSync(fullLicenseFilePath, "LICENSES GO HERE\n");
+  }
 
   fs.writeFileSync(
     path.join(outDir, "build-sha"),
