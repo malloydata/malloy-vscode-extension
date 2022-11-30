@@ -16,6 +16,26 @@
     { "include": "#identifiers-unquoted" }
   ],
   "repository": {
+    "query-in-sql": {
+      "begin": "%{",
+      "name": "source.internal-query-stuff",
+      "end": "%}",
+      "patterns": [
+        { "include": "#sql-string" },
+        { "include": "#comments" },
+        { "include": "#strings" },
+        { "include": "#numbers" },
+        { "include": "#keywords" },
+        { "include": "#properties" },
+        { "include": "#functions" },
+        { "include": "#dates" },
+        { "include": "#identifiers-quoted" },
+        { "include": "#types" },
+        { "include": "#constants" },
+        { "include": "#timeframes" },
+        { "include": "#identifiers-unquoted" }
+      ]
+    },
     "sql-string": {
       "begin": "\"\"\"",
       "end": "\"\"\"",
@@ -26,7 +46,10 @@
         "0": { "name": "punctuation.sql-block.close" }
       },
       "name": "source.sql",
-      "patterns": [{ "include": "source.sql"}]
+      "patterns": [
+        { "include": "#query-in-sql"},
+        { "include": "source.sql"}
+      ]
     },
     "functions": {
       "patterns": [
