@@ -41,7 +41,7 @@ export async function translateWithCache(
 
   const entry = TRANSLATE_CACHE.get(uri);
   if (entry && entry.version === currentVersion) {
-    return Promise.resolve(entry.model);
+    return entry.model;
   }
 
   const files = {
