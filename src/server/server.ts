@@ -23,6 +23,7 @@ import {
   HoverParams,
   Hover,
 } from "vscode-languageserver/node";
+import debounce from "lodash/debounce";
 
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { getMalloyDiagnostics } from "./diagnostics";
@@ -106,8 +107,10 @@ async function diagnoseDocument(document: TextDocument) {
   }
 }
 
-documents.onDidChangeContent(async (change) => {
-  await diagnoseDocument(change.document);
+const debouncedDiagnoseDocument = debounce(diagnoseDocument, 300);
+
+documents.onDidChangeContent((change) => {
+  debouncedDiagnoseDocument(change.document);
 });
 
 connection.onDocumentSymbol((handler) => {
