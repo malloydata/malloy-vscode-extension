@@ -12,11 +12,12 @@
  */
 
 import { TextDocument } from "vscode-languageserver-textdocument";
-import { HighlightType, Malloy } from "@malloydata/malloy";
+import { HighlightType } from "@malloydata/malloy";
 import {
   SemanticTokens,
   SemanticTokensBuilder,
 } from "vscode-languageserver/node";
+import { parseWithCache } from "../parse_cache";
 
 export const TOKEN_TYPES = [
   "class",
@@ -50,7 +51,7 @@ export function getMalloyHighlights(document: TextDocument): SemanticTokens {
 
   const text = document.getText();
   const textLines = text.split("\n");
-  const parse = Malloy.parse({ source: text });
+  const parse = parseWithCache(document);
 
   parse.highlights.forEach((highlight) => {
     for (

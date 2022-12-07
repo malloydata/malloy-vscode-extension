@@ -18,16 +18,14 @@ import {
   MarkupKind,
 } from "vscode-languageserver/node";
 import { TextDocument } from "vscode-languageserver-textdocument";
-import { Malloy } from "@malloydata/malloy";
 import { COMPLETION_DOCS } from "./completion_docs";
+import { parseWithCache } from "../parse_cache";
 
 export function getCompletionItems(
   document: TextDocument,
   context: CompletionParams
 ): CompletionItem[] {
-  const completions = Malloy.parse({ source: document.getText() }).completions(
-    context.position
-  );
+  const completions = parseWithCache(document).completions(context.position);
   return completions.map((completion) => {
     return {
       kind: CompletionItemKind.Property,

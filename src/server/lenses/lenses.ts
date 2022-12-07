@@ -12,8 +12,8 @@
  */
 
 import { CodeLens } from "vscode-languageserver/node";
-import { Malloy } from "@malloydata/malloy";
 import { TextDocument } from "vscode-languageserver-textdocument";
+import { parseWithCache } from "../parse_cache";
 
 // const explain = `
 //   index
@@ -37,7 +37,7 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 
 export function getMalloyLenses(document: TextDocument): CodeLens[] {
   const lenses: CodeLens[] = [];
-  const symbols = Malloy.parse({ source: document.getText() }).symbols;
+  const symbols = parseWithCache(document).symbols;
 
   let currentUnnamedQueryIndex = 0;
   let currentUnnamedSQLBlockIndex = 0;

@@ -12,11 +12,9 @@
  */
 
 import { TextDocument } from "vscode-languageserver-textdocument";
-import {
-  DocumentSymbol as MalloyDocumentSymbol,
-  Malloy,
-} from "@malloydata/malloy";
+import { DocumentSymbol as MalloyDocumentSymbol } from "@malloydata/malloy";
 import { DocumentSymbol, SymbolKind } from "vscode-languageserver/node";
+import { parseWithCache } from "../parse_cache";
 
 function mapSymbol(symbol: MalloyDocumentSymbol): DocumentSymbol {
   const type = symbol.type;
@@ -38,5 +36,5 @@ function mapSymbol(symbol: MalloyDocumentSymbol): DocumentSymbol {
 }
 
 export function getMalloySymbols(document: TextDocument): DocumentSymbol[] {
-  return Malloy.parse({ source: document.getText() }).symbols.map(mapSymbol);
+  return parseWithCache(document).symbols.map(mapSymbol);
 }
