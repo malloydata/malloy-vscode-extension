@@ -28,7 +28,11 @@ export class WorkerConnection {
     const workerModule = context.asAbsolutePath("dist/worker.js");
     const execArgv = ["--no-lazy"];
     if (debugWorker) {
-      execArgv.push("--inspect=6010");
+      execArgv.push(
+        "--inspect=6010",
+        "--preserve-symlinks",
+        "--enable-source-maps"
+      );
     }
 
     const startWorker = () => {
