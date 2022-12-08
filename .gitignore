@@ -6,3 +6,5 @@ node_modules
 third_party_notices.txt
 README.md
 CHANGELOG.md
+.DS_Store
+*.cpuprofile

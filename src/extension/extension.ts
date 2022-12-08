@@ -177,7 +177,14 @@ export function deactivate(): Promise<void> | undefined {
 
 function setupLanguageServer(context: vscode.ExtensionContext): void {
   const serverModule = context.asAbsolutePath("dist/server.js");
-  const debugOptions = { execArgv: ["--nolazy", "--inspect=6009"] };
+  const debugOptions = {
+    execArgv: [
+      "--nolazy",
+      "--inspect=6009",
+      "--preserve-symlinks",
+      "--enable-source-maps",
+    ],
+  };
 
   const serverOptions: ServerOptions = {
     run: { module: serverModule, transport: TransportKind.ipc },
