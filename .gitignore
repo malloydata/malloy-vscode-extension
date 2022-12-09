@@ -2,6 +2,7 @@ out
 dist
 node_modules
 .vscode-test/
+.vscode/settings.json
 *.vsix
 third_party_notices.txt
 README.md
