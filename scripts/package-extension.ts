@@ -15,7 +15,7 @@
 import { doBuild, outDir, Target } from "./build-extension";
 import * as path from "path";
 import * as semver from "semver";
-import { createVSIX, ICreateVSIXOptions } from "vsce";
+import { createVSIX } from "vsce";
 
 // importing this in normal fashion seems to import an older API?!
 // for ex, when imported, "Property 'rmSync' does not exist on type 'typeof import("fs")'"
@@ -27,7 +27,7 @@ export async function doPackage(
   version?: string,
   preRelease = false
 ): Promise<string> {
-  await doBuild(target);
+  await doBuild(false, target);
 
   // vsce uses package.json as a manifest, and has no way to pass in a version - it only reads
   // version info from package.json. This is annoying for many reasonas, but particularly for
