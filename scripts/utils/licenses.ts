@@ -11,24 +11,31 @@
  * GNU General Public License for more details.
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-console */
 import fs from "fs";
 
-export function readPackageJson(path: string): any {
+export interface NpmPackage {
+  dependencies?: Record<string, string>;
+  homepage?: string;
+  license?: string;
+  repo?: string;
+  repository?: {
+    baseUrl?: string;
+    url?: string;
+  };
+}
+
+export function readPackageJson(path: string): NpmPackage {
   try {
     const fileBuffer = fs.readFileSync(path, "utf8");
     return JSON.parse(fileBuffer);
   } catch (error) {
-    console.error("Could not read package.json", error);
-    throw error;
+    console.warn("Could not read package.json", error.message);
   }
+  return {};
 }
 
 export function getDependencies(rootPackageJson: string): string[] {
   const rootPackage = readPackageJson(rootPackageJson);
-  // eslint-disable-next-line no-prototype-builtins
-  return rootPackage.hasOwnProperty("dependencies")
-    ? Object.keys(rootPackage.dependencies)
-    : [];
+  return Object.keys(rootPackage.dependencies || {}) || [];
 }
