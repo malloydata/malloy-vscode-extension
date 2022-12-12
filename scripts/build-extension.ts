@@ -19,6 +19,7 @@ import * as path from "path";
 import { execSync } from "child_process";
 import { noNodeModulesSourceMaps } from "../malloy-third-party/third_party/github.com/evanw/esbuild/no-node-modules-sourcemaps";
 import svgrPlugin from "esbuild-plugin-svgr";
+import yargs from "yargs";
 
 import duckdbPackage from "@malloydata/db-duckdb/package.json";
 import { generateDisclaimer } from "./license_disclaimer";
@@ -173,8 +174,11 @@ for (const variable of ENV_PASSTHROUGH) {
 }
 
 // building without a target does a default build using whatever keytar native lib is in node_modules
-export async function doBuild(target?: Target): Promise<void> {
-  const development = process.env.NODE_ENV == "development";
+export async function doBuild(
+  development: boolean,
+  target?: Target
+): Promise<void> {
+  development = development || process.env.NODE_ENV == "development";
 
   if (target && !targetKeytarMap[target])
     throw new Error(`Invalid target: ${target}`);
@@ -318,19 +322,44 @@ export async function doBuild(target?: Target): Promise<void> {
   });
 }
 
-const args = process.argv.slice(2);
-if (args[0] == "build") {
-  console.log(`Building extension to ${outDir}`);
+yargs
+  .scriptName("build-extension")
+  .usage("$0 <cmd> [args]")
+  .command(
+    "build [target]",
+    "Build extension",
+    {
+      development: {
+        alias: "D",
+        type: "boolean",
+        default: false,
+        describe: "Build in development mode",
+      },
+      target: {
+        type: "string",
+        default: undefined,
+        describe: "Target platform",
+      },
+    },
+    ({ development, target }) => {
+      console.log(
+        `Building extension to ${outDir} in ${
+          development ? "development" : "production"
+        } mode`
+      );
 
-  const target = args[1] ? (args[1] as Target) : undefined;
-
-  doBuild(target)
-    .then(() => {
-      console.log("Extension built successfully");
-    })
-    .catch((error) => {
-      console.error("Extension built with errors");
-      console.log(error);
-      process.exit(1);
-    });
-}
+      doBuild(development, target as Target | undefined)
+        .then(() => {
+          console.log("Extension built successfully");
+        })
+        .catch((error) => {
+          console.error("Extension built with errors");
+          console.log(error);
+          process.exit(1);
+        });
+    }
+  )
+  .demandCommand(1)
+  .recommendCommands()
+  .strict()
+  .help().argv;
