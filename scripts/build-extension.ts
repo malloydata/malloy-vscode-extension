@@ -84,6 +84,7 @@ const keytarReplacerPlugin: Plugin = {
 
 function makeDuckdbNoNodePreGypPlugin(target: Target | undefined): Plugin {
   const localPath = require.resolve("duckdb/lib/binding/duckdb.node");
+  const posixPath = localPath.split(path.sep).join(path.posix.sep);
   const isDuckDBAvailable =
     target === undefined || targetDuckDBMap[target] !== undefined;
   return {
@@ -109,7 +110,7 @@ function makeDuckdbNoNodePreGypPlugin(target: Target | undefined): Plugin {
               var binding_path = ${
                 target
                   ? `require.resolve("./duckdb-native.node")`
-                  : `"${localPath}"`
+                  : `"${posixPath}"`
               };
 
               // dlopen is used because we need to specify the RTLD_GLOBAL flag to be able to resolve duckdb symbols
