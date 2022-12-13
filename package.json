@@ -22,7 +22,7 @@
     "lint": "eslint src scripts",
     "test": "jest --config=jest.config.js",
     "build-extension": "ts-node scripts/build-extension build",
-    "build-extension-dev": "NODE_ENV=development ts-node scripts/build-extension build",
+    "build-extension-dev": "ts-node scripts/build-extension build -D",
     "package-extension": "ts-node scripts/package-extension package",
     "publish-extensions": "ts-node scripts/publish-extensions",
     "malloy-install": "npm --no-fund --no-audit install --save-exact $npm_package_config_malloy_packages",
@@ -391,6 +391,7 @@
     "uuid": "^8.3.2",
     "vsce": "^2.6.3",
     "vscode-test": "^1.5.2",
-    "vscode-webview": "^1.0.1-beta.1"
+    "vscode-webview": "^1.0.1-beta.1",
+    "yargs": "^17.6.2"
   }
 }

@@ -15,6 +15,7 @@ import { TextDocuments } from "vscode-languageserver/node";
 import { Model, Runtime } from "@malloydata/malloy";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import * as fs from "fs";
+import { fileURLToPath } from "url";
 import { CONNECTION_MANAGER } from "./connections";
 
 const TRANSLATE_CACHE = new Map<string, { model: Model; version: number }>();
@@ -28,7 +29,7 @@ async function getDocumentText(
     return cached.getText();
   } else {
     // TODO catch a file read error
-    return fs.readFileSync(uri.pathname, "utf8");
+    return fs.readFileSync(fileURLToPath(uri), "utf8");
   }
 }
 

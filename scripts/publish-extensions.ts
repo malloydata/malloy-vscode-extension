@@ -15,7 +15,7 @@
 import * as semver from "semver";
 import { readFileSync } from "fs";
 import { publishVSIX } from "vsce";
-import { Target, targetKeytarMap } from "./build-extension";
+import { Target, targetKeytarMap } from "./build_common";
 import { doPackage } from "./package-extension";
 
 /**

@@ -12,10 +12,10 @@
  */
 /* eslint-disable no-console */
 
-import { doBuild, outDir, Target } from "./build-extension";
+import { doBuild, outDir, Target } from "./build_common";
 import * as path from "path";
 import * as semver from "semver";
-import { createVSIX, ICreateVSIXOptions } from "vsce";
+import { createVSIX } from "vsce";
 
 // importing this in normal fashion seems to import an older API?!
 // for ex, when imported, "Property 'rmSync' does not exist on type 'typeof import("fs")'"
@@ -27,11 +27,11 @@ export async function doPackage(
   version?: string,
   preRelease = false
 ): Promise<string> {
-  await doBuild(target);
+  await doBuild(false, target);
 
   // vsce uses package.json as a manifest, and has no way to pass in a version - it only reads
-  // version info from package.json. This is annoying for many reasonas, but particularly for
-  // CI & for managing production vs pre-release versions progarmmatically.
+  // version info from package.json. This is annoying for many reasons, but particularly for
+  // CI & for managing production vs pre-release versions programmatically.
   //
   // the hack here is to load package.json, change the version, write it out, package the VSIX,
   // then replace package.json with the original version. :(
@@ -53,14 +53,6 @@ export async function doPackage(
   fs.writeFileSync("package.json", JSON.stringify(packageJSON));
 
   try {
-    // vsce plugin has trouble keeping API / CLI aligned. For example, they note that "dependencies" can
-    // be used as a create vsix option, but their types don't reflect that yet.
-    // why do we need this at all? Well, trying to move to npm, it appears as though vsce doesn't
-    // handle npm workspaces well, and attempts to package ALL of our dependencies for our entire repo.
-    // packaging _any_ dependencies by default is weird, cause they instruct you to make a compiled build
-    // to package anyways?!.
-    // https://github.com/microsoft/vscode-vsce/issues/439
-    //  At any rate, this is why we're doing a type assertion below, so that we can include "dependencies:flase":
     await createVSIX({
       githubBranch: "main",
       preRelease,
