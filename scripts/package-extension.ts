@@ -12,7 +12,7 @@
  */
 /* eslint-disable no-console */
 
-import { doBuild, outDir, Target } from "./build-extension";
+import { doBuild, outDir, Target } from "./build_common";
 import * as path from "path";
 import * as semver from "semver";
 import { createVSIX } from "vsce";
@@ -30,8 +30,8 @@ export async function doPackage(
   await doBuild(false, target);
 
   // vsce uses package.json as a manifest, and has no way to pass in a version - it only reads
-  // version info from package.json. This is annoying for many reasonas, but particularly for
-  // CI & for managing production vs pre-release versions progarmmatically.
+  // version info from package.json. This is annoying for many reasons, but particularly for
+  // CI & for managing production vs pre-release versions programmatically.
   //
   // the hack here is to load package.json, change the version, write it out, package the VSIX,
   // then replace package.json with the original version. :(
