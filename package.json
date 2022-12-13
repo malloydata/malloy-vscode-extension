@@ -169,7 +169,11 @@
           "malloy"
         ],
         "filenames": [],
-        "configuration": "language.json"
+        "configuration": "language.json",
+        "icon": {
+          "dark": "./img/icon.svg",
+          "light": "./img/icon.svg"
+        }
       }
     ],
     "grammars": [
