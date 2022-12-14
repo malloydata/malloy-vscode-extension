@@ -249,7 +249,11 @@ export async function doBuild(
   } else {
     extensionPlugins.push(nativeNodeModulesPlugin);
   }
-  if (development) extensionPlugins.push(noNodeModulesSourceMaps);
+
+  if (development) {
+    extensionPlugins.push(noNodeModulesSourceMaps);
+    console.log("Entering watch mode");
+  }
 
   // build the extension and server
   await build({
