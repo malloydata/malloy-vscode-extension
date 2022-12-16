@@ -5,6 +5,8 @@ node_modules
 .vscode/settings.json
 *.vsix
 third_party_notices.txt
+third_party/github.com/duckdb/
+third_party/github.com/atom/
 README.md
 CHANGELOG.md
 .DS_Store

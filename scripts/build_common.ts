@@ -14,15 +14,15 @@
 /* eslint-disable no-console */
 import fs from "fs";
 import { build, Plugin } from "esbuild";
-import { nativeNodeModulesPlugin } from "../malloy-third-party/third_party/github.com/evanw/esbuild/native-modules-plugin";
+import { nativeNodeModulesPlugin } from "../third_party/github.com/evanw/esbuild/native-modules-plugin";
 import * as path from "path";
 import { execSync } from "child_process";
-import { noNodeModulesSourceMaps } from "../malloy-third-party/third_party/github.com/evanw/esbuild/no-node-modules-sourcemaps";
+import { noNodeModulesSourceMaps } from "../third_party/github.com/evanw/esbuild/no-node-modules-sourcemaps";
 import svgrPlugin from "esbuild-plugin-svgr";
+import { fetchKeytar, targetKeytarMap } from "./utils/fetch_keytar";
+import { fetchDuckDB, targetDuckDBMap } from "./utils/fetch_duckdb";
 
-import duckdbPackage from "@malloydata/db-duckdb/package.json";
 import { generateDisclaimer } from "./license_disclaimer";
-const DUCKDB_VERSION = duckdbPackage.dependencies.duckdb;
 
 export type Target =
   | "linux-x64"
@@ -33,26 +33,6 @@ export type Target =
   | "darwin-x64"
   | "darwin-arm64"
   | "win32-x64";
-
-export type BinaryTargetMap = { [target in Target]: string };
-
-export const targetKeytarMap: BinaryTargetMap = {
-  "linux-x64": "keytar-v7.7.0-napi-v3-linux-x64.node",
-  "linux-arm64": "keytar-v7.7.0-napi-v3-linux-arm64.node",
-  "linux-armhf": "keytar-v7.7.0-napi-v3-linux-ia32.node",
-  "alpine-x64": "keytar-v7.7.0-napi-v3-linuxmusl-x64.node",
-  "alpine-arm64": "keytar-v7.7.0-napi-v3-linuxmusl-arm64.node",
-  "darwin-x64": "keytar-v7.7.0-napi-v3-darwin-x64.node",
-  "darwin-arm64": "keytar-v7.7.0-napi-v3-darwin-arm64.node",
-  "win32-x64": "keytar-v7.7.0-napi-v3-win32-x64.node",
-};
-
-export const targetDuckDBMap: Partial<BinaryTargetMap> = {
-  "darwin-arm64": `duckdb-v${DUCKDB_VERSION}-node-v93-darwin-arm64.node`,
-  "darwin-x64": `duckdb-v${DUCKDB_VERSION}-node-v93-darwin-x64.node`,
-  "linux-x64": `duckdb-v${DUCKDB_VERSION}-node-v93-linux-x64.node`,
-  "win32-x64": `duckdb-v${DUCKDB_VERSION}-node-v93-win32-x64.node`,
-};
 
 export const outDir = "dist/";
 
@@ -212,31 +192,13 @@ export async function doBuild(
   );
 
   if (target) {
-    fs.copyFileSync(
-      path.join(
-        "malloy-third-party",
-        "third_party",
-        "github.com",
-        "atom",
-        "node-keytar",
-        targetKeytarMap[target]
-      ),
-      path.join(outDir, "keytar-native.node")
-    );
+    const file = await fetchKeytar(target);
+    fs.copyFileSync(file, path.join(outDir, "keytar-native.node"));
     const duckDBBinaryName = targetDuckDBMap[target];
     const isDuckDBAvailable = duckDBBinaryName !== undefined;
     if (isDuckDBAvailable) {
-      fs.copyFileSync(
-        path.join(
-          "malloy-third-party",
-          "third_party",
-          "github.com",
-          "duckdb",
-          "duckdb",
-          duckDBBinaryName
-        ),
-        path.join(outDir, "duckdb-native.node")
-      );
+      const file = await fetchDuckDB(target);
+      fs.copyFileSync(file, path.join(outDir, "duckdb-native.node"));
     }
   }
   const duckDBPlugin = makeDuckdbNoNodePreGypPlugin(target);
