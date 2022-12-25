@@ -196,7 +196,7 @@ $(symbol-field) \`${field.name}\`
   };
 
   isAggregate() {
-    return this.field.isAtomicField() && this.field.isAggregate();
+    return this.field.isAtomicField() && this.field.isCalculation();
   }
 
   type() {
@@ -279,7 +279,7 @@ function kindOrd(field: Field) {
   if (field.isExploreField()) {
     return 4;
   }
-  if (field.isAtomicField() && field.isAggregate()) {
+  if (field.isAtomicField() && field.isCalculation()) {
     return 2;
   }
   return 1;
