@@ -5,4 +5,8 @@ src/
 tsconfig.json
 tsconfig.tsbuildinfo
 esbuild.config.ts
+jest.config.js
 package.json.original
+third_party/
+scripts/
+test/
