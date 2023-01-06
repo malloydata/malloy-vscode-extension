@@ -27,23 +27,17 @@ export const fetchNode = async (
   await new Promise((resolve, reject) => {
     if (fs.existsSync(filePath)) {
       console.info(`Already exists: ${filePath}`);
+      resolve(null);
       return;
     }
 
     try {
       extract.on("entry", async (header, stream, _next) => {
         const outFile = fs.openSync(filePath, "w", header.mode);
-        stream.on("end", () => {
-          fs.closeSync(outFile);
-          resolve(null);
-        });
-
         for await (const chunk of stream) {
           fs.writeFileSync(outFile, chunk);
         }
-      });
-
-      extract.on("finish", function () {
+        fs.closeSync(outFile);
         resolve(null);
       });
       extract.on("error", function (error) {
