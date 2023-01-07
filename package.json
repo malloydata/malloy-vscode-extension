@@ -25,8 +25,8 @@
     "build-extension-dev": "ts-node scripts/build-extension build -D",
     "package-extension": "ts-node scripts/package-extension package",
     "publish-extensions": "ts-node scripts/publish-extensions",
-    "malloy-update-next": "npm install  --no-fund --no-audit --save-exact $(echo $malloy_packages | sed -E 's/(@malloydata\\/[-a-z]+)/\\1@next/g')",
-    "malloy-update": "npm install  --no-fund --no-audit --save-exact $(echo $malloy_packages | sed -E 's/(@malloydata\\/[-a-z]+)/\\1@latest/g')",
+    "malloy-update-next": "npm install  --no-fund --no-audit --save-exact $(echo $npm_package_config_malloy_packages | sed -E 's/(@malloydata\\/[-a-z]+)/\\1@next/g')",
+    "malloy-update": "npm install  --no-fund --no-audit --save-exact $(echo $npm_package_config_malloy_packages | sed -E 's/(@malloydata\\/[-a-z]+)/\\1@latest/g')",
     "malloy-link": "npm --no-fund --no-audit link $npm_package_config_malloy_packages",
     "malloy-unlink": "npm --no-fund --no-save --no-audit unlink $npm_package_config_malloy_packages && npm --no-fund --no-audit install --force"
   },
