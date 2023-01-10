@@ -335,11 +335,11 @@
     ]
   },
   "dependencies": {
-    "@malloydata/db-bigquery": "0.0.19",
-    "@malloydata/db-duckdb": "0.0.19",
-    "@malloydata/db-postgres": "0.0.19",
-    "@malloydata/malloy": "0.0.19",
-    "@malloydata/render": "0.0.19",
+    "@malloydata/db-bigquery": "0.0.20",
+    "@malloydata/db-duckdb": "0.0.20",
+    "@malloydata/db-postgres": "0.0.20",
+    "@malloydata/malloy": "0.0.20",
+    "@malloydata/render": "0.0.20",
     "@observablehq/plot": "^0.1.0",
     "@vscode/webview-ui-toolkit": "^1.0.0",
     "duckdb": "0.6.1",
