@@ -38,7 +38,7 @@ export async function dataStylesForFile(
     if (line.startsWith(PREFIX)) {
       const fileName = line.trimEnd().substring(PREFIX.length);
       const stylesPath = path.join(
-        uri.replace(/^file:\/\//, ""),
+        uri.replace(/^file:\/\/\/?/, ""),
         "..",
         fileName
       );
