@@ -31,7 +31,7 @@
     "malloy-unlink": "npm --no-fund --no-save --no-audit unlink $npm_package_config_malloy_packages && npm --no-fund --no-audit install --force"
   },
   "icon": "img/logo.png",
-  "license": "GPL-2.0",
+  "license": "MIT",
   "categories": [
     "Programming Languages",
     "Data Science",
