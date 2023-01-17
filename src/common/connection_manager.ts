@@ -119,7 +119,7 @@ const getConnectionForConfig = async (
           () => ({ rowLimit })
         );
       } catch (error) {
-        console.log("Could not create DuckDB connection:", error);
+        console.error("Could not create DuckDB connection:", error);
         throw error;
       }
       break;

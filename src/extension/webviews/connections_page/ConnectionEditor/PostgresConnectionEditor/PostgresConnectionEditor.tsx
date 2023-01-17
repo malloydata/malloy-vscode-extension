@@ -117,7 +117,7 @@ export const PostgresConnectionEditor: React.FC<
                   value="keychain"
                   checked={config.useKeychainPassword}
                   onChange={(event) => {
-                    if (event?.target && (event?.target as any).checked) {
+                    if (event.target?.checked) {
                       setConfig({
                         ...config,
                         password: undefined,
@@ -138,7 +138,7 @@ export const PostgresConnectionEditor: React.FC<
                   !config.useKeychainPassword && config.password === undefined
                 }
                 onChange={(event) => {
-                  if (event?.target && (event?.target as any).checked) {
+                  if (event.target?.checked) {
                     setConfig({
                       ...config,
                       password: undefined,
@@ -159,7 +159,7 @@ export const PostgresConnectionEditor: React.FC<
                 key="specified"
                 checked={config.password !== undefined}
                 onChange={(event) => {
-                  if (event?.target && (event?.target as any).checked) {
+                  if (event.target?.checked) {
                     setConfig({
                       ...config,
                       password: "",
@@ -199,7 +199,7 @@ export const PostgresConnectionEditor: React.FC<
               <VSCodeCheckbox
                 checked={showPassword}
                 onChange={(event) => {
-                  setShowPassword((event.target as any).checked);
+                  setShowPassword(event.target?.checked);
                 }}
               >
                 Show Password

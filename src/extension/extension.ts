@@ -174,11 +174,9 @@ export function activate(context: vscode.ExtensionContext): void {
   setupWorker(context);
 }
 
-export function deactivate(): Promise<void> | undefined {
+export async function deactivate(): Promise<void> | undefined {
   if (client) {
-    // TODO can this just be put into a disposable, passed to `context.subscriptions.push`
-    //      and disposed automatically?
-    return client.stop();
+    await client.stop();
   }
   if (worker) {
     worker.send({ type: "exit" });
