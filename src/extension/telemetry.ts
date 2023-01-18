@@ -64,6 +64,7 @@ async function track(event: GATrackingEvent) {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function trackQueryRun({ dialect }: { dialect: string }): Promise<void> {
   return track({
     name: "query_run",

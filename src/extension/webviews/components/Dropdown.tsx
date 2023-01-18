@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import React, { useEffect, useRef } from "react";
+import React, { FormEvent } from "react";
 import { VSCodeDropdown, VSCodeOption } from "@vscode/webview-ui-toolkit/react";
 
 interface DropdownProps {
@@ -32,6 +32,8 @@ interface DropdownProps {
   style?: React.CSSProperties;
 }
 
+type OnChange<T> = (event: Event & FormEvent<T>) => void;
+
 export const Dropdown: React.FC<DropdownProps> = ({
   value,
   setValue,
@@ -39,27 +41,12 @@ export const Dropdown: React.FC<DropdownProps> = ({
   options,
   style,
 }) => {
-  const onChange = (event: any) => {
-    setValue(event.target.value);
+  const onChange: OnChange<HTMLInputElement> = ({ currentTarget }) => {
+    setValue(currentTarget.value);
   };
 
-  // TODO: This is a hack because the VSCodeDropdown doesn't immediately select
-  //       the correct value. It requires a bump to update itself.
-  const theElement = useRef<any>(null);
-  useEffect(() => {
-    if (theElement.current) {
-      theElement.current.value = value;
-    }
-  });
-
   return (
-    <VSCodeDropdown
-      value={value}
-      onChange={onChange}
-      id={id}
-      ref={theElement}
-      style={style}
-    >
+    <VSCodeDropdown value={value} onChange={onChange} id={id} style={style}>
       {options.map((option, index) => (
         <VSCodeOption
           key={index}

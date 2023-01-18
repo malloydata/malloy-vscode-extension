@@ -41,7 +41,12 @@ module.exports = {
   },
   plugins: ["@typescript-eslint", "prettier"],
   rules: {
-    "no-console": "warn",
+    "no-console": [
+      "error",
+      {
+        allow: ["info", "warn", "error"],
+      },
+    ],
     "prettier/prettier": "error",
     "sort-keys": "off",
     "no-duplicate-imports": "error",

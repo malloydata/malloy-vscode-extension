@@ -22,7 +22,7 @@
  */
 
 import { TextFieldType } from "@vscode/webview-ui-toolkit";
-import React from "react";
+import React, { FormEvent } from "react";
 import { VSCodeTextField } from "@vscode/webview-ui-toolkit/react";
 
 interface TextFieldProps {
@@ -34,6 +34,8 @@ interface TextFieldProps {
   style?: React.CSSProperties;
 }
 
+type OnChange<T> = (event: Event & FormEvent<T>) => void;
+
 export const TextField: React.FC<TextFieldProps> = ({
   value,
   setValue,
@@ -42,8 +44,8 @@ export const TextField: React.FC<TextFieldProps> = ({
   id,
   style,
 }) => {
-  const onChange = (event: any) => {
-    setValue(event.target.value);
+  const onChange: OnChange<HTMLInputElement> = (event) => {
+    setValue(event.currentTarget.value);
   };
 
   return (
