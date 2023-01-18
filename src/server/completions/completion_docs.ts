@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-const DOCS_ROOT = "https://malloydata.github.io/malloy/documentation";
+const DOCS_ROOT = "https://malloydata.github.io/documentation";
 
 const MODEL_SOURCE_DOC = `Use \`source\` to name, describe, and augment a data source.
 
