@@ -230,9 +230,9 @@ export async function doBuild(
   // build the extension and server
   await build({
     entryPoints: [
-      "./src/extension/extension.ts",
-      "./src/server/server.ts",
-      "./src/worker/worker.ts",
+      "./src/extension/desktop/extension.ts",
+      "./src/server/server_desktop.ts",
+      "./src/worker/worker_desktop.ts",
     ],
     entryNames: "[name]",
     bundle: true,
@@ -245,6 +245,7 @@ export async function doBuild(
       "pg-native",
       "./keytar-native.node",
       "./duckdb-native.node",
+      "@duckdb/duckdb-wasm",
     ],
     loader: { [".png"]: "file", [".svg"]: "file" },
     plugins: extensionPlugins,
@@ -275,7 +276,11 @@ export async function doBuild(
     entryPoints: [
       "./src/extension/webviews/query_page/entry.ts",
       "./src/extension/webviews/connections_page/entry.ts",
+      "./src/extension/web/extension_web.ts",
+      "./src/server/server_web.ts",
+      "./src/worker/worker_web.ts",
     ],
+    external: ["vscode"],
     entryNames: "[dir]",
     bundle: true,
     minify: !development,

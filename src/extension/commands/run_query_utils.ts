@@ -22,7 +22,6 @@
  */
 
 import * as path from "path";
-import { performance } from "perf_hooks";
 import * as vscode from "vscode";
 import { MALLOY_EXTENSION_STATE, RunState } from "../state";
 import { Result } from "@malloydata/malloy";
@@ -30,9 +29,9 @@ import turtleIcon from "../../media/turtle.svg";
 import { getWebviewHtml } from "../webviews";
 import { QueryMessageType, QueryRunStatus } from "../message_types";
 import { WebviewMessageManager } from "../webview_message_manager";
-import { queryDownload } from "./query_download";
-import { getWorker } from "../extension";
+// TODO(web) import { queryDownload } from "./query_download";
 import { WorkerMessage } from "../../worker/types";
+import { getWorker } from "../../worker/worker";
 import { trackQueryRun } from "../telemetry";
 
 const malloyLog = vscode.window.createOutputChannel("Malloy");
@@ -186,7 +185,7 @@ export function runMalloyQuery(
         panelId,
         name,
       });
-      const allBegin = performance.now();
+      const allBegin = Date.now();
       const compileBegin = allBegin;
       let runBegin: number;
 
@@ -225,7 +224,7 @@ https://github.com/malloydata/malloy/issues.`,
                   break;
                 case QueryRunStatus.Running:
                   {
-                    const compileEnd = performance.now();
+                    const compileEnd = Date.now();
                     runBegin = compileEnd;
                     malloyLog.appendLine(message.sql);
                     logTime("Compile", compileBegin, compileEnd);
@@ -237,7 +236,7 @@ https://github.com/malloydata/malloy/issues.`,
                   break;
                 case QueryRunStatus.Done:
                   {
-                    const runEnd = performance.now();
+                    const runEnd = Date.now();
                     if (runBegin != null) {
                       logTime("Run", runBegin, runEnd);
                     }
@@ -245,18 +244,19 @@ https://github.com/malloydata/malloy/issues.`,
                     const queryResult = Result.fromJSON(result);
                     current.result = queryResult;
                     progress.report({ increment: 100, message: "Rendering" });
-                    const allEnd = performance.now();
+                    const allEnd = Date.now();
                     logTime("Total", allBegin, allEnd);
 
                     current.messages.onReceiveMessage((message) => {
                       if (message.type === QueryMessageType.StartDownload) {
-                        queryDownload(
-                          query,
-                          message.downloadOptions,
-                          queryResult,
-                          panelId,
-                          name
-                        );
+                        // TODO(web)
+                        // queryDownload(
+                        //   query,
+                        //   message.downloadOptions,
+                        //   queryResult,
+                        //   panelId,
+                        //   name
+                        // );
                       }
                     });
 

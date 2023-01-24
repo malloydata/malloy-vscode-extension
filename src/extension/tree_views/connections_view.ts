@@ -22,8 +22,10 @@
  */
 
 import * as vscode from "vscode";
-import { ConnectionBackend } from "../../common";
-import { getDefaultIndex } from "../../common/connection_manager_types";
+import {
+  ConnectionBackend,
+  getDefaultIndex,
+} from "../../common/connection_manager_types";
 import connectionIcon from "../../media/database.svg";
 import * as path from "path";
 import { VSCodeConnectionManager } from "../connection_manager";

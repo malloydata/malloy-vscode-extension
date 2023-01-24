@@ -21,14 +21,16 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { ConnectionConfig, ConnectionManager } from "../common";
 import * as vscode from "vscode";
+import { ConnectionManager } from "../common/connection_manager";
+import { ConnectionConfig } from "../common/connection_manager_types";
+import { ConnectionFactory } from "../common/connections/types";
 
 const DEFAULT_ROW_LIMIT = 50;
 
 export class VSCodeConnectionManager extends ConnectionManager {
-  constructor() {
-    super(VSCodeConnectionManager.getConnectionsConfig());
+  constructor(connectionFactory: ConnectionFactory) {
+    super(connectionFactory, VSCodeConnectionManager.getConnectionsConfig());
   }
 
   static getConnectionsConfig(): ConnectionConfig[] {

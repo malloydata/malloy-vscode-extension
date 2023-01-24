@@ -40,6 +40,7 @@ import { Label } from "./Label";
 import { LabelCell } from "./LabelCell";
 import { PostgresConnectionEditor } from "./PostgresConnectionEditor";
 import { DuckDBConnectionEditor } from "./DuckDBConnectionEditor";
+import { DuckDBWASMConnectionEditor } from "./DuckDBWASMConnectionEditor";
 import { isDuckDBAvailable } from "../../../../common/duckdb_availability";
 
 interface ConnectionEditorProps {
@@ -123,8 +124,12 @@ export const ConnectionEditor: React.FC<ConnectionEditorProps> = ({
         />
       ) : config.backend === ConnectionBackend.Postgres ? (
         <PostgresConnectionEditor config={config} setConfig={setConfig} />
-      ) : (
+      ) : config.backend === ConnectionBackend.DuckDB ? (
         <DuckDBConnectionEditor config={config} setConfig={setConfig} />
+      ) : config.backend === ConnectionBackend.DuckDBWASM ? (
+        <DuckDBWASMConnectionEditor config={config} setConfig={setConfig} />
+      ) : (
+        <div>Unknown Connection Type</div>
       )}
       <VSCodeDivider />
       <table>

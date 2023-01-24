@@ -20,18 +20,30 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+import { DuckDBConnection } from "@malloydata/db-duckdb";
+import {
+  ConfigOptions,
+  DuckDBConnectionConfig,
+} from "../connection_manager_types";
+import { isDuckDBAvailable } from "../../common/duckdb_availability";
 
-import { BaseWorker } from "./types";
-
-let _worker: BaseWorker | null = null;
-
-export const setWorker = (worker: BaseWorker): void => {
-  _worker = worker;
-};
-
-export const getWorker = (): BaseWorker => {
-  if (!_worker) {
-    throw new Error("Worker not initialized");
+export const createDuckDbConnection = async (
+  connectionConfig: DuckDBConnectionConfig,
+  { workingDirectory, rowLimit }: ConfigOptions
+) => {
+  if (!isDuckDBAvailable) {
+    throw new Error("DuckDB is not available.");
   }
-  return _worker;
+  try {
+    const connection = new DuckDBConnection(
+      connectionConfig.name,
+      ":memory:",
+      connectionConfig.workingDirectory || workingDirectory,
+      () => ({ rowLimit })
+    );
+    return connection;
+  } catch (error) {
+    console.error("Could not create DuckDB connection:", error);
+    throw error;
+  }
 };

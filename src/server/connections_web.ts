@@ -21,17 +21,10 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { BaseWorker } from "./types";
+import { ConnectionManager } from "../common/connection_manager";
+import { WebConnectionFactory } from "../extension/web/connection_factory";
 
-let _worker: BaseWorker | null = null;
-
-export const setWorker = (worker: BaseWorker): void => {
-  _worker = worker;
-};
-
-export const getWorker = (): BaseWorker => {
-  if (!_worker) {
-    throw new Error("Worker not initialized");
-  }
-  return _worker;
-};
+export const connectionManager = new ConnectionManager(
+  new WebConnectionFactory(),
+  []
+);

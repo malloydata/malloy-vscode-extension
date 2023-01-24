@@ -30,6 +30,7 @@ import {
   Field,
   QueryField,
   AtomicField,
+  URLReader,
 } from "@malloydata/malloy";
 import numberIcon from "../../media/number.svg";
 import numberAggregateIcon from "../../media/number-aggregate.svg";
@@ -41,8 +42,8 @@ import stringIcon from "../../media/string.svg";
 import oneToManyIcon from "../../media/one_to_many.svg";
 import manyToOneIcon from "../../media/many_to_one.svg";
 import oneToOneIcon from "../../media/one_to_one.svg";
-import { CONNECTION_MANAGER, MALLOY_EXTENSION_STATE } from "../state";
-import { VSCodeURLReader } from "../utils";
+import { MALLOY_EXTENSION_STATE } from "../state";
+import { ConnectionManager } from "../../common/connection_manager";
 
 export class SchemaProvider
   implements vscode.TreeDataProvider<ExploreItem | FieldItem>
@@ -50,7 +51,10 @@ export class SchemaProvider
   private readonly resultCache: Map<string, ExploreItem[]>;
   private previousKey: string | undefined;
 
-  constructor() {
+  constructor(
+    private connectionManager: ConnectionManager,
+    private urlReader: URLReader
+  ) {
     this.resultCache = new Map();
   }
 
@@ -104,7 +108,11 @@ export class SchemaProvider
         return this.resultCache.get(cacheKey) || [];
       }
 
-      const explores = await getStructs(document);
+      const explores = await getStructs(
+        this.connectionManager,
+        this.urlReader,
+        document
+      );
       if (explores === undefined) {
         return this.resultCache.get(cacheKey) || [];
       } else {
@@ -120,14 +128,15 @@ export class SchemaProvider
 }
 
 async function getStructs(
+  connectionManager: ConnectionManager,
+  reader: URLReader,
   document: vscode.TextDocument
 ): Promise<Explore[] | undefined> {
   const url = new URL("file://" + document.uri.fsPath);
-  const files = new VSCodeURLReader();
   try {
     const runtime = new Runtime(
-      files,
-      CONNECTION_MANAGER.getConnectionLookup(url)
+      reader,
+      connectionManager.getConnectionLookup(url)
     );
     const model = await runtime.getModel(url);
 

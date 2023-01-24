@@ -29,6 +29,7 @@ import {
 import { LogMessage, MalloyError } from "@malloydata/malloy";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { translateWithCache } from "../translate_cache";
+import { ConnectionManager } from "../../common/connection_manager";
 
 const DEFAULT_RANGE = {
   start: { line: 0, character: 0 },
@@ -36,6 +37,7 @@ const DEFAULT_RANGE = {
 };
 
 export async function getMalloyDiagnostics(
+  connectionManager: ConnectionManager,
   documents: TextDocuments<TextDocument>,
   document: TextDocument
 ): Promise<{ [uri: string]: Diagnostic[] }> {
@@ -46,7 +48,7 @@ export async function getMalloyDiagnostics(
   };
   let errors: LogMessage[] = [];
   try {
-    await translateWithCache(document, documents);
+    await translateWithCache(connectionManager, document, documents);
   } catch (error) {
     if (error instanceof MalloyError) {
       errors = error.log;

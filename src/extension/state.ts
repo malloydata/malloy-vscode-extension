@@ -25,9 +25,6 @@ import { TextDocument, WebviewPanel } from "vscode";
 import { Result } from "@malloydata/malloy";
 import { QueryPanelMessage } from "./message_types";
 import { WebviewMessageManager } from "./webview_message_manager";
-import { VSCodeConnectionManager } from "./connection_manager";
-
-export const CONNECTION_MANAGER = new VSCodeConnectionManager();
 
 export interface RunState {
   cancel: () => void;

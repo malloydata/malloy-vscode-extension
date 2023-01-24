@@ -25,6 +25,7 @@ export enum ConnectionBackend {
   BigQuery = "bigquery",
   Postgres = "postgres",
   DuckDB = "duckdb",
+  DuckDBWASM = "duckdb_wasm",
 }
 
 export interface BigQueryConnectionConfig {
@@ -59,11 +60,25 @@ export interface DuckDBConnectionConfig {
   id: string;
   workingDirectory?: string;
 }
+export interface DuckDBWASMConnectionConfig {
+  backend: ConnectionBackend.DuckDBWASM;
+  name: string;
+  isDefault: boolean;
+  id: string;
+  workingDirectory?: string;
+}
 
 export type ConnectionConfig =
   | BigQueryConnectionConfig
   | PostgresConnectionConfig
-  | DuckDBConnectionConfig;
+  | DuckDBConnectionConfig
+  | DuckDBWASMConnectionConfig;
+
+export interface ConfigOptions {
+  workingDirectory: string;
+  rowLimit?: number;
+  useCache?: boolean;
+}
 
 /**
  * Return the index of the connection that should be treated as

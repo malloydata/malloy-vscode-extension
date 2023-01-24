@@ -23,7 +23,7 @@
 
 import { ResultJSON } from "@malloydata/malloy";
 import { DataStyles } from "@malloydata/render";
-import { ConnectionConfig } from "../common";
+import { ConnectionConfig } from "../common/connection_manager_types";
 
 export enum QueryRunStatus {
   Compiling = "compiling",

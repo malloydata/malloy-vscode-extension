@@ -156,3 +156,9 @@ export type WorkerMessage =
   | WorkerQueryPanelMessage
   | WorkerReadMessage
   | WorkerStartMessage;
+
+export interface BaseWorker {
+  send(message: Message): void;
+  off(name: string, callback: (...args: unknown[]) => void): void;
+  on(name: string, callback: (...args: unknown[]) => void): void;
+}

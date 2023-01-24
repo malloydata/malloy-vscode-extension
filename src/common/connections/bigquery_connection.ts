@@ -21,17 +21,29 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { BaseWorker } from "./types";
+import { BigQueryConnection } from "@malloydata/db-bigquery";
+import {
+  ConfigOptions,
+  BigQueryConnectionConfig,
+} from "../connection_manager_types";
+import { convertToBytes } from "../convert_to_bytes";
 
-let _worker: BaseWorker | null = null;
-
-export const setWorker = (worker: BaseWorker): void => {
-  _worker = worker;
-};
-
-export const getWorker = (): BaseWorker => {
-  if (!_worker) {
-    throw new Error("Worker not initialized");
-  }
-  return _worker;
+export const createBigQueryConnection = async (
+  connectionConfig: BigQueryConnectionConfig,
+  { rowLimit }: ConfigOptions
+): Promise<BigQueryConnection> => {
+  const connection = new BigQueryConnection(
+    connectionConfig.name,
+    () => ({ rowLimit }),
+    {
+      defaultProject: connectionConfig.projectName,
+      serviceAccountKeyPath: connectionConfig.serviceAccountKeyPath,
+      location: connectionConfig.location,
+      maximumBytesBilled: convertToBytes(
+        connectionConfig.maximumBytesBilled || ""
+      ),
+      timeoutMs: connectionConfig.timeoutMs,
+    }
+  );
+  return connection;
 };

@@ -24,7 +24,7 @@
 /* eslint-disable no-console */
 import * as child_process from "child_process";
 import * as vscode from "vscode";
-import { fetchFile } from "../extension/utils";
+import { fetchFile } from "../extension/desktop/utils";
 import { Message, WorkerMessage, WorkerReadMessage } from "./types";
 const workerLog = vscode.window.createOutputChannel("Malloy Worker");
 const debugWorker = process.env.MALLOY_DEBUG_WORKER === "true";
@@ -35,7 +35,7 @@ export class WorkerConnection {
   worker!: child_process.ChildProcess;
 
   constructor(context: vscode.ExtensionContext) {
-    const workerModule = context.asAbsolutePath("dist/worker.js");
+    const workerModule = context.asAbsolutePath("dist/worker_desktop.js");
     const execArgv = ["--no-lazy"];
     if (debugWorker) {
       execArgv.push(

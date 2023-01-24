@@ -28,7 +28,7 @@ import { CSVWriter, JSONWriter, Runtime } from "@malloydata/malloy";
 import { MessageDownload, WorkerDownloadMessage } from "./types";
 import { createRunnable } from "./utils";
 import { WorkerURLReader } from "./files";
-import { CONNECTION_MANAGER } from "../server/connections";
+import { ConnectionManager } from "../common/connection_manager";
 
 const sendMessage = (name: string, error?: string) => {
   const msg: WorkerDownloadMessage = {
@@ -39,20 +39,17 @@ const sendMessage = (name: string, error?: string) => {
   process.send?.(msg);
 };
 
-export async function downloadQuery({
-  query,
-  panelId,
-  downloadOptions,
-  name,
-  filePath,
-}: MessageDownload): Promise<void> {
+export async function downloadQuery(
+  connectionManager: ConnectionManager,
+  { query, panelId, downloadOptions, name, filePath }: MessageDownload
+): Promise<void> {
   const files = new WorkerURLReader();
   const url = new URL(panelId);
 
   try {
     const runtime = new Runtime(
       files,
-      CONNECTION_MANAGER.getConnectionLookup(url)
+      connectionManager.getConnectionLookup(url)
     );
 
     const runnable = createRunnable(query, runtime);

@@ -23,22 +23,21 @@
 
 import * as vscode from "vscode";
 import * as path from "path";
-import { getWebviewHtml } from "../webviews";
+import { getWebviewHtml } from "../../webviews";
 import {
   ConnectionMessageType,
   ConnectionPanelMessage,
   ConnectionServiceAccountKeyRequestStatus,
   ConnectionTestStatus,
-} from "../message_types";
-import { WebviewMessageManager } from "../webview_message_manager";
-import { connectionManager } from "../desktop/connection_manager";
+} from "../../message_types";
+import { WebviewMessageManager } from "../../webview_message_manager";
 import {
-  ConnectionBackend,
   ConnectionConfig,
   getDefaultIndex,
-} from "../../common/connection_manager_types";
-import { VSCodeConnectionManager } from "../connection_manager";
-import { deletePassword, setPassword } from "keytar";
+} from "../../../common/connection_manager_types";
+import { VSCodeConnectionManager } from "../../connection_manager";
+
+import { connectionManager } from "../connection_manager";
 
 export function editConnectionsCommand(): void {
   const panel = vscode.window.createWebviewPanel(
@@ -152,33 +151,7 @@ async function handleConnectionsPreSave(
   for (let index = 0; index < connections.length; index++) {
     const connection = connections[index];
     connection.isDefault = index === defaultIndex;
-    if (connection.backend === ConnectionBackend.Postgres) {
-      if (connection.useKeychainPassword === false) {
-        connection.useKeychainPassword = undefined;
-        await deletePassword(
-          "com.malloy-lang.vscode-extension",
-          `connections.${connection.id}.password`
-        );
-      }
-    }
-    if (
-      connection.backend === ConnectionBackend.Postgres &&
-      connection.password !== undefined &&
-      connection.password !== ""
-    ) {
-      modifiedConnections.push({
-        ...connection,
-        password: undefined,
-        useKeychainPassword: true,
-      });
-      await setPassword(
-        "com.malloy-lang.vscode-extension",
-        `connections.${connection.id}.password`,
-        connection.password
-      );
-    } else {
-      modifiedConnections.push(connection);
-    }
+    modifiedConnections.push(connection);
   }
   return modifiedConnections;
 }

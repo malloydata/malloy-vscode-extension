@@ -22,7 +22,7 @@
  */
 
 import React, { useEffect, useState } from "react";
-import { ConnectionConfig } from "../../../common";
+import { ConnectionConfig } from "../../../common/connection_manager_types";
 import {
   ConnectionMessageType,
   ConnectionPanelMessage,

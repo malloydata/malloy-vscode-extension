@@ -21,17 +21,40 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { BaseWorker } from "./types";
+import { getPassword } from "keytar";
+import { PostgresConnection } from "@malloydata/db-postgres";
+import {
+  PostgresConnectionConfig,
+  ConfigOptions,
+} from "../connection_manager_types";
 
-let _worker: BaseWorker | null = null;
-
-export const setWorker = (worker: BaseWorker): void => {
-  _worker = worker;
-};
-
-export const getWorker = (): BaseWorker => {
-  if (!_worker) {
-    throw new Error("Worker not initialized");
-  }
-  return _worker;
+export const createPostgresConnection = async (
+  connectionConfig: PostgresConnectionConfig,
+  { rowLimit }: ConfigOptions
+): Promise<PostgresConnection> => {
+  const configReader = async () => {
+    let password: string;
+    if (connectionConfig.password !== undefined) {
+      password = connectionConfig.password;
+    } else if (connectionConfig.useKeychainPassword) {
+      password =
+        (await getPassword(
+          "com.malloy-lang.vscode-extension",
+          `connections.${connectionConfig.id}.password`
+        )) || undefined;
+    }
+    return {
+      username: connectionConfig.username,
+      host: connectionConfig.host,
+      password,
+      port: connectionConfig.port,
+      databaseName: connectionConfig.databaseName,
+    };
+  };
+  const connection = new PostgresConnection(
+    connectionConfig.name,
+    () => ({ rowLimit }),
+    configReader
+  );
+  return connection;
 };

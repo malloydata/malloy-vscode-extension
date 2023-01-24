@@ -21,6 +21,12 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-export { ConnectionManager } from "./connection_manager";
-export { ConnectionBackend } from "./connection_manager_types";
-export type { ConnectionConfig } from "./connection_manager_types";
+import { ConfigOptions, ConnectionConfig } from "../connection_manager_types";
+import { TestableConnection } from "@malloydata/malloy";
+
+export interface ConnectionFactory {
+  getConnectionForConfig(
+    connectionConfig: ConnectionConfig,
+    configOptions: ConfigOptions
+  ): Promise<TestableConnection>;
+}

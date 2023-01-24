@@ -29,13 +29,13 @@ import { WorkerURLReader } from "./files";
 import { log } from "./logger";
 import { MessageCancel, MessageRun, WorkerQueryPanelMessage } from "./types";
 
-import { CONNECTION_MANAGER } from "../server/connections";
 import {
   QueryMessageType,
   QueryPanelMessage,
   QueryRunStatus,
 } from "../extension/message_types";
 import { createRunnable } from "./utils";
+import { ConnectionManager } from "../common/connection_manager";
 
 interface QueryEntry {
   panelId: string;
@@ -53,10 +53,10 @@ const sendMessage = (message: QueryPanelMessage, panelId: string) => {
   process.send?.(msg);
 };
 
-export const runQuery = async ({
-  query,
-  panelId,
-}: MessageRun): Promise<void> => {
+export const runQuery = async (
+  connectionManager: ConnectionManager,
+  { query, panelId }: MessageRun
+): Promise<void> => {
   const reader = new WorkerURLReader();
   const files = new HackyDataStylesAccumulator(reader);
   const url = new URL(panelId);
@@ -64,7 +64,7 @@ export const runQuery = async ({
   try {
     const runtime = new Runtime(
       files,
-      CONNECTION_MANAGER.getConnectionLookup(url)
+      connectionManager.getConnectionLookup(url)
     );
 
     runningQueries[panelId] = { panelId, canceled: false };

@@ -21,10 +21,50 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import { log } from "./logger";
+import { cancelQuery, runQuery } from "./run_query";
+// TODO(web) import { downloadQuery } from "./download_query";
+import { Message } from "./types";
+import { refreshConfig } from "./refresh_config";
 import { ConnectionManager } from "../common/connection_manager";
-import { DesktopConnectionFactory } from "../extension/desktop/connection_factory";
 
-export const connectionManager = new ConnectionManager(
-  new DesktopConnectionFactory(),
-  []
-);
+export class MessageHandler {
+  constructor(connectionManager: ConnectionManager) {
+    log("Worker started");
+
+    process.send?.({ type: "started" });
+
+    const heartBeat = setInterval(() => {
+      log("Heartbeat");
+    }, 60 * 1000);
+
+    process.on("message", (message: Message) => {
+      switch (message.type) {
+        case "cancel":
+          cancelQuery(message);
+          break;
+        case "config":
+          refreshConfig(connectionManager, message);
+          break;
+        // TODO(web)
+        // case "download":
+        //   downloadQuery(connectionManager, message);
+        //   break;
+        case "exit":
+          clearInterval(heartBeat);
+          break;
+        case "run":
+          runQuery(connectionManager, message);
+          break;
+      }
+    });
+
+    process.on("exit", () => {
+      log("Worker exited");
+    });
+
+    process.on("SIGHUP", () => {
+      clearInterval(heartBeat);
+    });
+  }
+}

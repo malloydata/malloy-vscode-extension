@@ -24,14 +24,20 @@
 import { TextDocuments, Location, Position } from "vscode-languageserver/node";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { translateWithCache } from "../translate_cache";
+import { ConnectionManager } from "../../common/connection_manager";
 
 export async function getMalloyDefinitionReference(
+  connectionManager: ConnectionManager,
   documents: TextDocuments<TextDocument>,
   document: TextDocument,
   position: Position
 ): Promise<Location[]> {
   try {
-    const model = await translateWithCache(document, documents);
+    const model = await translateWithCache(
+      connectionManager,
+      document,
+      documents
+    );
     const reference = model.getReference(position);
     const location = reference?.definition.location;
     if (location) {

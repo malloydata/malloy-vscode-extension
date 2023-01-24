@@ -23,7 +23,7 @@
 
 import { CSVWriter, JSONWriter, Result } from "@malloydata/malloy";
 import { QueryDownloadOptions } from "../message_types";
-import { getWorker } from "../extension";
+import { getWorker } from "../../worker/worker";
 
 import * as vscode from "vscode";
 import * as os from "os";

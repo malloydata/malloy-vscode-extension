@@ -24,9 +24,9 @@
 import { TextDocuments } from "vscode-languageserver/node";
 import { Model, Runtime } from "@malloydata/malloy";
 import { TextDocument } from "vscode-languageserver-textdocument";
-import * as fs from "fs";
-import { fileURLToPath } from "url";
-import { CONNECTION_MANAGER } from "./connections";
+// TODO(web) import * as fs from "fs";
+// TODO(web) import { fileURLToPath } from "url";
+import { ConnectionManager } from "../common/connection_manager";
 
 const TRANSLATE_CACHE = new Map<string, { model: Model; version: number }>();
 
@@ -39,11 +39,12 @@ async function getDocumentText(
     return cached.getText();
   } else {
     // TODO catch a file read error
-    return fs.readFileSync(fileURLToPath(uri), "utf8");
+    // TODO(web) return fs.readFileSync(fileURLToPath(uri), "utf8");
   }
 }
 
 export async function translateWithCache(
+  connectionManager: ConnectionManager,
   document: TextDocument,
   documents: TextDocuments<TextDocument>
 ): Promise<Model> {
@@ -60,7 +61,7 @@ export async function translateWithCache(
   };
   const runtime = new Runtime(
     files,
-    CONNECTION_MANAGER.getConnectionLookup(new URL(document.uri))
+    connectionManager.getConnectionLookup(new URL(document.uri))
   );
 
   const model = await runtime.getModel(new URL(uri));

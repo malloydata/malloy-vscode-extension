@@ -44,7 +44,7 @@ import {
   stubMalloyHighlights,
 } from "./highlights";
 import { getMalloyLenses } from "./lenses";
-import { CONNECTION_MANAGER } from "./connections";
+import { connectionManager } from "./connections";
 import {
   getCompletionItems,
   resolveCompletionItem,
@@ -99,7 +99,11 @@ async function diagnoseDocument(document: TextDocument) {
     const versionsAtRequestTime = new Map(
       documents.all().map((document) => [document.uri, document.version])
     );
-    const diagnostics = await getMalloyDiagnostics(documents, document);
+    const diagnostics = await getMalloyDiagnostics(
+      connectionManager,
+      documents,
+      document
+    );
     // Only send diagnostics if the document hasn't changed since this request started
     for (const uri in diagnostics) {
       const versionAtRequest = versionsAtRequestTime.get(uri);
@@ -143,12 +147,17 @@ connection.onCodeLens((handler) => {
 connection.onDefinition((handler) => {
   const document = documents.get(handler.textDocument.uri);
   return document
-    ? getMalloyDefinitionReference(documents, document, handler.position)
+    ? getMalloyDefinitionReference(
+        connectionManager,
+        documents,
+        document,
+        handler.position
+      )
     : [];
 });
 
 connection.onDidChangeConfiguration(async (change) => {
-  await CONNECTION_MANAGER.setConnectionsConfig(
+  await connectionManager.setConnectionsConfig(
     change.settings.malloy.connections
   );
   haveConnectionsBeenSet = true;

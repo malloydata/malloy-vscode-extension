@@ -21,10 +21,10 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { fileURLToPath } from "node:url";
+import { fileURLToPath } from "url";
 import { URLReader } from "@malloydata/malloy";
 import * as vscode from "vscode";
-import { randomInt } from "crypto";
+import { v1 as uuid } from "uuid";
 import { promises as fs } from "fs";
 
 export async function fetchFile(path: string): Promise<string> {
@@ -54,15 +54,6 @@ export class VSCodeURLReader implements URLReader {
   }
 }
 
-const CLIENT_ID_CHARACTERS =
-  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-
-function randomClientIdCharacter() {
-  return CLIENT_ID_CHARACTERS.charAt(
-    Math.floor(randomInt(0, CLIENT_ID_CHARACTERS.length))
-  );
-}
-
 export function getNewClientId(): string {
-  return Array.from({ length: 32 }, randomClientIdCharacter).join("");
+  return uuid();
 }

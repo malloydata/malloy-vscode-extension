@@ -21,17 +21,11 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { BaseWorker } from "./types";
+import { URLReader } from "@malloydata/malloy";
 
-let _worker: BaseWorker | null = null;
-
-export const setWorker = (worker: BaseWorker): void => {
-  _worker = worker;
-};
-
-export const getWorker = (): BaseWorker => {
-  if (!_worker) {
-    throw new Error("Worker not initialized");
+export class VSCodeURLReader implements URLReader {
+  async readURL(url: URL): Promise<string> {
+    const request = await fetch(url);
+    return request.text();
   }
-  return _worker;
-};
+}
