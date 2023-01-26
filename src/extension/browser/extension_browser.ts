@@ -84,7 +84,9 @@ function setupLanguageServer(context: vscode.ExtensionContext): void {
   // Options to control the language client
   const clientOptions: LanguageClientOptions = {
     documentSelector,
-    synchronize: {},
+    synchronize: {
+      configurationSection: "malloy",
+    },
     initializationOptions: {},
   };
 

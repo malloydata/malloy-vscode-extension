@@ -156,7 +156,6 @@ async function getStructs(
 
     return Object.values(model.explores).sort(exploresByName);
   } catch (error) {
-    console.error(error);
     return undefined;
   }
 }

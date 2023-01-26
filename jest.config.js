@@ -28,7 +28,7 @@ module.exports = {
   moduleFileExtensions: ["js", "jsx", "ts", "tsx"],
   setupFilesAfterEnv: ["jest-expect-message"],
   testMatch: ["**/?(*.)spec.(ts|js)?(x)"],
-  testPathIgnorePatterns: ["/node_modules/", "/dist/", "/out/"],
+  testPathIgnorePatterns: ["/node_modules/", "/dist/"],
   transform: {
     "^.+\\.(ts|tsx)$": "ts-jest",
   },
