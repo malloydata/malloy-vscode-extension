@@ -22,7 +22,8 @@
  */
 
 import * as vscode from "vscode";
-import * as path from "path";
+import { URI, Utils } from "vscode-uri";
+
 import { getWebviewHtml } from "../../webviews";
 import {
   ConnectionMessageType,
@@ -31,13 +32,14 @@ import {
   ConnectionTestStatus,
 } from "../../message_types";
 import { WebviewMessageManager } from "../../webview_message_manager";
+import { connectionManager } from "../connection_manager";
 import {
+  ConnectionBackend,
   ConnectionConfig,
   getDefaultIndex,
 } from "../../../common/connection_manager_types";
-import { VSCodeConnectionManager } from "../../connection_manager";
-
-import { connectionManager } from "../connection_manager";
+import { deletePassword, setPassword } from "keytar";
+import { MALLOY_EXTENSION_STATE } from "../../state";
 
 export function editConnectionsCommand(): void {
   const panel = vscode.window.createWebviewPanel(
@@ -47,8 +49,10 @@ export function editConnectionsCommand(): void {
     { enableScripts: true, retainContextWhenHidden: true }
   );
 
-  const onDiskPath = vscode.Uri.file(
-    path.join(__filename, "..", "connections_page.js")
+  const onDiskPath = Utils.joinPath(
+    MALLOY_EXTENSION_STATE.getExtensionUri(),
+    "dist",
+    "connections_page.js"
   );
 
   const entrySrc = panel.webview.asWebviewUri(onDiskPath);
@@ -59,11 +63,13 @@ export function editConnectionsCommand(): void {
     panel
   );
 
-  const connections = VSCodeConnectionManager.getConnectionsConfig();
+  const connections = connectionManager.getConnectionConfigs();
+  const availableBackends = connectionManager.getAvailableBackends();
 
   messageManager.postMessage({
     type: ConnectionMessageType.SetConnections,
     connections,
+    availableBackends,
   });
 
   messageManager.onReceiveMessage(async (message) => {
@@ -88,6 +94,7 @@ export function editConnectionsCommand(): void {
         messageManager.postMessage({
           type: ConnectionMessageType.SetConnections,
           connections,
+          availableBackends,
         });
         break;
       }
@@ -151,7 +158,33 @@ async function handleConnectionsPreSave(
   for (let index = 0; index < connections.length; index++) {
     const connection = connections[index];
     connection.isDefault = index === defaultIndex;
-    modifiedConnections.push(connection);
+    if (connection.backend === ConnectionBackend.Postgres) {
+      if (connection.useKeychainPassword === false) {
+        connection.useKeychainPassword = undefined;
+        await deletePassword(
+          "com.malloy-lang.vscode-extension",
+          `connections.${connection.id}.password`
+        );
+      }
+    }
+    if (
+      connection.backend === ConnectionBackend.Postgres &&
+      connection.password !== undefined &&
+      connection.password !== ""
+    ) {
+      modifiedConnections.push({
+        ...connection,
+        password: undefined,
+        useKeychainPassword: true,
+      });
+      await setPassword(
+        "com.malloy-lang.vscode-extension",
+        `connections.${connection.id}.password`,
+        connection.password
+      );
+    } else {
+      modifiedConnections.push(connection);
+    }
   }
   return modifiedConnections;
 }

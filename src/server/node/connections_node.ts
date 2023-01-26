@@ -21,10 +21,10 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { ConnectionManager } from "../common/connection_manager";
-import { WebConnectionFactory } from "../extension/web/connection_factory";
+import { ConnectionManager } from "../../common/connection_manager";
+import { DesktopConnectionFactory } from "../../extension/node/connection_factory";
 
 export const connectionManager = new ConnectionManager(
-  new WebConnectionFactory(),
+  new DesktopConnectionFactory(),
   []
 );

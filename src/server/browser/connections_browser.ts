@@ -21,7 +21,10 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { connectionManager } from "../server/connections_web";
-import { MessageHandler } from "./message_handler";
+import { ConnectionManager } from "../../common/connection_manager";
+import { WebConnectionFactory } from "../../extension/browser/connection_factory";
 
-export const messageHandler = new MessageHandler(connectionManager);
+export const connectionManager = new ConnectionManager(
+  new WebConnectionFactory(),
+  []
+);

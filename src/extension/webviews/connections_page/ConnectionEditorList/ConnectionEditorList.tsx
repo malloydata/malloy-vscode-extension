@@ -41,6 +41,7 @@ interface ConnectionEditorListProps {
   testConnection: (connection: ConnectionConfig) => void;
   testStatuses: ConnectionMessageTest[];
   requestServiceAccountKeyPath: (connectionId: string) => void;
+  availableBackends: ConnectionBackend[];
 }
 
 export const ConnectionEditorList: React.FC<ConnectionEditorListProps> = ({
@@ -50,6 +51,7 @@ export const ConnectionEditorList: React.FC<ConnectionEditorListProps> = ({
   testConnection,
   testStatuses,
   requestServiceAccountKeyPath,
+  availableBackends,
 }) => {
   const [dirty, setDirty] = useState(false);
   const defaultConnectionIndex = getDefaultIndex(connections);
@@ -106,6 +108,7 @@ export const ConnectionEditorList: React.FC<ConnectionEditorListProps> = ({
           requestServiceAccountKeyPath={requestServiceAccountKeyPath}
           isDefault={index === defaultConnectionIndex}
           makeDefault={() => makeDefault(index)}
+          availableBackends={availableBackends}
         />
       ))}
       {connections.length === 0 && (

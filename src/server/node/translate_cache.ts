@@ -21,50 +21,52 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import * as fs from "fs/promises";
 import { TextDocuments } from "vscode-languageserver/node";
 import { Model, Runtime } from "@malloydata/malloy";
 import { TextDocument } from "vscode-languageserver-textdocument";
-// TODO(web) import * as fs from "fs";
-// TODO(web) import { fileURLToPath } from "url";
-import { ConnectionManager } from "../common/connection_manager";
+import { ConnectionManager } from "../../common/connection_manager";
+import { TranslateCache } from "../types";
 
-const TRANSLATE_CACHE = new Map<string, { model: Model; version: number }>();
+export class TranslateCacheNode implements TranslateCache {
+  cache = new Map<string, { model: Model; version: number }>();
 
-async function getDocumentText(
-  documents: TextDocuments<TextDocument>,
-  uri: URL
-): Promise<string> {
-  const cached = documents.get(uri.toString());
-  if (cached) {
-    return cached.getText();
-  } else {
-    // TODO catch a file read error
-    // TODO(web) return fs.readFileSync(fileURLToPath(uri), "utf8");
-  }
-}
-
-export async function translateWithCache(
-  connectionManager: ConnectionManager,
-  document: TextDocument,
-  documents: TextDocuments<TextDocument>
-): Promise<Model> {
-  const currentVersion = document.version;
-  const uri = document.uri;
-
-  const entry = TRANSLATE_CACHE.get(uri);
-  if (entry && entry.version === currentVersion) {
-    return entry.model;
+  async getDocumentText(
+    documents: TextDocuments<TextDocument>,
+    uri: URL
+  ): Promise<string> {
+    const cached = documents.get(uri.toString());
+    if (cached) {
+      return cached.getText();
+    } else {
+      // TODO catch a file read error
+      return fs.readFile(uri.toString(), "utf-8");
+    }
   }
 
-  const files = {
-    readURL: (url: URL) => getDocumentText(documents, url),
-  };
-  const runtime = new Runtime(
-    files,
-    connectionManager.getConnectionLookup(new URL(document.uri))
-  );
+  async translateWithCache(
+    connectionManager: ConnectionManager,
+    document: TextDocument,
+    documents: TextDocuments<TextDocument>
+  ): Promise<Model> {
+    const currentVersion = document.version;
+    const uri = document.uri;
 
-  const model = await runtime.getModel(new URL(uri));
-  TRANSLATE_CACHE.set(uri, { version: currentVersion, model });
-  return model;
+    const entry = this.cache.get(uri);
+    if (entry && entry.version === currentVersion) {
+      return entry.model;
+    }
+
+    const files = {
+      readURL: (url: URL) => this.getDocumentText(documents, url),
+    };
+    const runtime = new Runtime(
+      files,
+      connectionManager.getConnectionLookup(new URL(document.uri))
+    );
+
+    const model = await runtime.getModel(new URL(uri));
+    this.cache.set(uri, { version: currentVersion, model });
+    return model;
+  }
 }

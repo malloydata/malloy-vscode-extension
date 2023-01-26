@@ -21,39 +21,48 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { TextDocuments, Location, Position } from "vscode-languageserver/node";
+import { TextDocuments } from "vscode-languageserver/browser";
+import { Model, Runtime } from "@malloydata/malloy";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { ConnectionManager } from "../../common/connection_manager";
 import { TranslateCache } from "../types";
 
-export async function getMalloyDefinitionReference(
-  translateCache: TranslateCache,
-  connectionManager: ConnectionManager,
-  documents: TextDocuments<TextDocument>,
-  document: TextDocument,
-  position: Position
-): Promise<Location[]> {
-  try {
-    const model = await translateCache.translateWithCache(
-      connectionManager,
-      document,
-      documents
-    );
-    const reference = model.getReference(position);
-    const location = reference?.definition.location;
-    if (location) {
-      return [
-        {
-          uri: location.url,
-          range: location.range,
-        },
-      ];
+export class TranslateCacheBrowser implements TranslateCache {
+  cache = new Map<string, { model: Model; version: number }>();
+
+  async getDocumentText(
+    documents: TextDocuments<TextDocument>,
+    uri: URL
+  ): Promise<string> {
+    const cached = documents.get(uri.toString());
+    if (cached) {
+      return cached.getText();
     }
-    return [];
-  } catch {
-    // TODO It's probably possible to get some references from a model that has errors;
-    //      maybe the Model api should not throw an error if there are errors, but just
-    //      make them available via `.errors` or something.
-    return [];
+  }
+
+  async translateWithCache(
+    connectionManager: ConnectionManager,
+    document: TextDocument,
+    documents: TextDocuments<TextDocument>
+  ): Promise<Model> {
+    const currentVersion = document.version;
+    const uri = document.uri;
+
+    const entry = this.cache.get(uri);
+    if (entry && entry.version === currentVersion) {
+      return entry.model;
+    }
+
+    const files = {
+      readURL: (url: URL) => this.getDocumentText(documents, url),
+    };
+    const runtime = new Runtime(
+      files,
+      connectionManager.getConnectionLookup(new URL(document.uri))
+    );
+
+    const model = await runtime.getModel(new URL(uri));
+    this.cache.set(uri, { version: currentVersion, model });
+    return model;
   }
 }

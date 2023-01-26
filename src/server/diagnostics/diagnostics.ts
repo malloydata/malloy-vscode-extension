@@ -25,11 +25,11 @@ import {
   Diagnostic,
   DiagnosticSeverity,
   TextDocuments,
-} from "vscode-languageserver/node";
+} from "vscode-languageserver";
 import { LogMessage, MalloyError } from "@malloydata/malloy";
-import { TextDocument } from "vscode-languageserver-textdocument";
-import { translateWithCache } from "../translate_cache";
-import { ConnectionManager } from "../../common/connection_manager";
+import type { TextDocument } from "vscode-languageserver-textdocument";
+import type { ConnectionManager } from "../../common/connection_manager";
+import type { TranslateCache } from "../types";
 
 const DEFAULT_RANGE = {
   start: { line: 0, character: 0 },
@@ -37,6 +37,7 @@ const DEFAULT_RANGE = {
 };
 
 export async function getMalloyDiagnostics(
+  translateCache: TranslateCache,
   connectionManager: ConnectionManager,
   documents: TextDocuments<TextDocument>,
   document: TextDocument
@@ -48,7 +49,11 @@ export async function getMalloyDiagnostics(
   };
   let errors: LogMessage[] = [];
   try {
-    await translateWithCache(connectionManager, document, documents);
+    await translateCache.translateWithCache(
+      connectionManager,
+      document,
+      documents
+    );
   } catch (error) {
     if (error instanceof MalloyError) {
       errors = error.log;

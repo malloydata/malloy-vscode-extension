@@ -23,7 +23,7 @@
 
 /* eslint-disable no-console */
 import fs from "fs";
-import { build, Plugin } from "esbuild";
+import { context, Plugin } from "esbuild";
 import { nativeNodeModulesPlugin } from "../third_party/github.com/evanw/esbuild/native-modules-plugin";
 import * as path from "path";
 import { execSync } from "child_process";
@@ -159,7 +159,7 @@ const ENV_PASSTHROUGH = ["GA_API_SECRET", "GA_MEASUREMENT_ID"];
 
 for (const variable of ENV_PASSTHROUGH) {
   DEFINITIONS[`process.env.${variable}`] = JSON.stringify(
-    process.env[variable]
+    process.env[variable] || ""
   );
 }
 
@@ -228,11 +228,11 @@ export async function doBuild(
   }
 
   // build the extension and server
-  await build({
+  const nodeContext = await context({
     entryPoints: [
-      "./src/extension/desktop/extension.ts",
-      "./src/server/server_desktop.ts",
-      "./src/worker/worker_desktop.ts",
+      "./src/extension/node/extension_node.ts",
+      "./src/server/node/server_node.ts",
+      "./src/worker/worker_node.ts",
     ],
     entryNames: "[name]",
     bundle: true,
@@ -249,14 +249,6 @@ export async function doBuild(
     ],
     loader: { [".png"]: "file", [".svg"]: "file" },
     plugins: extensionPlugins,
-    watch: development
-      ? {
-          onRebuild(error, result) {
-            if (error) console.error("Extension server build failed:", error);
-            else console.log("Extension server build succeeded:", result);
-          },
-        }
-      : false,
     define: DEFINITIONS,
   });
 
@@ -272,13 +264,10 @@ export async function doBuild(
   }
 
   // build the webviews
-  await build({
+  const webviewContext = await context({
     entryPoints: [
       "./src/extension/webviews/query_page/entry.ts",
       "./src/extension/webviews/connections_page/entry.ts",
-      "./src/extension/web/extension_web.ts",
-      "./src/server/server_web.ts",
-      "./src/worker/worker_web.ts",
     ],
     external: ["vscode"],
     entryNames: "[dir]",
@@ -292,13 +281,39 @@ export async function doBuild(
       "process.env.NODE_DEBUG": "false", // TODO this is a hack because some package we include assumed process.env exists :(
     },
     plugins: webviewPlugins,
-    watch: development
-      ? {
-          onRebuild(error, result) {
-            if (error) console.error("Webview build failed:", error);
-            else console.log("Webview build succeeded:", result);
-          },
-        }
-      : false,
   });
+
+  // build the web extension
+  const browserContext = await context({
+    entryPoints: [
+      "./src/extension/browser/extension_browser.ts",
+      "./src/server/browser/server_browser.ts",
+      "./src/worker/worker_browser.ts",
+    ],
+    external: ["vscode"],
+    entryNames: "[name]",
+    bundle: true,
+    format: "cjs",
+    minify: !development,
+    sourcemap: development ? "inline" : false,
+    outdir: outDir,
+    platform: "browser",
+    loader: { [".svg"]: "file" },
+    define: {
+      "process.env.NODE_DEBUG": "false", // TODO this is a hack because some package we include assumed process.env exists :(
+      "process.env.GA_MEASUREMENT_ID": '""',
+      "process.env.GA_API_SECRET": '""',
+    },
+    tsconfig: "./tsconfig.browser.json",
+    plugins: extensionPlugins,
+    banner: {
+      js: "globalThis.require = globalThis.require || null;",
+    },
+  });
+
+  if (development) {
+    await nodeContext.watch();
+    await webviewContext.watch();
+    await browserContext.watch();
+  }
 }

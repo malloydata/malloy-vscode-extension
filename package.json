@@ -55,8 +55,8 @@
     "onWebviewPanel:malloyQuery",
     "onWebviewPanel:malloyConnections"
   ],
-  "main": "./dist/extension",
-  "browser": "./dist/extension/web",
+  "main": "./dist/extension_node",
+  "browser": "./dist/extension_browser",
   "configurationDefaults": {
     "[malloy]": {
       "editor.semanticHighlighting.enabled": true
@@ -345,16 +345,15 @@
     "duckdb": "0.6.1",
     "keytar": "7.7.0",
     "lodash": "^4.17.21",
-    "path": "^0.12.7",
     "react": "^17.0.2",
     "react-is": "^16.8.0",
     "react-popper-tooltip": "^4.3.1",
     "shiki": "^0.10.0",
     "styled-components": "^5.3.3",
-    "url": "^0.11.0",
     "vscode-languageclient": "^8.0.2",
     "vscode-languageserver": "^8.0.2",
-    "vscode-languageserver-textdocument": "^1.0.8"
+    "vscode-languageserver-textdocument": "^1.0.8",
+    "vscode-uri": "^3.0.7"
   },
   "dependenciesComments": {
     "esbuild": "READ THIS! esbuild is pinned to 0.14.13 because some version after that introduces 'use strict' to bundled js files. Consider this before upgrading"
@@ -377,7 +376,8 @@
     "@types/vscode-webview": "^1.57.0",
     "@typescript-eslint/eslint-plugin": "^5.48.2",
     "@typescript-eslint/parser": "^5.48.2",
-    "esbuild": "0.14.13",
+    "@vscode/test-web": "^0.0.34",
+    "esbuild": "0.17.4",
     "esbuild-plugin-svgr": "^1.0.1",
     "eslint": "^8.32.0",
     "eslint-config-prettier": "^8.6.0",

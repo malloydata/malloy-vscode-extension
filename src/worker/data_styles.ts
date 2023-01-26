@@ -21,8 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as path from "path";
-
 import { URLReader } from "@malloydata/malloy";
 import { DataStyles } from "@malloydata/render";
 
@@ -42,33 +40,35 @@ export async function dataStylesForFile(
   uri: string,
   text: string
 ): Promise<DataStyles> {
-  const PREFIX = "--! styles ";
-  let styles: DataStyles = {};
-  for (const line of text.split("\n")) {
-    if (line.startsWith(PREFIX)) {
-      const fileName = line.trimEnd().substring(PREFIX.length);
-      const stylesPath = path.join(
-        uri.replace(
-          process.platform === "win32" ? /^file:\/\/\/?/ : /^file:\/\//,
-          ""
-        ),
-        "..",
-        fileName
-      );
-      // TODO instead of failing silently when the file does not exist, perform this after the WebView has been
-      //      created, so that the error can be shown there.
-      let stylesText;
-      try {
-        stylesText = await fetchFile(stylesPath);
-      } catch (error) {
-        log(`Error loading data style '${fileName}': ${error}`);
-        stylesText = "{}";
-      }
-      styles = { ...styles, ...compileDataStyles(stylesText) };
-    }
-  }
+  // TODO(web)
+  // const PREFIX = "--! styles ";
+  // let styles: DataStyles = {};
+  // for (const line of text.split("\n")) {
+  //   if (line.startsWith(PREFIX)) {
+  //     const fileName = line.trimEnd().substring(PREFIX.length);
+  //     const stylesPath = path.join(
+  //       uri.replace(
+  //         process.platform === "win32" ? /^file:\/\/\/?/ : /^file:\/\//,
+  //         ""
+  //       ),
+  //       "..",
+  //       fileName
+  //     );
+  //     // TODO instead of failing silently when the file does not exist, perform this after the WebView has been
+  //     //      created, so that the error can be shown there.
+  //     let stylesText;
+  //     try {
+  //       stylesText = await fetchFile(stylesPath);
+  //     } catch (error) {
+  //       log(`Error loading data style '${fileName}': ${error}`);
+  //       stylesText = "{}";
+  //     }
+  //     styles = { ...styles, ...compileDataStyles(stylesText) };
+  //   }
+  // }
 
-  return styles;
+  // return styles;
+  return {};
 }
 
 // TODO Come up with a better way to handle data styles. Perhaps this is

@@ -24,39 +24,36 @@
 import {
   createConnection,
   TextDocuments,
+  ProposedFeatures,
   InitializeParams,
   TextDocumentSyncKind,
   InitializeResult,
   SemanticTokensBuilder,
-  BrowserMessageReader,
-  BrowserMessageWriter,
   CompletionItem,
   HoverParams,
   Hover,
-} from "vscode-languageserver/browser";
+} from "vscode-languageserver/node";
 import debounce from "lodash/debounce";
 
 import { TextDocument } from "vscode-languageserver-textdocument";
-import { getMalloyDiagnostics } from "./diagnostics";
-import { getMalloySymbols } from "./symbols";
+import { getMalloyDiagnostics } from "../diagnostics";
+import { getMalloySymbols } from "../symbols";
 import {
   TOKEN_TYPES,
   TOKEN_MODIFIERS,
   stubMalloyHighlights,
-} from "./highlights";
-import { getMalloyLenses } from "./lenses";
-import { connectionManager } from "./connections_web";
+} from "../highlights";
+import { getMalloyLenses } from "../lenses";
+import { connectionManager } from "./connections_node";
 import {
   getCompletionItems,
   resolveCompletionItem,
-} from "./completions/completions";
-import { getHover } from "./hover/hover";
-import { getMalloyDefinitionReference } from "./definitions/definitions";
+} from "../completions/completions";
+import { getHover } from "../hover/hover";
+import { getMalloyDefinitionReference } from "../definitions/definitions";
+import { TranslateCacheNode } from "./translate_cache";
 
-const messageReader = new BrowserMessageReader(self);
-const messageWriter = new BrowserMessageWriter(self);
-
-const connection = createConnection(messageReader, messageWriter);
+const connection = createConnection(ProposedFeatures.all);
 
 const documents = new TextDocuments(TextDocument);
 let haveConnectionsBeenSet = false;
@@ -97,6 +94,8 @@ connection.onInitialize((params: InitializeParams) => {
   return result;
 });
 
+const translateCache = new TranslateCacheNode();
+
 async function diagnoseDocument(document: TextDocument) {
   if (haveConnectionsBeenSet) {
     // Necessary to copy the versions, because they're mutated in the same document object
@@ -104,6 +103,7 @@ async function diagnoseDocument(document: TextDocument) {
       documents.all().map((document) => [document.uri, document.version])
     );
     const diagnostics = await getMalloyDiagnostics(
+      translateCache,
       connectionManager,
       documents,
       document
@@ -152,6 +152,7 @@ connection.onDefinition((handler) => {
   const document = documents.get(handler.textDocument.uri);
   return document
     ? getMalloyDefinitionReference(
+        translateCache,
         connectionManager,
         documents,
         document,

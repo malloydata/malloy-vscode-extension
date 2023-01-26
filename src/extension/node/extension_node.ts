@@ -29,7 +29,7 @@ import {
   ServerOptions,
   TransportKind,
 } from "vscode-languageclient/node";
-import { editConnectionsCommand } from "../commands/edit_connections";
+import { editConnectionsCommand } from "./commands/edit_connections";
 import { showLicensesCommand } from "../commands/show_licenses";
 import { ConnectionsProvider } from "../tree_views/connections_view";
 import { WorkerConnection } from "../../worker/worker_connection";
@@ -47,7 +47,7 @@ export let extensionModeProduction: boolean;
 export function activate(context: vscode.ExtensionContext): void {
   const urlReader = new VSCodeURLReader();
   setupSubscriptions(context, urlReader, connectionManager);
-  const connectionsTree = new ConnectionsProvider();
+  const connectionsTree = new ConnectionsProvider(context, connectionManager);
 
   // Show Licenses
   context.subscriptions.push(
@@ -98,7 +98,7 @@ export async function deactivate(): Promise<void> | undefined {
 }
 
 function setupLanguageServer(context: vscode.ExtensionContext): void {
-  const serverModule = context.asAbsolutePath("dist/server_desktop.js");
+  const serverModule = context.asAbsolutePath("dist/server_node.js");
   const debugOptions = {
     execArgv: [
       "--nolazy",

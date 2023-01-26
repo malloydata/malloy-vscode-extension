@@ -21,48 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* eslint-disable no-console */
-import * as yargs from "yargs";
-import { doBuild, outDir, Target } from "./build_common";
+import { connectionManager } from "../server/node/connections_node";
+import { MessageHandler } from "./message_handler";
 
-yargs
-  .scriptName("build-extension")
-  .usage("$0 <cmd> [args]")
-  .command(
-    "build [target]",
-    "Build extension",
-    {
-      development: {
-        alias: "D",
-        type: "boolean",
-        default: false,
-        describe: "Build in development mode",
-      },
-      target: {
-        type: "string",
-        default: undefined,
-        describe: "Target platform",
-      },
-    },
-    ({ development, target }) => {
-      console.log(
-        `Building extension to ${outDir} in ${
-          development ? "development" : "production"
-        } mode`
-      );
-
-      doBuild(development, target as Target | undefined)
-        .then(() => {
-          console.log("Extension built successfully");
-        })
-        .catch((error) => {
-          console.error("Extension built with errors");
-          console.log(error);
-          process.exit(1);
-        });
-    }
-  )
-  .demandCommand(1)
-  .recommendCommands()
-  .strict()
-  .help().argv;
+export const messageHandler = new MessageHandler(connectionManager);

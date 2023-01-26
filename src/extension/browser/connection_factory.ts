@@ -10,6 +10,10 @@ import { createDuckDbWasmConnection } from "../../common/connections/duckdb_wasm
 export class WebConnectionFactory implements ConnectionFactory {
   connectionCache: Record<string, TestableConnection> = {};
 
+  getAvailableBackends(): ConnectionBackend[] {
+    return [ConnectionBackend.DuckDBWASM];
+  }
+
   async getConnectionForConfig(
     connectionConfig: ConnectionConfig,
     configOptions: ConfigOptions = {
@@ -35,5 +39,23 @@ export class WebConnectionFactory implements ConnectionFactory {
     }
 
     return connection;
+  }
+
+  getWorkingDirectory(url: URL): string {
+    console.info("Need to determine working directory for", url.toString());
+    return "/";
+  }
+
+  addDefaults(configs: ConnectionConfig[]): ConnectionConfig[] {
+    // Create a default duckdb connection if one isn't configured
+    if (!configs.find((config) => config.name === "duckdb")) {
+      configs.push({
+        name: "duckdb",
+        backend: ConnectionBackend.DuckDBWASM,
+        id: "duckdb-default",
+        isDefault: false,
+      });
+    }
+    return configs;
   }
 }

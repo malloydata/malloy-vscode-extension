@@ -45,7 +45,7 @@ export function activate(context: vscode.ExtensionContext): void {
   const urlReader = new VSCodeURLReader();
   setupSubscriptions(context, urlReader, connectionManager);
 
-  const connectionsTree = new ConnectionsProvider();
+  const connectionsTree = new ConnectionsProvider(context, connectionManager);
   context.subscriptions.push(
     vscode.window.registerTreeDataProvider("malloyConnections", connectionsTree)
   );
@@ -115,7 +115,7 @@ function createWorkerLanguageClient(
   // Create a worker. The worker main file implements the language server.
   const serverMain = vscode.Uri.joinPath(
     context.extensionUri,
-    "dist/server_web.js"
+    "dist/server_browser.js"
   );
   const worker = new Worker(serverMain.toString(true));
 

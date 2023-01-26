@@ -21,8 +21,9 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as path from "path";
 import * as vscode from "vscode";
+import { Utils } from "vscode-uri";
+
 import { MALLOY_EXTENSION_STATE, RunState } from "../state";
 import { Result } from "@malloydata/malloy";
 import turtleIcon from "../../media/turtle.svg";
@@ -144,14 +145,18 @@ export function runMalloyQuery(
           cancel,
           document: query.file,
         };
-        current.panel.iconPath = vscode.Uri.parse(
-          path.join(__filename, "..", turtleIcon)
+        current.panel.iconPath = Utils.joinPath(
+          MALLOY_EXTENSION_STATE.getExtensionUri(),
+          "dist",
+          turtleIcon
         );
         MALLOY_EXTENSION_STATE.setRunState(panelId, current);
       }
 
-      const onDiskPath = vscode.Uri.file(
-        path.join(__filename, "..", "query_page.js")
+      const onDiskPath = Utils.joinPath(
+        MALLOY_EXTENSION_STATE.getExtensionUri(),
+        "dist",
+        "query_page.js"
       );
 
       const entrySrc = current.panel.webview.asWebviewUri(onDiskPath);

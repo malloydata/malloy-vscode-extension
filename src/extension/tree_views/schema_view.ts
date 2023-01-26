@@ -21,8 +21,9 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as path from "path";
 import * as vscode from "vscode";
+import { Utils } from "vscode-uri";
+
 import {
   Explore,
   Runtime,
@@ -52,6 +53,7 @@ export class SchemaProvider
   private previousKey: string | undefined;
 
   constructor(
+    private context: vscode.ExtensionContext,
     private connectionManager: ConnectionManager,
     private urlReader: URLReader
   ) {
@@ -82,13 +84,19 @@ export class SchemaProvider
         const newPath = [...element.accessPath, field.name];
         if (field.isExploreField()) {
           return new ExploreItem(
+            this.context,
             element.topLevelExplore,
             field,
             newPath,
             element.explore.allFields.length === 1
           );
         } else {
-          return new FieldItem(element.topLevelExplore, field, newPath);
+          return new FieldItem(
+            this.context,
+            element.topLevelExplore,
+            field,
+            newPath
+          );
         }
       });
     } else {
@@ -118,7 +126,13 @@ export class SchemaProvider
       } else {
         const results = explores.map(
           (explore) =>
-            new ExploreItem(explore.name, explore, [], explores.length === 1)
+            new ExploreItem(
+              this.context,
+              explore.name,
+              explore,
+              [],
+              explores.length === 1
+            )
         );
         this.resultCache.set(cacheKey, results);
         return results;
@@ -132,7 +146,7 @@ async function getStructs(
   reader: URLReader,
   document: vscode.TextDocument
 ): Promise<Explore[] | undefined> {
-  const url = new URL("file://" + document.uri.fsPath);
+  const url = new URL(document.uri.toString());
   try {
     const runtime = new Runtime(
       reader,
@@ -142,12 +156,14 @@ async function getStructs(
 
     return Object.values(model.explores).sort(exploresByName);
   } catch (error) {
+    console.error(error);
     return undefined;
   }
 }
 
 class ExploreItem extends vscode.TreeItem {
   constructor(
+    private context: vscode.ExtensionContext,
     public topLevelExplore: string,
     public explore: Explore,
     public accessPath: string[],
@@ -177,14 +193,15 @@ class ExploreItem extends vscode.TreeItem {
     }
 
     this.iconPath = {
-      light: getIconPath(`struct_${subtype}`, false),
-      dark: getIconPath(`struct_${subtype}`, false),
+      light: getIconPath(this.context, `struct_${subtype}`, false),
+      dark: getIconPath(this.context, `struct_${subtype}`, false),
     };
   }
 }
 
 class FieldItem extends vscode.TreeItem {
   constructor(
+    private context: vscode.ExtensionContext,
     public topLevelExplore: string,
     public field: AtomicField | QueryField,
     public accessPath: string[]
@@ -210,8 +227,8 @@ $(symbol-field) \`${field.name}\`
   };
 
   iconPath = {
-    light: getIconPath(this.type(), this.isAggregate()),
-    dark: getIconPath(this.type(), this.isAggregate()),
+    light: getIconPath(this.context, this.type(), this.isAggregate()),
+    dark: getIconPath(this.context, this.type(), this.isAggregate()),
   };
 
   isAggregate() {
@@ -223,7 +240,11 @@ $(symbol-field) \`${field.name}\`
   }
 }
 
-function getIconPath(fieldType: string, isAggregate: boolean) {
+function getIconPath(
+  context: vscode.ExtensionContext,
+  fieldType: string,
+  isAggregate: boolean
+) {
   let imageFileName;
   if (isAggregate) {
     imageFileName = numberAggregateIcon;
@@ -263,7 +284,8 @@ function getIconPath(fieldType: string, isAggregate: boolean) {
     }
   }
 
-  return path.join(__filename, "..", imageFileName);
+  const uri = context.extensionUri;
+  return Utils.joinPath(uri, "dist", imageFileName);
 }
 
 export function runTurtleFromSchemaCommand(fieldItem: FieldItem): void {

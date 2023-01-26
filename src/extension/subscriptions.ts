@@ -38,11 +38,15 @@ import { trackModelLoad, trackModelSave } from "./telemetry";
 import { ConnectionManager } from "../common/connection_manager";
 import { URLReader } from "@malloydata/malloy";
 
+import { MALLOY_EXTENSION_STATE } from "./state";
+
 export const setupSubscriptions = (
   context: vscode.ExtensionContext,
   urlReader: URLReader,
   connectionManager: ConnectionManager
 ) => {
+  MALLOY_EXTENSION_STATE.setExtensionUri(context.extensionUri);
+
   // Run Query (whole file)
   context.subscriptions.push(
     vscode.commands.registerCommand("malloy.runQueryFile", runQueryFileCommand)
@@ -79,7 +83,7 @@ export const setupSubscriptions = (
     )
   );
 
-  const schemaTree = new SchemaProvider(connectionManager, urlReader);
+  const schemaTree = new SchemaProvider(context, connectionManager, urlReader);
 
   context.subscriptions.push(
     vscode.window.registerTreeDataProvider("malloySchema", schemaTree)

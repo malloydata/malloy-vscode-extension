@@ -21,11 +21,16 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { URLReader } from "@malloydata/malloy";
+import type { ConnectionManager } from "../common/connection_manager";
+import type { TextDocuments } from "vscode-languageserver";
+import type { TextDocument } from "vscode-languageserver-textdocument";
 
-export class VSCodeURLReader implements URLReader {
-  async readURL(url: URL): Promise<string> {
-    const request = await fetch(url);
-    return request.text();
-  }
+import { Model } from "@malloydata/malloy";
+
+export interface TranslateCache {
+  translateWithCache(
+    connectionManager: ConnectionManager,
+    document: TextDocument,
+    documents: TextDocuments<TextDocument>
+  ): Promise<Model>;
 }

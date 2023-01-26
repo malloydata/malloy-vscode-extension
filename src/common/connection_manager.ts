@@ -21,19 +21,12 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as path from "path";
-import { fileURLToPath } from "url";
 import {
   Connection,
   LookupConnection,
   TestableConnection,
 } from "@malloydata/malloy";
-import {
-  ConfigOptions,
-  ConnectionBackend,
-  ConnectionConfig,
-} from "./connection_manager_types";
-import { isDuckDBAvailable } from "../common/duckdb_availability";
+import { ConfigOptions, ConnectionConfig } from "./connection_manager_types";
 import { ConnectionFactory } from "./connections/types";
 
 const DEFAULT_CONFIG = Symbol("default-config");
@@ -69,22 +62,21 @@ export class DynamicConnectionLookup implements LookupConnection<Connection> {
 
 export class ConnectionManager {
   private connectionLookups: Record<string, DynamicConnectionLookup> = {};
-  configs: Record<string | symbol, ConnectionConfig> = {};
+  configMap: Record<string | symbol, ConnectionConfig> = {};
   connectionCache: Record<string | symbol, TestableConnection> = {};
   currentRowLimit = 50;
 
   constructor(
     private connectionFactory: ConnectionFactory,
-    configs: ConnectionConfig[]
+    private configList: ConnectionConfig[]
   ) {
-    this.buildConfigMap(configs);
+    this.buildConfigMap();
   }
 
   public setConnectionsConfig(connectionsConfig: ConnectionConfig[]): void {
     // Force existing connections to be regenerated
-    this.connectionLookups = {};
-    this.connectionCache = {};
-    this.buildConfigMap(connectionsConfig);
+    this.configList = connectionsConfig;
+    this.buildConfigMap();
   }
 
   public async connectionForConfig(
@@ -96,11 +88,12 @@ export class ConnectionManager {
   }
 
   public getConnectionLookup(url: URL): LookupConnection<Connection> {
-    const workingDirectory = path.dirname(fileURLToPath(url));
+    const workingDirectory = this.connectionFactory.getWorkingDirectory(url);
+
     if (!this.connectionLookups[workingDirectory]) {
       this.connectionLookups[workingDirectory] = new DynamicConnectionLookup(
         this.connectionFactory,
-        this.configs,
+        this.configMap,
         {
           workingDirectory,
           rowLimit: this.getCurrentRowLimit(),
@@ -118,43 +111,33 @@ export class ConnectionManager {
     return this.currentRowLimit;
   }
 
-  protected static filterUnavailableConnectionBackends(
+  public getConnectionConfigs() {
+    return this.filterUnavailableConnectionBackends(this.configList);
+  }
+
+  public getAvailableBackends() {
+    return this.connectionFactory.getAvailableBackends();
+  }
+
+  protected filterUnavailableConnectionBackends(
     connectionsConfig: ConnectionConfig[]
   ): ConnectionConfig[] {
-    return connectionsConfig.filter(
-      (config) =>
-        isDuckDBAvailable || config.backend !== ConnectionBackend.DuckDB
+    const availableBackends = this.connectionFactory.getAvailableBackends();
+    return connectionsConfig.filter((config) =>
+      availableBackends.includes(config.backend)
     );
   }
 
-  buildConfigMap(configs: ConnectionConfig[]): void {
-    // Create a default bigquery connection if one isn't configured
-    if (
-      !configs.find((config) => config.backend === ConnectionBackend.BigQuery)
-    ) {
-      configs.push({
-        name: "bigquery",
-        backend: ConnectionBackend.BigQuery,
-        id: "bigquery-default",
-        isDefault: !configs.find((config) => config.isDefault),
-      });
-    }
+  private buildConfigMap(): void {
+    this.connectionLookups = {};
+    this.connectionCache = {};
 
-    // Create a default duckdb connection if one isn't configured
-    if (!configs.find((config) => config.name === "duckdb")) {
-      configs.push({
-        name: "duckdb",
-        backend: ConnectionBackend.DuckDB,
-        id: "duckdb-default",
-        isDefault: false,
-      });
-    }
-
+    const configs = this.connectionFactory.addDefaults(this.configList);
     configs.forEach((config) => {
       if (config.isDefault) {
-        this.configs[DEFAULT_CONFIG] = config;
+        this.configMap[DEFAULT_CONFIG] = config;
       }
-      this.configs[config.name] = config;
+      this.configMap[config.name] = config;
     });
   }
 }

@@ -22,7 +22,10 @@
  */
 
 import React, { useEffect, useState } from "react";
-import { ConnectionConfig } from "../../../common/connection_manager_types";
+import {
+  ConnectionBackend,
+  ConnectionConfig,
+} from "../../../common/connection_manager_types";
 import {
   ConnectionMessageType,
   ConnectionPanelMessage,
@@ -45,11 +48,15 @@ export const App: React.FC = () => {
     ConnectionConfig[] | undefined
   >();
   const [testStatuses, setTestStatuses] = useState<ConnectionMessageTest[]>([]);
+  const [availableBackends, setAvailableBackends] = useState<
+    ConnectionBackend[]
+  >([]);
 
   const postConnections = () => {
     vscode.postMessage({
       type: ConnectionMessageType.SetConnections,
       connections: connections || [],
+      availableBackends,
     });
   };
 
@@ -78,6 +85,7 @@ export const App: React.FC = () => {
       switch (message.type) {
         case ConnectionMessageType.SetConnections:
           setConnections(message.connections);
+          setAvailableBackends(message.availableBackends);
           break;
         case ConnectionMessageType.TestConnection:
           setTestStatuses([...testStatuses, message]);
@@ -121,6 +129,7 @@ export const App: React.FC = () => {
           testConnection={testConnection}
           testStatuses={testStatuses}
           requestServiceAccountKeyPath={requestServiceAccountKeyPath}
+          availableBackends={availableBackends}
         />
       </div>
     </Scroll>

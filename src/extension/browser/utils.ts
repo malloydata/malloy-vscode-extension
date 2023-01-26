@@ -21,10 +21,13 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { ConnectionManager } from "../common/connection_manager";
-import { DesktopConnectionFactory } from "../extension/desktop/connection_factory";
+import { URLReader } from "@malloydata/malloy";
+import * as vscode from "vscode";
 
-export const connectionManager = new ConnectionManager(
-  new DesktopConnectionFactory(),
-  []
-);
+export class VSCodeURLReader implements URLReader {
+  async readURL(url: URL): Promise<string> {
+    const uri = vscode.Uri.parse(url.toString());
+    const buffer = await vscode.workspace.fs.readFile(uri);
+    return new TextDecoder("utf-8").decode(buffer);
+  }
+}

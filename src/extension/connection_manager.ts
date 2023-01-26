@@ -28,23 +28,19 @@ import { ConnectionFactory } from "../common/connections/types";
 
 const DEFAULT_ROW_LIMIT = 50;
 
+const getConnectionsConfig = (): ConnectionConfig[] => {
+  return vscode.workspace
+    .getConfiguration("malloy")
+    .get("connections") as ConnectionConfig[];
+};
+
 export class VSCodeConnectionManager extends ConnectionManager {
   constructor(connectionFactory: ConnectionFactory) {
-    super(connectionFactory, VSCodeConnectionManager.getConnectionsConfig());
-  }
-
-  static getConnectionsConfig(): ConnectionConfig[] {
-    return this.filterUnavailableConnectionBackends(
-      vscode.workspace
-        .getConfiguration("malloy")
-        .get("connections") as ConnectionConfig[]
-    );
+    super(connectionFactory, getConnectionsConfig());
   }
 
   async onConfigurationUpdated(): Promise<void> {
-    return this.setConnectionsConfig(
-      VSCodeConnectionManager.getConnectionsConfig()
-    );
+    return this.setConnectionsConfig(getConnectionsConfig());
   }
 
   getCurrentRowLimit(): number {
