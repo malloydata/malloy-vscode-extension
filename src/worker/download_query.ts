@@ -27,7 +27,7 @@ import { CSVWriter, JSONWriter, Runtime } from "@malloydata/malloy";
 
 import { MessageDownload, WorkerDownloadMessage } from "./types";
 import { createRunnable } from "./utils";
-import { WorkerURLReader } from "./files";
+import { WorkerURLReader } from "./node/files";
 import { ConnectionManager } from "../common/connection_manager";
 
 const sendMessage = (name: string, error?: string) => {

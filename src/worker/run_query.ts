@@ -21,14 +21,17 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as vscode from "vscode";
-import { QueryMaterializer, Runtime } from "@malloydata/malloy";
+import { QueryMaterializer, Runtime, URLReader } from "@malloydata/malloy";
 import { DataStyles } from "@malloydata/render";
 
 import { HackyDataStylesAccumulator } from "./data_styles";
-import { WorkerURLReader } from "./files";
 import { log } from "./logger";
-import { MessageCancel, MessageRun, WorkerQueryPanelMessage } from "./types";
+import {
+  MessageCancel,
+  MessageHandler,
+  MessageRun,
+  WorkerQueryPanelMessage,
+} from "./types";
 
 import {
   QueryMessageType,
@@ -45,20 +48,26 @@ interface QueryEntry {
 
 const runningQueries: Record<string, QueryEntry> = {};
 
-const sendMessage = (message: QueryPanelMessage, panelId: string) => {
+const sendMessage = (
+  messageHandler: MessageHandler,
+  message: QueryPanelMessage,
+  panelId: string
+) => {
   const msg: WorkerQueryPanelMessage = {
     type: "query_panel",
     panelId,
     message,
   };
-  process.send?.(msg);
+
+  messageHandler.send(msg);
 };
 
 export const runQuery = async (
+  messageHandler: MessageHandler,
+  reader: URLReader,
   connectionManager: ConnectionManager,
   { query, panelId }: MessageRun
 ): Promise<void> => {
-  const reader = new WorkerURLReader();
   const files = new HackyDataStylesAccumulator(reader);
   const url = new URL(panelId);
 
@@ -70,6 +79,7 @@ export const runQuery = async (
 
     runningQueries[panelId] = { panelId, canceled: false };
     sendMessage(
+      messageHandler,
       {
         type: QueryMessageType.QueryStatus,
         status: QueryRunStatus.Compiling,
@@ -100,6 +110,7 @@ export const runQuery = async (
       log(sql);
     } catch (error) {
       sendMessage(
+        messageHandler,
         {
           type: QueryMessageType.QueryStatus,
           status: QueryRunStatus.Error,
@@ -111,6 +122,7 @@ export const runQuery = async (
     }
 
     sendMessage(
+      messageHandler,
       {
         type: QueryMessageType.QueryStatus,
         status: QueryRunStatus.Running,
@@ -123,6 +135,7 @@ export const runQuery = async (
     if (runningQueries[panelId].canceled) return;
 
     sendMessage(
+      messageHandler,
       {
         type: QueryMessageType.QueryStatus,
         status: QueryRunStatus.Done,
@@ -133,6 +146,7 @@ export const runQuery = async (
     );
   } catch (error) {
     sendMessage(
+      messageHandler,
       {
         type: QueryMessageType.QueryStatus,
         status: QueryRunStatus.Error,

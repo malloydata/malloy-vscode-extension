@@ -162,3 +162,7 @@ export interface BaseWorker {
   off(name: string, callback: (...args: unknown[]) => void): void;
   on(name: string, callback: (...args: unknown[]) => void): void;
 }
+
+export interface MessageHandler {
+  send(message: WorkerMessage): void;
+}

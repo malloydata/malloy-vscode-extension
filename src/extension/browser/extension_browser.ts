@@ -28,16 +28,17 @@ import {
   LanguageClientOptions,
 } from "vscode-languageclient/browser";
 
-// TODO(web) import { WorkerConnection } from "../../worker/worker_connection";
+import { WorkerConnection } from "../../worker/browser/worker_connection";
 import { setupSubscriptions } from "../subscriptions";
-// TODO(web) import { MalloyConfig } from "../types";
+import { MalloyConfig } from "../types";
 import { connectionManager } from "./connection_manager";
 import { ConnectionsProvider } from "../tree_views/connections_view";
 import { editConnectionsCommand } from "./commands/edit_connections";
 import { VSCodeURLReader } from "./utils";
+import { setWorker } from "../../worker/worker";
 
 let client: LanguageClient;
-// TODO(web) let worker: WorkerConnection;
+let worker: WorkerConnection;
 
 export let extensionModeProduction: boolean;
 
@@ -65,17 +66,16 @@ export function activate(context: vscode.ExtensionContext): void {
     )
   );
   setupLanguageServer(context);
-  // setupWorker(context);
+  setupWorker(context);
 }
 
 export async function deactivate(): Promise<void> | undefined {
   if (client) {
     await client.stop();
   }
-  // TODO(web)
-  // if (worker) {
-  //   worker.send({ type: "exit" });
-  // }
+  if (worker) {
+    worker.send({ type: "exit" });
+  }
 }
 
 function setupLanguageServer(context: vscode.ExtensionContext): void {
@@ -96,19 +96,20 @@ function setupLanguageServer(context: vscode.ExtensionContext): void {
 }
 
 function sendWorkerConfig() {
-  // TODO(web)
-  // worker.send({
-  //   type: "config",
-  //   config: vscode.workspace.getConfiguration(
-  //     "malloy"
-  //   ) as unknown as MalloyConfig,
-  // });
+  const rawConfig = vscode.workspace.getConfiguration("malloy");
+  // Strip out functions
+  const config: MalloyConfig = JSON.parse(JSON.stringify(rawConfig));
+  worker.send({
+    type: "config",
+    config,
+  });
 }
 
-// function setupWorker(context: vscode.ExtensionContext): void {
-//   worker = new WorkerConnection(context);
-//   sendWorkerConfig();
-// }
+function setupWorker(context: vscode.ExtensionContext): void {
+  worker = new WorkerConnection(context);
+  setWorker(worker);
+  sendWorkerConfig();
+}
 
 function createWorkerLanguageClient(
   context: vscode.ExtensionContext,

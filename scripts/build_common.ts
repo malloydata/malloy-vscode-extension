@@ -232,7 +232,7 @@ export async function doBuild(
     entryPoints: [
       "./src/extension/node/extension_node.ts",
       "./src/server/node/server_node.ts",
-      "./src/worker/worker_node.ts",
+      "./src/worker/node/worker_node.ts",
     ],
     entryNames: "[name]",
     bundle: true,
@@ -288,7 +288,7 @@ export async function doBuild(
     entryPoints: [
       "./src/extension/browser/extension_browser.ts",
       "./src/server/browser/server_browser.ts",
-      "./src/worker/worker_browser.ts",
+      "./src/worker/browser/worker_browser.ts",
     ],
     external: ["vscode"],
     entryNames: "[name]",
@@ -307,7 +307,7 @@ export async function doBuild(
     tsconfig: "./tsconfig.browser.json",
     plugins: extensionPlugins,
     banner: {
-      js: "globalThis.require = globalThis.require || null;",
+      js: "globalThis.require = globalThis.require || null;\nglobalThis.module = globalThis.module || {};",
     },
   });
 

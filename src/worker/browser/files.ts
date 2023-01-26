@@ -22,7 +22,7 @@
  */
 
 import { URLReader } from "@malloydata/malloy";
-import { Message } from "./types";
+import { Message } from "../types";
 
 let idx = 1;
 
@@ -41,18 +41,19 @@ export async function fetchFile(file: string): Promise<string> {
     // For now just be relentlessly optimistic because there's
     // a tight coupling with the worker controller.
     const id = `${file}-${idx++}`;
-    const callback = (message: Message) => {
+    const callback = (event: MessageEvent) => {
+      const message: Message = event.data;
       if (message.type === "read" && message.id === id) {
         if (message.data != null) {
           resolve(message.data);
         } else if (message.error != null) {
           reject(new Error(message.error));
         }
-        process.off("message", callback);
+        self.removeEventListener("message", callback);
       }
     };
-    process.on("message", callback);
-    process.send?.({
+    self.addEventListener("message", callback);
+    self.postMessage({
       type: "read",
       file,
       id,
@@ -62,7 +63,6 @@ export async function fetchFile(file: string): Promise<string> {
 
 export class WorkerURLReader implements URLReader {
   async readURL(url: URL): Promise<string> {
-    // TODO(web) fix possibly encoded pathname
     return fetchFile(url.pathname);
   }
 }

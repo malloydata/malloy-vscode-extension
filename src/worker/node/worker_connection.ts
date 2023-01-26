@@ -24,8 +24,8 @@
 /* eslint-disable no-console */
 import * as child_process from "child_process";
 import * as vscode from "vscode";
-import { fetchFile } from "../extension/node/utils";
-import { Message, WorkerMessage, WorkerReadMessage } from "./types";
+import { fetchFile } from "../../extension/node/utils";
+import { Message, WorkerMessage, WorkerReadMessage } from "../types";
 const workerLog = vscode.window.createOutputChannel("Malloy Worker");
 const debugWorker = process.env.MALLOY_DEBUG_WORKER === "true";
 

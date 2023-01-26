@@ -21,16 +21,19 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { log } from "./logger";
-import { cancelQuery, runQuery } from "./run_query";
-// TODO(web) import { downloadQuery } from "./download_query";
-import { Message } from "./types";
-import { refreshConfig } from "./refresh_config";
-import { ConnectionManager } from "../common/connection_manager";
+import { URLReader } from "@malloydata/malloy";
+import { log } from "../logger";
+import { cancelQuery, runQuery } from "../run_query";
+import { downloadQuery } from "../download_query";
+import { Message, MessageHandler, WorkerMessage } from "../types";
+import { refreshConfig } from "../refresh_config";
+import { ConnectionManager } from "../../common/connection_manager";
+import { WorkerURLReader } from "./files";
 
-export class MessageHandler {
+export class NodeMessageHandler implements MessageHandler {
   constructor(connectionManager: ConnectionManager) {
     log("Worker started");
+    const reader = new WorkerURLReader();
 
     process.send?.({ type: "started" });
 
@@ -46,15 +49,14 @@ export class MessageHandler {
         case "config":
           refreshConfig(connectionManager, message);
           break;
-        // TODO(web)
-        // case "download":
-        //   downloadQuery(connectionManager, message);
-        //   break;
+        case "download":
+          downloadQuery(connectionManager, message);
+          break;
         case "exit":
           clearInterval(heartBeat);
           break;
         case "run":
-          runQuery(connectionManager, message);
+          runQuery(this, reader, connectionManager, message);
           break;
       }
     });
@@ -66,5 +68,9 @@ export class MessageHandler {
     process.on("SIGHUP", () => {
       clearInterval(heartBeat);
     });
+  }
+
+  send(message: WorkerMessage) {
+    process.send?.(message);
   }
 }

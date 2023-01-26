@@ -24,7 +24,7 @@
 import { URLReader } from "@malloydata/malloy";
 import { DataStyles } from "@malloydata/render";
 
-import { fetchFile } from "./files";
+import { fetchFile } from "./node/files";
 import { log } from "./logger";
 
 export function compileDataStyles(styles: string): DataStyles {

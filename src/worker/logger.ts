@@ -28,5 +28,9 @@ export const log = (message: string): void => {
     type: "log",
     message,
   };
-  process.send?.(msg);
+  if (typeof process !== "undefined") {
+    process.send?.(msg);
+  } else {
+    self.postMessage(msg);
+  }
 };
