@@ -54,6 +54,9 @@ yargs
       doBuild(development, target as Target | undefined)
         .then(() => {
           console.log("Extension built successfully");
+          if (!development) {
+            process.exit(0);
+          }
         })
         .catch((error) => {
           console.error("Extension built with errors");

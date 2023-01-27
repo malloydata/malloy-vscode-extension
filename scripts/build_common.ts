@@ -23,7 +23,7 @@
 
 /* eslint-disable no-console */
 import fs from "fs";
-import { context, Plugin } from "esbuild";
+import { build, BuildOptions, context, Plugin } from "esbuild";
 import { nativeNodeModulesPlugin } from "../third_party/github.com/evanw/esbuild/native-modules-plugin";
 import * as path from "path";
 import { execSync } from "child_process";
@@ -228,7 +228,7 @@ export async function doBuild(
   }
 
   // build the extension and server
-  const nodeContext = await context({
+  const nodeOptions: BuildOptions = {
     entryPoints: [
       "./src/extension/node/extension_node.ts",
       "./src/server/node/server_node.ts",
@@ -250,7 +250,7 @@ export async function doBuild(
     loader: { [".png"]: "file", [".svg"]: "file" },
     plugins: extensionPlugins,
     define: DEFINITIONS,
-  });
+  };
 
   const webviewPlugins = [
     svgrPlugin({
@@ -264,7 +264,7 @@ export async function doBuild(
   }
 
   // build the webviews
-  const webviewContext = await context({
+  const webviewOptions: BuildOptions = {
     entryPoints: [
       "./src/extension/webviews/query_page/entry.ts",
       "./src/extension/webviews/connections_page/entry.ts",
@@ -281,10 +281,10 @@ export async function doBuild(
       "process.env.NODE_DEBUG": "false", // TODO this is a hack because some package we include assumed process.env exists :(
     },
     plugins: webviewPlugins,
-  });
+  };
 
   // build the web extension
-  const browserContext = await context({
+  const browserOptions: BuildOptions = {
     entryPoints: [
       "./src/extension/browser/extension_browser.ts",
       "./src/server/browser/server_browser.ts",
@@ -309,11 +309,18 @@ export async function doBuild(
     banner: {
       js: "globalThis.require = globalThis.require || null;\nglobalThis.module = globalThis.module || {};",
     },
-  });
+  };
 
   if (development) {
+    const nodeContext = await context(nodeOptions);
+    const webviewContext = await context(webviewOptions);
+    const browserContext = await context(browserOptions);
     await nodeContext.watch();
     await webviewContext.watch();
     await browserContext.watch();
+  } else {
+    await build(nodeOptions);
+    await build(browserOptions);
+    await build(browserOptions);
   }
 }
