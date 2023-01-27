@@ -24,8 +24,8 @@
 import { URLReader } from "@malloydata/malloy";
 import { DataStyles } from "@malloydata/render";
 
-import { fetchFile } from "./node/files";
-import { log } from "./logger";
+// TODO(web) import { fetchFile } from "./node/files";
+// TODO(web) import { log } from "./logger";
 
 export function compileDataStyles(styles: string): DataStyles {
   try {
@@ -37,8 +37,8 @@ export function compileDataStyles(styles: string): DataStyles {
 
 // TODO replace this with actual JSON metadata import functionality, when it exists
 export async function dataStylesForFile(
-  uri: string,
-  text: string
+  _uri: string,
+  _text: string
 ): Promise<DataStyles> {
   // TODO(web)
   // const PREFIX = "--! styles ";

@@ -22,7 +22,7 @@
  */
 
 import * as vscode from "vscode";
-import { URI, Utils } from "vscode-uri";
+import { Utils } from "vscode-uri";
 
 import { getWebviewHtml } from "../../webviews";
 import {

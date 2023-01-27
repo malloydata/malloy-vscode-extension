@@ -21,7 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { URLReader } from "@malloydata/malloy";
 import { log } from "../logger";
 import { cancelQuery, runQuery } from "../run_query";
 import { downloadQuery } from "../download_query";
