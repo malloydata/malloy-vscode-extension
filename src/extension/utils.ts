@@ -21,39 +21,28 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { fileURLToPath } from "url";
 import { URLReader } from "@malloydata/malloy";
 import * as vscode from "vscode";
-import { v1 as uuid } from "uuid";
-import { promises as fs } from "fs";
 
 export async function fetchFile(path: string): Promise<string> {
   const openFiles = vscode.workspace.textDocuments;
   const openDocument = openFiles.find(
     (document) => document.uri.fsPath === path
   );
-  // Only get the text from VSCode's open files if the file is alredy open in VSCode,
+  // Only get the text from VSCode's open files if the file is already open in VSCode,
   // otherwise, just read the file from the file system
   if (openDocument !== undefined) {
     return openDocument.getText();
   } else {
-    return fs.readFile(path, "utf-8");
+    const contents = await vscode.workspace.fs.readFile(vscode.Uri.file(path));
+    return new TextDecoder("utf-8").decode(contents);
   }
 }
 
 export class VSCodeURLReader implements URLReader {
   async readURL(url: URL): Promise<string> {
-    switch (url.protocol) {
-      case "file:":
-        return fetchFile(fileURLToPath(url));
-      default:
-        throw new Error(
-          `Protocol ${url.protocol} not implemented in VSCodeURLReader.`
-        );
-    }
+    const uri = vscode.Uri.parse(url.toString());
+    const buffer = await vscode.workspace.fs.readFile(uri);
+    return new TextDecoder("utf-8").decode(buffer);
   }
-}
-
-export function getNewClientId(): string {
-  return uuid();
 }

@@ -36,8 +36,7 @@ import { WorkerConnection } from "../../worker/node/worker_connection";
 import { MalloyConfig } from "../types";
 import { connectionManager } from "./connection_manager";
 import { setupSubscriptions } from "../subscriptions";
-import { MALLOY_EXTENSION_STATE } from "../state";
-import { getNewClientId, VSCodeURLReader } from "./utils";
+import { VSCodeURLReader } from "../utils";
 import { getWorker, setWorker } from "../../worker/worker";
 
 let client: LanguageClient;
@@ -74,14 +73,6 @@ export function activate(context: vscode.ExtensionContext): void {
       }
     })
   );
-
-  let clientId: string | undefined =
-    context.globalState.get("malloy_client_id");
-  if (clientId === undefined) {
-    clientId = getNewClientId();
-    context.globalState.update("malloy_client_id", clientId);
-  }
-  MALLOY_EXTENSION_STATE.setClientId(clientId);
 
   setupLanguageServer(context);
   setupWorker(context);

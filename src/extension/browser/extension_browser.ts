@@ -34,7 +34,7 @@ import { MalloyConfig } from "../types";
 import { connectionManager } from "./connection_manager";
 import { ConnectionsProvider } from "../tree_views/connections_view";
 import { editConnectionsCommand } from "./commands/edit_connections";
-import { VSCodeURLReader } from "./utils";
+import { VSCodeURLReader } from "../utils";
 import { setWorker } from "../../worker/worker";
 
 let client: LanguageClient;

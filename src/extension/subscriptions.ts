@@ -37,8 +37,13 @@ import {
 import { trackModelLoad, trackModelSave } from "./telemetry";
 import { ConnectionManager } from "../common/connection_manager";
 import { URLReader } from "@malloydata/malloy";
+import { v4 as uuid } from "uuid";
 
 import { MALLOY_EXTENSION_STATE } from "./state";
+
+function getNewClientId(): string {
+  return uuid();
+}
 
 export const setupSubscriptions = (
   context: vscode.ExtensionContext,
@@ -124,4 +129,12 @@ export const setupSubscriptions = (
       }
     })
   );
+
+  let clientId: string | undefined =
+    context.globalState.get("malloy_client_id");
+  if (clientId === undefined) {
+    clientId = getNewClientId();
+    context.globalState.update("malloy_client_id", clientId);
+  }
+  MALLOY_EXTENSION_STATE.setClientId(clientId);
 };
