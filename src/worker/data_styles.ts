@@ -23,9 +23,7 @@
 
 import { URLReader } from "@malloydata/malloy";
 import { DataStyles } from "@malloydata/render";
-
-// TODO(web) import { fetchFile } from "./node/files";
-// TODO(web) import { log } from "./logger";
+import { log } from "./logger";
 
 export function compileDataStyles(styles: string): DataStyles {
   try {
@@ -37,38 +35,30 @@ export function compileDataStyles(styles: string): DataStyles {
 
 // TODO replace this with actual JSON metadata import functionality, when it exists
 export async function dataStylesForFile(
-  _uri: string,
-  _text: string
+  reader: URLReader,
+  url: URL,
+  text: string
 ): Promise<DataStyles> {
-  // TODO(web)
-  // const PREFIX = "--! styles ";
-  // let styles: DataStyles = {};
-  // for (const line of text.split("\n")) {
-  //   if (line.startsWith(PREFIX)) {
-  //     const fileName = line.trimEnd().substring(PREFIX.length);
-  //     const stylesPath = path.join(
-  //       uri.replace(
-  //         process.platform === "win32" ? /^file:\/\/\/?/ : /^file:\/\//,
-  //         ""
-  //       ),
-  //       "..",
-  //       fileName
-  //     );
-  //     // TODO instead of failing silently when the file does not exist, perform this after the WebView has been
-  //     //      created, so that the error can be shown there.
-  //     let stylesText;
-  //     try {
-  //       stylesText = await fetchFile(stylesPath);
-  //     } catch (error) {
-  //       log(`Error loading data style '${fileName}': ${error}`);
-  //       stylesText = "{}";
-  //     }
-  //     styles = { ...styles, ...compileDataStyles(stylesText) };
-  //   }
-  // }
+  const PREFIX = "--! styles ";
+  let styles: DataStyles = {};
+  for (const line of text.split("\n")) {
+    if (line.startsWith(PREFIX)) {
+      const fileName = line.trimEnd().substring(PREFIX.length);
+      const styleUrl = new URL(fileName, url);
+      // TODO instead of failing silently when the file does not exist, perform this after the WebView has been
+      //      created, so that the error can be shown there.
+      let stylesText: string;
+      try {
+        stylesText = await reader.readURL(styleUrl);
+      } catch (error) {
+        log(`Error loading data style '${fileName}': ${error}`);
+        stylesText = "{}";
+      }
+      styles = { ...styles, ...compileDataStyles(stylesText) };
+    }
+  }
 
-  // return styles;
-  return {};
+  return styles;
 }
 
 // TODO Come up with a better way to handle data styles. Perhaps this is
@@ -87,7 +77,7 @@ export class HackyDataStylesAccumulator implements URLReader {
     const contents = await this.uriReader.readURL(uri);
     this.dataStyles = {
       ...this.dataStyles,
-      ...(await dataStylesForFile(uri.toString(), contents)),
+      ...(await dataStylesForFile(this, uri, contents)),
     };
 
     return contents;

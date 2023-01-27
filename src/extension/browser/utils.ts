@@ -34,7 +34,8 @@ export async function fetchFile(path: string): Promise<string> {
   if (openDocument !== undefined) {
     return openDocument.getText();
   } else {
-    throw new Error(`Unable to fetch ${path}`);
+    const contents = await vscode.workspace.fs.readFile(vscode.Uri.file(path));
+    return new TextDecoder("utf-8").decode(contents);
   }
 }
 

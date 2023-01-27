@@ -34,11 +34,15 @@ export const createDuckDbWasmConnection = async (
   if (!isDuckDBAvailable) {
     throw new Error("DuckDB is not available.");
   }
+  workingDirectory = connectionConfig.workingDirectory || workingDirectory;
+  if (workingDirectory.startsWith("file:")) {
+    workingDirectory = workingDirectory.substring(7);
+  }
   try {
     const connection = new DuckDBWASMConnection(
       connectionConfig.name,
       ":memory:",
-      connectionConfig.workingDirectory || workingDirectory,
+      workingDirectory,
       () => ({ rowLimit })
     );
     return connection;

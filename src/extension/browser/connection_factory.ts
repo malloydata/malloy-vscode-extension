@@ -42,8 +42,8 @@ export class WebConnectionFactory implements ConnectionFactory {
   }
 
   getWorkingDirectory(url: URL): string {
-    console.info("Need to determine working directory for", url.toString());
-    return "/";
+    const baseUrl = new URL(".", url);
+    return baseUrl.toString();
   }
 
   addDefaults(configs: ConnectionConfig[]): ConnectionConfig[] {
