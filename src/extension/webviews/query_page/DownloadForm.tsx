@@ -28,12 +28,23 @@ import { Dropdown, TextField, VSCodeButton } from "../components";
 
 interface DownloadFormProps {
   onDownload: (options: QueryDownloadOptions) => Promise<void>;
+  canStream: boolean;
 }
 
-export const DownloadForm: React.FC<DownloadFormProps> = ({ onDownload }) => {
+export const DownloadForm: React.FC<DownloadFormProps> = ({
+  onDownload,
+  canStream,
+}) => {
   const [format, setFormat] = useState<"json" | "csv">("json");
   const [rowLimit, setRowLimit] = useState(1000);
   const [amount, setAmount] = useState<"current" | "all" | number>("current");
+  const options = canStream
+    ? [
+        { value: "current", label: "Current result set" },
+        { value: "all", label: "All results" },
+        { value: "rows", label: "Limited rows" },
+      ]
+    : [{ value: "current", label: "Current result set" }];
   return (
     <Form>
       <FormRow>
@@ -57,11 +68,7 @@ export const DownloadForm: React.FC<DownloadFormProps> = ({ onDownload }) => {
               setAmount(rowLimit);
             }
           }}
-          options={[
-            { value: "current", label: "Current result set" },
-            { value: "all", label: "All results" },
-            { value: "rows", label: "Limited rows" },
-          ]}
+          options={options}
           style={{ width: "100%" }}
         />
       </FormRow>

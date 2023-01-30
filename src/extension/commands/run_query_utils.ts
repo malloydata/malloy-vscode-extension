@@ -30,7 +30,7 @@ import turtleIcon from "../../media/turtle.svg";
 import { getWebviewHtml } from "../webviews";
 import { QueryMessageType, QueryRunStatus } from "../message_types";
 import { WebviewMessageManager } from "../webview_message_manager";
-// TODO(web) import { queryDownload } from "./query_download";
+import { queryDownload } from "./query_download";
 import { WorkerMessage } from "../../worker/types";
 import { getWorker } from "../../worker/worker";
 import { trackQueryRun } from "../telemetry";
@@ -245,8 +245,8 @@ https://github.com/malloydata/malloy/issues.`,
                     if (runBegin != null) {
                       logTime("Run", runBegin, runEnd);
                     }
-                    const { result } = message;
-                    const queryResult = Result.fromJSON(result);
+                    const { resultJson } = message;
+                    const queryResult = Result.fromJSON(resultJson);
                     current.result = queryResult;
                     progress.report({ increment: 100, message: "Rendering" });
                     const allEnd = Date.now();
@@ -254,14 +254,13 @@ https://github.com/malloydata/malloy/issues.`,
 
                     current.messages.onReceiveMessage((message) => {
                       if (message.type === QueryMessageType.StartDownload) {
-                        // TODO(web)
-                        // queryDownload(
-                        //   query,
-                        //   message.downloadOptions,
-                        //   queryResult,
-                        //   panelId,
-                        //   name
-                        // );
+                        queryDownload(
+                          query,
+                          message.downloadOptions,
+                          queryResult,
+                          panelId,
+                          name
+                        );
                       }
                     });
 

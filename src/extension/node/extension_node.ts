@@ -22,6 +22,7 @@
  */
 
 import * as vscode from "vscode";
+import * as os from "os";
 
 import {
   LanguageClient,
@@ -38,6 +39,7 @@ import { connectionManager } from "./connection_manager";
 import { setupSubscriptions } from "../subscriptions";
 import { VSCodeURLReader } from "../utils";
 import { getWorker, setWorker } from "../../worker/worker";
+import { MALLOY_EXTENSION_STATE } from "../state";
 
 let client: LanguageClient;
 
@@ -47,6 +49,8 @@ export function activate(context: vscode.ExtensionContext): void {
   const urlReader = new VSCodeURLReader();
   setupSubscriptions(context, urlReader, connectionManager);
   const connectionsTree = new ConnectionsProvider(context, connectionManager);
+
+  MALLOY_EXTENSION_STATE.setHomeUri(vscode.Uri.file(os.homedir()));
 
   // Show Licenses
   context.subscriptions.push(

@@ -55,7 +55,7 @@ export class NodeMessageHandler implements MessageHandler {
           clearInterval(heartBeat);
           break;
         case "run":
-          runQuery(this, reader, connectionManager, message);
+          runQuery(this, reader, connectionManager, false, message);
           break;
       }
     });

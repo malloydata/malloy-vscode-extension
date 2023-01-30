@@ -66,6 +66,7 @@ export const runQuery = async (
   messageHandler: MessageHandler,
   reader: URLReader,
   connectionManager: ConnectionManager,
+  isBrowser: boolean,
   { query, panelId }: MessageRun
 ): Promise<void> => {
   const files = new HackyDataStylesAccumulator(reader);
@@ -87,7 +88,7 @@ export const runQuery = async (
       panelId
     );
 
-    let styles: DataStyles = {};
+    let dataStyles: DataStyles = {};
     let sql;
     const runnable = createRunnable(query, runtime);
 
@@ -104,7 +105,7 @@ export const runQuery = async (
 
     try {
       sql = await runnable.getSQL();
-      styles = { ...styles, ...files.getHackyAccumulatedDataStyles() };
+      dataStyles = { ...dataStyles, ...files.getHackyAccumulatedDataStyles() };
 
       if (runningQueries[panelId].canceled) return;
       log(sql);
@@ -139,8 +140,9 @@ export const runQuery = async (
       {
         type: QueryMessageType.QueryStatus,
         status: QueryRunStatus.Done,
-        result: queryResult.toJSON(),
-        styles,
+        resultJson: queryResult.toJSON(),
+        dataStyles,
+        canDownloadStream: !isBrowser,
       },
       panelId
     );

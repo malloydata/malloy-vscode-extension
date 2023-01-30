@@ -13,10 +13,7 @@
       "skipFiles": ["${workspaceFolder}/node_modules/**/*.js"],
       "outFiles": ["${workspaceFolder}/dist/*.js"],
       "preLaunchTask": "build-extension-task",
-      "sourceMaps": true,
-      "env": {
-        "MALLOY_DEBUG_WORKER": "true"
-      }
+      "sourceMaps": true
     },
     {
       "name": "Run VSCode Extension (and Debug Webviews)",
@@ -44,10 +41,7 @@
       "skipFiles": ["${workspaceFolder}/node_modules/**/*.js"],
       "outFiles": ["${workspaceFolder}/dist/*.js"],
       "preLaunchTask": "build-extension-task",
-      "sourceMaps": true,
-      "env": {
-        "MALLOY_DEBUG_WORKER": "true"
-      }
+      "sourceMaps": true
     },
     {
       "type": "node",

@@ -59,7 +59,7 @@ export class BrowserMessageHandler implements MessageHandler {
           clearInterval(heartBeat);
           break;
         case "run":
-          runQuery(this, reader, connectionManager, message);
+          runQuery(this, reader, connectionManager, true, message);
           break;
       }
     });

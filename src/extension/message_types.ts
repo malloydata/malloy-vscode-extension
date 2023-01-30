@@ -62,8 +62,9 @@ interface QueryMessageStatusError {
 interface QueryMessageStatusDone {
   type: QueryMessageType.QueryStatus;
   status: QueryRunStatus.Done;
-  result: ResultJSON;
-  styles: DataStyles;
+  resultJson: ResultJSON;
+  dataStyles: DataStyles;
+  canDownloadStream: boolean;
 }
 
 type QueryMessageStatus =

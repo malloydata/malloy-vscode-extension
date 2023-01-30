@@ -26,7 +26,6 @@ import * as vscode from "vscode";
 import { fetchFile } from "../../extension/utils";
 import { Message, WorkerMessage, WorkerReadMessage } from "../types";
 const workerLog = vscode.window.createOutputChannel("Malloy Worker");
-// const debugWorker = process.env.MALLOY_DEBUG_WORKER === "true";
 
 // const DEFAULT_RESTART_SECONDS = 1;
 

@@ -39,6 +39,8 @@ class MalloyExtensionState {
   private activeWebviewPanelId: string | undefined;
   private clientId: string | undefined;
   private extensionUri: vscode.Uri | undefined;
+  private runStates: Map<string, RunState> = new Map();
+  private homeUri: vscode.Uri | undefined;
 
   setActiveWebviewPanelId(panelId: string) {
     this.activeWebviewPanelId = panelId;
@@ -52,8 +54,6 @@ class MalloyExtensionState {
     const id = this.activeWebviewPanelId;
     return id ? this.getRunState(id) : undefined;
   }
-
-  private runStates: Map<string, RunState> = new Map();
 
   setRunState(panelId: string, state: RunState | undefined) {
     if (state) {
@@ -87,6 +87,14 @@ class MalloyExtensionState {
 
   setExtensionUri(uri: vscode.Uri) {
     this.extensionUri = uri;
+  }
+
+  setHomeUri(uri: vscode.Uri) {
+    this.homeUri = uri;
+  }
+
+  getHomeUri(): vscode.Uri | undefined {
+    return this.homeUri;
   }
 }
 

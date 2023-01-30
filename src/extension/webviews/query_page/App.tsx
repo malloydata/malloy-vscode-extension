@@ -68,6 +68,8 @@ export const App: React.FC = () => {
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [observer, setObserver] = useState<MutationObserver>();
+  const [canDownload, setCanDownload] = useState(false);
+  const [canDownloadStream, setCanDownloadStream] = useState(false);
   const tooltipId = useRef(0);
   const { setTooltipRef, setTriggerRef, getTooltipProps } = usePopperTooltip({
     visible: tooltipVisible,
@@ -115,17 +117,21 @@ export const App: React.FC = () => {
             setError(undefined);
           }
           if (message.status === QueryRunStatus.Done) {
+            const { resultJson, dataStyles, canDownloadStream } = message;
             setWarning(undefined);
+            // TODO(web) Figure out some way to download current result set
+            setCanDownload(canDownloadStream);
+            setCanDownloadStream(canDownloadStream);
             setStatus(Status.Rendering);
             setTimeout(async () => {
-              const result = Result.fromJSON(message.result);
+              const result = Result.fromJSON(resultJson);
               const data = result.data;
               setJSON(JSON.stringify(data.toObject(), null, 2));
               setSQL(
                 Prism.highlight(result.sql, Prism.languages["sql"], "sql")
               );
               const rendered = await new HTMLView(document).render(data, {
-                dataStyles: message.styles,
+                dataStyles,
                 isDrillingEnabled: false,
                 onDrill: (drillQuery, target) => {
                   navigator.clipboard.writeText(drillQuery);
@@ -210,14 +216,17 @@ export const App: React.FC = () => {
           <ResultLabel>QUERY RESULTS</ResultLabel>
           <ResultControlsItems>
             <ResultKindToggle kind={resultKind} setKind={setResultKind} />
-            <DownloadButton
-              onDownload={async (downloadOptions) => {
-                vscode.postMessage({
-                  type: QueryMessageType.StartDownload,
-                  downloadOptions,
-                });
-              }}
-            />
+            {canDownload && (
+              <DownloadButton
+                canStream={canDownloadStream}
+                onDownload={async (downloadOptions) => {
+                  vscode.postMessage({
+                    type: QueryMessageType.StartDownload,
+                    downloadOptions,
+                  });
+                }}
+              />
+            )}
           </ResultControlsItems>
         </ResultControlsBar>
       )}

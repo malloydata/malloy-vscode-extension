@@ -23,6 +23,7 @@
 
 import { URLReader } from "@malloydata/malloy";
 import { Message } from "../types";
+import { fileURLToPath } from "url";
 
 let idx = 1;
 
@@ -62,7 +63,6 @@ export async function fetchFile(file: string): Promise<string> {
 
 export class WorkerURLReader implements URLReader {
   async readURL(url: URL): Promise<string> {
-    // TODO(web) fix possibly encoded pathname
-    return fetchFile(url.pathname);
+    return fetchFile(fileURLToPath(url));
   }
 }
