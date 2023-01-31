@@ -38,20 +38,26 @@ yargs
         default: false,
         describe: "Build in development mode",
       },
+      metadata: {
+        alias: "m",
+        type: "boolean",
+        default: false,
+        describe: "Output build metadata",
+      },
       target: {
         type: "string",
         default: undefined,
         describe: "Target platform",
       },
     },
-    ({ development, target }) => {
+    ({ development, target, metadata }) => {
       console.log(
         `Building extension to ${outDir} in ${
           development ? "development" : "production"
         } mode`
       );
 
-      doBuild(development, target as Target | undefined)
+      doBuild(development, target as Target | undefined, metadata)
         .then(() => {
           console.log("Extension built successfully");
           if (!development) {

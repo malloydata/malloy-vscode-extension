@@ -166,7 +166,8 @@ for (const variable of ENV_PASSTHROUGH) {
 // building without a target does a default build using whatever keytar native lib is in node_modules
 export async function doBuild(
   development: boolean,
-  target?: Target
+  target?: Target,
+  metadata = false
 ): Promise<void> {
   development = development || process.env.NODE_ENV == "development";
 
@@ -213,32 +214,41 @@ export async function doBuild(
   }
   const duckDBPlugin = makeDuckdbNoNodePreGypPlugin(target);
   const extensionPlugins = [duckDBPlugin];
-  // if we're building with a target, replace keytar imports using plugin that imports
-  // binary builds of keytar. if we're building for dev, use a .node plugin to
-  // ensure ketyar's node_modules .node file is in the build
-  if (target) {
-    extensionPlugins.push(keytarReplacerPlugin);
-  } else {
-    extensionPlugins.push(nativeNodeModulesPlugin);
-  }
 
   if (development) {
     extensionPlugins.push(noNodeModulesSourceMaps);
     console.log("Entering watch mode");
   }
 
+  const nodeExtensionPlugins = extensionPlugins;
+  // if we're building with a target, replace keytar imports using plugin that imports
+  // binary builds of keytar. if we're building for dev, use a .node plugin to
+  // ensure ketyar's node_modules .node file is in the build
+  if (target) {
+    nodeExtensionPlugins.push(keytarReplacerPlugin);
+  } else {
+    nodeExtensionPlugins.push(nativeNodeModulesPlugin);
+  }
+
+  const baseOptions: BuildOptions = {
+    bundle: true,
+    minify: !development,
+    sourcemap: development ? "inline" : false,
+    outdir: outDir,
+    loader: { [".svg"]: "file" },
+    metafile: true,
+    logLevel: "info",
+  };
+
   // build the extension and server
   const nodeOptions: BuildOptions = {
+    ...baseOptions,
     entryPoints: [
       "./src/extension/node/extension_node.ts",
       "./src/server/node/server_node.ts",
       "./src/worker/node/worker_node.ts",
     ],
     entryNames: "[name]",
-    bundle: true,
-    minify: !development,
-    sourcemap: development,
-    outdir: outDir,
     platform: "node",
     external: [
       "vscode",
@@ -248,7 +258,7 @@ export async function doBuild(
       "@duckdb/duckdb-wasm",
     ],
     loader: { [".png"]: "file", [".svg"]: "file" },
-    plugins: extensionPlugins,
+    plugins: nodeExtensionPlugins,
     define: DEFINITIONS,
   };
 
@@ -265,18 +275,14 @@ export async function doBuild(
 
   // build the webviews
   const webviewOptions: BuildOptions = {
+    ...baseOptions,
     entryPoints: [
       "./src/extension/webviews/query_page/entry.ts",
       "./src/extension/webviews/connections_page/entry.ts",
     ],
-    external: ["vscode"],
     entryNames: "[dir]",
-    bundle: true,
-    minify: !development,
-    sourcemap: development ? "inline" : false,
-    outdir: outDir,
     platform: "browser",
-    loader: { [".svg"]: "file" },
+    external: ["vscode"],
     define: {
       "process.env.NODE_DEBUG": "false", // TODO this is a hack because some package we include assumed process.env exists :(
     },
@@ -285,24 +291,19 @@ export async function doBuild(
 
   // build the web extension
   const browserOptions: BuildOptions = {
+    ...baseOptions,
     entryPoints: [
       "./src/extension/browser/extension_browser.ts",
       "./src/server/browser/server_browser.ts",
       "./src/worker/browser/worker_browser.ts",
     ],
-    external: ["vscode"],
     entryNames: "[name]",
-    bundle: true,
     format: "cjs",
-    minify: !development,
-    sourcemap: development ? "inline" : false,
-    outdir: outDir,
     platform: "browser",
-    loader: { [".svg"]: "file" },
+    external: ["vscode"],
     define: {
       "process.env.NODE_DEBUG": "false", // TODO this is a hack because some package we include assumed process.env exists :(
-      "process.env.GA_MEASUREMENT_ID": '""',
-      "process.env.GA_API_SECRET": '""',
+      ...DEFINITIONS,
     },
     tsconfig: "./tsconfig.browser.json",
     plugins: extensionPlugins,
@@ -312,6 +313,7 @@ export async function doBuild(
   };
 
   if (development) {
+    console.log("[watch] build started");
     const nodeContext = await context(nodeOptions);
     const webviewContext = await context(webviewOptions);
     const browserContext = await context(browserOptions);
@@ -319,8 +321,20 @@ export async function doBuild(
     await webviewContext.watch();
     await browserContext.watch();
   } else {
-    await build(nodeOptions);
-    await build(browserOptions);
-    await build(browserOptions);
+    const nodeResult = await build(nodeOptions);
+    const webviewResult = await build(webviewOptions);
+    const browserResult = await build(browserOptions);
+
+    if (metadata) {
+      fs.writeFileSync("meta-node.json", JSON.stringify(nodeResult.metafile));
+      fs.writeFileSync(
+        "meta-webview.json",
+        JSON.stringify(webviewResult.metafile)
+      );
+      fs.writeFileSync(
+        "meta-browser.json",
+        JSON.stringify(browserResult.metafile)
+      );
+    }
   }
 }

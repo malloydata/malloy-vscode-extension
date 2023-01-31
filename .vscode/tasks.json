@@ -13,7 +13,7 @@
         "severity": "error",
         "pattern": [
           {
-            "regexp": "\\[tsl\\] (ERROR|WARNING) in (.*)?\\((\\d+),(\\d+)\\)",
+            "regexp": "(ERROR|WARNING).*\n\n[ ]+(.*):(\\d+):(\\d+):",
             "severity": 1,
             "file": 2,
             "line": 3,
@@ -30,10 +30,10 @@
         "background": {
           "activeOnStart": true,
           "beginsPattern": {
-            "regexp": "Building extension"
+            "regexp": "build started"
           },
           "endsPattern": {
-            "regexp": "Extension built (.*?successfully|with .*?errors)"
+            "regexp": "build finished"
           }
         }
       },
