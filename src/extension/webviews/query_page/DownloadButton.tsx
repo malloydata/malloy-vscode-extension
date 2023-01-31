@@ -30,10 +30,12 @@ import DownloadIcon from "../assets/download_hover.svg";
 
 interface DownloadButtonProps {
   onDownload: (options: QueryDownloadOptions) => Promise<void>;
+  canStream: boolean;
 }
 
 export const DownloadButton: React.FC<DownloadButtonProps> = ({
   onDownload,
+  canStream,
 }) => {
   const [open, setOpen] = useState(false);
 
@@ -53,6 +55,7 @@ export const DownloadButton: React.FC<DownloadButtonProps> = ({
       >
         <PopoverContent>
           <DownloadForm
+            canStream={canStream}
             onDownload={async (options) => {
               onDownload(options);
               setOpen(false);

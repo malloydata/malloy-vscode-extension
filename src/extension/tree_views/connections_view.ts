@@ -22,15 +22,23 @@
  */
 
 import * as vscode from "vscode";
-import { ConnectionBackend } from "../../common";
-import { getDefaultIndex } from "../../common/connection_manager_types";
+import { Utils } from "vscode-uri";
+
+import {
+  ConnectionBackend,
+  getDefaultIndex,
+} from "../../common/connection_manager_types";
 import connectionIcon from "../../media/database.svg";
-import * as path from "path";
 import { VSCodeConnectionManager } from "../connection_manager";
 
 export class ConnectionsProvider
   implements vscode.TreeDataProvider<ConnectionItem>
 {
+  constructor(
+    private context: vscode.ExtensionContext,
+    private connectionManager: VSCodeConnectionManager
+  ) {}
+
   getTreeItem(element: ConnectionItem): vscode.TreeItem {
     return element;
   }
@@ -48,11 +56,12 @@ export class ConnectionsProvider
 
   async getChildren(element?: ConnectionItem): Promise<ConnectionItem[]> {
     if (element === undefined) {
-      const config = VSCodeConnectionManager.getConnectionsConfig();
+      const config = this.connectionManager.getConnectionConfigs();
       const defaultIndex = getDefaultIndex(config);
       return config.map(
         (config, index) =>
           new ConnectionItem(
+            this.context,
             config.name,
             config.backend,
             index === defaultIndex
@@ -66,6 +75,7 @@ export class ConnectionsProvider
 
 class ConnectionItem extends vscode.TreeItem {
   constructor(
+    private context: vscode.ExtensionContext,
     public name: string,
     public backend: string,
     public isDefault: boolean
@@ -79,9 +89,10 @@ class ConnectionItem extends vscode.TreeItem {
         : "DuckDB";
     this.description = `(${backendName}${isDefault ? ", default" : ""})`;
 
+    const uri = this.context.extensionUri;
     this.iconPath = {
-      light: path.join(__filename, "..", connectionIcon),
-      dark: path.join(__filename, "..", connectionIcon),
+      light: Utils.joinPath(uri, "dist", connectionIcon),
+      dark: Utils.joinPath(uri, "dist", connectionIcon),
     };
   }
 }

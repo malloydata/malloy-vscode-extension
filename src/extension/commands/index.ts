@@ -25,7 +25,5 @@ export { runQueryFileCommand } from "./run_query_file";
 export { runQueryCommand } from "./run_query";
 export { copyFieldPathCommand } from "./copy_field_path";
 export { runNamedQuery } from "./run_named_query";
-export { showLicensesCommand } from "./show_licenses";
-export { editConnectionsCommand } from "./edit_connections";
 export { runNamedSQLBlock } from "./run_named_sql_block";
 export { runUnnamedSQLBlock } from "./run_unnamed_sql_block";

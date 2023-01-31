@@ -4,12 +4,11 @@
     "jsx": "react",
     "moduleResolution": "node",
     "noEmit": true,
-    "outDir": "out",
     "resolveJsonModule": true,
     "rootDir": "src",
     "skipLibCheck": true,
-    "target": "es2019",
+    "target": "es2020"
   },
   "include": ["./src", "src/malloy.tmGrammar.json"],
-  "exclude": ["node_modules", ".vscode-test", "out"],
+  "exclude": ["node_modules", ".vscode-test", ".vscode-test-web", "dist"]
 }

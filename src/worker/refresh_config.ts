@@ -22,17 +22,20 @@
  */
 
 import { MessageConfig } from "./types";
-import { CONNECTION_MANAGER } from "../server/connections";
 import { log } from "./logger";
+import { ConnectionManager } from "../common/connection_manager";
 
 const DEFAULT_ROW_LIMIT = 50;
 
-export const refreshConfig = ({ config }: MessageConfig): void => {
+export const refreshConfig = (
+  connectionManager: ConnectionManager,
+  { config }: MessageConfig
+): void => {
   const { rowLimit: rowLimitRaw, connections } = config;
 
   log("Config updated");
 
-  CONNECTION_MANAGER.setConnectionsConfig(connections);
+  connectionManager.setConnectionsConfig(connections);
   const rowLimit = rowLimitRaw || DEFAULT_ROW_LIMIT;
-  CONNECTION_MANAGER.setCurrentRowLimit(+rowLimit);
+  connectionManager.setCurrentRowLimit(+rowLimit);
 };

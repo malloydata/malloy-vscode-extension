@@ -7,36 +7,7 @@
       "type": "npm",
       "script": "build-extension-dev",
       "label": "build-extension-task",
-      "problemMatcher": {
-        "owner": "typescript",
-        "source": "ts",
-        "severity": "error",
-        "pattern": [
-          {
-            "regexp": "\\[tsl\\] (ERROR|WARNING) in (.*)?\\((\\d+),(\\d+)\\)",
-            "severity": 1,
-            "file": 2,
-            "line": 3,
-            "column": 4
-          },
-          {
-            "regexp": "\\s*TS(\\d+):\\s*(.*)$",
-            "code": 1,
-            "message": 2
-          }
-        ],
-        "applyTo": "closedDocuments",
-        "fileLocation": "absolute",
-        "background": {
-          "activeOnStart": true,
-          "beginsPattern": {
-            "regexp": "Building extension"
-          },
-          "endsPattern": {
-            "regexp": "Extension built (.*?successfully|with .*?errors)"
-          }
-        }
-      },
+      "problemMatcher": "$esbuild-watch",
       "isBackground": true,
       "presentation": {
         "reveal": "silent",

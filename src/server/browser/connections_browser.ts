@@ -21,6 +21,10 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-export { ConnectionManager } from "./connection_manager";
-export { ConnectionBackend } from "./connection_manager_types";
-export type { ConnectionConfig } from "./connection_manager_types";
+import { ConnectionManager } from "../../common/connection_manager";
+import { WebConnectionFactory } from "../../extension/browser/connection_factory";
+
+export const connectionManager = new ConnectionManager(
+  new WebConnectionFactory(),
+  []
+);

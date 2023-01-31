@@ -23,7 +23,7 @@
 
 /* eslint-disable no-console */
 import fs from "fs";
-import { build, Plugin } from "esbuild";
+import { build, BuildOptions, context, Plugin } from "esbuild";
 import { nativeNodeModulesPlugin } from "../third_party/github.com/evanw/esbuild/native-modules-plugin";
 import * as path from "path";
 import { execSync } from "child_process";
@@ -159,14 +159,15 @@ const ENV_PASSTHROUGH = ["GA_API_SECRET", "GA_MEASUREMENT_ID"];
 
 for (const variable of ENV_PASSTHROUGH) {
   DEFINITIONS[`process.env.${variable}`] = JSON.stringify(
-    process.env[variable]
+    process.env[variable] || ""
   );
 }
 
 // building without a target does a default build using whatever keytar native lib is in node_modules
 export async function doBuild(
   development: boolean,
-  target?: Target
+  target?: Target,
+  metadata = false
 ): Promise<void> {
   development = development || process.env.NODE_ENV == "development";
 
@@ -213,51 +214,53 @@ export async function doBuild(
   }
   const duckDBPlugin = makeDuckdbNoNodePreGypPlugin(target);
   const extensionPlugins = [duckDBPlugin];
-  // if we're building with a target, replace keytar imports using plugin that imports
-  // binary builds of keytar. if we're building for dev, use a .node plugin to
-  // ensure ketyar's node_modules .node file is in the build
-  if (target) {
-    extensionPlugins.push(keytarReplacerPlugin);
-  } else {
-    extensionPlugins.push(nativeNodeModulesPlugin);
-  }
 
   if (development) {
     extensionPlugins.push(noNodeModulesSourceMaps);
     console.log("Entering watch mode");
   }
 
-  // build the extension and server
-  await build({
-    entryPoints: [
-      "./src/extension/extension.ts",
-      "./src/server/server.ts",
-      "./src/worker/worker.ts",
-    ],
-    entryNames: "[name]",
+  const nodeExtensionPlugins = extensionPlugins;
+  // if we're building with a target, replace keytar imports using plugin that imports
+  // binary builds of keytar. if we're building for dev, use a .node plugin to
+  // ensure ketyar's node_modules .node file is in the build
+  if (target) {
+    nodeExtensionPlugins.push(keytarReplacerPlugin);
+  } else {
+    nodeExtensionPlugins.push(nativeNodeModulesPlugin);
+  }
+
+  const baseOptions: BuildOptions = {
     bundle: true,
     minify: !development,
-    sourcemap: development,
+    sourcemap: development ? "inline" : false,
     outdir: outDir,
+    loader: { [".svg"]: "file" },
+    metafile: true,
+    logLevel: "info",
+  };
+
+  // build the extension and server
+  const nodeOptions: BuildOptions = {
+    ...baseOptions,
+    entryPoints: [
+      "./src/extension/node/extension_node.ts",
+      "./src/server/node/server_node.ts",
+      "./src/worker/node/worker_node.ts",
+    ],
+    entryNames: "[name]",
     platform: "node",
     external: [
       "vscode",
       "pg-native",
       "./keytar-native.node",
       "./duckdb-native.node",
+      "@duckdb/duckdb-wasm",
     ],
     loader: { [".png"]: "file", [".svg"]: "file" },
-    plugins: extensionPlugins,
-    watch: development
-      ? {
-          onRebuild(error, result) {
-            if (error) console.error("Extension server build failed:", error);
-            else console.log("Extension server build succeeded:", result);
-          },
-        }
-      : false,
+    plugins: nodeExtensionPlugins,
     define: DEFINITIONS,
-  });
+  };
 
   const webviewPlugins = [
     svgrPlugin({
@@ -271,29 +274,67 @@ export async function doBuild(
   }
 
   // build the webviews
-  await build({
+  const webviewOptions: BuildOptions = {
+    ...baseOptions,
     entryPoints: [
       "./src/extension/webviews/query_page/entry.ts",
       "./src/extension/webviews/connections_page/entry.ts",
     ],
     entryNames: "[dir]",
-    bundle: true,
-    minify: !development,
-    sourcemap: development ? "inline" : false,
-    outdir: outDir,
     platform: "browser",
-    loader: { [".svg"]: "file" },
+    external: ["vscode"],
     define: {
       "process.env.NODE_DEBUG": "false", // TODO this is a hack because some package we include assumed process.env exists :(
     },
     plugins: webviewPlugins,
-    watch: development
-      ? {
-          onRebuild(error, result) {
-            if (error) console.error("Webview build failed:", error);
-            else console.log("Webview build succeeded:", result);
-          },
-        }
-      : false,
-  });
+  };
+
+  // build the web extension
+  const browserOptions: BuildOptions = {
+    ...baseOptions,
+    entryPoints: [
+      "./src/extension/browser/extension_browser.ts",
+      "./src/server/browser/server_browser.ts",
+      "./src/worker/browser/worker_browser.ts",
+    ],
+    entryNames: "[name]",
+    format: "cjs",
+    platform: "browser",
+    external: ["vscode"],
+    define: {
+      "process.env.NODE_DEBUG": "false", // TODO this is a hack because some package we include assumed process.env exists :(
+      ...DEFINITIONS,
+    },
+    tsconfig: "./tsconfig.browser.json",
+    plugins: extensionPlugins,
+    banner: {
+      js: "globalThis.require = globalThis.require || null;\nglobalThis.module = globalThis.module || {};",
+    },
+  };
+
+  if (development) {
+    console.log("[watch] build started");
+    const nodeContext = await context(nodeOptions);
+    const webviewContext = await context(webviewOptions);
+    const browserContext = await context(browserOptions);
+    await nodeContext.watch();
+    await webviewContext.watch();
+    await browserContext.watch();
+  } else {
+    const nodeResult = await build(nodeOptions);
+    const webviewResult = await build(webviewOptions);
+    const browserResult = await build(browserOptions);
+
+    if (metadata) {
+      fs.writeFileSync("meta-node.json", JSON.stringify(nodeResult.metafile));
+      fs.writeFileSync(
+        "meta-webview.json",
+        JSON.stringify(webviewResult.metafile)
+      );
+      fs.writeFileSync(
+        "meta-browser.json",
+        JSON.stringify(browserResult.metafile)
+      );
+    }
+  }
 }

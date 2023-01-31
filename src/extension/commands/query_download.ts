@@ -21,20 +21,41 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { CSVWriter, JSONWriter, Result } from "@malloydata/malloy";
+import { CSVWriter, JSONWriter, Result, WriteStream } from "@malloydata/malloy";
 import { QueryDownloadOptions } from "../message_types";
-import { getWorker } from "../extension";
+import { getWorker } from "../../worker/worker";
 
 import * as vscode from "vscode";
-import * as os from "os";
-import * as fs from "fs";
-import * as path from "path";
+import { Utils } from "vscode-uri";
 import { QuerySpec } from "./run_query_utils";
 import {
   MessageDownload,
   WorkerMessage,
   WorkerQuerySpec,
 } from "../../worker/types";
+import { MALLOY_EXTENSION_STATE } from "../state";
+
+/**
+ * VSCode doesn't support streaming writes, so fake it.
+ */
+
+class VSCodeWriteStream implements WriteStream {
+  contents = "";
+
+  constructor(private uri: vscode.Uri) {}
+
+  async close() {
+    vscode.workspace.fs.writeFile(
+      this.uri,
+      new TextEncoder().encode(this.contents)
+    );
+  }
+
+  async write(chunk?: string) {
+    this.contents = this.contents += chunk;
+    return Promise.resolve(undefined);
+  }
+}
 
 const sendDownloadMessage = (
   query: WorkerQuerySpec,
@@ -62,28 +83,37 @@ export async function queryDownload(
   panelId: string,
   name: string
 ): Promise<void> {
-  const rawDownloadPath = vscode.workspace
+  const configDownloadPath = vscode.workspace
     .getConfiguration("malloy")
     .get("downloadsPath");
-  const relativeDownloadPath =
-    rawDownloadPath === undefined || typeof rawDownloadPath !== "string"
-      ? "~/Downloads"
-      : rawDownloadPath;
-  const downloadPath = relativeDownloadPath.startsWith(".")
-    ? path.resolve(relativeDownloadPath)
-    : relativeDownloadPath.startsWith("~")
-    ? relativeDownloadPath.replace(/^~/, os.homedir())
-    : relativeDownloadPath;
-  if (!fs.existsSync(downloadPath)) {
+  let downloadPath =
+    configDownloadPath && typeof configDownloadPath === "string"
+      ? configDownloadPath
+      : "~/Downloads";
+
+  const homeUri = MALLOY_EXTENSION_STATE.getHomeUri();
+  if (homeUri) {
+    downloadPath = downloadPath.replace(/^~/, homeUri.fsPath);
+  }
+  const downloadPathUri = vscode.Uri.file(downloadPath);
+  try {
+    const stat = await vscode.workspace.fs.stat(downloadPathUri);
+    if (!(stat.type & vscode.FileType.Directory)) {
+      vscode.window.showErrorMessage(
+        `Download path ${downloadPath} is not a directory.`
+      );
+      return;
+    }
+  } catch (error) {
+    console.error(error);
     vscode.window.showErrorMessage(
-      `Download path ${downloadPath} does not exist.`
+      `Download path ${downloadPath} is not accessible.`
     );
     return;
   }
 
   const fileExtension = downloadOptions.format === "json" ? "json" : "csv";
-  const rawFilePath = path.join(downloadPath, `${name}.${fileExtension}`);
-  const filePath = dedupFileName(rawFilePath);
+  const fileUri = await dedupeFileName(downloadPathUri, name, fileExtension);
   vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
@@ -93,7 +123,7 @@ export async function queryDownload(
     async () => {
       try {
         if (downloadOptions.amount === "current") {
-          const writeStream = fs.createWriteStream(filePath);
+          const writeStream = new VSCodeWriteStream(fileUri);
           const writer =
             downloadOptions.format === "json"
               ? new JSONWriter(writeStream)
@@ -114,7 +144,7 @@ export async function queryDownload(
             },
             panelId,
             name,
-            filePath,
+            fileUri.fsPath,
             downloadOptions
           );
           const listener = (msg: WorkerMessage) => {
@@ -159,16 +189,21 @@ https://github.com/malloydata/malloy/issues.`
   );
 }
 
-function dedupFileName(absolutePath: string) {
+async function dedupeFileName(uri: vscode.Uri, name: string, ext: string) {
   let index = 0;
-  let attempt = absolutePath;
-  const parsed = path.parse(absolutePath);
-  const extension = parsed.ext;
-  const fileName = parsed.name;
-  const directory = parsed.dir;
-  while (fs.existsSync(attempt)) {
-    index++;
-    attempt = path.join(directory, `${fileName}_${index}${extension}`);
+  let attempt = Utils.joinPath(uri, `${name}.${ext}`);
+  try {
+    let stat = await vscode.workspace.fs.stat(attempt);
+    while (stat) {
+      attempt = Utils.joinPath(uri, `${name} ${++index}.${ext}`);
+      try {
+        stat = await vscode.workspace.fs.stat(attempt);
+      } catch {
+        stat = null;
+      }
+    }
+  } catch {
+    // Hopefully nothing bad...
   }
   return attempt;
 }

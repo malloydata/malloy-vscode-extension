@@ -21,28 +21,26 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { ConnectionConfig, ConnectionManager } from "../common";
 import * as vscode from "vscode";
+import { ConnectionManager } from "../common/connection_manager";
+import { ConnectionConfig } from "../common/connection_manager_types";
+import { ConnectionFactory } from "../common/connections/types";
 
 const DEFAULT_ROW_LIMIT = 50;
 
-export class VSCodeConnectionManager extends ConnectionManager {
-  constructor() {
-    super(VSCodeConnectionManager.getConnectionsConfig());
-  }
+const getConnectionsConfig = (): ConnectionConfig[] => {
+  return vscode.workspace
+    .getConfiguration("malloy")
+    .get("connections") as ConnectionConfig[];
+};
 
-  static getConnectionsConfig(): ConnectionConfig[] {
-    return this.filterUnavailableConnectionBackends(
-      vscode.workspace
-        .getConfiguration("malloy")
-        .get("connections") as ConnectionConfig[]
-    );
+export class VSCodeConnectionManager extends ConnectionManager {
+  constructor(connectionFactory: ConnectionFactory) {
+    super(connectionFactory, getConnectionsConfig());
   }
 
   async onConfigurationUpdated(): Promise<void> {
-    return this.setConnectionsConfig(
-      VSCodeConnectionManager.getConnectionsConfig()
-    );
+    return this.setConnectionsConfig(getConnectionsConfig());
   }
 
   getCurrentRowLimit(): number {

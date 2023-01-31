@@ -2,8 +2,10 @@ out
 dist
 node_modules
 .vscode-test/
+.vscode-test-web/
 .vscode/settings.json
 *.vsix
+meta-*.json
 third_party_notices.txt
 third_party/github.com/duckdb/
 third_party/github.com/atom/

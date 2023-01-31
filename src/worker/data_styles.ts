@@ -21,12 +21,8 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as path from "path";
-
 import { URLReader } from "@malloydata/malloy";
 import { DataStyles } from "@malloydata/render";
-
-import { fetchFile } from "./files";
 import { log } from "./logger";
 
 export function compileDataStyles(styles: string): DataStyles {
@@ -39,7 +35,8 @@ export function compileDataStyles(styles: string): DataStyles {
 
 // TODO replace this with actual JSON metadata import functionality, when it exists
 export async function dataStylesForFile(
-  uri: string,
+  reader: URLReader,
+  url: URL,
   text: string
 ): Promise<DataStyles> {
   const PREFIX = "--! styles ";
@@ -47,19 +44,12 @@ export async function dataStylesForFile(
   for (const line of text.split("\n")) {
     if (line.startsWith(PREFIX)) {
       const fileName = line.trimEnd().substring(PREFIX.length);
-      const stylesPath = path.join(
-        uri.replace(
-          process.platform === "win32" ? /^file:\/\/\/?/ : /^file:\/\//,
-          ""
-        ),
-        "..",
-        fileName
-      );
+      const styleUrl = new URL(fileName, url);
       // TODO instead of failing silently when the file does not exist, perform this after the WebView has been
       //      created, so that the error can be shown there.
-      let stylesText;
+      let stylesText: string;
       try {
-        stylesText = await fetchFile(stylesPath);
+        stylesText = await reader.readURL(styleUrl);
       } catch (error) {
         log(`Error loading data style '${fileName}': ${error}`);
         stylesText = "{}";
@@ -87,7 +77,7 @@ export class HackyDataStylesAccumulator implements URLReader {
     const contents = await this.uriReader.readURL(uri);
     this.dataStyles = {
       ...this.dataStyles,
-      ...(await dataStylesForFile(uri.toString(), contents)),
+      ...(await dataStylesForFile(this, uri, contents)),
     };
 
     return contents;

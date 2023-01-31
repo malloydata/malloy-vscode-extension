@@ -23,7 +23,10 @@
 
 import { ResultJSON } from "@malloydata/malloy";
 import { DataStyles } from "@malloydata/render";
-import { ConnectionConfig } from "../common";
+import {
+  ConnectionBackend,
+  ConnectionConfig,
+} from "../common/connection_manager_types";
 
 export enum QueryRunStatus {
   Compiling = "compiling",
@@ -59,8 +62,9 @@ interface QueryMessageStatusError {
 interface QueryMessageStatusDone {
   type: QueryMessageType.QueryStatus;
   status: QueryRunStatus.Done;
-  result: ResultJSON;
-  styles: DataStyles;
+  resultJson: ResultJSON;
+  dataStyles: DataStyles;
+  canDownloadStream: boolean;
 }
 
 type QueryMessageStatus =
@@ -98,6 +102,7 @@ export enum ConnectionMessageType {
 interface ConnectionMessageSetConnections {
   type: ConnectionMessageType.SetConnections;
   connections: ConnectionConfig[];
+  availableBackends: ConnectionBackend[];
 }
 
 interface ConnectionMessageAppReady {

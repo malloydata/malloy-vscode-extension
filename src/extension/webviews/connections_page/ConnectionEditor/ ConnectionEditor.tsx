@@ -40,7 +40,7 @@ import { Label } from "./Label";
 import { LabelCell } from "./LabelCell";
 import { PostgresConnectionEditor } from "./PostgresConnectionEditor";
 import { DuckDBConnectionEditor } from "./DuckDBConnectionEditor";
-import { isDuckDBAvailable } from "../../../../common/duckdb_availability";
+import { DuckDBWASMConnectionEditor } from "./DuckDBWASMConnectionEditor";
 
 interface ConnectionEditorProps {
   config: ConnectionConfig;
@@ -51,6 +51,7 @@ interface ConnectionEditorProps {
   requestServiceAccountKeyPath: (connectionId: string) => void;
   isDefault: boolean;
   makeDefault: () => void;
+  availableBackends: ConnectionBackend[];
 }
 
 export const ConnectionEditor: React.FC<ConnectionEditorProps> = ({
@@ -62,15 +63,18 @@ export const ConnectionEditor: React.FC<ConnectionEditorProps> = ({
   requestServiceAccountKeyPath,
   isDefault,
   makeDefault,
+  availableBackends,
 }) => {
-  const backendOptions: { value: ConnectionBackend; label: string }[] = [
+  const allBackendOptions: { value: ConnectionBackend; label: string }[] = [
     { value: ConnectionBackend.BigQuery, label: "BigQuery" },
     { value: ConnectionBackend.Postgres, label: "Postgres" },
+    { value: ConnectionBackend.DuckDB, label: "DuckDB" },
+    { value: ConnectionBackend.DuckDBWASM, label: "DuckDB" },
   ];
 
-  if (isDuckDBAvailable) {
-    backendOptions.push({ value: ConnectionBackend.DuckDB, label: "DuckDB" });
-  }
+  const backendOptions = allBackendOptions.filter((option) =>
+    availableBackends.includes(option.value)
+  );
 
   return (
     <ConnectionEditorBox>
@@ -123,8 +127,12 @@ export const ConnectionEditor: React.FC<ConnectionEditorProps> = ({
         />
       ) : config.backend === ConnectionBackend.Postgres ? (
         <PostgresConnectionEditor config={config} setConfig={setConfig} />
-      ) : (
+      ) : config.backend === ConnectionBackend.DuckDB ? (
         <DuckDBConnectionEditor config={config} setConfig={setConfig} />
+      ) : config.backend === ConnectionBackend.DuckDBWASM ? (
+        <DuckDBWASMConnectionEditor config={config} setConfig={setConfig} />
+      ) : (
+        <div>Unknown Connection Type</div>
       )}
       <VSCodeDivider />
       <table>

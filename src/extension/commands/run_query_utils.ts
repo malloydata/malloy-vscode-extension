@@ -21,9 +21,9 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as path from "path";
-import { performance } from "perf_hooks";
 import * as vscode from "vscode";
+import { Utils } from "vscode-uri";
+
 import { MALLOY_EXTENSION_STATE, RunState } from "../state";
 import { Result } from "@malloydata/malloy";
 import turtleIcon from "../../media/turtle.svg";
@@ -31,8 +31,8 @@ import { getWebviewHtml } from "../webviews";
 import { QueryMessageType, QueryRunStatus } from "../message_types";
 import { WebviewMessageManager } from "../webview_message_manager";
 import { queryDownload } from "./query_download";
-import { getWorker } from "../extension";
 import { WorkerMessage } from "../../worker/types";
+import { getWorker } from "../../worker/worker";
 import { trackQueryRun } from "../telemetry";
 
 const malloyLog = vscode.window.createOutputChannel("Malloy");
@@ -145,14 +145,18 @@ export function runMalloyQuery(
           cancel,
           document: query.file,
         };
-        current.panel.iconPath = vscode.Uri.parse(
-          path.join(__filename, "..", turtleIcon)
+        current.panel.iconPath = Utils.joinPath(
+          MALLOY_EXTENSION_STATE.getExtensionUri(),
+          "dist",
+          turtleIcon
         );
         MALLOY_EXTENSION_STATE.setRunState(panelId, current);
       }
 
-      const onDiskPath = vscode.Uri.file(
-        path.join(__filename, "..", "query_page.js")
+      const onDiskPath = Utils.joinPath(
+        MALLOY_EXTENSION_STATE.getExtensionUri(),
+        "dist",
+        "query_page.js"
       );
 
       const entrySrc = current.panel.webview.asWebviewUri(onDiskPath);
@@ -186,7 +190,7 @@ export function runMalloyQuery(
         panelId,
         name,
       });
-      const allBegin = performance.now();
+      const allBegin = Date.now();
       const compileBegin = allBegin;
       let runBegin: number;
 
@@ -225,7 +229,7 @@ https://github.com/malloydata/malloy/issues.`,
                   break;
                 case QueryRunStatus.Running:
                   {
-                    const compileEnd = performance.now();
+                    const compileEnd = Date.now();
                     runBegin = compileEnd;
                     malloyLog.appendLine(message.sql);
                     logTime("Compile", compileBegin, compileEnd);
@@ -237,15 +241,15 @@ https://github.com/malloydata/malloy/issues.`,
                   break;
                 case QueryRunStatus.Done:
                   {
-                    const runEnd = performance.now();
+                    const runEnd = Date.now();
                     if (runBegin != null) {
                       logTime("Run", runBegin, runEnd);
                     }
-                    const { result } = message;
-                    const queryResult = Result.fromJSON(result);
+                    const { resultJson } = message;
+                    const queryResult = Result.fromJSON(resultJson);
                     current.result = queryResult;
                     progress.report({ increment: 100, message: "Rendering" });
-                    const allEnd = performance.now();
+                    const allEnd = Date.now();
                     logTime("Total", allBegin, allEnd);
 
                     current.messages.onReceiveMessage((message) => {

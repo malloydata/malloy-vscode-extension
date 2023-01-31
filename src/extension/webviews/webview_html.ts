@@ -22,7 +22,7 @@
  */
 
 import * as vscode from "vscode";
-import { randomInt } from "crypto";
+import { v1 as uuid } from "uuid";
 
 export function getWebviewHtml(
   entrySrc: string,
@@ -118,15 +118,6 @@ export function getWebviewHtml(
 </html>`;
 }
 
-const NONCE_CHARACTERS =
-  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-
-function randomNonceCharacter() {
-  return NONCE_CHARACTERS.charAt(
-    Math.floor(randomInt(0, NONCE_CHARACTERS.length))
-  );
-}
-
 function getNonce() {
-  return Array.from({ length: 32 }, randomNonceCharacter).join("");
+  return uuid();
 }

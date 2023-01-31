@@ -22,8 +22,8 @@
  */
 
 import { URLReader } from "@malloydata/malloy";
+import { Message } from "../types";
 import { fileURLToPath } from "url";
-import { Message } from "./types";
 
 let idx = 1;
 

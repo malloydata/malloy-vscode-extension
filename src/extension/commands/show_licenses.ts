@@ -22,13 +22,16 @@
  */
 
 import * as vscode from "vscode";
-import * as path from "path";
-import * as fs from "fs";
+import { URI, Utils } from "vscode-uri";
 
 export async function showLicensesCommand(): Promise<void> {
-  const licenseFilePath = path.join(__dirname, "third_party_notices.txt");
+  const licenseFilePath = Utils.joinPath(
+    URI.file(__dirname),
+    "third_party_notices.txt"
+  );
 
-  const content = fs.readFileSync(licenseFilePath);
+  const buffer = await vscode.workspace.fs.readFile(licenseFilePath);
+  const content = new TextDecoder("utf-8").decode(buffer);
   const document = await vscode.workspace.openTextDocument({
     language: "text",
     content: content.toString(),

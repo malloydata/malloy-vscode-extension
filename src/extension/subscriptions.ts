@@ -22,44 +22,35 @@
  */
 
 import * as vscode from "vscode";
-
-import {
-  LanguageClient,
-  LanguageClientOptions,
-  ServerOptions,
-  TransportKind,
-} from "vscode-languageclient/node";
 import {
   runTurtleFromSchemaCommand,
   SchemaProvider,
 } from "./tree_views/schema_view";
 import {
   copyFieldPathCommand,
-  editConnectionsCommand,
   runNamedQuery,
   runNamedSQLBlock,
   runQueryCommand,
   runQueryFileCommand,
   runUnnamedSQLBlock,
-  showLicensesCommand,
 } from "./commands";
-import { CONNECTION_MANAGER, MALLOY_EXTENSION_STATE } from "./state";
-import { ConnectionsProvider } from "./tree_views/connections_view";
-import { WorkerConnection } from "../worker/worker_connection";
-import { MalloyConfig } from "./types";
-import { getNewClientId } from "./utils";
 import { trackModelLoad, trackModelSave } from "./telemetry";
+import { ConnectionManager } from "../common/connection_manager";
+import { URLReader } from "@malloydata/malloy";
+import { v4 as uuid } from "uuid";
 
-let client: LanguageClient;
-let worker: WorkerConnection;
+import { MALLOY_EXTENSION_STATE } from "./state";
 
-export let extensionModeProduction: boolean;
+function getNewClientId(): string {
+  return uuid();
+}
 
-export function activate(context: vscode.ExtensionContext): void {
-  // Show Licenses
-  context.subscriptions.push(
-    vscode.commands.registerCommand("malloy.showLicenses", showLicensesCommand)
-  );
+export const setupSubscriptions = (
+  context: vscode.ExtensionContext,
+  urlReader: URLReader,
+  connectionManager: ConnectionManager
+) => {
+  MALLOY_EXTENSION_STATE.setExtensionUri(context.extensionUri);
 
   // Run Query (whole file)
   context.subscriptions.push(
@@ -97,7 +88,7 @@ export function activate(context: vscode.ExtensionContext): void {
     )
   );
 
-  const schemaTree = new SchemaProvider();
+  const schemaTree = new SchemaProvider(context, connectionManager, urlReader);
 
   context.subscriptions.push(
     vscode.window.registerTreeDataProvider("malloySchema", schemaTree)
@@ -122,37 +113,6 @@ export function activate(context: vscode.ExtensionContext): void {
     )
   );
 
-  const connectionsTree = new ConnectionsProvider();
-
-  context.subscriptions.push(
-    vscode.window.registerTreeDataProvider("malloyConnections", connectionsTree)
-  );
-
-  context.subscriptions.push(
-    vscode.commands.registerCommand(
-      "malloy.editConnections",
-      editConnectionsCommand
-    )
-  );
-
-  context.subscriptions.push(
-    vscode.workspace.onDidChangeConfiguration(async (e) => {
-      if (e.affectsConfiguration("malloy")) {
-        await CONNECTION_MANAGER.onConfigurationUpdated();
-        connectionsTree.refresh();
-        sendWorkerConfig();
-      }
-    })
-  );
-
-  let clientId: string | undefined =
-    context.globalState.get("malloy_client_id");
-  if (clientId === undefined) {
-    clientId = getNewClientId();
-    context.globalState.update("malloy_client_id", clientId);
-  }
-  MALLOY_EXTENSION_STATE.setClientId(clientId);
-
   context.subscriptions.push(
     vscode.workspace.onDidOpenTextDocument(async (e) => {
       if (e.languageId === "malloy") {
@@ -170,71 +130,11 @@ export function activate(context: vscode.ExtensionContext): void {
     })
   );
 
-  setupLanguageServer(context);
-  setupWorker(context);
-}
-
-export async function deactivate(): Promise<void> | undefined {
-  if (client) {
-    await client.stop();
+  let clientId: string | undefined =
+    context.globalState.get("malloy_client_id");
+  if (clientId === undefined) {
+    clientId = getNewClientId();
+    context.globalState.update("malloy_client_id", clientId);
   }
-  if (worker) {
-    worker.send({ type: "exit" });
-  }
-}
-
-function setupLanguageServer(context: vscode.ExtensionContext): void {
-  const serverModule = context.asAbsolutePath("dist/server.js");
-  const debugOptions = {
-    execArgv: [
-      "--nolazy",
-      "--inspect=6009",
-      "--preserve-symlinks",
-      "--enable-source-maps",
-    ],
-  };
-
-  const serverOptions: ServerOptions = {
-    run: { module: serverModule, transport: TransportKind.ipc },
-    debug: {
-      module: serverModule,
-      transport: TransportKind.ipc,
-      options: debugOptions,
-    },
-  };
-
-  const clientOptions: LanguageClientOptions = {
-    documentSelector: [{ scheme: "file", language: "malloy" }],
-    synchronize: {
-      configurationSection: "malloy",
-      fileEvents: vscode.workspace.createFileSystemWatcher("**/.clientrc"),
-    },
-  };
-
-  client = new LanguageClient(
-    "malloy",
-    "Malloy Language Server",
-    serverOptions,
-    clientOptions
-  );
-
-  client.start();
-}
-
-export function getWorker(): WorkerConnection {
-  return worker;
-}
-
-function sendWorkerConfig() {
-  worker.send({
-    type: "config",
-    config: vscode.workspace.getConfiguration(
-      "malloy"
-    ) as unknown as MalloyConfig,
-  });
-}
-
-function setupWorker(context: vscode.ExtensionContext): void {
-  worker = new WorkerConnection(context);
-  sendWorkerConfig();
-}
+  MALLOY_EXTENSION_STATE.setClientId(clientId);
+};

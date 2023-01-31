@@ -21,21 +21,25 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { QueryMaterializer, Runtime } from "@malloydata/malloy";
+import { QueryMaterializer, Runtime, URLReader } from "@malloydata/malloy";
 import { DataStyles } from "@malloydata/render";
 
 import { HackyDataStylesAccumulator } from "./data_styles";
-import { WorkerURLReader } from "./files";
 import { log } from "./logger";
-import { MessageCancel, MessageRun, WorkerQueryPanelMessage } from "./types";
+import {
+  MessageCancel,
+  MessageHandler,
+  MessageRun,
+  WorkerQueryPanelMessage,
+} from "./types";
 
-import { CONNECTION_MANAGER } from "../server/connections";
 import {
   QueryMessageType,
   QueryPanelMessage,
   QueryRunStatus,
 } from "../extension/message_types";
 import { createRunnable } from "./utils";
+import { ConnectionManager } from "../common/connection_manager";
 
 interface QueryEntry {
   panelId: string;
@@ -44,31 +48,39 @@ interface QueryEntry {
 
 const runningQueries: Record<string, QueryEntry> = {};
 
-const sendMessage = (message: QueryPanelMessage, panelId: string) => {
+const sendMessage = (
+  messageHandler: MessageHandler,
+  message: QueryPanelMessage,
+  panelId: string
+) => {
   const msg: WorkerQueryPanelMessage = {
     type: "query_panel",
     panelId,
     message,
   };
-  process.send?.(msg);
+
+  messageHandler.send(msg);
 };
 
-export const runQuery = async ({
-  query,
-  panelId,
-}: MessageRun): Promise<void> => {
-  const reader = new WorkerURLReader();
+export const runQuery = async (
+  messageHandler: MessageHandler,
+  reader: URLReader,
+  connectionManager: ConnectionManager,
+  isBrowser: boolean,
+  { query, panelId }: MessageRun
+): Promise<void> => {
   const files = new HackyDataStylesAccumulator(reader);
   const url = new URL(panelId);
 
   try {
     const runtime = new Runtime(
       files,
-      CONNECTION_MANAGER.getConnectionLookup(url)
+      connectionManager.getConnectionLookup(url)
     );
 
     runningQueries[panelId] = { panelId, canceled: false };
     sendMessage(
+      messageHandler,
       {
         type: QueryMessageType.QueryStatus,
         status: QueryRunStatus.Compiling,
@@ -76,7 +88,7 @@ export const runQuery = async ({
       panelId
     );
 
-    let styles: DataStyles = {};
+    let dataStyles: DataStyles = {};
     let sql;
     const runnable = createRunnable(query, runtime);
 
@@ -93,12 +105,13 @@ export const runQuery = async ({
 
     try {
       sql = await runnable.getSQL();
-      styles = { ...styles, ...files.getHackyAccumulatedDataStyles() };
+      dataStyles = { ...dataStyles, ...files.getHackyAccumulatedDataStyles() };
 
       if (runningQueries[panelId].canceled) return;
       log(sql);
     } catch (error) {
       sendMessage(
+        messageHandler,
         {
           type: QueryMessageType.QueryStatus,
           status: QueryRunStatus.Error,
@@ -110,6 +123,7 @@ export const runQuery = async ({
     }
 
     sendMessage(
+      messageHandler,
       {
         type: QueryMessageType.QueryStatus,
         status: QueryRunStatus.Running,
@@ -122,16 +136,19 @@ export const runQuery = async ({
     if (runningQueries[panelId].canceled) return;
 
     sendMessage(
+      messageHandler,
       {
         type: QueryMessageType.QueryStatus,
         status: QueryRunStatus.Done,
-        result: queryResult.toJSON(),
-        styles,
+        resultJson: queryResult.toJSON(),
+        dataStyles,
+        canDownloadStream: !isBrowser,
       },
       panelId
     );
   } catch (error) {
     sendMessage(
+      messageHandler,
       {
         type: QueryMessageType.QueryStatus,
         status: QueryRunStatus.Error,
