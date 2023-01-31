@@ -53,7 +53,7 @@ interface CopyHTMLButtonProps {
   onClick: (event: MouseEvent) => void;
 }
 
-export const CopyHTMLButton: React.FC<CopyHTMLButtonProps> = ({ onClick }) => {
+export const CopyButton: React.FC<CopyHTMLButtonProps> = ({ onClick }) => {
   return <StyledDownloadIcon onClick={onClick} />;
 };
 
