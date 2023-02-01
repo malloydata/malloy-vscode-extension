@@ -22,13 +22,14 @@
  */
 
 import * as fs from "fs";
+import { fileURLToPath } from "url";
 
 import { CSVWriter, JSONWriter, Runtime } from "@malloydata/malloy";
 
-import { MessageDownload, WorkerDownloadMessage } from "./types";
-import { createRunnable } from "./utils";
-import { WorkerURLReader } from "./node/files";
-import { ConnectionManager } from "../common/connection_manager";
+import { MessageDownload, WorkerDownloadMessage } from "../types";
+import { createRunnable } from "../utils";
+import { WorkerURLReader } from "./files";
+import { ConnectionManager } from "../../common/connection_manager";
 
 const sendMessage = (name: string, error?: string) => {
   const msg: WorkerDownloadMessage = {
@@ -41,7 +42,7 @@ const sendMessage = (name: string, error?: string) => {
 
 export async function downloadQuery(
   connectionManager: ConnectionManager,
-  { query, panelId, downloadOptions, name, filePath }: MessageDownload
+  { query, panelId, downloadOptions, name, uri }: MessageDownload
 ): Promise<void> {
   const files = new WorkerURLReader();
   const url = new URL(panelId);
@@ -53,7 +54,7 @@ export async function downloadQuery(
     );
 
     const runnable = createRunnable(query, runtime);
-    const writeStream = fs.createWriteStream(filePath);
+    const writeStream = fs.createWriteStream(fileURLToPath(uri));
     const writer =
       downloadOptions.format === "json"
         ? new JSONWriter(writeStream)

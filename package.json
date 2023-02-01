@@ -187,12 +187,6 @@
     "views": {
       "explorer": [
         {
-          "id": "malloyHelp",
-          "name": "Malloy Help",
-          "type": "webview",
-          "when": "malloy.webviewPanelFocused == true || resourceFilename =~ /\\.malloy$/"
-        },
-        {
           "id": "malloySchema",
           "name": "Malloy Schema",
           "when": "malloy.webviewPanelFocused == true || resourceFilename =~ /\\.malloy$/"
@@ -288,6 +282,48 @@
                     "type": "string"
                   },
                   "serviceAccountKeyPath": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "backend": {
+                    "type": "string",
+                    "const": "duckdb"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "isDefault": {
+                    "type": "boolean"
+                  },
+                  "workingDirectory": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "backend": {
+                    "type": "string",
+                    "const": "duckdb_wasm"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "isDefault": {
+                    "type": "boolean"
+                  },
+                  "workingDirectory": {
                     "type": "string"
                   }
                 }

@@ -79,7 +79,7 @@ export async function deactivate(): Promise<void> | undefined {
 }
 
 function setupLanguageServer(context: vscode.ExtensionContext): void {
-  const documentSelector = [{ scheme: "file", language: "malloy" }];
+  const documentSelector = [{ language: "malloy" }];
 
   // Options to control the language client
   const clientOptions: LanguageClientOptions = {

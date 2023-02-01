@@ -23,7 +23,7 @@
 
 import { log } from "../logger";
 import { cancelQuery, runQuery } from "../run_query";
-import { downloadQuery } from "../download_query";
+import { downloadQuery } from "./download_query";
 import { Message, MessageHandler, WorkerMessage } from "../types";
 import { refreshConfig } from "../refresh_config";
 import { ConnectionManager } from "../../common/connection_manager";

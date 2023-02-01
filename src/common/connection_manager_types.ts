@@ -28,6 +28,11 @@ export enum ConnectionBackend {
   DuckDBWASM = "duckdb_wasm",
 }
 
+/*
+ * NOTE: These should be kept in sync with the "malloy.connections"
+ * section of the extension "configuration" definition in package.json
+ */
+
 export interface BigQueryConnectionConfig {
   backend: ConnectionBackend.BigQuery;
   name: string;
@@ -60,6 +65,7 @@ export interface DuckDBConnectionConfig {
   id: string;
   workingDirectory?: string;
 }
+
 export interface DuckDBWASMConnectionConfig {
   backend: ConnectionBackend.DuckDBWASM;
   name: string;

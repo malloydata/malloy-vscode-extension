@@ -61,7 +61,7 @@ const sendDownloadMessage = (
   query: WorkerQuerySpec,
   panelId: string,
   name: string,
-  filePath: string,
+  uri: string,
   downloadOptions: QueryDownloadOptions
 ) => {
   const worker = getWorker();
@@ -70,7 +70,7 @@ const sendDownloadMessage = (
     query,
     panelId,
     name,
-    filePath,
+    uri,
     downloadOptions,
   };
   worker.send?.(message);
@@ -136,10 +136,9 @@ export async function queryDownload(
         } else {
           const worker = getWorker();
           const { file, ...params } = query;
-          const fsPath = file.uri.fsPath;
           sendDownloadMessage(
             {
-              file: fsPath,
+              uri: file.uri.toString(),
               ...params,
             },
             panelId,

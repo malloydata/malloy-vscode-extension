@@ -24,17 +24,17 @@
 import { URLReader } from "@malloydata/malloy";
 import * as vscode from "vscode";
 
-export async function fetchFile(path: string): Promise<string> {
+export async function fetchFile(uri: string): Promise<string> {
   const openFiles = vscode.workspace.textDocuments;
   const openDocument = openFiles.find(
-    (document) => document.uri.fsPath === path
+    (document) => document.uri.toString() === uri
   );
   // Only get the text from VSCode's open files if the file is already open in VSCode,
   // otherwise, just read the file from the file system
   if (openDocument !== undefined) {
     return openDocument.getText();
   } else {
-    const contents = await vscode.workspace.fs.readFile(vscode.Uri.file(path));
+    const contents = await vscode.workspace.fs.readFile(vscode.Uri.parse(uri));
     return new TextDecoder("utf-8").decode(contents);
   }
 }

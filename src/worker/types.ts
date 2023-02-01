@@ -30,31 +30,31 @@ import { MalloyConfig } from "../extension/types";
 interface NamedQuerySpec {
   type: "named";
   name: string;
-  file: string;
+  uri: string;
 }
 
 interface QueryStringSpec {
   type: "string";
   text: string;
-  file: string;
+  uri: string;
 }
 
 interface QueryFileSpec {
   type: "file";
   index: number;
-  file: string;
+  uri: string;
 }
 
 interface NamedSQLQuerySpec {
   type: "named_sql";
   name: string;
-  file: string;
+  uri: string;
 }
 
 interface UnnamedSQLQuerySpec {
   type: "unnamed_sql";
   index: number;
-  file: string;
+  uri: string;
 }
 
 export type WorkerQuerySpec =
@@ -92,7 +92,7 @@ export interface MessageConfig {
 export interface MessageRead {
   type: "read";
   id: string;
-  file: string;
+  uri: string;
   data?: string;
   error?: string;
 }
@@ -102,7 +102,7 @@ export interface MessageDownload {
   query: WorkerQuerySpec;
   panelId: string;
   name: string;
-  filePath: string;
+  uri: string;
   downloadOptions: QueryDownloadOptions;
 }
 
@@ -146,7 +146,7 @@ export interface WorkerStartMessage {
 export interface WorkerReadMessage {
   type: "read";
   id: string;
-  file: string;
+  uri: string;
 }
 
 export type WorkerMessage =
