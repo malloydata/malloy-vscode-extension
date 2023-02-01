@@ -63,7 +63,7 @@ export class WorkerConnection {
             workerLog.appendLine(`worker: ${message.message}`);
             break;
           case "read": {
-            workerLog.appendLine(`worker: reading file ${message.url}`);
+            workerLog.appendLine(`worker: reading file ${message.uri}`);
             this.readFile(message);
             break;
           }
