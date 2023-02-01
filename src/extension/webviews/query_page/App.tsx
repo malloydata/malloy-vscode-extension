@@ -44,7 +44,7 @@ import "prismjs/components/prism-sql";
 import { usePopperTooltip } from "react-popper-tooltip";
 import { useQueryVSCodeContext } from "./query_vscode_context";
 import { DownloadButton } from "./DownloadButton";
-import { CopyHTMLButton } from "./CopyHTMLButton";
+import { CopyButton } from "./CopyButton";
 import { Scroll } from "./Scroll";
 
 enum Status {
@@ -127,9 +127,7 @@ export const App: React.FC = () => {
               const result = Result.fromJSON(resultJson);
               const data = result.data;
               setJSON(JSON.stringify(data.toObject(), null, 2));
-              setSQL(
-                Prism.highlight(result.sql, Prism.languages["sql"], "sql")
-              );
+              setSQL(result.sql);
               const rendered = await new HTMLView(document).render(data, {
                 dataStyles,
                 isDrillingEnabled: false,
@@ -177,9 +175,19 @@ export const App: React.FC = () => {
     return () => window.removeEventListener("message", listener);
   });
 
-  const copyHTMLTopClipboard = useCallback(
+  const copyToClipboard = useCallback(
     ({ target }: MouseEvent) => {
-      navigator.clipboard.writeText(getStyledHTML(html));
+      switch (resultKind) {
+        case ResultKind.HTML:
+          navigator.clipboard.writeText(getStyledHTML(html));
+          break;
+        case ResultKind.JSON:
+          navigator.clipboard.writeText(json);
+          break;
+        case ResultKind.SQL:
+          navigator.clipboard.writeText(sql);
+          break;
+      }
       setTriggerRef(target as HTMLElement);
       setTooltipVisible(true);
       const currentTooltipId = ++tooltipId.current;
@@ -189,7 +197,7 @@ export const App: React.FC = () => {
         }
       }, 1000);
     },
-    [html]
+    [resultKind, html, json, sql]
   );
 
   return (
@@ -233,13 +241,14 @@ export const App: React.FC = () => {
       {!error && resultKind === ResultKind.HTML && (
         <Scroll>
           <div style={{ margin: "10px" }}>
-            <CopyHTMLButton onClick={copyHTMLTopClipboard} />
+            <CopyButton onClick={copyToClipboard} />
             <DOMElement element={html} />
           </div>
         </Scroll>
       )}
       {!error && resultKind === ResultKind.JSON && (
         <Scroll>
+          <CopyButton onClick={copyToClipboard} />
           <PrismContainer darkMode={darkMode} style={{ margin: "10px" }}>
             {json}
           </PrismContainer>
@@ -247,9 +256,12 @@ export const App: React.FC = () => {
       )}
       {!error && resultKind === ResultKind.SQL && (
         <Scroll>
+          <CopyButton onClick={copyToClipboard} />
           <PrismContainer darkMode={darkMode} style={{ margin: "10px" }}>
             <div
-              dangerouslySetInnerHTML={{ __html: sql }}
+              dangerouslySetInnerHTML={{
+                __html: Prism.highlight(sql, Prism.languages["sql"], "sql"),
+              }}
               style={{ margin: "10px" }}
             />
           </PrismContainer>
