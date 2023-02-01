@@ -63,7 +63,6 @@ export async function fetchFile(uri: string): Promise<string> {
 
 export class WorkerURLReader implements URLReader {
   async readURL(url: URL): Promise<string> {
-    // TODO(web) Fix possibly encoded pathname
     return fetchFile(url.toString());
   }
 }
