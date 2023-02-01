@@ -26,10 +26,10 @@ import { fileURLToPath } from "url";
 
 import { CSVWriter, JSONWriter, Runtime } from "@malloydata/malloy";
 
-import { MessageDownload, WorkerDownloadMessage } from "./types";
-import { createRunnable } from "./utils";
-import { WorkerURLReader } from "./node/files";
-import { ConnectionManager } from "../common/connection_manager";
+import { MessageDownload, WorkerDownloadMessage } from "../types";
+import { createRunnable } from "../utils";
+import { WorkerURLReader } from "./files";
+import { ConnectionManager } from "../../common/connection_manager";
 
 const sendMessage = (name: string, error?: string) => {
   const msg: WorkerDownloadMessage = {
