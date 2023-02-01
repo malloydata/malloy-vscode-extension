@@ -382,7 +382,6 @@
     "keytar": "7.7.0",
     "lodash": "^4.17.21",
     "react": "^17.0.2",
-    "react-is": "^16.8.0",
     "react-popper-tooltip": "^4.3.1",
     "shiki": "^0.10.0",
     "styled-components": "^5.3.3",
