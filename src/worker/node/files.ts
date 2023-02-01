@@ -23,7 +23,6 @@
 
 import { URLReader } from "@malloydata/malloy";
 import { Message } from "../types";
-import { fileURLToPath } from "url";
 
 let idx = 1;
 
