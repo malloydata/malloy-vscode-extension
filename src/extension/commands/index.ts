@@ -27,3 +27,4 @@ export { copyFieldPathCommand } from "./copy_field_path";
 export { runNamedQuery } from "./run_named_query";
 export { runNamedSQLBlock } from "./run_named_sql_block";
 export { runUnnamedSQLBlock } from "./run_unnamed_sql_block";
+export { showLicensesCommand } from "./show_licenses";

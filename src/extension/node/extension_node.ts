@@ -31,7 +31,6 @@ import {
   TransportKind,
 } from "vscode-languageclient/node";
 import { editConnectionsCommand } from "./commands/edit_connections";
-import { showLicensesCommand } from "../commands/show_licenses";
 import { ConnectionsProvider } from "../tree_views/connections_view";
 import { WorkerConnection } from "../../worker/node/worker_connection";
 import { MalloyConfig } from "../types";
@@ -51,11 +50,6 @@ export function activate(context: vscode.ExtensionContext): void {
   const connectionsTree = new ConnectionsProvider(context, connectionManager);
 
   MALLOY_EXTENSION_STATE.setHomeUri(vscode.Uri.file(os.homedir()));
-
-  // Show Licenses
-  context.subscriptions.push(
-    vscode.commands.registerCommand("malloy.showLicenses", showLicensesCommand)
-  );
 
   context.subscriptions.push(
     vscode.window.registerTreeDataProvider("malloyConnections", connectionsTree)

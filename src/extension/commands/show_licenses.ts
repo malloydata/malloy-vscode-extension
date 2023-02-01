@@ -22,11 +22,14 @@
  */
 
 import * as vscode from "vscode";
-import { URI, Utils } from "vscode-uri";
+import { Utils } from "vscode-uri";
+
+import { MALLOY_EXTENSION_STATE } from "../state";
 
 export async function showLicensesCommand(): Promise<void> {
   const licenseFilePath = Utils.joinPath(
-    URI.file(__dirname),
+    MALLOY_EXTENSION_STATE.getExtensionUri(),
+    "dist",
     "third_party_notices.txt"
   );
 

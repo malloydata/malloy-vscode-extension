@@ -33,6 +33,7 @@ import {
   runQueryCommand,
   runQueryFileCommand,
   runUnnamedSQLBlock,
+  showLicensesCommand,
 } from "./commands";
 import { trackModelLoad, trackModelSave } from "./telemetry";
 import { ConnectionManager } from "../common/connection_manager";
@@ -105,6 +106,11 @@ export const setupSubscriptions = (
       "malloy.runTurtleFromSchema",
       runTurtleFromSchemaCommand
     )
+  );
+
+  // Show Licenses
+  context.subscriptions.push(
+    vscode.commands.registerCommand("malloy.showLicenses", showLicensesCommand)
   );
 
   context.subscriptions.push(
