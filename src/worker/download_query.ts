@@ -22,6 +22,7 @@
  */
 
 import * as fs from "fs";
+import { fileURLToPath } from "url";
 
 import { CSVWriter, JSONWriter, Runtime } from "@malloydata/malloy";
 
@@ -41,7 +42,7 @@ const sendMessage = (name: string, error?: string) => {
 
 export async function downloadQuery(
   connectionManager: ConnectionManager,
-  { query, panelId, downloadOptions, name, filePath }: MessageDownload
+  { query, panelId, downloadOptions, name, uri }: MessageDownload
 ): Promise<void> {
   const files = new WorkerURLReader();
   const url = new URL(panelId);
@@ -53,7 +54,7 @@ export async function downloadQuery(
     );
 
     const runnable = createRunnable(query, runtime);
-    const writeStream = fs.createWriteStream(filePath);
+    const writeStream = fs.createWriteStream(fileURLToPath(uri));
     const writer =
       downloadOptions.format === "json"
         ? new JSONWriter(writeStream)

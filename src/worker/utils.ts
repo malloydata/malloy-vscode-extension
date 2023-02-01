@@ -33,7 +33,7 @@ export const createRunnable = (
   runtime: Runtime
 ): SQLBlockMaterializer | QueryMaterializer => {
   let runnable: QueryMaterializer | SQLBlockMaterializer;
-  const queryFileURL = new URL("file://" + query.file);
+  const queryFileURL = new URL(query.uri);
   if (query.type === "string") {
     runnable = runtime.loadModel(queryFileURL).loadQuery(query.text);
   } else if (query.type === "named") {

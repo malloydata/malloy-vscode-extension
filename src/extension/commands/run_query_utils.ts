@@ -179,12 +179,12 @@ export function runMalloyQuery(
       });
 
       const { file, ...params } = query;
-      const fsPath = file.uri.fsPath;
+      const uri = file.uri.toString();
       const worker = getWorker();
       worker.send({
         type: "run",
         query: {
-          file: fsPath,
+          uri,
           ...params,
         },
         panelId,

@@ -64,7 +64,7 @@ export class WorkerConnection {
               workerLog.appendLine(`worker: ${message.message}`);
               break;
             case "read": {
-              workerLog.appendLine(`worker: reading file ${message.file}`);
+              workerLog.appendLine(`worker: reading file ${message.uri}`);
               this.readFile(message);
               break;
             }
@@ -95,12 +95,12 @@ export class WorkerConnection {
   }
 
   async readFile(message: WorkerReadMessage): Promise<void> {
-    const { id, file } = message;
+    const { id, uri } = message;
     try {
-      const data = await fetchFile(file);
-      this.send?.({ type: "read", id, file, data });
+      const data = await fetchFile(uri);
+      this.send?.({ type: "read", id, uri, data });
     } catch (error) {
-      this.send?.({ type: "read", id, file, error: error.message });
+      this.send?.({ type: "read", id, uri, error: error.message });
     }
   }
 }

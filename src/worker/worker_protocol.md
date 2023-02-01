@@ -11,9 +11,13 @@ elements are defined per message type. Messages requiring two-way communication
 use an id parameter to match the corresponding response to the correct request.
 
 The VSCode resident part of the worker process lives in
-[worker_controller.ts](../../blob/master/src/worker/worker_controller.ts),
-the main worker file is
-[worker.ts](../../blob/master/src/worker/worker.ts)
+[worker_connection.ts](../../blob/master/src/worker/node/worker_connection.ts)
+for the node version and
+[worker_connection.ts](../../blob/master/src/worker/browser/worker_connection.ts)
+for the browser version, the main worker file is
+[worker_node.ts](../../blob/master/src/worker/node/worker_node.ts)
+for the node version and
+[worker_browser.ts](../../blob/master/src/worker/browser/worker_browser.ts).
 
 ## Example
 
@@ -25,7 +29,7 @@ A file read request from the worker to the VSCode extension:
 {
   "type": "read",
   "id": 67,
-  "file": "file:///data/flights.malloy"
+  "uri": "file:///data/flights.malloy"
 }
 ```
 
@@ -37,7 +41,7 @@ A response from VSCode to the worker containing the file contents:
 {
   "type": "read",
   "id": 67,
-  "file": "file:///data/flights.malloy",
+  "uri": "file:///data/flights.malloy",
   "data": "source: flights is table('flights.parquet') {...}"
 }
 ```
@@ -57,11 +61,11 @@ A response from VSCode to the worker containing the file contents:
   the contents of the file, either from a VS Code editor buffer or from disk.
   - Parameters:
     - `type` - "read"
-    - `file` - A file URL to return the contents for.
+    - `uri` - A URL to return the contents for.
     - `id` - ID to include in response.
   - Response:
     - `type` - "read"
-    - `file` - File URL from the request.
+    - `uri` - URL from the request.
     - `id` - ID from the request.
     - `data` - File contents or
     - `error` - Error message if an error occurred.
@@ -153,8 +157,10 @@ A message indicating that a query is now running against the database:
   to apply to the visualization.
   - `type` - "query-status";
   - `status` - "done";
-  - `result` - JSON result object
-  - `styles` - Renderer styles object
+  - `resultJson` - JSON result object
+  - `dataStyles` - Renderer styles object
+  - `canDownloadStream` - Worker can stream results to a file for unlimited
+    download
 
 ## Query Worker Spec
 
@@ -167,7 +173,7 @@ A message indicating that a query is now running against the database:
   "query": {
     "type": "named",
     "name": "flights_dashboard",
-    "file": "file:///data/flights.malloy"
+    "uri": "file:///data/flights.malloy"
   }
 }
 ```
@@ -177,23 +183,23 @@ A message indicating that a query is now running against the database:
 - **Named Query**
   - `type` - "named"
   - `name` - Name of query
-  - `file` - URL of Malloy file containing the query
+  - `uri` - URL of Malloy file containing the query
 - **Query String**
   - `type` - "string"
   - `text` - Malloy query string
-  - `file` - URL of Malloy file containing model to run query against
+  - `uri` - URL of Malloy file containing model to run query against
 - **Query File**
   - `type` - "file"
   - `index` - Index of query in the Malloy file
-  - `file` - URL of Malloy file containing the query
+  - `uri` - URL of Malloy file containing the query
 - **Named SQL Query**
   - `type` - "named_sql";
   - `name` - Name of query in the Malloy file
-  - `file` - URL of Malloy file containing the query
+  - `uri` - URL of Malloy file containing the query
 - **Unnamed SQL Query**
   - `type` - "unnamed_sql"
   - `index` - Index of query in the Malloy file
-  - `file` - URL of Malloy file containing the query
+  - `uri` - URL of Malloy file containing the query
 
 ```
 

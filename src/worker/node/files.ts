@@ -36,12 +36,12 @@ let idx = 1;
  * @param file File path to resolve
  * @returns File contents
  */
-export async function fetchFile(file: string): Promise<string> {
+export async function fetchFile(uri: string): Promise<string> {
   return new Promise((resolve, reject) => {
     // This could probably use some more error handling (timeout?).
     // For now just be relentlessly optimistic because there's
     // a tight coupling with the worker controller.
-    const id = `${file}-${idx++}`;
+    const id = `${uri}-${idx++}`;
     const callback = (message: Message) => {
       if (message.type === "read" && message.id === id) {
         if (message.data != null) {
@@ -55,7 +55,7 @@ export async function fetchFile(file: string): Promise<string> {
     process.on("message", callback);
     process.send?.({
       type: "read",
-      file,
+      uri,
       id,
     });
   });
@@ -63,6 +63,6 @@ export async function fetchFile(file: string): Promise<string> {
 
 export class WorkerURLReader implements URLReader {
   async readURL(url: URL): Promise<string> {
-    return fetchFile(fileURLToPath(url));
+    return fetchFile(url.toString());
   }
 }
