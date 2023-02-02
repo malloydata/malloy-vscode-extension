@@ -42,7 +42,8 @@ export type Target =
   | "alpine-arm64"
   | "darwin-x64"
   | "darwin-arm64"
-  | "win32-x64";
+  | "win32-x64"
+  | "web";
 
 export const outDir = "dist/";
 
@@ -171,8 +172,9 @@ export async function doBuild(
 ): Promise<void> {
   development = development || process.env.NODE_ENV == "development";
 
-  if (target && !targetKeytarMap[target])
+  if (target && !targetKeytarMap[target] && target !== "web") {
     throw new Error(`Invalid target: ${target}`);
+  }
 
   fs.rmSync(outDir, { recursive: true, force: true });
   fs.mkdirSync(outDir, { recursive: true });
@@ -202,34 +204,6 @@ export async function doBuild(
     execSync("git rev-parse HEAD")
   );
 
-  if (target) {
-    const file = await fetchKeytar(target);
-    fs.copyFileSync(file, path.join(outDir, "keytar-native.node"));
-    const duckDBBinaryName = targetDuckDBMap[target];
-    const isDuckDBAvailable = duckDBBinaryName !== undefined;
-    if (isDuckDBAvailable) {
-      const file = await fetchDuckDB(target);
-      fs.copyFileSync(file, path.join(outDir, "duckdb-native.node"));
-    }
-  }
-  const duckDBPlugin = makeDuckdbNoNodePreGypPlugin(target);
-  const extensionPlugins = [duckDBPlugin];
-
-  if (development) {
-    extensionPlugins.push(noNodeModulesSourceMaps);
-    console.log("Entering watch mode");
-  }
-
-  const nodeExtensionPlugins = extensionPlugins;
-  // if we're building with a target, replace keytar imports using plugin that imports
-  // binary builds of keytar. if we're building for dev, use a .node plugin to
-  // ensure ketyar's node_modules .node file is in the build
-  if (target) {
-    nodeExtensionPlugins.push(keytarReplacerPlugin);
-  } else {
-    nodeExtensionPlugins.push(nativeNodeModulesPlugin);
-  }
-
   const baseOptions: BuildOptions = {
     bundle: true,
     minify: !development,
@@ -240,33 +214,68 @@ export async function doBuild(
     logLevel: "info",
   };
 
-  // build the extension and server
-  const nodeOptions: BuildOptions = {
-    ...baseOptions,
-    entryPoints: [
-      "./src/extension/node/extension_node.ts",
-      "./src/server/node/server_node.ts",
-      "./src/worker/node/worker_node.ts",
-    ],
-    entryNames: "[name]",
-    platform: "node",
-    external: [
-      "vscode",
-      "pg-native",
-      "./keytar-native.node",
-      "./duckdb-native.node",
-      "@duckdb/duckdb-wasm",
-    ],
-    loader: { [".png"]: "file", [".svg"]: "file" },
-    plugins: nodeExtensionPlugins,
-    define: DEFINITIONS,
-  };
+  let nodeOptions: BuildOptions | null = null;
+  let nodeWebviewPlugins: Plugin[] = [];
+
+  if (target !== "web") {
+    if (target) {
+      const file = await fetchKeytar(target);
+      fs.copyFileSync(file, path.join(outDir, "keytar-native.node"));
+      const duckDBBinaryName = targetDuckDBMap[target];
+      const isDuckDBAvailable = duckDBBinaryName !== undefined;
+      if (isDuckDBAvailable) {
+        const file = await fetchDuckDB(target);
+        fs.copyFileSync(file, path.join(outDir, "duckdb-native.node"));
+      }
+    }
+    const duckDBPlugin = makeDuckdbNoNodePreGypPlugin(target);
+    const extensionPlugins = [duckDBPlugin];
+
+    if (development) {
+      extensionPlugins.push(noNodeModulesSourceMaps);
+      console.log("Entering watch mode");
+    }
+
+    const nodeExtensionPlugins = extensionPlugins;
+    // if we're building with a target, replace keytar imports using plugin that imports
+    // binary builds of keytar. if we're building for dev, use a .node plugin to
+    // ensure ketyar's node_modules .node file is in the build
+    if (target) {
+      nodeExtensionPlugins.push(keytarReplacerPlugin);
+    } else {
+      nodeExtensionPlugins.push(nativeNodeModulesPlugin);
+    }
+
+    // build the extension and server
+    nodeOptions = {
+      ...baseOptions,
+      entryPoints: [
+        "./src/extension/node/extension_node.ts",
+        "./src/server/node/server_node.ts",
+        "./src/worker/node/worker_node.ts",
+      ],
+      entryNames: "[name]",
+      platform: "node",
+      external: [
+        "vscode",
+        "pg-native",
+        "./keytar-native.node",
+        "./duckdb-native.node",
+        "@duckdb/duckdb-wasm",
+      ],
+      loader: { [".png"]: "file", [".svg"]: "file" },
+      plugins: nodeExtensionPlugins,
+      define: DEFINITIONS,
+    };
+
+    nodeWebviewPlugins = [duckDBPlugin];
+  }
 
   const webviewPlugins = [
     svgrPlugin({
       typescript: true,
     }),
-    duckDBPlugin,
+    ...nodeWebviewPlugins,
   ];
 
   if (development) {
@@ -289,6 +298,12 @@ export async function doBuild(
     plugins: webviewPlugins,
   };
 
+  const browserPlugins: Plugin[] = [
+    svgrPlugin({
+      typescript: true,
+    }),
+  ];
+
   // build the web extension
   const browserOptions: BuildOptions = {
     ...baseOptions,
@@ -306,7 +321,7 @@ export async function doBuild(
       ...DEFINITIONS,
     },
     tsconfig: "./tsconfig.browser.json",
-    plugins: extensionPlugins,
+    plugins: browserPlugins,
     banner: {
       js: "globalThis.require = globalThis.require || null;\nglobalThis.module = globalThis.module || {};",
     },
@@ -314,19 +329,25 @@ export async function doBuild(
 
   if (development) {
     console.log("[watch] build started");
-    const nodeContext = await context(nodeOptions);
+    if (nodeOptions) {
+      const nodeContext = await context(nodeOptions);
+      await nodeContext.watch();
+    }
     const webviewContext = await context(webviewOptions);
-    const browserContext = await context(browserOptions);
-    await nodeContext.watch();
     await webviewContext.watch();
+    const browserContext = await context(browserOptions);
     await browserContext.watch();
   } else {
-    const nodeResult = await build(nodeOptions);
+    if (nodeOptions) {
+      const nodeResult = await build(nodeOptions);
+      if (metadata) {
+        fs.writeFileSync("meta-node.json", JSON.stringify(nodeResult.metafile));
+      }
+    }
     const webviewResult = await build(webviewOptions);
     const browserResult = await build(browserOptions);
 
     if (metadata) {
-      fs.writeFileSync("meta-node.json", JSON.stringify(nodeResult.metafile));
       fs.writeFileSync(
         "meta-webview.json",
         JSON.stringify(webviewResult.metafile)

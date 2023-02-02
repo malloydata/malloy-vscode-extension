@@ -88,6 +88,15 @@ async function doPublish(version: string) {
       pat: process.env.VSCE_PAT,
     });
   }
+
+  const packagePath = await doPackage("web", versionCode, preRelease);
+
+  await publishVSIX(packagePath, {
+    githubBranch: "main",
+    preRelease: preRelease,
+    useYarn: false,
+    pat: process.env.VSCE_PAT,
+  });
 }
 
 const args = process.argv.slice(2);

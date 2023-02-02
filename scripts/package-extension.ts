@@ -60,7 +60,10 @@ export async function doPackage(
   fs.copyFileSync("package.json", "package.json.original");
 
   packageJSON.version = version;
-  fs.writeFileSync("package.json", JSON.stringify(packageJSON));
+  if (target === "web") {
+    delete packageJSON["main"];
+  }
+  fs.writeFileSync("package.json", JSON.stringify(packageJSON, null, 2));
 
   try {
     await createVSIX({
