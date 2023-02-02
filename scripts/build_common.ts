@@ -215,6 +215,7 @@ export async function doBuild(
   };
 
   let nodeOptions: BuildOptions | null = null;
+  let browserOptions: BuildOptions | null = null;
   let nodeWebviewPlugins: Plugin[] = [];
 
   if (target !== "web") {
@@ -298,34 +299,36 @@ export async function doBuild(
     plugins: webviewPlugins,
   };
 
-  const browserPlugins: Plugin[] = [
-    svgrPlugin({
-      typescript: true,
-    }),
-  ];
+  if (target === "web") {
+    const browserPlugins: Plugin[] = [
+      svgrPlugin({
+        typescript: true,
+      }),
+    ];
 
-  // build the web extension
-  const browserOptions: BuildOptions = {
-    ...baseOptions,
-    entryPoints: [
-      "./src/extension/browser/extension_browser.ts",
-      "./src/server/browser/server_browser.ts",
-      "./src/worker/browser/worker_browser.ts",
-    ],
-    entryNames: "[name]",
-    format: "cjs",
-    platform: "browser",
-    external: ["vscode"],
-    define: {
-      "process.env.NODE_DEBUG": "false", // TODO this is a hack because some package we include assumed process.env exists :(
-      ...DEFINITIONS,
-    },
-    tsconfig: "./tsconfig.browser.json",
-    plugins: browserPlugins,
-    banner: {
-      js: "globalThis.require = globalThis.require || null;\nglobalThis.module = globalThis.module || {};",
-    },
-  };
+    // build the web extension
+    browserOptions = {
+      ...baseOptions,
+      entryPoints: [
+        "./src/extension/browser/extension_browser.ts",
+        "./src/server/browser/server_browser.ts",
+        "./src/worker/browser/worker_browser.ts",
+      ],
+      entryNames: "[name]",
+      format: "cjs",
+      platform: "browser",
+      external: ["vscode"],
+      define: {
+        "process.env.NODE_DEBUG": "false", // TODO this is a hack because some package we include assumed process.env exists :(
+        ...DEFINITIONS,
+      },
+      tsconfig: "./tsconfig.browser.json",
+      plugins: browserPlugins,
+      banner: {
+        js: "globalThis.require = globalThis.require || null;\nglobalThis.module = globalThis.module || {};",
+      },
+    };
+  }
 
   if (development) {
     console.log("[watch] build started");
@@ -335,8 +338,10 @@ export async function doBuild(
     }
     const webviewContext = await context(webviewOptions);
     await webviewContext.watch();
-    const browserContext = await context(browserOptions);
-    await browserContext.watch();
+    if (browserOptions) {
+      const browserContext = await context(browserOptions);
+      await browserContext.watch();
+    }
   } else {
     if (nodeOptions) {
       const nodeResult = await build(nodeOptions);
@@ -345,17 +350,20 @@ export async function doBuild(
       }
     }
     const webviewResult = await build(webviewOptions);
-    const browserResult = await build(browserOptions);
-
     if (metadata) {
       fs.writeFileSync(
         "meta-webview.json",
         JSON.stringify(webviewResult.metafile)
       );
-      fs.writeFileSync(
-        "meta-browser.json",
-        JSON.stringify(browserResult.metafile)
-      );
+    }
+    if (browserOptions) {
+      const browserResult = await build(browserOptions);
+      if (metadata) {
+        fs.writeFileSync(
+          "meta-browser.json",
+          JSON.stringify(browserResult.metafile)
+        );
+      }
     }
   }
 }
