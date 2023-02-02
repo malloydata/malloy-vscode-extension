@@ -300,11 +300,7 @@ export async function doBuild(
   };
 
   if (target === "web") {
-    const browserPlugins: Plugin[] = [
-      svgrPlugin({
-        typescript: true,
-      }),
-    ];
+    const browserPlugins: Plugin[] = [];
 
     // build the web extension
     browserOptions = {
