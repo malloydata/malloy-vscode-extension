@@ -27,6 +27,7 @@ import { Model, Runtime } from "@malloydata/malloy";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { ConnectionManager } from "../../common/connection_manager";
 import { TranslateCache } from "../types";
+import { fileURLToPath } from "url";
 
 export class TranslateCacheNode implements TranslateCache {
   cache = new Map<string, { model: Model; version: number }>();
@@ -40,7 +41,7 @@ export class TranslateCacheNode implements TranslateCache {
       return cached.getText();
     } else {
       // TODO catch a file read error
-      return fs.readFile(uri.toString(), "utf-8");
+      return fs.readFile(fileURLToPath(uri), "utf-8");
     }
   }
 
