@@ -49,6 +49,18 @@ export class WebConnectionFactory implements ConnectionFactory {
       return this.connectionCache[connectionConfig.name];
     }
     switch (connectionConfig.backend) {
+      // Hack to handle existing configs
+      // TODO(web) Maybe only have one duckdb backend.
+      case ConnectionBackend.DuckDB:
+        connectionConfig = {
+          ...connectionConfig,
+          backend: ConnectionBackend.DuckDBWASM,
+        };
+        connection = await createDuckDbWasmConnection(
+          connectionConfig,
+          configOptions
+        );
+        break;
       case ConnectionBackend.DuckDBWASM: {
         connection = await createDuckDbWasmConnection(
           connectionConfig,

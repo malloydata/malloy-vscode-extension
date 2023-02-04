@@ -61,7 +61,7 @@ export const ConnectionEditorList: React.FC<ConnectionEditorListProps> = ({
       ...connections,
       {
         name: "",
-        backend: ConnectionBackend.BigQuery,
+        backend: availableBackends[0],
         id: uuidv4(),
         isDefault: connections.length === 0,
       },
