@@ -44,7 +44,6 @@ export class WorkerURLReader implements URLReader {
 const reader = new WorkerURLReader();
 
 export class WorkerConnection implements BaseWorker {
-  worker!: Worker;
   listeners: Record<string, ListenerType[]> = {};
   constructor(_context: vscode.ExtensionContext) {
     workerLog.appendLine("Worker started");
@@ -75,12 +74,6 @@ export class WorkerConnection implements BaseWorker {
     this.listeners["message"].forEach((listener) => listener(message));
   }
 
-  notifyListeners(message: WorkerMessage): void {
-    Object.keys(this.listeners).forEach((event) => {
-      this.listeners[event].forEach((listener) => listener(message));
-    });
-  }
-
   on(event: string, listener: (message: WorkerMessage) => void): void {
     this.listeners[event] ??= [];
     this.listeners[event].push(listener);
@@ -95,6 +88,6 @@ export class WorkerConnection implements BaseWorker {
   }
 
   stop(): void {
-    this.worker.terminate();
+    // noop
   }
 }
