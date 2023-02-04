@@ -299,7 +299,7 @@ export async function doBuild(
     plugins: webviewPlugins,
   };
 
-  if (target === "web") {
+  if (!target || target === "web") {
     const browserPlugins: Plugin[] = [];
 
     // build the web extension
