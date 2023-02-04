@@ -31,6 +31,7 @@ export const log = (message: string): void => {
   if (typeof process !== "undefined") {
     process.send?.(msg);
   } else {
-    self.postMessage(msg);
+    // self.postMessage(msg);
+    console.log("Malloy Worker", msg);
   }
 };
