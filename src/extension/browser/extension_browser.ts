@@ -28,7 +28,8 @@ import {
   LanguageClientOptions,
 } from "vscode-languageclient/browser";
 
-import { WorkerConnection } from "../../worker/browser/worker_connection";
+// import { WorkerConnection } from "../../worker/browser/worker_connection";
+import { WorkerConnection } from "../../worker/browser/workerless_worker";
 import { setupSubscriptions } from "../subscriptions";
 import { MalloyConfig } from "../types";
 import { connectionManager } from "./connection_manager";
