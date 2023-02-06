@@ -25,6 +25,7 @@ import React from "react";
 import styled from "styled-components";
 import {
   ConnectionBackend,
+  ConnectionBackendNames,
   ConnectionConfig,
 } from "../../../../common/connection_manager_types";
 import { ConnectionMessageTest } from "../../../message_types";
@@ -64,15 +65,15 @@ export const ConnectionEditor: React.FC<ConnectionEditorProps> = ({
   makeDefault,
   availableBackends,
 }) => {
-  const allBackendOptions: { value: ConnectionBackend; label: string }[] = [
-    { value: ConnectionBackend.BigQuery, label: "BigQuery" },
-    { value: ConnectionBackend.Postgres, label: "Postgres" },
-    { value: ConnectionBackend.DuckDB, label: "DuckDB" },
+  const allBackendOptions: ConnectionBackend[] = [
+    ConnectionBackend.BigQuery,
+    ConnectionBackend.Postgres,
+    ConnectionBackend.DuckDB,
   ];
 
-  const backendOptions = allBackendOptions.filter((option) =>
-    availableBackends.includes(option.value)
-  );
+  const backendOptions = allBackendOptions
+    .filter((option) => availableBackends.includes(option))
+    .map((value) => ({ value, label: ConnectionBackendNames[value] }));
 
   return (
     <ConnectionEditorBox>

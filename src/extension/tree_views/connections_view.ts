@@ -25,7 +25,6 @@ import * as vscode from "vscode";
 import { Utils } from "vscode-uri";
 
 import {
-  ConnectionBackend,
   ConnectionBackendNames,
   ConnectionConfig,
   getDefaultIndex,
