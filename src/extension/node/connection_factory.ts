@@ -106,6 +106,7 @@ export class DesktopConnectionFactory implements ConnectionFactory {
         backend: ConnectionBackend.BigQuery,
         id: "bigquery-default",
         isDefault: !configs.find((config) => config.isDefault),
+        isGenerated: true,
       });
     }
 
@@ -116,6 +117,7 @@ export class DesktopConnectionFactory implements ConnectionFactory {
         backend: ConnectionBackend.DuckDB,
         id: "duckdb-default",
         isDefault: false,
+        isGenerated: true,
       });
     }
     return configs;

@@ -25,19 +25,30 @@ export enum ConnectionBackend {
   BigQuery = "bigquery",
   Postgres = "postgres",
   DuckDB = "duckdb",
-  DuckDBWASM = "duckdb_wasm",
+  DuckDBWASM_DEPRECATED = "duckdb_wasm",
 }
+
+export const ConnectionBackendNames: Record<ConnectionBackend, string> = {
+  [ConnectionBackend.BigQuery]: "BigQuery",
+  [ConnectionBackend.Postgres]: "Postgres",
+  [ConnectionBackend.DuckDB]: "DuckDB",
+  [ConnectionBackend.DuckDBWASM_DEPRECATED]: "duckdDuckDBb_wasm",
+};
 
 /*
  * NOTE: These should be kept in sync with the "malloy.connections"
  * section of the extension "configuration" definition in package.json
  */
 
-export interface BigQueryConnectionConfig {
-  backend: ConnectionBackend.BigQuery;
+export interface BaseConnectionConfig {
   name: string;
   isDefault: boolean;
   id: string;
+  isGenerated?: boolean; // Not part of VS Code configuration
+}
+
+export interface BigQueryConnectionConfig extends BaseConnectionConfig {
+  backend: ConnectionBackend.BigQuery;
   serviceAccountKeyPath?: string;
   projectName?: string;
   location?: string;
@@ -45,11 +56,8 @@ export interface BigQueryConnectionConfig {
   timeoutMs?: string;
 }
 
-export interface PostgresConnectionConfig {
+export interface PostgresConnectionConfig extends BaseConnectionConfig {
   backend: ConnectionBackend.Postgres;
-  name: string;
-  isDefault: boolean;
-  id: string;
   username?: string;
   password?: string;
   host?: string;
@@ -58,19 +66,14 @@ export interface PostgresConnectionConfig {
   useKeychainPassword?: boolean;
 }
 
-export interface DuckDBConnectionConfig {
+export interface DuckDBConnectionConfig extends BaseConnectionConfig {
   backend: ConnectionBackend.DuckDB;
-  name: string;
-  isDefault: boolean;
-  id: string;
   workingDirectory?: string;
 }
 
-export interface DuckDBWASMConnectionConfig {
-  backend: ConnectionBackend.DuckDBWASM;
-  name: string;
-  isDefault: boolean;
-  id: string;
+export interface DuckDBWASMConnectionConfigDeprecated
+  extends BaseConnectionConfig {
+  backend: ConnectionBackend.DuckDBWASM_DEPRECATED;
   workingDirectory?: string;
 }
 
@@ -78,7 +81,7 @@ export type ConnectionConfig =
   | BigQueryConnectionConfig
   | PostgresConnectionConfig
   | DuckDBConnectionConfig
-  | DuckDBWASMConnectionConfig;
+  | DuckDBWASMConnectionConfigDeprecated;
 
 export interface ConfigOptions {
   workingDirectory: string;

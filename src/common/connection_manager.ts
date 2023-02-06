@@ -111,6 +111,10 @@ export class ConnectionManager {
     return this.currentRowLimit;
   }
 
+  public getAllConnectionConfigs() {
+    return this.configList;
+  }
+
   public getConnectionConfigs() {
     return this.filterUnavailableConnectionBackends(this.configList);
   }

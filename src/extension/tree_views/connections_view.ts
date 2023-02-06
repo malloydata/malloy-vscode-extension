@@ -25,7 +25,8 @@ import * as vscode from "vscode";
 import { Utils } from "vscode-uri";
 
 import {
-  ConnectionBackend,
+  ConnectionBackendNames,
+  ConnectionConfig,
   getDefaultIndex,
 } from "../../common/connection_manager_types";
 import connectionIcon from "../../media/database.svg";
@@ -56,15 +57,16 @@ export class ConnectionsProvider
 
   async getChildren(element?: ConnectionItem): Promise<ConnectionItem[]> {
     if (element === undefined) {
-      const config = this.connectionManager.getConnectionConfigs();
+      const availableBackends = this.connectionManager.getAvailableBackends();
+      const config = this.connectionManager.getAllConnectionConfigs();
       const defaultIndex = getDefaultIndex(config);
       return config.map(
         (config, index) =>
           new ConnectionItem(
             this.context,
-            config.name,
-            config.backend,
-            index === defaultIndex
+            config,
+            index === defaultIndex,
+            availableBackends.includes(config.backend)
           )
       );
     } else {
@@ -76,18 +78,15 @@ export class ConnectionsProvider
 class ConnectionItem extends vscode.TreeItem {
   constructor(
     private context: vscode.ExtensionContext,
-    public name: string,
-    public backend: string,
-    public isDefault: boolean
+    config: ConnectionConfig,
+    isDefault: boolean,
+    isAvailable: boolean
   ) {
-    super(name, vscode.TreeItemCollapsibleState.None);
-    const backendName =
-      backend === ConnectionBackend.BigQuery
-        ? "BigQuery"
-        : backend === ConnectionBackend.Postgres
-        ? "Postgres"
-        : "DuckDB";
-    this.description = `(${backendName}${isDefault ? ", default" : ""})`;
+    super(config.name, vscode.TreeItemCollapsibleState.None);
+    const backendName = ConnectionBackendNames[config.backend];
+    this.description = `(${backendName}${isDefault ? ", default" : ""}${
+      config.isGenerated ? ", automatically generated" : ""
+    }) ${isAvailable ? "" : "(Not available)"}`;
 
     const uri = this.context.extensionUri;
     this.iconPath = {

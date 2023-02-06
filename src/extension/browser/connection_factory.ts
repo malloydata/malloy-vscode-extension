@@ -34,7 +34,7 @@ export class WebConnectionFactory implements ConnectionFactory {
   connectionCache: Record<string, TestableConnection> = {};
 
   getAvailableBackends(): ConnectionBackend[] {
-    return [ConnectionBackend.DuckDBWASM];
+    return [ConnectionBackend.DuckDB];
   }
 
   async getConnectionForConfig(
@@ -49,19 +49,18 @@ export class WebConnectionFactory implements ConnectionFactory {
       return this.connectionCache[connectionConfig.name];
     }
     switch (connectionConfig.backend) {
-      // Hack to handle existing configs
-      // TODO(web) Maybe only have one duckdb backend.
-      case ConnectionBackend.DuckDB:
+      // Hack to handle existing configs.
+      case ConnectionBackend.DuckDBWASM_DEPRECATED:
         connectionConfig = {
           ...connectionConfig,
-          backend: ConnectionBackend.DuckDBWASM,
+          backend: ConnectionBackend.DuckDB,
         };
         connection = await createDuckDbWasmConnection(
           connectionConfig,
           configOptions
         );
         break;
-      case ConnectionBackend.DuckDBWASM: {
+      case ConnectionBackend.DuckDB: {
         connection = await createDuckDbWasmConnection(
           connectionConfig,
           configOptions
@@ -86,9 +85,10 @@ export class WebConnectionFactory implements ConnectionFactory {
     if (!configs.find((config) => config.name === "duckdb")) {
       configs.push({
         name: "duckdb",
-        backend: ConnectionBackend.DuckDBWASM,
+        backend: ConnectionBackend.DuckDB,
         id: "duckdb-default",
         isDefault: false,
+        isGenerated: true,
       });
     }
     return configs;

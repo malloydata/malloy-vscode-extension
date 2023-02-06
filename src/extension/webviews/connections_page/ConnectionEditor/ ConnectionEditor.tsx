@@ -25,6 +25,7 @@ import React from "react";
 import styled from "styled-components";
 import {
   ConnectionBackend,
+  ConnectionBackendNames,
   ConnectionConfig,
 } from "../../../../common/connection_manager_types";
 import { ConnectionMessageTest } from "../../../message_types";
@@ -40,7 +41,6 @@ import { Label } from "./Label";
 import { LabelCell } from "./LabelCell";
 import { PostgresConnectionEditor } from "./PostgresConnectionEditor";
 import { DuckDBConnectionEditor } from "./DuckDBConnectionEditor";
-import { DuckDBWASMConnectionEditor } from "./DuckDBWASMConnectionEditor";
 
 interface ConnectionEditorProps {
   config: ConnectionConfig;
@@ -65,16 +65,15 @@ export const ConnectionEditor: React.FC<ConnectionEditorProps> = ({
   makeDefault,
   availableBackends,
 }) => {
-  const allBackendOptions: { value: ConnectionBackend; label: string }[] = [
-    { value: ConnectionBackend.BigQuery, label: "BigQuery" },
-    { value: ConnectionBackend.Postgres, label: "Postgres" },
-    { value: ConnectionBackend.DuckDB, label: "DuckDB" },
-    { value: ConnectionBackend.DuckDBWASM, label: "DuckDB" },
+  const allBackendOptions: ConnectionBackend[] = [
+    ConnectionBackend.BigQuery,
+    ConnectionBackend.Postgres,
+    ConnectionBackend.DuckDB,
   ];
 
-  const backendOptions = allBackendOptions.filter((option) =>
-    availableBackends.includes(option.value)
-  );
+  const backendOptions = allBackendOptions
+    .filter((option) => availableBackends.includes(option))
+    .map((value) => ({ value, label: ConnectionBackendNames[value] }));
 
   return (
     <ConnectionEditorBox>
@@ -129,8 +128,6 @@ export const ConnectionEditor: React.FC<ConnectionEditorProps> = ({
         <PostgresConnectionEditor config={config} setConfig={setConfig} />
       ) : config.backend === ConnectionBackend.DuckDB ? (
         <DuckDBConnectionEditor config={config} setConfig={setConfig} />
-      ) : config.backend === ConnectionBackend.DuckDBWASM ? (
-        <DuckDBWASMConnectionEditor config={config} setConfig={setConfig} />
       ) : (
         <div>Unknown Connection Type</div>
       )}
