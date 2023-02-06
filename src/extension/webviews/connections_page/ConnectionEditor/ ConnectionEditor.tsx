@@ -40,7 +40,6 @@ import { Label } from "./Label";
 import { LabelCell } from "./LabelCell";
 import { PostgresConnectionEditor } from "./PostgresConnectionEditor";
 import { DuckDBConnectionEditor } from "./DuckDBConnectionEditor";
-import { DuckDBWASMConnectionEditor } from "./DuckDBWASMConnectionEditor";
 
 interface ConnectionEditorProps {
   config: ConnectionConfig;
@@ -69,7 +68,6 @@ export const ConnectionEditor: React.FC<ConnectionEditorProps> = ({
     { value: ConnectionBackend.BigQuery, label: "BigQuery" },
     { value: ConnectionBackend.Postgres, label: "Postgres" },
     { value: ConnectionBackend.DuckDB, label: "DuckDB" },
-    { value: ConnectionBackend.DuckDBWASM, label: "DuckDB" },
   ];
 
   const backendOptions = allBackendOptions.filter((option) =>
@@ -129,8 +127,6 @@ export const ConnectionEditor: React.FC<ConnectionEditorProps> = ({
         <PostgresConnectionEditor config={config} setConfig={setConfig} />
       ) : config.backend === ConnectionBackend.DuckDB ? (
         <DuckDBConnectionEditor config={config} setConfig={setConfig} />
-      ) : config.backend === ConnectionBackend.DuckDBWASM ? (
-        <DuckDBWASMConnectionEditor config={config} setConfig={setConfig} />
       ) : (
         <div>Unknown Connection Type</div>
       )}
