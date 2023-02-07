@@ -31,7 +31,7 @@ export function getWebviewHtml(
   const cspSrc = webview.cspSource;
 
   const nonce = getNonce();
-  return `<!DOCTYPE html>
+  return /*html*/ `<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8">
@@ -110,7 +110,7 @@ export function getWebviewHtml(
               </g>
             </svg>
           </div>
-        </HorizontalCenter>
+        </div>
       </div>
     </div>
   </body>

@@ -32,6 +32,6 @@ export const log = (message: string): void => {
     process.send?.(msg);
   } else {
     // self.postMessage(msg);
-    console.log("Malloy Worker", msg);
+    console.log("Malloy Worker", msg.message);
   }
 };
