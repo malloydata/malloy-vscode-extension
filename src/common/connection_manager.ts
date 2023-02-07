@@ -77,6 +77,7 @@ export class ConnectionManager {
     // Force existing connections to be regenerated
     this.configList = connectionsConfig;
     this.buildConfigMap();
+    this.connectionFactory.reset();
   }
 
   public async connectionForConfig(

@@ -29,6 +29,8 @@ import {
 import { TestableConnection } from "@malloydata/malloy";
 
 export interface ConnectionFactory {
+  reset(): void;
+
   getAvailableBackends(): ConnectionBackend[];
 
   getConnectionForConfig(
