@@ -33,11 +33,17 @@ import { createDuckDbConnection } from "../../common/connections/duckdb_connecti
 import { createPostgresConnection } from "../../common/connections/postgres_connection";
 import { isDuckDBAvailable } from "../../common/duckdb_availability";
 
-import * as path from "path";
 import { fileURLToPath } from "url";
 
 export class DesktopConnectionFactory implements ConnectionFactory {
   connectionCache: Record<string, TestableConnection> = {};
+
+  reset() {
+    Object.values(this.connectionCache).forEach((connection) =>
+      connection.close()
+    );
+    this.connectionCache = {};
+  }
 
   getAvailableBackends(): ConnectionBackend[] {
     const available = [ConnectionBackend.BigQuery, ConnectionBackend.Postgres];
@@ -53,11 +59,12 @@ export class DesktopConnectionFactory implements ConnectionFactory {
       workingDirectory: "/",
     }
   ): Promise<TestableConnection> {
-    const { useCache } = configOptions;
+    const { useCache, workingDirectory } = configOptions;
+    const cacheKey = `${connectionConfig.name}::${workingDirectory}`;
 
     let connection: TestableConnection;
-    if (useCache && this.connectionCache[connectionConfig.name]) {
-      return this.connectionCache[connectionConfig.name];
+    if (useCache && this.connectionCache[cacheKey]) {
+      return this.connectionCache[cacheKey];
     }
     switch (connectionConfig.backend) {
       case ConnectionBackend.BigQuery:
@@ -82,16 +89,19 @@ export class DesktopConnectionFactory implements ConnectionFactory {
       }
     }
     if (useCache) {
-      this.connectionCache[connectionConfig.name] = connection;
+      this.connectionCache[cacheKey] = connection;
     }
 
     return connection;
   }
 
   getWorkingDirectory(url: URL): string {
-    let workingDirectory = "/";
-    if (url.protocol === "file:") {
-      workingDirectory = path.dirname(fileURLToPath(url));
+    let workingDirectory: string;
+    const baseUrl = new URL(".", url);
+    if (baseUrl.protocol === "file:") {
+      workingDirectory = fileURLToPath(baseUrl);
+    } else {
+      workingDirectory = baseUrl.toString();
     }
     return workingDirectory;
   }

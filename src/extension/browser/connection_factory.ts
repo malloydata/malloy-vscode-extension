@@ -33,6 +33,13 @@ import { createDuckDbWasmConnection } from "../../common/connections/duckdb_wasm
 export class WebConnectionFactory implements ConnectionFactory {
   connectionCache: Record<string, TestableConnection> = {};
 
+  reset() {
+    Object.values(this.connectionCache).forEach((connection) =>
+      connection.close()
+    );
+    this.connectionCache = {};
+  }
+
   getAvailableBackends(): ConnectionBackend[] {
     return [ConnectionBackend.DuckDB];
   }
@@ -43,10 +50,11 @@ export class WebConnectionFactory implements ConnectionFactory {
       workingDirectory: "/",
     }
   ): Promise<TestableConnection> {
-    const { useCache } = configOptions;
+    const { useCache, workingDirectory } = configOptions;
+    const cacheKey = `${connectionConfig.name}::${workingDirectory}`;
     let connection: TestableConnection;
-    if (useCache && this.connectionCache[connectionConfig.name]) {
-      return this.connectionCache[connectionConfig.name];
+    if (useCache && this.connectionCache[cacheKey]) {
+      return this.connectionCache[cacheKey];
     }
     switch (connectionConfig.backend) {
       // Hack to handle existing configs.
@@ -69,7 +77,7 @@ export class WebConnectionFactory implements ConnectionFactory {
       }
     }
     if (useCache) {
-      this.connectionCache[connectionConfig.name] = connection;
+      this.connectionCache[cacheKey] = connection;
     }
 
     return connection;
