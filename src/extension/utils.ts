@@ -41,8 +41,6 @@ export async function fetchFile(uri: string): Promise<string> {
 
 export class VSCodeURLReader implements URLReader {
   async readURL(url: URL): Promise<string> {
-    const uri = vscode.Uri.parse(url.toString());
-    const buffer = await vscode.workspace.fs.readFile(uri);
-    return new TextDecoder("utf-8").decode(buffer);
+    return fetchFile(url.toString());
   }
 }

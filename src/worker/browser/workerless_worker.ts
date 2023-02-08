@@ -21,25 +21,15 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* eslint-disable no-console */
 import * as vscode from "vscode";
-import { URLReader } from "@malloydata/malloy";
-import { fetchFile } from "../../extension/utils";
+import { VSCodeURLReader as WorkerURLReader } from "../../extension/utils";
 import { BaseWorker, Message, WorkerMessage } from "../types";
-const workerLog = vscode.window.createOutputChannel("Malloy Worker");
-import { refreshConfig } from "../refresh_config";
-import { connectionManager } from "../../server/browser/connections_browser";
+import { connectionManager } from "../../extension/browser/connection_manager";
 import { cancelQuery, runQuery } from "../run_query";
 
-// const DEFAULT_RESTART_SECONDS = 1;
+const workerLog = vscode.window.createOutputChannel("Malloy Worker");
 
 export type ListenerType = (message: WorkerMessage) => void;
-
-export class WorkerURLReader implements URLReader {
-  async readURL(url: URL): Promise<string> {
-    return fetchFile(url.toString());
-  }
-}
 
 const reader = new WorkerURLReader();
 
@@ -52,7 +42,8 @@ export class WorkerConnection implements BaseWorker {
   send(message: Message): void {
     switch (message.type) {
       case "config":
-        refreshConfig(connectionManager, message);
+        // Shared with extension
+        // refreshConfig(connectionManager, message);
         break;
       case "cancel":
         cancelQuery(message);
@@ -74,12 +65,12 @@ export class WorkerConnection implements BaseWorker {
     this.listeners["message"].forEach((listener) => listener(message));
   }
 
-  on(event: string, listener: (message: WorkerMessage) => void): void {
+  on(event: string, listener: ListenerType): void {
     this.listeners[event] ??= [];
     this.listeners[event].push(listener);
   }
 
-  off(event: string, listener: (message: WorkerMessage) => void): void {
+  off(event: string, listener: ListenerType): void {
     if (this.listeners[event]) {
       this.listeners[event] = this.listeners[event].filter(
         (l) => l !== listener
