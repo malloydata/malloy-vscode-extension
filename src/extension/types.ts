@@ -31,3 +31,7 @@ export interface MalloyConfig {
   /** Connections for Malloy to use to access data when compiling and querying. */
   connections: ConnectionConfig[];
 }
+
+export interface FetchBinaryFileEvent {
+  uri: string;
+}

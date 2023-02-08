@@ -22,14 +22,11 @@
  */
 
 import {
-  createConnection,
   TextDocuments,
   InitializeParams,
   TextDocumentSyncKind,
   InitializeResult,
   SemanticTokensBuilder,
-  BrowserMessageReader,
-  BrowserMessageWriter,
   CompletionItem,
   HoverParams,
   Hover,
@@ -45,7 +42,7 @@ import {
   stubMalloyHighlights,
 } from "../highlights";
 import { getMalloyLenses } from "../lenses";
-import { connectionManager } from "./connections_browser";
+import { connection, connectionManager } from "./connections_browser";
 import {
   getCompletionItems,
   resolveCompletionItem,
@@ -55,11 +52,6 @@ import { getMalloyDefinitionReference } from "../definitions/definitions";
 import { TranslateCacheBrowser } from "./translate_cache";
 
 console.info("Server loaded");
-
-const messageReader = new BrowserMessageReader(self);
-const messageWriter = new BrowserMessageWriter(self);
-
-const connection = createConnection(messageReader, messageWriter);
 
 const documents = new TextDocuments(TextDocument);
 let haveConnectionsBeenSet = false;

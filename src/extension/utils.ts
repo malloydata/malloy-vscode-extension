@@ -39,6 +39,17 @@ export async function fetchFile(uri: string): Promise<string> {
   }
 }
 
+export async function fetchBinaryFile(
+  uri: string
+): Promise<Uint8Array | undefined> {
+  try {
+    return await vscode.workspace.fs.readFile(vscode.Uri.parse(uri));
+  } catch (error) {
+    console.error(error);
+  }
+  return undefined;
+}
+
 export class VSCodeURLReader implements URLReader {
   async readURL(url: URL): Promise<string> {
     return fetchFile(url.toString());
