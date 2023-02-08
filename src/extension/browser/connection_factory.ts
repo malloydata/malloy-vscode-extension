@@ -29,13 +29,20 @@ import {
   ConnectionConfig,
 } from "../../common/connection_manager_types";
 import { createDuckDbWasmConnection } from "../../common/connections/duckdb_wasm_connection";
+import { DuckDBWASMConnection } from "@malloydata/db-duckdb/wasm";
+
+export type FetchCallback = (uri: string) => Promise<Uint8Array>;
 
 export class WebConnectionFactory implements ConnectionFactory {
   connectionCache: Record<string, TestableConnection> = {};
 
-  reset() {
-    Object.values(this.connectionCache).forEach((connection) =>
-      connection.close()
+  constructor(private fetchBinaryFile?: FetchCallback) {}
+
+  async reset() {
+    await Promise.all(
+      Object.values(this.connectionCache).map((connection) =>
+        connection.close()
+      )
     );
     this.connectionCache = {};
   }
@@ -57,27 +64,29 @@ export class WebConnectionFactory implements ConnectionFactory {
       return this.connectionCache[cacheKey];
     }
     switch (connectionConfig.backend) {
-      // Hack to handle existing configs.
-      case ConnectionBackend.DuckDBWASM_DEPRECATED:
-        connectionConfig = {
-          ...connectionConfig,
-          backend: ConnectionBackend.DuckDB,
-        };
-        connection = await createDuckDbWasmConnection(
-          connectionConfig,
-          configOptions
-        );
+      case ConnectionBackend.DuckDB:
+        {
+          const remoteTableCallback = async (tableName: string) => {
+            if (this.fetchBinaryFile) {
+              const url = new URL(tableName, workingDirectory);
+              return this.fetchBinaryFile(url.toString());
+            }
+            return undefined;
+          };
+          const duckDBConnection: DuckDBWASMConnection =
+            await createDuckDbWasmConnection(connectionConfig, configOptions);
+          duckDBConnection.registerRemoteTableCallback(remoteTableCallback);
+          connection = duckDBConnection;
+        }
         break;
-      case ConnectionBackend.DuckDB: {
-        connection = await createDuckDbWasmConnection(
-          connectionConfig,
-          configOptions
-        );
-        break;
-      }
     }
     if (useCache) {
       this.connectionCache[cacheKey] = connection;
+    }
+    if (!connection) {
+      throw new Error(
+        `Unsupported connection back end "${connectionConfig.backend}"`
+      );
     }
 
     return connection;

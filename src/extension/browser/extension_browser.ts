@@ -31,11 +31,11 @@ import {
 // import { WorkerConnection } from "../../worker/browser/worker_connection";
 import { WorkerConnection } from "../../worker/browser/workerless_worker";
 import { setupSubscriptions } from "../subscriptions";
-import { MalloyConfig } from "../types";
+import { FetchBinaryFileEvent, MalloyConfig } from "../types";
 import { connectionManager } from "./connection_manager";
 import { ConnectionsProvider } from "../tree_views/connections_view";
 import { editConnectionsCommand } from "./commands/edit_connections";
-import { VSCodeURLReader } from "../utils";
+import { fetchBinaryFile, VSCodeURLReader } from "../utils";
 import { setWorker } from "../../worker/worker";
 
 let client: LanguageClient;
@@ -79,7 +79,9 @@ export async function deactivate(): Promise<void> | undefined {
   }
 }
 
-function setupLanguageServer(context: vscode.ExtensionContext): void {
+async function setupLanguageServer(
+  context: vscode.ExtensionContext
+): Promise<void> {
   const documentSelector = [{ language: "malloy" }];
 
   // Options to control the language client
@@ -93,7 +95,13 @@ function setupLanguageServer(context: vscode.ExtensionContext): void {
 
   const client = createWorkerLanguageClient(context, clientOptions);
 
-  client.start();
+  await client.start();
+  client.onRequest(
+    "malloy/fetchBinaryFile",
+    async (event: FetchBinaryFileEvent) => {
+      return await fetchBinaryFile(event.uri);
+    }
+  );
 }
 
 function sendWorkerConfig() {

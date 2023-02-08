@@ -21,10 +21,31 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import {
+  createConnection,
+  BrowserMessageReader,
+  BrowserMessageWriter,
+} from "vscode-languageserver/browser";
 import { ConnectionManager } from "../../common/connection_manager";
 import { WebConnectionFactory } from "../../extension/browser/connection_factory";
 
+const messageReader = new BrowserMessageReader(self);
+const messageWriter = new BrowserMessageWriter(self);
+
+export const connection = createConnection(messageReader, messageWriter);
+
+const fetchBinaryFile = async (
+  uri: string
+): Promise<Uint8Array | undefined> => {
+  try {
+    return await connection.sendRequest("malloy/fetchBinaryFile", { uri });
+  } catch (error) {
+    console.error(error);
+  }
+  return undefined;
+};
+
 export const connectionManager = new ConnectionManager(
-  new WebConnectionFactory(),
+  new WebConnectionFactory(fetchBinaryFile),
   []
 );
