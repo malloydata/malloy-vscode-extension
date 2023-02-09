@@ -31,11 +31,11 @@ import {
 // import { WorkerConnection } from "../../worker/browser/worker_connection";
 import { WorkerConnection } from "../../worker/browser/workerless_worker";
 import { setupSubscriptions } from "../subscriptions";
-import { FetchBinaryFileEvent, MalloyConfig } from "../types";
+import { FetchBinaryFileEvent, FetchFileEvent, MalloyConfig } from "../types";
 import { connectionManager } from "./connection_manager";
 import { ConnectionsProvider } from "../tree_views/connections_view";
 import { editConnectionsCommand } from "./commands/edit_connections";
-import { fetchBinaryFile, VSCodeURLReader } from "../utils";
+import { fetchFile, fetchBinaryFile, VSCodeURLReader } from "../utils";
 import { setWorker } from "../../worker/worker";
 
 let client: LanguageClient;
@@ -96,9 +96,16 @@ async function setupLanguageServer(
   const client = createWorkerLanguageClient(context, clientOptions);
 
   await client.start();
+
+  client.onRequest("malloy/fetchFile", async (event: FetchFileEvent) => {
+    console.info("fetchFile returning", event.uri);
+    return await fetchFile(event.uri);
+  });
+
   client.onRequest(
     "malloy/fetchBinaryFile",
     async (event: FetchBinaryFileEvent) => {
+      console.info("fetchBinaryFile returning", event.uri);
       return await fetchBinaryFile(event.uri);
     }
   );
