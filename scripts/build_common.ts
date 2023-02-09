@@ -23,6 +23,7 @@
 
 /* eslint-disable no-console */
 import fs from "fs";
+import * as babel from "@babel/core";
 import { build, BuildOptions, context, Plugin } from "esbuild";
 import { nativeNodeModulesPlugin } from "../third_party/github.com/evanw/esbuild/native-modules-plugin";
 import * as path from "path";
@@ -33,6 +34,40 @@ import { fetchKeytar, targetKeytarMap } from "./utils/fetch_keytar";
 import { fetchDuckDB, targetDuckDBMap } from "./utils/fetch_duckdb";
 
 import { generateDisclaimer } from "./license_disclaimer";
+
+const babelPlugin: Plugin = {
+  name: "babel",
+
+  setup(build) {
+    const transformContents = async ({ args, contents }) => {
+      const loadConfig = {
+        presets: [
+          [
+            "@babel/preset-env",
+            {
+              targets: {
+                node: "current",
+              },
+            },
+          ],
+          ["@babel/typescript", {}],
+        ],
+        filename: path.relative(__dirname, args.path),
+      };
+      const options = babel.loadOptions(loadConfig);
+      const result = await babel.transformAsync(contents, options!);
+      const code = result!.code!;
+
+      return { contents: code };
+    };
+
+    build.onLoad({ filter: /.*\.tsx?/, namespace: "" }, async (args) => {
+      const contents = await fs.promises.readFile(args.path, "utf8");
+
+      return await transformContents({ args, contents });
+    });
+  },
+};
 
 export type Target =
   | "linux-x64"
@@ -232,7 +267,7 @@ export async function doBuild(
       }
     }
     const duckDBPlugin = makeDuckdbNoNodePreGypPlugin(target);
-    const extensionPlugins = [duckDBPlugin];
+    const extensionPlugins = [babelPlugin, duckDBPlugin];
 
     if (development) {
       extensionPlugins.push(noNodeModulesSourceMaps);
