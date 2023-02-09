@@ -26,6 +26,7 @@ import { Model, Runtime } from "@malloydata/malloy";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { ConnectionManager } from "../../common/connection_manager";
 import { TranslateCache } from "../types";
+import { connection } from "./connections_browser";
 
 export class TranslateCacheBrowser implements TranslateCache {
   cache = new Map<string, { model: Model; version: number }>();
@@ -37,6 +38,9 @@ export class TranslateCacheBrowser implements TranslateCache {
     const cached = documents.get(uri.toString());
     if (cached) {
       return cached.getText();
+    } else {
+      console.info("fetchFile requesting", uri);
+      return await connection.sendRequest("malloy/fetchFile", { uri });
     }
   }
 

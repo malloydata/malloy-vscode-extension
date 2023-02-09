@@ -32,6 +32,10 @@ export interface MalloyConfig {
   connections: ConnectionConfig[];
 }
 
+export interface FetchFileEvent {
+  uri: string;
+}
+
 export interface FetchBinaryFileEvent {
   uri: string;
 }

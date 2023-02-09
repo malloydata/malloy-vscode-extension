@@ -38,6 +38,7 @@ const fetchBinaryFile = async (
   uri: string
 ): Promise<Uint8Array | undefined> => {
   try {
+    console.info("fetchBinaryFile requesting", uri);
     return await connection.sendRequest("malloy/fetchBinaryFile", { uri });
   } catch (error) {
     console.error(error);
