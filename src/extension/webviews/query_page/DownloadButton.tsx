@@ -26,7 +26,7 @@ import styled from "styled-components";
 import { QueryDownloadOptions } from "../../message_types";
 import { Popover } from "../components/Popover";
 import { DownloadForm } from "./DownloadForm";
-import DownloadIcon from "../assets/download_hover.svg";
+import DownloadIcon from "../assets/download_hover";
 
 interface DownloadButtonProps {
   onDownload: (options: QueryDownloadOptions) => Promise<void>;

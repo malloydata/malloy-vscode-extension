@@ -20,61 +20,51 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+import React, { SVGProps } from "react";
 
-import React from "react";
-import styled, { keyframes } from "styled-components";
-import SpinnerSVG from "../../assets/spinner";
+const SvgCopy = (props: SVGProps<SVGSVGElement>) => (
+  <svg
+    width="110px"
+    height="110px"
+    viewBox="0 0 110 110"
+    version="1.1"
+    xmlns="http://www.w3.org/2000/svg"
+    xmlnsXlink="http://www.w3.org/1999/xlink"
+    {...props}
+  >
+    <title>Copy HTML to Clipboard</title>
+    <g
+      id="item_duplicate"
+      stroke="none"
+      stroke-width="1"
+      fill="none"
+      fill-rule="evenodd"
+    >
+      <rect
+        id="Rectangle"
+        stroke="#4285F4"
+        className="primarystroke"
+        stroke-width="6"
+        x="29.4307692"
+        y="24"
+        width="30.0923077"
+        height="41.7692308"
+        rx="5"
+      ></rect>
+      <rect
+        id="Rectangle-Copy"
+        stroke="#4285F4"
+        className="primarystroke"
+        stroke-width="6"
+        fill="none"
+        x="47.4769231"
+        y="45.2307692"
+        width="30.0923077"
+        height="41.7692308"
+        rx="5"
+      ></rect>
+    </g>
+  </svg>
+);
 
-interface SpinnerProps {
-  text: string;
-}
-
-export const Spinner: React.FC<SpinnerProps> = ({ text }) => {
-  return (
-    <VerticalCenter>
-      <HorizontalCenter>
-        <Label>{text}</Label>
-        <SpinningSVG>
-          <SpinnerSVG />
-        </SpinningSVG>
-      </HorizontalCenter>
-    </VerticalCenter>
-  );
-};
-
-const rotation = keyframes`
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(359deg);
-  }
-`;
-
-const SpinningSVG = styled.div`
-  width: 25px;
-  height: 25px;
-  animation: ${rotation} 2s infinite linear;
-`;
-
-const Label = styled.div`
-  margin-bottom: 10px;
-  color: var(--malloy-title-color, #505050);
-  font-size: 15px;
-`;
-
-const VerticalCenter = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  flex: 1 0 auto;
-  width: 100%;
-  height: 100%;
-`;
-
-const HorizontalCenter = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-`;
+export default SvgCopy;

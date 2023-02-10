@@ -40,19 +40,15 @@ const babelPlugin: Plugin = {
 
   setup(build) {
     const transformContents = async ({ args, contents }) => {
-      const loadConfig = {
+      const filename = path.relative(__dirname, args.path);
+      const loadConfig: babel.TransformOptions = {
         presets: [
-          [
-            "@babel/preset-env",
-            {
-              targets: {
-                node: "current",
-              },
-            },
-          ],
-          ["@babel/typescript", {}],
+          "@babel/preset-env",
+          "@babel/typescript",
+          "@babel/preset-react",
         ],
-        filename: path.relative(__dirname, args.path),
+        sourceType: "unambiguous",
+        filename,
       };
       const options = babel.loadOptions(loadConfig);
       const result = await babel.transformAsync(contents, options!);
@@ -61,7 +57,11 @@ const babelPlugin: Plugin = {
       return { contents: code };
     };
 
-    build.onLoad({ filter: /.*\.tsx?/, namespace: "" }, async (args) => {
+    build.onLoad({ filter: /.(ts|tsx|js)$/, namespace: "" }, async (args) => {
+      const filename = path.relative(__dirname, args.path);
+      if (filename.match(/duckdb-binding\.js/)) {
+        return;
+      }
       const contents = await fs.promises.readFile(args.path, "utf8");
 
       return await transformContents({ args, contents });
@@ -143,6 +143,7 @@ function makeDuckdbNoNodePreGypPlugin(target: Target | undefined): Plugin {
               process.dlopen(module, binding_path, os.constants.dlopen.RTLD_NOW | os.constants.dlopen.RTLD_GLOBAL);
             `,
             resolveDir: ".",
+            loader: "js",
           };
         }
       );
@@ -159,8 +160,8 @@ function makeDuckdbNoNodePreGypPlugin(target: Target | undefined): Plugin {
         },
         (_args) => {
           return {
-            contents: `
-              export const isDuckDBAvailable = ${isDuckDBAvailable};
+            contents: /* javascript */ `
+              export var isDuckDBAvailable = ${isDuckDBAvailable};
             `,
             resolveDir: ".",
           };
@@ -247,13 +248,14 @@ export async function doBuild(
     loader: { [".svg"]: "file" },
     metafile: true,
     logLevel: "info",
+    target: "es5",
   };
 
   let nodeOptions: BuildOptions | null = null;
   let nodeServerOptions: BuildOptions | null = null;
   let browserOptions: BuildOptions | null = null;
   let browserServerOptions: BuildOptions | null = null;
-  let nodeWebviewPlugins: Plugin[] = [];
+  const nodeWebviewPlugins: Plugin[] = [babelPlugin];
 
   if (target !== "web") {
     if (target) {
@@ -319,7 +321,7 @@ export async function doBuild(
       external: ["pg-native", "./keytar-native.node", "./duckdb-native.node"],
     };
 
-    nodeWebviewPlugins = [duckDBPlugin];
+    nodeWebviewPlugins.push(duckDBPlugin);
   }
 
   const webviewPlugins = [
@@ -349,7 +351,7 @@ export async function doBuild(
   };
 
   if (!target || target === "web") {
-    const browserPlugins: Plugin[] = [];
+    const browserPlugins: Plugin[] = [babelPlugin];
 
     // build the web extension
     const commonBrowserOptions: BuildOptions = {

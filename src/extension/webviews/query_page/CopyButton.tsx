@@ -45,12 +45,12 @@ import React from "react";
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import DownloadIcon from "../assets/copy.svg";
+import DownloadIcon from "../assets/copy";
 import styled from "styled-components";
 import { Scroll } from "./Scroll";
 
 interface CopyHTMLButtonProps {
-  onClick: (event: MouseEvent) => void;
+  onClick: React.MouseEventHandler;
 }
 
 export const CopyButton: React.FC<CopyHTMLButtonProps> = ({ onClick }) => {

@@ -23,13 +23,7 @@
 
 import { Result } from "@malloydata/malloy";
 import { HTMLView } from "@malloydata/render";
-import React, {
-  DOMElement,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import {
   QueryMessageType,
@@ -176,7 +170,7 @@ export const App: React.FC = () => {
   });
 
   const copyToClipboard = useCallback(
-    ({ target }: MouseEvent) => {
+    ({ target }: React.MouseEvent) => {
       switch (resultKind) {
         case ResultKind.HTML:
           navigator.clipboard.writeText(getStyledHTML(html));
