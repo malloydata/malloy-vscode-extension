@@ -390,9 +390,6 @@
     "vscode-languageserver-textdocument": "^1.0.8",
     "vscode-uri": "^3.0.7"
   },
-  "dependenciesComments": {
-    "esbuild": "READ THIS! esbuild is pinned to 0.14.13 because some version after that introduces 'use strict' to bundled js files. Consider this before upgrading"
-  },
   "devDependencies": {
     "@jest/globals": "^26.6.2",
     "@types/jest": "^29.2.1",
