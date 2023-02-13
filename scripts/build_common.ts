@@ -212,6 +212,7 @@ export async function doBuild(
     loader: { [".svg"]: "file" },
     metafile: true,
     logLevel: "info",
+    target: "node12.22",
   };
 
   let nodeOptions: BuildOptions | null = null;
