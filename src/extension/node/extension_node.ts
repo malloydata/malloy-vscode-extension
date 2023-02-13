@@ -73,6 +73,7 @@ export function activate(context: vscode.ExtensionContext): void {
     )
   );
 
+  cloudshellEnv();
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration(async (e) => {
       if (e.affectsConfiguration("malloy")) {
