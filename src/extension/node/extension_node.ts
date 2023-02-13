@@ -44,6 +44,17 @@ let client: LanguageClient;
 
 export let extensionModeProduction: boolean;
 
+const cloudshellEnv = () => {
+  const cloudShellProject = vscode.workspace
+    .getConfiguration("cloudcode")
+    .get("cloudshell.project");
+  if (cloudShellProject && typeof cloudShellProject === "string") {
+    process.env.DEVSHELL_PROJECT_ID = cloudShellProject;
+    process.env.GOOGLE_CLOUD_PROJECT = cloudShellProject;
+    process.env.GOOGLE_CLOUD_QUOTA_PROJECT = cloudShellProject;
+  }
+};
+
 export function activate(context: vscode.ExtensionContext): void {
   const urlReader = new VSCodeURLReader();
   setupSubscriptions(context, urlReader, connectionManager);
@@ -68,6 +79,9 @@ export function activate(context: vscode.ExtensionContext): void {
         await connectionManager.onConfigurationUpdated();
         connectionsTree.refresh();
         sendWorkerConfig();
+      }
+      if (e.affectsConfiguration("cloudshell")) {
+        cloudshellEnv();
       }
     })
   );
