@@ -3,11 +3,30 @@ _Breaking changes indicated with *_
 
 We will use this space to highlight major and/or breaking changes to Malloy.
 
+## v0.4.x
+
+### Unsupported Data Types
+
+While Malloy does have the most common data types (string, number, timestamp,
+date, boolean), the SQL engines all have types that are not currrently
+integrated into Malloy.
+
+With this release, columns of a type which Malloy does not yet support are
+alloweed in the following contexts:
+
+1) You can use `=` and `!=` compare them to NULL
+  * `where: var_with_unusal_type != NULL`
+2) You use `=` and `!=` to compare them to other columns of the same type
+  * `where: unusual1 = unusual2`
+3) You can `group_by:` and `project:` these columns
+4) You can pass them as arguments to functions
+5) You can cast them to a supported type.
+
 ## v0.2.x
 
 ### VS Code helper view windows relocated
 
-To improve discoverability and reduce extra clicking around in VS Code, we've relocated the Help, Connections, and Schema View Windows into the Explorer View. They will only appear when a `.malloy` file is opened. 
+To improve discoverability and reduce extra clicking around in VS Code, we've relocated the Help, Connections, and Schema View Windows into the Explorer View. They will only appear when a `.malloy` file is opened.
 
 <img width="1365" alt="Screen Shot 2022-08-08 at 11 32 26 AM" src="https://user-images.githubusercontent.com/7178946/183488595-0c88591d-a162-4272-a937-e15261bf50c5.png">
 
