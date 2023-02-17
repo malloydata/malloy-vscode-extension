@@ -25,13 +25,16 @@ import {
   ConfigOptions,
   ConnectionBackend,
   ConnectionConfig,
+  ExternalConnection,
 } from '../connection_manager_types';
 import {TestableConnection} from '@malloydata/malloy';
 
 export interface ConnectionFactory {
   reset(): void;
 
-  getAvailableBackends(): ConnectionBackend[];
+  getAvailableBackends(): Promise<Array<ConnectionBackend | string>>;
+
+  getExternalConnections(): Promise<Record<string, ExternalConnection>>;
 
   getConnectionForConfig(
     connectionConfig: ConnectionConfig,

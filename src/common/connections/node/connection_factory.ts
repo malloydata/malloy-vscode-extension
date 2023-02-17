@@ -21,12 +21,20 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 import {TestableConnection} from '@malloydata/malloy';
 import {ConnectionFactory} from '../types';
 import {
+  BigQueryConnectionConfig,
   ConfigOptions,
   ConnectionBackend,
+  ConnectionBackendNames,
   ConnectionConfig,
+  DuckDBConnectionConfig,
+  ExternalConnection,
+  PostgresConnectionConfig,
 } from '../../connection_manager_types';
 import {createBigQueryConnection} from '../bigquery_connection';
 import {createDuckDbConnection} from '../duckdb_connection';
@@ -36,7 +44,8 @@ import {isDuckDBAvailable} from '../../duckdb_availability';
 import {fileURLToPath} from 'url';
 
 export class DesktopConnectionFactory implements ConnectionFactory {
-  connectionCache: Record<string, TestableConnection> = {};
+  private connectionCache: Record<string, TestableConnection> = {};
+  private _externalConnections: Record<string, ExternalConnection> | undefined;
 
   reset() {
     Object.values(this.connectionCache).forEach(connection =>
@@ -45,12 +54,26 @@ export class DesktopConnectionFactory implements ConnectionFactory {
     this.connectionCache = {};
   }
 
-  getAvailableBackends(): ConnectionBackend[] {
-    const available = [ConnectionBackend.BigQuery, ConnectionBackend.Postgres];
+  async getAvailableBackends(): Promise<Array<ConnectionBackend | string>> {
+    const available: Array<ConnectionBackend | string> = [
+      ConnectionBackend.BigQuery,
+      ConnectionBackend.Postgres,
+    ];
     if (isDuckDBAvailable) {
       available.push(ConnectionBackend.DuckDB);
     }
+    const externalConnections = await this.getExternalConnections();
+    for (const backend of Object.keys(externalConnections)) {
+      available.push(backend);
+    }
     return available;
+  }
+
+  async getExternalConnections(): Promise<Record<string, ExternalConnection>> {
+    if (!this._externalConnections) {
+      this._externalConnections = this.loadExternalConnections();
+    }
+    return this._externalConnections;
   }
 
   async getConnectionForConfig(
@@ -60,7 +83,8 @@ export class DesktopConnectionFactory implements ConnectionFactory {
     }
   ): Promise<TestableConnection> {
     const {useCache, workingDirectory} = configOptions;
-    const cacheKey = `${connectionConfig.name}::${workingDirectory}`;
+    const {name, backend} = connectionConfig;
+    const cacheKey = `${name}::${workingDirectory}`;
 
     let connection: TestableConnection;
     if (useCache && this.connectionCache[cacheKey]) {
@@ -69,23 +93,42 @@ export class DesktopConnectionFactory implements ConnectionFactory {
     switch (connectionConfig.backend) {
       case ConnectionBackend.BigQuery:
         connection = await createBigQueryConnection(
-          connectionConfig,
+          connectionConfig as BigQueryConnectionConfig,
           configOptions
         );
         break;
       case ConnectionBackend.Postgres: {
         connection = await createPostgresConnection(
-          connectionConfig,
+          connectionConfig as PostgresConnectionConfig,
           configOptions
         );
         break;
       }
       case ConnectionBackend.DuckDB: {
         connection = await createDuckDbConnection(
-          connectionConfig,
+          connectionConfig as DuckDBConnectionConfig,
           configOptions
         );
         break;
+      }
+      default: {
+        const externalConnections = await this.getExternalConnections();
+        if (externalConnections[backend]) {
+          if (!externalConnections[backend].bundle) {
+            throw new Error(`${backend}: Missing bundle path`);
+          }
+          const {createConnection} = await import(
+            externalConnections[backend].bundle
+          );
+          if (!createConnection) {
+            throw new Error(
+              `${backend}: Missing createConnection() entry point`
+            );
+          }
+          connection = createConnection(connectionConfig, configOptions);
+        } else {
+          throw new Error(`${backend}: Not available`);
+        }
       }
     }
     if (useCache) {
@@ -126,5 +169,43 @@ export class DesktopConnectionFactory implements ConnectionFactory {
       });
     }
     return configs;
+  }
+
+  loadExternalConnections(): Record<string, ExternalConnection> {
+    const malloyDir = path.join(os.homedir(), '.malloy', 'extensions');
+    const results: Record<string, ExternalConnection> = {};
+    try {
+      const modules = fs.readdirSync(malloyDir);
+      for (const module of modules) {
+        const packageDir = path.join(malloyDir, module);
+        const packageFile = path.join(packageDir, 'package.json');
+        try {
+          const packageJson = fs.readFileSync(packageFile, 'utf8');
+          const packageData = JSON.parse(packageJson);
+          const contributes = packageData.contributes;
+          if (contributes?.connection) {
+            let {name, title} = contributes.connection;
+            if (!name) {
+              name = packageData.name;
+            }
+            if (!title) {
+              title = name;
+            }
+            results[name] = {
+              ...contributes?.connection,
+              bundle: path.join(packageDir, packageData.main),
+              name,
+              title,
+            };
+            ConnectionBackendNames[name] = title;
+          }
+        } catch {
+          console.warn(`Error reading ${packageFile}`);
+        }
+      }
+    } catch {
+      console.info('Cannot read malloy extensions directory');
+    }
+    return results;
   }
 }

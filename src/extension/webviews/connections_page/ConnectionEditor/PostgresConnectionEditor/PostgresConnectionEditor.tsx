@@ -26,8 +26,8 @@ import React, {useState} from 'react';
 import {PostgresConnectionConfig} from '../../../../../common/connection_manager_types';
 import {TextField} from '../../../components';
 import {VSCodeCheckbox, VSCodeRadio} from '@vscode/webview-ui-toolkit/react';
-import {Label} from '../Label';
-import {LabelCell} from '../LabelCell';
+import {Label} from '../../../components/Label';
+import {LabelCell} from '../../../components/LabelCell';
 
 interface PostgresConnectionEditorProps {
   config: PostgresConnectionConfig;

@@ -24,8 +24,8 @@
 import React from 'react';
 import {BigQueryConnectionConfig} from '../../../../../common/connection_manager_types';
 import {TextField, VSCodeButton} from '../../../components';
-import {Label} from '../Label';
-import {LabelCell} from '../LabelCell';
+import {Label} from '../../../components/Label';
+import {LabelCell} from '../../../components/LabelCell';
 
 interface BigQueryConnectionEditorProps {
   config: BigQueryConnectionConfig;

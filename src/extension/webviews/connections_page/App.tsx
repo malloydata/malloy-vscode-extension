@@ -25,6 +25,7 @@ import React, {useEffect, useState} from 'react';
 import {
   ConnectionBackend,
   ConnectionConfig,
+  ExternalConnection,
 } from '../../../common/connection_manager_types';
 import {
   ConnectionMessageType,
@@ -49,14 +50,18 @@ export const App: React.FC = () => {
   >();
   const [testStatuses, setTestStatuses] = useState<ConnectionMessageTest[]>([]);
   const [availableBackends, setAvailableBackends] = useState<
-    ConnectionBackend[]
+    Array<ConnectionBackend | string>
   >([]);
+  const [externalConnections, setExternalConnections] = useState<
+    Record<string, ExternalConnection>
+  >({});
 
   const postConnections = () => {
     vscode.postMessage({
       type: ConnectionMessageType.SetConnections,
       connections: connections || [],
       availableBackends,
+      externalConnections,
     });
   };
 
@@ -86,6 +91,7 @@ export const App: React.FC = () => {
         case ConnectionMessageType.SetConnections:
           setConnections(message.connections);
           setAvailableBackends(message.availableBackends);
+          setExternalConnections(message.externalConnections);
           break;
         case ConnectionMessageType.TestConnection:
           setTestStatuses([...testStatuses, message]);
@@ -120,23 +126,23 @@ export const App: React.FC = () => {
       <Spinner text="Loading" />
     </div>
   ) : (
-    <Scroll>
-      <div style={{margin: '0 10px 10px 10px'}}>
-        <ConnectionEditorList
-          connections={connections}
-          setConnections={setConnections}
-          saveConnections={postConnections}
-          testConnection={testConnection}
-          testStatuses={testStatuses}
-          requestServiceAccountKeyPath={requestServiceAccountKeyPath}
-          availableBackends={availableBackends}
-        />
-      </div>
-    </Scroll>
+    <AppContainer>
+      <ConnectionEditorList
+        connections={connections}
+        setConnections={setConnections}
+        saveConnections={postConnections}
+        testConnection={testConnection}
+        testStatuses={testStatuses}
+        requestServiceAccountKeyPath={requestServiceAccountKeyPath}
+        availableBackends={availableBackends}
+        externalConnections={externalConnections}
+      />
+    </AppContainer>
   );
 };
 
-const Scroll = styled.div`
+const AppContainer = styled.div`
   height: 100%;
-  overflow: auto;
+  max-width: 800px;
+  overflow: hidden;
 `;

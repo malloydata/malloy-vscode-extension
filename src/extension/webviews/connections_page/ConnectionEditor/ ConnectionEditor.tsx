@@ -24,16 +24,28 @@
 import React from 'react';
 import styled from 'styled-components';
 import {
+  BigQueryConnectionConfig,
   ConnectionBackend,
   ConnectionBackendNames,
   ConnectionConfig,
+<<<<<<< HEAD
 } from '../../../../common/connection_manager_types';
 import {ConnectionMessageTest} from '../../../../common/message_types';
 import {Dropdown} from '../../components';
+=======
+  DuckDBConnectionConfig,
+  ExternalConnection,
+  ExternalConnectionConfig,
+  PostgresConnectionConfig,
+} from "../../../../common/connection_manager_types";
+import { ConnectionMessageTest } from "../../../message_types";
+import { Dropdown } from "../../components";
+>>>>>>> 983bb58 (Basic dynamic connection loading)
 import {
   VSCodeButton,
   VSCodeDivider,
   VSCodeTag,
+<<<<<<< HEAD
 } from '@vscode/webview-ui-toolkit/react';
 import {ButtonGroup} from '../ButtonGroup';
 import {BigQueryConnectionEditor} from './BigQueryConnectionEditor';
@@ -41,6 +53,16 @@ import {Label} from './Label';
 import {LabelCell} from './LabelCell';
 import {PostgresConnectionEditor} from './PostgresConnectionEditor';
 import {DuckDBConnectionEditor} from './DuckDBConnectionEditor';
+=======
+} from "@vscode/webview-ui-toolkit/react";
+import { ButtonGroup } from "../../components/ButtonGroup";
+import { BigQueryConnectionEditor } from "./BigQueryConnectionEditor";
+import { Label } from "../../components/Label";
+import { LabelCell } from "../../components/LabelCell";
+import { PostgresConnectionEditor } from "./PostgresConnectionEditor";
+import { DuckDBConnectionEditor } from "./DuckDBConnectionEditor";
+import { ExternalConnectionEditor } from "./ExternalConnectionEditor";
+>>>>>>> 983bb58 (Basic dynamic connection loading)
 
 interface ConnectionEditorProps {
   config: ConnectionConfig;
@@ -51,7 +73,8 @@ interface ConnectionEditorProps {
   requestServiceAccountKeyPath: (connectionId: string) => void;
   isDefault: boolean;
   makeDefault: () => void;
-  availableBackends: ConnectionBackend[];
+  availableBackends: Array<ConnectionBackend | string>;
+  externalConnections: Record<string, ExternalConnection>;
 }
 
 export const ConnectionEditor: React.FC<ConnectionEditorProps> = ({
@@ -64,7 +87,9 @@ export const ConnectionEditor: React.FC<ConnectionEditorProps> = ({
   isDefault,
   makeDefault,
   availableBackends,
+  externalConnections,
 }) => {
+<<<<<<< HEAD
   const allBackendOptions: ConnectionBackend[] = [
     ConnectionBackend.BigQuery,
     ConnectionBackend.Postgres,
@@ -74,6 +99,12 @@ export const ConnectionEditor: React.FC<ConnectionEditorProps> = ({
   const backendOptions = allBackendOptions
     .filter(option => availableBackends.includes(option))
     .map(value => ({value, label: ConnectionBackendNames[value]}));
+=======
+  const backendOptions = availableBackends.map((value) => ({
+    value,
+    label: ConnectionBackendNames[value] || externalConnections[value]?.title,
+  }));
+>>>>>>> 983bb58 (Basic dynamic connection loading)
 
   return (
     <ConnectionEditorBox>
@@ -95,41 +126,60 @@ export const ConnectionEditor: React.FC<ConnectionEditorProps> = ({
       </div>
       <table>
         <tbody>
-          <tr>
-            <LabelCell>
-              <Label>Type:</Label>
-            </LabelCell>
-            <td>
-              <Dropdown
-                value={config.backend}
-                setValue={(backend: string) =>
-                  setConfig({
-                    name: config.name,
-                    backend: backend as ConnectionBackend,
-                    id: config.id,
-                    isDefault: config.isDefault,
-                  })
-                }
-                options={backendOptions}
-              />
-            </td>
-          </tr>
+          {!availableBackends.includes(config.backend) ? (
+            <tr>
+              <LabelCell>
+                <Label>Cannot Edit:</Label>
+              </LabelCell>
+              <td>{config.backend} not available</td>
+            </tr>
+          ) : (
+            <tr>
+              <LabelCell>
+                <Label>Type:</Label>
+              </LabelCell>
+              <td>
+                <Dropdown
+                  value={config.backend}
+                  setValue={(backend: string) =>
+                    setConfig({
+                      name: config.name,
+                      backend: backend as ConnectionBackend,
+                      id: config.id,
+                      isDefault: config.isDefault,
+                    })
+                  }
+                  options={backendOptions}
+                />
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
       {config.backend === ConnectionBackend.BigQuery ? (
         <BigQueryConnectionEditor
-          config={config}
+          config={config as BigQueryConnectionConfig}
           setConfig={setConfig}
           requestServiceAccountKeyPath={() =>
             requestServiceAccountKeyPath(config.id)
           }
         />
       ) : config.backend === ConnectionBackend.Postgres ? (
-        <PostgresConnectionEditor config={config} setConfig={setConfig} />
+        <PostgresConnectionEditor
+          config={config as PostgresConnectionConfig}
+          setConfig={setConfig}
+        />
       ) : config.backend === ConnectionBackend.DuckDB ? (
-        <DuckDBConnectionEditor config={config} setConfig={setConfig} />
+        <DuckDBConnectionEditor
+          config={config as DuckDBConnectionConfig}
+          setConfig={setConfig}
+        />
       ) : (
-        <div>Unknown Connection Type</div>
+        <ExternalConnectionEditor
+          config={config as ExternalConnectionConfig}
+          setConfig={setConfig}
+          externalConnection={externalConnections[config.backend]}
+        />
       )}
       <VSCodeDivider />
       <table>

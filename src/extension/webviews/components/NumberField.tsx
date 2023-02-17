@@ -21,13 +21,40 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-export {BooleanField} from './BooleanField';
-export {ButtonGroup} from './ButtonGroup';
-export {Dropdown} from './Dropdown';
-export {Label} from './Label';
-export {LabelCell} from './LabelCell';
-export {NumberField} from './NumberField';
-export {TextField} from './TextField';
-export {Spinner} from './Spinner';
-export {VSCodeButton} from '@vscode/webview-ui-toolkit/react';
-export {VSCodeProgressRing} from '@vscode/webview-ui-toolkit/react';
+import React, { FormEvent } from "react";
+import { VSCodeTextField } from "@vscode/webview-ui-toolkit/react";
+
+interface NumberFieldProps {
+  value: number;
+  setValue: (value: number) => void;
+  placeholder?: number;
+  id?: string;
+  style?: React.CSSProperties;
+  min?: number;
+  max?: number;
+}
+
+type OnChange<T> = (event: Event & FormEvent<T>) => void;
+
+export const NumberField: React.FC<NumberFieldProps> = ({
+  value,
+  setValue,
+  placeholder,
+  id,
+  style,
+}) => {
+  const onChange: OnChange<HTMLInputElement> = (event) => {
+    setValue(Number(event.currentTarget.value));
+  };
+
+  return (
+    <VSCodeTextField
+      value={value != null && String(value)}
+      type="number"
+      onChange={onChange}
+      placeholder={placeholder}
+      id={id}
+      style={style}
+    />
+  );
+};

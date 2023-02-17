@@ -23,12 +23,11 @@
 
 import {ResultJSON} from '@malloydata/malloy';
 import {DataStyles} from '@malloydata/render';
-import {ConnectionBackend, ConnectionConfig} from './connection_manager_types';
-
-/*
- * These messages are used to pass status back from the worker to
- * the query result web view
- */
+import {
+  ConnectionBackend,
+  ConnectionConfig,
+  ExternalConnection,
+} from '../common/connection_manager_types';
 
 export enum QueryRunStatus {
   Compiling = 'compiling',
@@ -104,7 +103,8 @@ export enum ConnectionMessageType {
 interface ConnectionMessageSetConnections {
   type: ConnectionMessageType.SetConnections;
   connections: ConnectionConfig[];
-  availableBackends: ConnectionBackend[];
+  availableBackends: Array<ConnectionBackend | string>;
+  externalConnections: Record<string, ExternalConnection>;
 }
 
 interface ConnectionMessageAppReady {

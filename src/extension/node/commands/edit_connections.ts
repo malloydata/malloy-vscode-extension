@@ -41,7 +41,7 @@ import {
 import {deletePassword, setPassword} from 'keytar';
 import {MALLOY_EXTENSION_STATE} from '../../state';
 
-export function editConnectionsCommand(): void {
+export async function editConnectionsCommand(): Promise<void> {
   const panel = vscode.window.createWebviewPanel(
     'malloyConnections',
     'Edit Connections',
@@ -63,13 +63,15 @@ export function editConnectionsCommand(): void {
     panel
   );
 
-  const connections = connectionManager.getConnectionConfigs();
-  const availableBackends = connectionManager.getAvailableBackends();
+  const connections = connectionManager.getAllConnectionConfigs();
+  const availableBackends = await connectionManager.getAvailableBackends();
+  const externalConnections = await connectionManager.getExternalConnections();
 
   messageManager.postMessage({
     type: ConnectionMessageType.SetConnections,
     connections,
     availableBackends,
+    externalConnections,
   });
 
   messageManager.onReceiveMessage(async message => {
@@ -95,6 +97,7 @@ export function editConnectionsCommand(): void {
           type: ConnectionMessageType.SetConnections,
           connections,
           availableBackends,
+          externalConnections,
         });
         break;
       }
@@ -180,7 +183,7 @@ async function handleConnectionsPreSave(
       await setPassword(
         'com.malloy-lang.vscode-extension',
         `connections.${connection.id}.password`,
-        connection.password
+        connection.password as string
       );
     } else if (!connection.isGenerated) {
       modifiedConnections.push(connection);

@@ -39,7 +39,7 @@ import {
 import {connectionManager} from '../connection_manager';
 import {MALLOY_EXTENSION_STATE} from '../../state';
 
-export function editConnectionsCommand(): void {
+export async function editConnectionsCommand(): Promise<void> {
   const panel = vscode.window.createWebviewPanel(
     'malloyConnections',
     'Edit Connections',
@@ -61,13 +61,14 @@ export function editConnectionsCommand(): void {
     panel
   );
 
-  const connections = connectionManager.getConnectionConfigs();
-  const availableBackends = connectionManager.getAvailableBackends();
+  const connections = connectionManager.getAllConnectionConfigs();
+  const availableBackends = await connectionManager.getAvailableBackends();
 
   messageManager.postMessage({
     type: ConnectionMessageType.SetConnections,
     connections,
     availableBackends,
+    externalConnections: {},
   });
 
   messageManager.onReceiveMessage(async message => {
@@ -93,6 +94,7 @@ export function editConnectionsCommand(): void {
           type: ConnectionMessageType.SetConnections,
           connections,
           availableBackends,
+          externalConnections: {},
         });
         break;
       }

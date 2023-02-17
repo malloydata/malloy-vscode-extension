@@ -27,11 +27,12 @@ import {v4 as uuidv4} from 'uuid';
 import {
   ConnectionBackend,
   ConnectionConfig,
+  ExternalConnection,
   getDefaultIndex,
 } from '../../../../common/connection_manager_types';
 import {ConnectionMessageTest} from '../../../../common/message_types';
 import {VSCodeButton} from '../../components';
-import {ButtonGroup} from '../ButtonGroup';
+import {ButtonGroup} from '../../components/ButtonGroup';
 import {ConnectionEditor} from '../ConnectionEditor';
 
 interface ConnectionEditorListProps {
@@ -41,7 +42,8 @@ interface ConnectionEditorListProps {
   testConnection: (connection: ConnectionConfig) => void;
   testStatuses: ConnectionMessageTest[];
   requestServiceAccountKeyPath: (connectionId: string) => void;
-  availableBackends: ConnectionBackend[];
+  availableBackends: Array<ConnectionBackend | string>;
+  externalConnections: Record<string, ExternalConnection>;
 }
 
 export const ConnectionEditorList: React.FC<ConnectionEditorListProps> = ({
@@ -52,6 +54,7 @@ export const ConnectionEditorList: React.FC<ConnectionEditorListProps> = ({
   testStatuses,
   requestServiceAccountKeyPath,
   availableBackends,
+  externalConnections,
 }) => {
   const [dirty, setDirty] = useState(false);
   const defaultConnectionIndex = getDefaultIndex(connections);
@@ -84,51 +87,73 @@ export const ConnectionEditorList: React.FC<ConnectionEditorListProps> = ({
   };
 
   return (
-    <div style={{marginTop: '20px'}}>
-      <ButtonGroup style={{margin: '10px'}}>
-        <VSCodeButton onClick={addConnection}>New Connection</VSCodeButton>
-      </ButtonGroup>
-      {connections.map((config, index) => (
-        <ConnectionEditor
-          key={index}
-          config={config}
-          setConfig={newConfig => setConfig(newConfig, index)}
-          deleteConfig={() => {
-            const copy = [...connections];
-            copy.splice(index, 1);
-            setConnections(copy);
-            setDirty(true);
-          }}
-          testConfig={() => {
-            testConnection(connections[index]);
-          }}
-          testStatus={[...testStatuses]
-            .reverse()
-            .find(message => message.connection.id === config.id)}
-          requestServiceAccountKeyPath={requestServiceAccountKeyPath}
-          isDefault={index === defaultConnectionIndex}
-          makeDefault={() => makeDefault(index)}
-          availableBackends={availableBackends}
-        />
-      ))}
-      {connections.length === 0 && (
-        <EmptyStateBox>NO CONNECTIONS</EmptyStateBox>
-      )}
-      {dirty && (
-        <ButtonGroup style={{margin: '10px'}}>
-          <VSCodeButton
-            onClick={() => {
-              setDirty(false);
-              saveConnections();
+    <EditorContainer>
+      <ListContainer>
+        {connections.map((config, index) => (
+          <ConnectionEditor
+            key={index}
+            config={config}
+            setConfig={newConfig => setConfig(newConfig, index)}
+            deleteConfig={() => {
+              const copy = [...connections];
+              copy.splice(index, 1);
+              setConnections(copy);
+              setDirty(true);
             }}
-          >
-            Save
-          </VSCodeButton>
-        </ButtonGroup>
-      )}
-    </div>
+            testConfig={() => {
+              testConnection(connections[index]);
+            }}
+            testStatus={[...testStatuses]
+              .reverse()
+              .find(message => message.connection.id === config.id)}
+            requestServiceAccountKeyPath={requestServiceAccountKeyPath}
+            isDefault={index === defaultConnectionIndex}
+            makeDefault={() => makeDefault(index)}
+            availableBackends={availableBackends}
+            externalConnections={externalConnections}
+          />
+        ))}
+        {connections.length === 0 && (
+          <EmptyStateBox>NO CONNECTIONS</EmptyStateBox>
+        )}
+      </ListContainer>
+      <EditorButtons style={{margin: '10px'}}>
+        <VSCodeButton onClick={addConnection}>New Connection</VSCodeButton>
+        <Spacer />
+        <VSCodeButton
+          disabled={!dirty}
+          onClick={() => {
+            setDirty(false);
+            saveConnections();
+          }}
+        >
+          Save
+        </VSCodeButton>
+      </EditorButtons>
+    </EditorContainer>
   );
 };
+
+const EditorContainer = styled.div`
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+`;
+
+const ListContainer = styled.div`
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow: auto;
+`;
+
+const EditorButtons = styled(ButtonGroup)`
+  flex: 0 0 auto;
+`;
+
+const Spacer = styled.div`
+  flex: 1 1 auto;
+`;
 
 const EmptyStateBox = styled.div`
   margin: 10px;

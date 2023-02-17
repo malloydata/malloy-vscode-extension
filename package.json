@@ -425,6 +425,13 @@
                   },
                   "serviceAccountKeyPath": {
                     "type": "string"
+                  },
+                  "maximumBytesBilled": {
+                    "type": "number"
+                  },
+                  "timeoutMs": {
+                    "type": "number",
+                    "title": "Query Timeout Milliseconds"
                   }
                 }
               },

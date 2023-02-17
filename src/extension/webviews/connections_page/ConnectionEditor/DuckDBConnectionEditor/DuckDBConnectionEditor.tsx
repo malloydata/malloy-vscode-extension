@@ -24,8 +24,8 @@
 import React from 'react';
 import {DuckDBConnectionConfig} from '../../../../../common/connection_manager_types';
 import {TextField} from '../../../components';
-import {Label} from '../Label';
-import {LabelCell} from '../LabelCell';
+import {Label} from '../../../components/Label';
+import {LabelCell} from '../../../components/LabelCell';
 
 interface DuckDBConnectionEditorProps {
   config: DuckDBConnectionConfig;

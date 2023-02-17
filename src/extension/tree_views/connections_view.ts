@@ -57,7 +57,8 @@ export class ConnectionsProvider
 
   async getChildren(element?: ConnectionItem): Promise<ConnectionItem[]> {
     if (element === undefined) {
-      const availableBackends = this.connectionManager.getAvailableBackends();
+      const availableBackends =
+        await this.connectionManager.getAvailableBackends();
       const config = this.connectionManager.getAllConnectionConfigs();
       const defaultIndex = getDefaultIndex(config);
       return config.map(
@@ -83,7 +84,8 @@ class ConnectionItem extends vscode.TreeItem {
     isAvailable: boolean
   ) {
     super(config.name, vscode.TreeItemCollapsibleState.None);
-    const backendName = ConnectionBackendNames[config.backend];
+    const backendName =
+      ConnectionBackendNames[config.backend] || config.backend;
     this.description = `(${backendName}${isDefault ? ', default' : ''}${
       config.isGenerated ? ', automatically generated' : ''
     }) ${isAvailable ? '' : '(Not available)'}`;

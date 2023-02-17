@@ -27,6 +27,8 @@ import {
   ConfigOptions,
   ConnectionBackend,
   ConnectionConfig,
+  DuckDBConnectionConfig,
+  ExternalConnection,
 } from '../../connection_manager_types';
 import {createDuckDbWasmConnection} from '../duckdb_wasm_connection';
 import {DuckDBWASMConnection} from '@malloydata/db-duckdb/wasm';
@@ -45,8 +47,12 @@ export class WebConnectionFactory implements ConnectionFactory {
     this.connectionCache = {};
   }
 
-  getAvailableBackends(): ConnectionBackend[] {
+  async getAvailableBackends(): Promise<ConnectionBackend[]> {
     return [ConnectionBackend.DuckDB];
+  }
+
+  async getExternalConnections(): Promise<Record<string, ExternalConnection>> {
+    return {};
   }
 
   async getConnectionForConfig(
@@ -72,7 +78,10 @@ export class WebConnectionFactory implements ConnectionFactory {
             return undefined;
           };
           const duckDBConnection: DuckDBWASMConnection =
-            await createDuckDbWasmConnection(connectionConfig, configOptions);
+            await createDuckDbWasmConnection(
+              connectionConfig as DuckDBConnectionConfig,
+              configOptions
+            );
           duckDBConnection.registerRemoteTableCallback(remoteTableCallback);
           connection = duckDBConnection;
         }

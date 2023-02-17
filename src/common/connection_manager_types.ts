@@ -25,14 +25,12 @@ export enum ConnectionBackend {
   BigQuery = 'bigquery',
   Postgres = 'postgres',
   DuckDB = 'duckdb',
-  DuckDBWASM_DEPRECATED = 'duckdb_wasm',
 }
 
-export const ConnectionBackendNames: Record<ConnectionBackend, string> = {
+export const ConnectionBackendNames: Record<string, string> = {
   [ConnectionBackend.BigQuery]: 'BigQuery',
   [ConnectionBackend.Postgres]: 'Postgres',
   [ConnectionBackend.DuckDB]: 'DuckDB',
-  [ConnectionBackend.DuckDBWASM_DEPRECATED]: 'duckdDuckDBb_wasm',
 };
 
 /*
@@ -71,17 +69,16 @@ export interface DuckDBConnectionConfig extends BaseConnectionConfig {
   workingDirectory?: string;
 }
 
-export interface DuckDBWASMConnectionConfigDeprecated
-  extends BaseConnectionConfig {
-  backend: ConnectionBackend.DuckDBWASM_DEPRECATED;
-  workingDirectory?: string;
+export interface ExternalConnectionConfig extends BaseConnectionConfig {
+  backend: string;
+  [key: string]: unknown;
 }
 
 export type ConnectionConfig =
   | BigQueryConnectionConfig
   | PostgresConnectionConfig
   | DuckDBConnectionConfig
-  | DuckDBWASMConnectionConfigDeprecated;
+  | ExternalConnectionConfig;
 
 export interface ConfigOptions {
   workingDirectory: string;
@@ -109,4 +106,36 @@ export function getDefaultIndex(
     }
   }
   return index;
+}
+export interface ConnectionProperty<T> {
+  title?: string;
+  const?: T;
+  default?: T;
+}
+
+export interface ConnectionBooleanProperty extends ConnectionProperty<boolean> {
+  type: 'boolean';
+}
+
+export interface ConnectionNumberProperty extends ConnectionProperty<number> {
+  type: 'number';
+}
+
+export interface ConnectionStringProperty extends ConnectionProperty<string> {
+  type: 'string';
+}
+
+export type ConnectionConfigProperty =
+  | ConnectionBooleanProperty
+  | ConnectionNumberProperty
+  | ConnectionStringProperty;
+
+export interface ExternalConnection {
+  bundle: string;
+  name: string;
+  title: string;
+  dialect: string;
+  properties: {
+    [key: string]: ConnectionConfigProperty;
+  };
 }

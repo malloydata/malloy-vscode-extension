@@ -21,13 +21,37 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-export {BooleanField} from './BooleanField';
-export {ButtonGroup} from './ButtonGroup';
-export {Dropdown} from './Dropdown';
-export {Label} from './Label';
-export {LabelCell} from './LabelCell';
-export {NumberField} from './NumberField';
-export {TextField} from './TextField';
-export {Spinner} from './Spinner';
-export {VSCodeButton} from '@vscode/webview-ui-toolkit/react';
-export {VSCodeProgressRing} from '@vscode/webview-ui-toolkit/react';
+import React, { FormEvent } from "react";
+import { VSCodeCheckbox } from "@vscode/webview-ui-toolkit/react";
+
+interface TextFieldProps {
+  value: boolean;
+  setValue: (value: boolean) => void;
+  placeholder?: string;
+  id?: string;
+  style?: React.CSSProperties;
+}
+
+type OnChange<T> = (event: Event & FormEvent<T>) => void;
+
+export const BooleanField: React.FC<TextFieldProps> = ({
+  value,
+  setValue,
+  placeholder,
+  id,
+  style,
+}) => {
+  const onChange: OnChange<HTMLInputElement> = (event) => {
+    setValue(event.currentTarget.checked);
+  };
+
+  return (
+    <VSCodeCheckbox
+      checked={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      id={id}
+      style={style}
+    />
+  );
+};

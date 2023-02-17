@@ -124,10 +124,15 @@ export class ConnectionManager {
     return this.connectionFactory.getAvailableBackends();
   }
 
-  protected filterUnavailableConnectionBackends(
+  public getExternalConnections() {
+    return this.connectionFactory.getExternalConnections();
+  }
+
+  protected async filterUnavailableConnectionBackends(
     connectionsConfig: ConnectionConfig[]
-  ): ConnectionConfig[] {
-    const availableBackends = this.connectionFactory.getAvailableBackends();
+  ): Promise<ConnectionConfig[]> {
+    const availableBackends =
+      await this.connectionFactory.getAvailableBackends();
     return connectionsConfig.filter(config =>
       availableBackends.includes(config.backend)
     );
