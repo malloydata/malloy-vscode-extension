@@ -24,9 +24,9 @@
 
 import * as semver from "semver";
 import { readFileSync } from "fs";
-import { publishVSIX } from "vsce";
+// import { publishVSIX } from "vsce";
 import { Target } from "./build_common";
-import { targetKeytarMap } from "./utils/fetch_keytar";
+// import { targetKeytarMap } from "./utils/fetch_keytar";
 import { doPackage } from "./package-extension";
 import { publishCloudExtension } from "./publish-cloud-extension";
 
