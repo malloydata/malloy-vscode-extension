@@ -88,6 +88,12 @@ async function createRelease(
     }
   );
 
+  if (!response.ok) {
+    throw new Error(
+      `Error Creating Release:\n${JSON.stringify(response, null, 2)}`
+    );
+  }
+
   return (await response.json()) as GithubRelease;
 }
 
@@ -117,6 +123,12 @@ async function uploadAsset(
     },
     body: fs.createReadStream(fullAssetPath),
   });
+
+  if (!response.ok) {
+    throw new Error(
+      `Error Uploading Asset:\n${JSON.stringify(response, null, 2)}`
+    );
+  }
 
   return (await response.json()) as GithubAsset;
 }
