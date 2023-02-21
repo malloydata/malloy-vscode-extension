@@ -76,31 +76,31 @@ async function doPublish(version: string) {
   );
   console.log(`Pre-release: ${preRelease}`);
 
-  for (const target in targetKeytarMap) {
-    const packagePath = await doPackage(
-      target as Target,
-      versionCode,
-      preRelease
-    );
+  // for (const target in targetKeytarMap) {
+  //   const packagePath = await doPackage(
+  //     target as Target,
+  //     versionCode,
+  //     preRelease
+  //   );
 
-    await publishVSIX(packagePath, {
-      githubBranch: "main",
-      preRelease: preRelease,
-      useYarn: false,
-      pat: process.env.VSCE_PAT,
-    });
-  }
+  //   await publishVSIX(packagePath, {
+  //     githubBranch: "main",
+  //     preRelease: preRelease,
+  //     useYarn: false,
+  //     pat: process.env.VSCE_PAT,
+  //   });
+  // }
 
-  const packagePath = await doPackage("web", versionCode, preRelease);
+  // const packagePath = await doPackage("web", versionCode, preRelease);
 
-  await publishVSIX(packagePath, {
-    githubBranch: "main",
-    preRelease: preRelease,
-    useYarn: false,
-    pat: process.env.VSCE_PAT,
-  });
+  // await publishVSIX(packagePath, {
+  //   githubBranch: "main",
+  //   preRelease: preRelease,
+  //   useYarn: false,
+  //   pat: process.env.VSCE_PAT,
+  // });
 
-  if (!preRelease) {
+  if (preRelease) {
     const cloudPackagePath = await doPackage(
       "linux-x64" as Target,
       versionCode,
