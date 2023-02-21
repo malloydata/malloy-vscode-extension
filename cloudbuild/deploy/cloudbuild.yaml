@@ -6,7 +6,7 @@ steps:
       - -c
       - "./cloudbuild/deploy/$TRIGGER_NAME.sh"
     timeout: "1800s"
-    secretEnv: ["VSCE_PAT", "GA_API_SECRET", "GA_MEASUREMENT_ID"]
+    secretEnv: ["VSCE_PAT", "GA_API_SECRET", "GA_MEASUREMENT_ID", "GHAPI_PAT"]
 options:
   logging: CLOUD_LOGGING_ONLY
 timeout: "1800s"
@@ -18,3 +18,5 @@ availableSecrets:
       env: "GA_API_SECRET"
     - versionName: projects/malloy-303216/secrets/vscode-extension-CI-GA-MEASUREMENT-ID/versions/latest
       env: "GA_MEASUREMENT_ID"
+    - versionName: projects/malloy-303216/secrets/vscode-extension-gh-pat/versions/latest
+      env: "GHAPI_PAT"

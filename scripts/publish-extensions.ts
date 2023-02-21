@@ -28,6 +28,7 @@ import { publishVSIX } from "vsce";
 import { Target } from "./build_common";
 import { targetKeytarMap } from "./utils/fetch_keytar";
 import { doPackage } from "./package-extension";
+import { publishCloudExtension } from "./publish-cloud-extension";
 
 /**
  * @returns Array of version bits. [major, minor, patch]
@@ -74,6 +75,7 @@ async function doPublish(version: string) {
     `Publishing ${version} extensions with version code: ${versionCode}`
   );
   console.log(`Pre-release: ${preRelease}`);
+
   for (const target in targetKeytarMap) {
     const packagePath = await doPackage(
       target as Target,
@@ -97,13 +99,22 @@ async function doPublish(version: string) {
     useYarn: false,
     pat: process.env.VSCE_PAT,
   });
+
+  if (!preRelease) {
+    const cloudPackagePath = await doPackage(
+      "linux-x64" as Target,
+      versionCode,
+      preRelease
+    );
+    await publishCloudExtension(cloudPackagePath, versionCode, preRelease);
+  }
 }
 
 const args = process.argv.slice(2);
 const version = args[0];
 if (!version)
   throw new Error(
-    "No version passed to publish script. Call it with a semver version or pass 'pre-release'."
+    "No version passed to publish script. Call it with 'patch' or 'pre-release'."
   );
 
 console.log(`Starting ${version} publish for extensions`);
