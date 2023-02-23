@@ -95,7 +95,8 @@ async function setupLanguageServer(
 
   const client = createWorkerLanguageClient(context, clientOptions);
 
-  await client.start();
+  client.start();
+  await client.onReady();
 
   client.onRequest("malloy/fetchFile", async (event: FetchFileEvent) => {
     console.info("fetchFile returning", event.uri);
