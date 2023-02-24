@@ -129,9 +129,11 @@ export const ConnectionEditor: React.FC<ConnectionEditorProps> = ({
           {!availableBackends.includes(config.backend) ? (
             <tr>
               <LabelCell>
-                <Label>Cannot Edit:</Label>
+                <Label></Label>
               </LabelCell>
-              <td>{config.backend} not available</td>
+              <td>
+                Cannot Edit {config.name}: {config.backend} is not available
+              </td>
             </tr>
           ) : (
             <tr>
