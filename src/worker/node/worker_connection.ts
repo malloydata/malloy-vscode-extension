@@ -24,8 +24,13 @@
 /* eslint-disable no-console */
 import * as child_process from 'child_process';
 import * as vscode from 'vscode';
-import {fetchFile} from '../../extension/utils';
-import {Message, WorkerMessage, WorkerReadMessage} from '../types';
+import {fetchBinaryFile, fetchFile} from '../../extension/utils';
+import {
+  Message,
+  WorkerMessage,
+  WorkerReadBinaryMessage,
+  WorkerReadMessage,
+} from '../types';
 const workerLog = vscode.window.createOutputChannel('Malloy Worker');
 
 const DEFAULT_RESTART_SECONDS = 1;
@@ -68,6 +73,11 @@ export class WorkerConnection {
               this.readFile(message);
               break;
             }
+            case 'read_binary': {
+              workerLog.appendLine(`worker: reading file ${message.uri}`);
+              this.readFileBinary(message);
+              break;
+            }
           }
         });
     };
@@ -101,6 +111,16 @@ export class WorkerConnection {
       this.send?.({type: 'read', id, uri, data});
     } catch (error) {
       this.send?.({type: 'read', id, uri, error: error.message});
+    }
+  }
+
+  async readFileBinary(message: WorkerReadBinaryMessage): Promise<void> {
+    const {id, uri} = message;
+    try {
+      const data = await fetchBinaryFile(uri);
+      this.send?.({type: 'read_binary', id, uri, data});
+    } catch (error) {
+      this.send?.({type: 'read_binary', id, uri, error: error.message});
     }
   }
 }

@@ -22,9 +22,7 @@
  */
 
 import {
-  createConnection,
   TextDocuments,
-  ProposedFeatures,
   InitializeParams,
   TextDocumentSyncKind,
   InitializeResult,
@@ -44,7 +42,7 @@ import {
   stubMalloyHighlights,
 } from '../highlights';
 import {getMalloyLenses} from '../lenses';
-import {connectionManager} from './connections_node';
+import {connection, connectionManager} from './connections_node';
 import {
   getCompletionItems,
   resolveCompletionItem,
@@ -52,8 +50,6 @@ import {
 import {getHover} from '../hover/hover';
 import {getMalloyDefinitionReference} from '../definitions/definitions';
 import {TranslateCacheNode} from './translate_cache';
-
-const connection = createConnection(ProposedFeatures.all);
 
 const documents = new TextDocuments(TextDocument);
 let haveConnectionsBeenSet = false;
@@ -162,9 +158,8 @@ connection.onDefinition(handler => {
 });
 
 connection.onDidChangeConfiguration(async change => {
-  await connectionManager.setConnectionsConfig(
-    change.settings.malloy.connections
-  );
+  console.info('Server onDidChangeConfiguration');
+  connectionManager.setConnectionsConfig(change.settings.malloy.connections);
   haveConnectionsBeenSet = true;
   documents.all().forEach(diagnoseDocument);
 });

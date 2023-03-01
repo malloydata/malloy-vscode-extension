@@ -32,7 +32,7 @@ let idx = 1;
  * disk doesn't take into account unsaved changes that only
  * VS Code is aware of.
  *
- * @param file File path to resolve
+ * @param uri URI to resolve
  * @returns File contents
  */
 export async function fetchFile(uri: string): Promise<string> {
@@ -55,6 +55,41 @@ export async function fetchFile(uri: string): Promise<string> {
     self.addEventListener('message', callback);
     self.postMessage({
       type: 'read',
+      uri,
+      id,
+    });
+  });
+}
+
+/**
+ * Requests a file from the worker's controller. Although the
+ * file path is a file system path, reading the file off
+ * disk doesn't take into account unsaved changes that only
+ * VS Code is aware of.
+ *
+ * @param uri URI to resolve
+ * @returns File contents
+ */
+export async function fetchFileBinary(uri: string): Promise<Uint8Array> {
+  return new Promise((resolve, reject) => {
+    // This could probably use some more error handling (timeout?).
+    // For now just be relentlessly optimistic because there's
+    // a tight coupling with the worker controller.
+    const id = `${uri}-${idx++}`;
+    const callback = (event: MessageEvent) => {
+      const message: Message = event.data;
+      if (message.type === 'read_binary' && message.id === id) {
+        if (message.data !== undefined) {
+          resolve(message.data);
+        } else if (message.error !== undefined) {
+          reject(new Error(message.error));
+        }
+        self.removeEventListener('message', callback);
+      }
+    };
+    self.addEventListener('message', callback);
+    self.postMessage({
+      type: 'read_binary',
       uri,
       id,
     });

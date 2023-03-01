@@ -97,6 +97,14 @@ export interface MessageRead {
   error?: string;
 }
 
+export interface MessageReadBinary {
+  type: 'read_binary';
+  id: string;
+  uri: string;
+  data?: Uint8Array;
+  error?: string;
+}
+
 export interface MessageDownload {
   type: 'download';
   query: WorkerQuerySpec;
@@ -111,6 +119,7 @@ export type Message =
   | MessageConfig
   | MessageExit
   | MessageRead
+  | MessageReadBinary
   | MessageRun
   | MessageDownload;
 
@@ -143,6 +152,12 @@ export interface WorkerStartMessage {
   type: 'start';
 }
 
+export interface WorkerReadBinaryMessage {
+  type: 'read_binary';
+  id: string;
+  uri: string;
+}
+
 export interface WorkerReadMessage {
   type: 'read';
   id: string;
@@ -154,6 +169,7 @@ export type WorkerMessage =
   | WorkerDownloadMessage
   | WorkerLogMessage
   | WorkerQueryPanelMessage
+  | WorkerReadBinaryMessage
   | WorkerReadMessage
   | WorkerStartMessage;
 
