@@ -25,6 +25,19 @@
 import {URLReader} from '@malloydata/malloy';
 import * as vscode from 'vscode';
 
+const fixNotebookUri = (uri: vscode.Uri) => {
+  if (uri.scheme === 'vscode-notebook-cell') {
+    uri = vscode.Uri.from({
+      scheme: 'file',
+      authority: uri.authority,
+      path: uri.path,
+      query: uri.query,
+    });
+  }
+
+  return uri;
+};
+
 export async function fetchFile(uri: string): Promise<string> {
   const openFiles = vscode.workspace.textDocuments;
   const openDocument = openFiles.find(
@@ -41,10 +54,11 @@ export async function fetchFile(uri: string): Promise<string> {
 }
 
 export async function fetchBinaryFile(
-  uri: string
+  uriString: string
 ): Promise<Uint8Array | undefined> {
+  const uri = fixNotebookUri(vscode.Uri.parse(uriString));
   try {
-    return await vscode.workspace.fs.readFile(vscode.Uri.parse(uri));
+    return await vscode.workspace.fs.readFile(uri);
   } catch (error) {
     console.error(error);
   }

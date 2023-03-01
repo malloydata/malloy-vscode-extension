@@ -96,14 +96,9 @@ export class DesktopConnectionFactory implements ConnectionFactory {
   }
 
   getWorkingDirectory(url: URL): string {
-    let workingDirectory: string;
     const baseUrl = new URL('.', url);
-    if (baseUrl.protocol === 'file:') {
-      workingDirectory = fileURLToPath(baseUrl);
-    } else {
-      workingDirectory = baseUrl.toString();
-    }
-    return workingDirectory;
+    const fileUrl = new URL(baseUrl.pathname, 'file:');
+    return fileURLToPath(fileUrl);
   }
 
   addDefaults(configs: ConnectionConfig[]): ConnectionConfig[] {

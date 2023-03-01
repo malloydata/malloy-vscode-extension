@@ -155,7 +155,9 @@ function makeDuckdbNoNodePreGypPlugin(target: Target | undefined): Plugin {
   };
 }
 
-const DEFINITIONS: Record<string, string> = {};
+const DEFINITIONS: Record<string, string> = {
+  'process.env.NODE_DEBUG': 'false', // TODO this is a hack because some package we include assumed process.env exists :(
+};
 
 const ENV_PASSTHROUGH = ['GA_API_SECRET', 'GA_MEASUREMENT_ID'];
 
@@ -214,12 +216,10 @@ export async function doBuild(
     metafile: true,
     logLevel: 'info',
     target: 'node12.22',
+    define: DEFINITIONS,
   };
 
-  let nodeOptions: BuildOptions | null = null;
-  let nodeServerOptions: BuildOptions | null = null;
-  let browserOptions: BuildOptions | null = null;
-  let browserServerOptions: BuildOptions | null = null;
+  const buildOptions: Record<string, BuildOptions> = {};
   let nodeWebviewPlugins: Plugin[] = [];
 
   if (target !== 'web') {
@@ -254,11 +254,6 @@ export async function doBuild(
     // build the extension and servers
     const commonNodeOptions: BuildOptions = {
       ...baseOptions,
-      entryPoints: [
-        './src/extension/node/extension_node.ts',
-        './src/server/node/server_node.ts',
-        './src/worker/node/worker_node.ts',
-      ],
       entryNames: '[name]',
       platform: 'node',
       loader: {['.png']: 'file', ['.svg']: 'file'},
@@ -266,7 +261,7 @@ export async function doBuild(
       define: DEFINITIONS,
     };
 
-    nodeOptions = {
+    buildOptions['node'] = {
       ...commonNodeOptions,
       entryPoints: ['./src/extension/node/extension_node.ts'],
       external: [
@@ -277,7 +272,7 @@ export async function doBuild(
       ],
     };
 
-    nodeServerOptions = {
+    buildOptions['nodeServer'] = {
       ...commonNodeOptions,
       entryPoints: [
         './src/server/node/server_node.ts',
@@ -301,7 +296,7 @@ export async function doBuild(
   }
 
   // build the webviews
-  const webviewOptions: BuildOptions = {
+  buildOptions['webview'] = {
     ...baseOptions,
     entryPoints: [
       './src/extension/webviews/query_page/entry.ts',
@@ -309,9 +304,16 @@ export async function doBuild(
     ],
     entryNames: '[dir]',
     platform: 'browser',
-    define: {
-      'process.env.NODE_DEBUG': 'false', // TODO this is a hack because some package we include assumed process.env exists :(
-    },
+    plugins: webviewPlugins,
+  };
+
+  // Build the notebook renderer
+  buildOptions['renderer'] = {
+    ...baseOptions,
+    format: 'esm',
+    entryPoints: ['./src/extension/notebook/renderer/entry.tsx'],
+    entryNames: '[name]',
+    platform: 'browser',
     plugins: webviewPlugins,
   };
 
@@ -324,10 +326,6 @@ export async function doBuild(
       entryNames: '[name]',
       format: 'cjs',
       platform: 'browser',
-      define: {
-        'process.env.NODE_DEBUG': 'false', // TODO this is a hack because some package we include assumed process.env exists :(
-        ...DEFINITIONS,
-      },
       tsconfig: './tsconfig.browser.json',
       plugins: browserPlugins,
       banner: {
@@ -335,13 +333,13 @@ export async function doBuild(
       },
     };
 
-    browserOptions = {
+    buildOptions['browser'] = {
       ...commonBrowserOptions,
       entryPoints: ['./src/extension/browser/extension_browser.ts'],
       external: ['vscode'],
     };
 
-    browserServerOptions = {
+    buildOptions['browserServer'] = {
       ...commonBrowserOptions,
       entryPoints: [
         './src/server/browser/server_browser.ts',
@@ -352,51 +350,15 @@ export async function doBuild(
 
   if (development) {
     console.log('[watch] build started');
-    if (nodeOptions && nodeServerOptions) {
-      const nodeContext = await context(nodeOptions);
-      const nodeServerContext = await context(nodeServerOptions);
-      await nodeContext.watch();
-      await nodeServerContext.watch();
-    }
-    const webviewContext = await context(webviewOptions);
-    await webviewContext.watch();
-    if (browserOptions && browserServerOptions) {
-      const browserContext = await context(browserOptions);
-      const browserServerContext = await context(browserServerOptions);
-      await browserContext.watch();
-      await browserServerContext.watch();
+    for (const name in buildOptions) {
+      const result = await context(buildOptions[name]);
+      await result.watch();
     }
   } else {
-    if (nodeOptions && nodeServerOptions) {
-      const nodeResult = await build(nodeOptions);
-      const nodeServerResult = await build(nodeServerOptions);
+    for (const name in buildOptions) {
+      const result = await build(buildOptions[name]);
       if (metadata) {
-        fs.writeFileSync('meta-node.json', JSON.stringify(nodeResult.metafile));
-        fs.writeFileSync(
-          'meta-node-server.json',
-          JSON.stringify(nodeServerResult.metafile)
-        );
-      }
-    }
-    const webviewResult = await build(webviewOptions);
-    if (metadata) {
-      fs.writeFileSync(
-        'meta-webview.json',
-        JSON.stringify(webviewResult.metafile)
-      );
-    }
-    if (browserOptions && browserServerOptions) {
-      const browserResult = await build(browserOptions);
-      const browserServerResult = await build(browserServerOptions);
-      if (metadata) {
-        fs.writeFileSync(
-          'meta-browser.json',
-          JSON.stringify(browserResult.metafile)
-        );
-        fs.writeFileSync(
-          'meta-browser-server.json',
-          JSON.stringify(browserServerResult.metafile)
-        );
+        fs.writeFileSync(`meta-${name}.json`, JSON.stringify(result));
       }
     }
   }

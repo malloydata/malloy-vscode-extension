@@ -61,7 +61,8 @@
     "onView:malloyConnections",
     "onView:malloySchema",
     "onWebviewPanel:malloyQuery",
-    "onWebviewPanel:malloyConnections"
+    "onWebviewPanel:malloyConnections",
+    "onNotebook:malloy-notebook"
   ],
   "main": "./dist/extension_node",
   "browser": "./dist/extension_browser",
@@ -144,6 +145,11 @@
         "title": "Run Unnamed SQL Block",
         "category": "Malloy",
         "enablement": "false"
+      },
+      {
+        "category": "Create",
+        "command": "malloy.newUntitledNotebook",
+        "title": "New Malloy Notebook"
       }
     ],
     "menus": {
@@ -164,6 +170,12 @@
           "command": "malloy.runTurtleFromSchema",
           "when": "view == malloySchema && viewItem == query",
           "group": "inline"
+        }
+      ],
+      "file/newFile": [
+        {
+          "command": "malloy.newUntitledNotebook",
+          "group": "notebook"
         }
       ]
     },
@@ -377,6 +389,28 @@
           }
         ]
       }
+    ],
+    "notebooks": [
+      {
+        "id": "malloy-notebook",
+        "type": "malloy-notebook",
+        "displayName": "Malloy Notebook",
+        "selector": [
+          {
+            "filenamePattern": "*.malloynb"
+          }
+        ]
+      }
+    ],
+    "notebookRenderer": [
+      {
+        "displayName": "Malloy Notebook Renderer",
+        "entrypoint": "./dist/entry.js",
+        "id": "malloy.notebook-renderer",
+        "mimeTypes": [
+          "x-application/malloy-results"
+        ]
+      }
     ]
   },
   "dependencies": {
@@ -386,6 +420,7 @@
     "@malloydata/malloy": "0.0.24",
     "@malloydata/render": "0.0.24",
     "@popperjs/core": "^2.11.6",
+    "@types/vscode-notebook-renderer": "^1.72.0",
     "@vscode/webview-ui-toolkit": "^1.2.1",
     "duckdb": "0.7.1",
     "keytar": "7.7.0",
@@ -421,7 +456,7 @@
     "@types/styled-components": "^5.1.19",
     "@types/tar-stream": "^2.2.2",
     "@types/uuid": "^8.3.4",
-    "@types/vscode": "1.56.0",
+    "@types/vscode": "1.75.1",
     "@types/vscode-webview": "^1.57.0",
     "@typescript-eslint/eslint-plugin": "^5.48.2",
     "@typescript-eslint/parser": "^5.48.2",

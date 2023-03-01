@@ -41,6 +41,8 @@ import {URLReader} from '@malloydata/malloy';
 import {v4 as uuid} from 'uuid';
 
 import {MALLOY_EXTENSION_STATE} from './state';
+import {activateNotebookSerializer} from './notebook/malloy_serializer';
+import {activateNotebookController} from './notebook/malloy_controller';
 
 function getNewClientId(): string {
   return uuid();
@@ -135,6 +137,9 @@ export const setupSubscriptions = (
       }
     })
   );
+
+  activateNotebookSerializer(context);
+  activateNotebookController(context, connectionManager, urlReader);
 
   let clientId: string | undefined =
     context.globalState.get('malloy_client_id');
