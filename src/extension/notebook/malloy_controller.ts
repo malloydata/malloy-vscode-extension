@@ -24,6 +24,7 @@
 import * as vscode from 'vscode';
 import {Runtime, URLReader} from '@malloydata/malloy';
 import {ConnectionManager} from '../../common/connection_manager';
+import {newUntitledNotebookCommand} from '../commands/new_untitled_notebook';
 
 export function activateNotebookController(
   context: vscode.ExtensionContext,
@@ -32,6 +33,13 @@ export function activateNotebookController(
 ) {
   context.subscriptions.push(
     new MalloyController(connectionManager, urlReader)
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      'malloy.newUntitledNotebook',
+      newUntitledNotebookCommand
+    )
   );
 }
 

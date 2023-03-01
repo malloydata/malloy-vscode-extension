@@ -21,10 +21,24 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {ConnectionManager} from '../../common/connection_manager';
-import {DesktopConnectionFactory} from '../../extension/node/connection_factory';
+import * as vscode from 'vscode';
 
-export const connectionManager = new ConnectionManager(
-  new DesktopConnectionFactory(),
-  []
-);
+const NOTEBOOK_TYPE = 'malloy-notebook';
+
+export async function newUntitledNotebookCommand(): Promise<void> {
+  const language = 'malloy';
+  const defaultValue = '// Enter Malloy here';
+  const cell = new vscode.NotebookCellData(
+    vscode.NotebookCellKind.Code,
+    defaultValue,
+    language
+  );
+  const data = new vscode.NotebookData([cell]);
+  data.metadata = {
+    custom: {
+      cells: [],
+    },
+  };
+  const doc = await vscode.workspace.openNotebookDocument(NOTEBOOK_TYPE, data);
+  await vscode.window.showNotebookDocument(doc);
+}

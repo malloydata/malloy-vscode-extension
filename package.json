@@ -149,7 +149,7 @@
       {
         "category": "Create",
         "command": "malloy.newUntitledNotebook",
-        "title": "New Malloy Notebook"
+        "title": "Malloy Notebook"
       }
     ],
     "menus": {
@@ -183,7 +183,8 @@
       {
         "id": "malloy",
         "extensions": [
-          ".malloy"
+          ".malloy",
+          ".malloynb"
         ],
         "aliases": [
           "Malloy",

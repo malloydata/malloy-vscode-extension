@@ -21,9 +21,9 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { ConnectionManager } from "../../common/connection_manager";
-import { WebConnectionFactory } from "../../extension/browser/connection_factory";
-import { fetchFileBinary } from "./files";
+import {ConnectionManager} from '../../common/connection_manager';
+import {WebConnectionFactory} from '../../extension/browser/connection_factory';
+import {fetchFileBinary} from './files';
 
 export const connectionManager = new ConnectionManager(
   new WebConnectionFactory(fetchFileBinary),
