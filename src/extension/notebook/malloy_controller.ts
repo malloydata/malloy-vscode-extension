@@ -84,7 +84,7 @@ class MalloyController {
         this.urlReader,
         this.connectionManager.getConnectionLookup(url)
       );
-      const query = runtime.loadQuery(cell.document.getText());
+      const query = runtime.loadQuery(url);
       const results = await query.run();
       execution.replaceOutput([
         new vscode.NotebookCellOutput([

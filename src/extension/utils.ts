@@ -25,11 +25,9 @@
 import {URLReader} from '@malloydata/malloy';
 import * as vscode from 'vscode';
 
-import {MALLOY_EXTENSION_STATE} from './state';
-
 const fixNotebookUri = (uri: vscode.Uri) => {
   if (uri.scheme === 'vscode-notebook-cell') {
-    const {scheme} = MALLOY_EXTENSION_STATE.getExtensionUri();
+    const {scheme} = vscode.workspace.workspaceFolders[0].uri;
     uri = vscode.Uri.from({
       scheme,
       authority: uri.authority,
@@ -41,17 +39,18 @@ const fixNotebookUri = (uri: vscode.Uri) => {
   return uri;
 };
 
-export async function fetchFile(uri: string): Promise<string> {
+export async function fetchFile(uriString: string): Promise<string> {
   const openFiles = vscode.workspace.textDocuments;
   const openDocument = openFiles.find(
-    document => document.uri.toString() === uri
+    document => document.uri.toString() === uriString
   );
   // Only get the text from VSCode's open files if the file is already open in VSCode,
   // otherwise, just read the file from the file system
   if (openDocument !== undefined) {
     return openDocument.getText();
   } else {
-    const contents = await vscode.workspace.fs.readFile(vscode.Uri.parse(uri));
+    const uri = fixNotebookUri(vscode.Uri.parse(uriString));
+    const contents = await vscode.workspace.fs.readFile(uri);
     return new TextDecoder('utf-8').decode(contents);
   }
 }

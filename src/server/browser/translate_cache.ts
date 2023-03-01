@@ -41,7 +41,9 @@ export class TranslateCacheBrowser implements TranslateCache {
       return cached.getText();
     } else {
       console.info('fetchFile requesting', uri);
-      return await connection.sendRequest('malloy/fetchFile', {uri});
+      return await connection.sendRequest('malloy/fetchFile', {
+        uri: uri.toString(),
+      });
     }
   }
 
