@@ -25,10 +25,13 @@
 import {URLReader} from '@malloydata/malloy';
 import * as vscode from 'vscode';
 
+import {MALLOY_EXTENSION_STATE} from './state';
+
 const fixNotebookUri = (uri: vscode.Uri) => {
   if (uri.scheme === 'vscode-notebook-cell') {
+    const {scheme} = MALLOY_EXTENSION_STATE.getExtensionUri();
     uri = vscode.Uri.from({
-      scheme: 'file',
+      scheme,
       authority: uri.authority,
       path: uri.path,
       query: uri.query,
