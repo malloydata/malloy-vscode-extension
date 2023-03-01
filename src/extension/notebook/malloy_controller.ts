@@ -48,6 +48,9 @@ class MalloyController {
     private connectionManager: ConnectionManager,
     private urlReader: URLReader
   ) {
+    if (!vscode.notebooks) {
+      return;
+    }
     this._controller = vscode.notebooks.createNotebookController(
       this.controllerId,
       this.notebookType,

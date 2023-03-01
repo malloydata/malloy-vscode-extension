@@ -24,7 +24,7 @@
 import * as vscode from 'vscode';
 
 export function activateNotebookSerializer(context: vscode.ExtensionContext) {
-  if (!vscode.workspace.registerNotebookSerializer) {
+  if (!vscode.notebooks) {
     return;
   }
 
