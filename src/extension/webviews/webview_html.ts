@@ -31,7 +31,7 @@ export function getWebviewHtml(
   const cspSrc = webview.cspSource;
 
   const nonce = getNonce();
-  return `<!DOCTYPE html>
+  return /* html */ `<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8">
@@ -56,7 +56,6 @@ export function getWebviewHtml(
     }
     body {
       background-color: transparent;
-      font-size: 11px;
     }
     .placeholder-vertical-center {
       display: flex;
