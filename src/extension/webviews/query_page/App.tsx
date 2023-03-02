@@ -340,7 +340,7 @@ const DOMElement: React.FC<{element: HTMLElement}> = ({element}) => {
     }
   }, [element]);
 
-  return <div style={{ fontSize: 11 }} ref={ref}></div>;
+  return <div style={{fontSize: 11}} ref={ref}></div>;
 };
 
 const Tooltip = styled.div`

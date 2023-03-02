@@ -40,18 +40,38 @@ const fixNotebookUri = (uri: vscode.Uri) => {
 };
 
 export async function fetchFile(uriString: string): Promise<string> {
+  console.info('<<<<<', uriString);
+  const uri = vscode.Uri.parse(uriString);
+  const {path, fragment} = uri;
   const openFiles = vscode.workspace.textDocuments;
-  const openDocument = openFiles.find(
-    document => document.uri.toString() === uriString
-  );
-  // Only get the text from VSCode's open files if the file is already open in VSCode,
-  // otherwise, just read the file from the file system
-  if (openDocument !== undefined) {
-    return openDocument.getText();
+  if (uri.scheme === 'vscode-notebook-cell' && fragment) {
+    let text = '';
+    const notebook = vscode.workspace.notebookDocuments.find(
+      notebook => notebook.uri.path === path
+    );
+    const cells = notebook.getCells();
+    for (const cell of cells) {
+      if (cell.kind === vscode.NotebookCellKind.Code) {
+        text += cell.document.getText();
+      }
+      if (fragment === cell.document.uri.fragment) {
+        break;
+      }
+    }
+    console.info('>>>>>', text);
+    return text;
   } else {
-    const uri = fixNotebookUri(vscode.Uri.parse(uriString));
-    const contents = await vscode.workspace.fs.readFile(uri);
-    return new TextDecoder('utf-8').decode(contents);
+    const openDocument = openFiles.find(
+      document => document.uri.toString() === uriString
+    );
+    // Only get the text from VSCode's open files if the file is already open in VSCode,
+    // otherwise, just read the file from the file system
+    if (openDocument !== undefined) {
+      return openDocument.getText();
+    } else {
+      const contents = await vscode.workspace.fs.readFile(fixNotebookUri(uri));
+      return new TextDecoder('utf-8').decode(contents);
+    }
   }
 }
 

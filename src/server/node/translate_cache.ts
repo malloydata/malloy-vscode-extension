@@ -36,7 +36,7 @@ export class TranslateCacheNode implements TranslateCache {
     uri: URL
   ): Promise<string> {
     const cached = documents.get(uri.toString());
-    if (cached) {
+    if (cached && uri.protocol !== 'vscode-notebook-cell:') {
       return cached.getText();
     } else {
       console.info('fetchFile requesting', uri);
