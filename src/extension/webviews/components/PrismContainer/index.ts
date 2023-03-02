@@ -21,43 +21,4 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as React from 'react';
-import {Result, ResultJSON} from '@malloydata/malloy';
-import {HTMLView} from '@malloydata/render';
-
-export interface ResultProps {
-  results: ResultJSON;
-}
-
-export const MalloyRenderer: React.FC<ResultProps> = ({results}) => {
-  const [html, setHtml] = React.useState<HTMLElement>();
-
-  React.useEffect(() => {
-    if (results) {
-      const {data} = Result.fromJSON(results);
-      const rendering = new HTMLView(document).render(data, {dataStyles: {}});
-      rendering.then(rendered => {
-        setHtml(rendered);
-      });
-    }
-  }, [results]);
-
-  if (html) {
-    return <DOMElement element={html} />;
-  }
-  return null;
-};
-
-const DOMElement: React.FC<{element: HTMLElement}> = ({element}) => {
-  const ref = React.useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
-    const parent = ref.current;
-    if (parent) {
-      parent.innerHTML = '';
-      parent.appendChild(element);
-    }
-  }, [element]);
-
-  return <div ref={ref} />;
-};
+export {PrismContainer} from './PrismContainer';

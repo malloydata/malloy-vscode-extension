@@ -39,13 +39,12 @@ import {
 import {Spinner} from '../components';
 import {ResultKind, ResultKindToggle} from './ResultKindToggle';
 import Prism from 'prismjs';
-import 'prismjs/components/prism-json';
-import 'prismjs/components/prism-sql';
 import {usePopperTooltip} from 'react-popper-tooltip';
 import {useQueryVSCodeContext} from './query_vscode_context';
 import {DownloadButton} from './DownloadButton';
 import {CopyButton} from './CopyButton';
 import {Scroll} from './Scroll';
+import {PrismContainer} from '../components/PrismContainer';
 
 enum Status {
   Ready = 'ready',
@@ -250,7 +249,12 @@ export const App: React.FC = () => {
         <Scroll>
           <CopyButton onClick={copyToClipboard} />
           <PrismContainer darkMode={darkMode} style={{margin: '10px'}}>
-            {json}
+            <div
+              dangerouslySetInnerHTML={{
+                __html: Prism.highlight(json, Prism.languages['json'], 'json'),
+              }}
+              style={{margin: '10px'}}
+            />
           </PrismContainer>
         </Scroll>
       )}
@@ -324,61 +328,6 @@ function getStyledHTML(html: HTMLElement): string {
 `;
   return styles + html.outerHTML;
 }
-
-interface PrismContainerProps {
-  darkMode: boolean;
-}
-
-const PrismContainer = styled.pre<PrismContainerProps>`
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
-  font-size: 14px;
-  color: ${props => (props.darkMode ? '#9cdcfe' : '#333388')};
-
-  span.token.keyword {
-    color: ${props => (props.darkMode ? '#c586c0' : '#af00db')};
-  }
-
-  span.token.comment {
-    color: ${props => (props.darkMode ? '#6a9955' : '#4f984f')};
-  }
-
-  span.token.function,
-  span.token.function_keyword {
-    color: ${props => (props.darkMode ? '#ce9178' : '#795e26')};
-  }
-
-  span.token.string {
-    color: ${props => (props.darkMode ? '#d16969' : '#ca4c4c')};
-  }
-
-  span.token.regular_expression {
-    color: ${props => (props.darkMode ? '#f03e91' : '#88194d')};
-  }
-
-  span.token.operator,
-  span.token.punctuation {
-    color: ${props => (props.darkMode ? '#dadada' : '#505050')};
-  }
-
-  span.token.number {
-    color: ${props => (props.darkMode ? '#4ec9b0' : '#09866a')};
-  }
-
-  span.token.type,
-  span.token.timeframe {
-    color: ${props => (props.darkMode ? '#569cd6 ' : '#0070c1')};
-  }
-
-  span.token.date {
-    color: ${props => (props.darkMode ? '#4ec9b0' : '#09866a')};
-    /* color: ${props => (props.darkMode ? '#8730b3' : '#8730b3')};; */
-  }
-
-  span.token.property {
-    color: ${props => (props.darkMode ? '#dcdcaa' : '#b98f13')};
-  }
-`;
 
 const DOMElement: React.FC<{element: HTMLElement}> = ({element}) => {
   const ref = useRef<HTMLDivElement>(null);

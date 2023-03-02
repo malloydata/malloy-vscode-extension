@@ -405,9 +405,17 @@
     ],
     "notebookRenderer": [
       {
-        "displayName": "Malloy Notebook Renderer",
-        "entrypoint": "./dist/entry.js",
+        "displayName": "Malloy",
+        "entrypoint": "./dist/malloy_entry.js",
         "id": "malloy.notebook-renderer",
+        "mimeTypes": [
+          "x-application/malloy-results"
+        ]
+      },
+      {
+        "displayName": "JSON",
+        "entrypoint": "./dist/json_entry.js",
+        "id": "malloy.notebook-renderer-json",
         "mimeTypes": [
           "x-application/malloy-results"
         ]

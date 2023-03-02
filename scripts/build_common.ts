@@ -307,11 +307,14 @@ export async function doBuild(
     plugins: webviewPlugins,
   };
 
-  // Build the notebook renderer
-  buildOptions['renderer'] = {
+  // Build the notebook renderers
+  buildOptions['renderers'] = {
     ...baseOptions,
     format: 'esm',
-    entryPoints: ['./src/extension/notebook/renderer/entry.tsx'],
+    entryPoints: [
+      './src/extension/notebook/renderer/malloy_entry.tsx',
+      './src/extension/notebook/renderer/json_entry.tsx',
+    ],
     entryNames: '[name]',
     platform: 'browser',
     plugins: webviewPlugins,

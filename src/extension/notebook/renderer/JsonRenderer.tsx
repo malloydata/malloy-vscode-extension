@@ -22,42 +22,36 @@
  */
 
 import * as React from 'react';
+import styled from 'styled-components';
+import Prism from 'prismjs';
 import {Result, ResultJSON} from '@malloydata/malloy';
-import {HTMLView} from '@malloydata/render';
+import {PrismContainer} from '../../webviews/components/PrismContainer';
 
 export interface ResultProps {
   results: ResultJSON;
 }
 
-export const MalloyRenderer: React.FC<ResultProps> = ({results}) => {
-  const [html, setHtml] = React.useState<HTMLElement>();
+export const JsonRenderer: React.FC<ResultProps> = ({results}) => {
+  const [json, setJson] = React.useState<string>();
 
   React.useEffect(() => {
     if (results) {
       const {data} = Result.fromJSON(results);
-      const rendering = new HTMLView(document).render(data, {dataStyles: {}});
-      rendering.then(rendered => {
-        setHtml(rendered);
-      });
+      setJson(JSON.stringify(data.toObject(), null, 2));
     }
   }, [results]);
 
-  if (html) {
-    return <DOMElement element={html} />;
+  if (json) {
+    return (
+      <PrismContainer darkMode={false} style={{margin: '10px'}}>
+        <div
+          dangerouslySetInnerHTML={{
+            __html: Prism.highlight(json, Prism.languages['json'], 'json'),
+          }}
+          style={{margin: '10px'}}
+        />
+      </PrismContainer>
+    );
   }
   return null;
-};
-
-const DOMElement: React.FC<{element: HTMLElement}> = ({element}) => {
-  const ref = React.useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
-    const parent = ref.current;
-    if (parent) {
-      parent.innerHTML = '';
-      parent.appendChild(element);
-    }
-  }, [element]);
-
-  return <div ref={ref} />;
 };
