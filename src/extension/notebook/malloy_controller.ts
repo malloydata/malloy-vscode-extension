@@ -26,6 +26,8 @@ import {Runtime, URLReader} from '@malloydata/malloy';
 import {ConnectionManager} from '../../common/connection_manager';
 import {newUntitledNotebookCommand} from '../commands/new_untitled_notebook';
 
+const NO_QUERY = 'Model has no queries.';
+
 export function activateNotebookController(
   context: vscode.ExtensionContext,
   connectionManager: ConnectionManager,
@@ -102,14 +104,14 @@ class MalloyController {
           ),
         ]),
       ]);
+      execution.end(true, Date.now());
     } catch (error) {
       execution.replaceOutput([
         new vscode.NotebookCellOutput([
           vscode.NotebookCellOutputItem.text(error.message),
         ]),
       ]);
-    } finally {
-      execution.end(true, Date.now());
+      execution.end(error.message === NO_QUERY, Date.now());
     }
   }
 

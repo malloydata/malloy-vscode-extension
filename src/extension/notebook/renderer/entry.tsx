@@ -26,8 +26,6 @@ import React from 'react';
 import {ActivationFunction} from 'vscode-notebook-renderer';
 import {MalloyRenderer} from './MalloyRenderer';
 
-console.info('ASDGADSGASEDGASDGSDGASD');
-
 export const activate: ActivationFunction = () => {
   return {
     renderOutputItem(info, element) {
