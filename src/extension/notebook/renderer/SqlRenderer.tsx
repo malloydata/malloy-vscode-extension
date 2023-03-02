@@ -30,22 +30,22 @@ export interface ResultProps {
   results: ResultJSON;
 }
 
-export const JsonRenderer: React.FC<ResultProps> = ({results}) => {
-  const [json, setJson] = React.useState<string>();
+export const SqlRenderer: React.FC<ResultProps> = ({results}) => {
+  const [sql, setSql] = React.useState<string>();
 
   React.useEffect(() => {
     if (results) {
-      const {data} = Result.fromJSON(results);
-      setJson(JSON.stringify(data.toObject(), null, 2));
+      const {sql} = Result.fromJSON(results);
+      setSql(sql);
     }
   }, [results]);
 
-  if (json) {
+  if (sql) {
     return (
       <PrismContainer darkMode={false} style={{margin: '10px'}}>
         <div
           dangerouslySetInnerHTML={{
-            __html: Prism.highlight(json, Prism.languages['json'], 'json'),
+            __html: Prism.highlight(sql, Prism.languages['sql'], 'sql'),
           }}
           style={{margin: '10px'}}
         />

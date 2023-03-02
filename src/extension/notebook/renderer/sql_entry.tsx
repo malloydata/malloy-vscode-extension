@@ -21,36 +21,29 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as React from 'react';
-import Prism from 'prismjs';
-import {Result, ResultJSON} from '@malloydata/malloy';
-import {PrismContainer} from '../../webviews/components/PrismContainer';
+import ReactDOM from 'react-dom';
+import React from 'react';
+import {StyleSheetManager} from 'styled-components';
+import {ActivationFunction} from 'vscode-notebook-renderer';
+import {SqlRenderer} from './SqlRenderer';
 
-export interface ResultProps {
-  results: ResultJSON;
-}
-
-export const JsonRenderer: React.FC<ResultProps> = ({results}) => {
-  const [json, setJson] = React.useState<string>();
-
-  React.useEffect(() => {
-    if (results) {
-      const {data} = Result.fromJSON(results);
-      setJson(JSON.stringify(data.toObject(), null, 2));
-    }
-  }, [results]);
-
-  if (json) {
-    return (
-      <PrismContainer darkMode={false} style={{margin: '10px'}}>
-        <div
-          dangerouslySetInnerHTML={{
-            __html: Prism.highlight(json, Prism.languages['json'], 'json'),
-          }}
-          style={{margin: '10px'}}
-        />
-      </PrismContainer>
-    );
-  }
-  return null;
+export const activate: ActivationFunction = () => {
+  return {
+    renderOutputItem(info, element) {
+      let shadow = element.shadowRoot;
+      if (!shadow) {
+        shadow = element.attachShadow({mode: 'open'});
+        const root = document.createElement('div');
+        root.id = 'root';
+        shadow.append(root);
+      }
+      const root = shadow.querySelector<HTMLElement>('#root');
+      ReactDOM.render(
+        <StyleSheetManager target={root}>
+          <SqlRenderer results={info.json()} />
+        </StyleSheetManager>,
+        root
+      );
+    },
+  };
 };
