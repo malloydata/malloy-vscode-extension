@@ -210,12 +210,12 @@
         {
           "id": "malloySchema",
           "name": "Malloy Schema",
-          "when": "malloy.webviewPanelFocused == true || resourceFilename =~ /\\.malloy$/"
+          "when": "malloy.webviewPanelFocused == true || resourceFilename =~ /\\.malloy(nb)?$/"
         },
         {
           "id": "malloyConnections",
           "name": "Malloy Connections",
-          "when": "malloy.webviewPanelFocused == true || resourceFilename =~ /\\.malloy$/"
+          "when": "malloy.webviewPanelFocused == true || resourceFilename =~ /\\.malloy(nb)?$/"
         }
       ]
     },
