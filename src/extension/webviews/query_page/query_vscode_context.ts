@@ -21,11 +21,11 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { QueryPanelMessage } from "../../message_types";
-import { makeUseVSCodeContext, makeVSCodeContext } from "../vscode_context";
+import {QueryPanelMessage} from '../../message_types';
+import {makeUseVSCodeContext, makeVSCodeContext} from '../vscode_context';
 
 export const QueryVSCodeContext = makeVSCodeContext<void, QueryPanelMessage>();
 
 export const useQueryVSCodeContext = makeUseVSCodeContext(QueryVSCodeContext);
 
-export { getVSCodeAPI } from "../vscode_context";
+export {getVSCodeAPI} from '../vscode_context';

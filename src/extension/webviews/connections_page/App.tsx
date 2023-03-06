@@ -21,27 +21,27 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import React, { useEffect, useState } from "react";
+import React, {useEffect, useState} from 'react';
 import {
   ConnectionBackend,
   ConnectionConfig,
-} from "../../../common/connection_manager_types";
+} from '../../../common/connection_manager_types';
 import {
   ConnectionMessageType,
   ConnectionPanelMessage,
   ConnectionMessageTest,
   ConnectionTestStatus,
   ConnectionServiceAccountKeyRequestStatus,
-} from "../../message_types";
-import { useConnectionsVSCodeContext } from "./connections_vscode_context";
-import { ConnectionEditorList } from "./ConnectionEditorList";
-import { Spinner } from "../components";
-import styled from "styled-components";
+} from '../../message_types';
+import {useConnectionsVSCodeContext} from './connections_vscode_context';
+import {ConnectionEditorList} from './ConnectionEditorList';
+import {Spinner} from '../components';
+import styled from 'styled-components';
 
 export const App: React.FC = () => {
   const vscode = useConnectionsVSCodeContext();
   useEffect(() => {
-    vscode.postMessage({ type: ConnectionMessageType.AppReady });
+    vscode.postMessage({type: ConnectionMessageType.AppReady});
   });
 
   const [connections, setConnections] = useState<
@@ -95,7 +95,7 @@ export const App: React.FC = () => {
             message.status === ConnectionServiceAccountKeyRequestStatus.Success
           ) {
             setConnections(
-              (connections || []).map((connection) => {
+              (connections || []).map(connection => {
                 if (connection.id === message.connectionId) {
                   return {
                     ...connection,
@@ -111,17 +111,17 @@ export const App: React.FC = () => {
         }
       }
     };
-    window.addEventListener("message", listener);
-    return () => window.removeEventListener("message", listener);
+    window.addEventListener('message', listener);
+    return () => window.removeEventListener('message', listener);
   });
 
   return connections === undefined ? (
-    <div style={{ height: "100%" }}>
+    <div style={{height: '100%'}}>
       <Spinner text="Loading" />
     </div>
   ) : (
     <Scroll>
-      <div style={{ margin: "0 10px 10px 10px" }}>
+      <div style={{margin: '0 10px 10px 10px'}}>
         <ConnectionEditorList
           connections={connections}
           setConnections={setConnections}

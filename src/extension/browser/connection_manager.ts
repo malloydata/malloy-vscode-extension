@@ -21,9 +21,9 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { VSCodeConnectionManager } from "../connection_manager";
-import { WebConnectionFactory } from "./connection_factory";
-import { fetchBinaryFile } from "../utils";
+import {VSCodeConnectionManager} from '../connection_manager';
+import {WebConnectionFactory} from './connection_factory';
+import {fetchBinaryFile} from '../utils';
 
 export const connectionFactory = new WebConnectionFactory(fetchBinaryFile);
 export const connectionManager = new VSCodeConnectionManager(connectionFactory);

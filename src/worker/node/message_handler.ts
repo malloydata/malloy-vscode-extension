@@ -21,50 +21,50 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { log } from "../logger";
-import { cancelQuery, runQuery } from "../run_query";
-import { downloadQuery } from "./download_query";
-import { Message, MessageHandler, WorkerMessage } from "../types";
-import { refreshConfig } from "../refresh_config";
-import { ConnectionManager } from "../../common/connection_manager";
-import { WorkerURLReader } from "./files";
+import {log} from '../logger';
+import {cancelQuery, runQuery} from '../run_query';
+import {downloadQuery} from './download_query';
+import {Message, MessageHandler, WorkerMessage} from '../types';
+import {refreshConfig} from '../refresh_config';
+import {ConnectionManager} from '../../common/connection_manager';
+import {WorkerURLReader} from './files';
 
 export class NodeMessageHandler implements MessageHandler {
   constructor(connectionManager: ConnectionManager) {
-    log("Worker started");
+    log('Worker started');
     const reader = new WorkerURLReader();
 
-    process.send?.({ type: "started" });
+    process.send?.({type: 'started'});
 
     const heartBeat = setInterval(() => {
-      log("Heartbeat");
+      log('Heartbeat');
     }, 60 * 1000);
 
-    process.on("message", (message: Message) => {
+    process.on('message', (message: Message) => {
       switch (message.type) {
-        case "cancel":
+        case 'cancel':
           cancelQuery(message);
           break;
-        case "config":
+        case 'config':
           refreshConfig(connectionManager, message);
           break;
-        case "download":
+        case 'download':
           downloadQuery(connectionManager, message);
           break;
-        case "exit":
+        case 'exit':
           clearInterval(heartBeat);
           break;
-        case "run":
+        case 'run':
           runQuery(this, reader, connectionManager, false, message);
           break;
       }
     });
 
-    process.on("exit", () => {
-      log("Worker exited");
+    process.on('exit', () => {
+      log('Worker exited');
     });
 
-    process.on("SIGHUP", () => {
+    process.on('SIGHUP', () => {
       clearInterval(heartBeat);
     });
   }

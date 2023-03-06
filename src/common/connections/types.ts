@@ -25,8 +25,8 @@ import {
   ConfigOptions,
   ConnectionBackend,
   ConnectionConfig,
-} from "../connection_manager_types";
-import { TestableConnection } from "@malloydata/malloy";
+} from '../connection_manager_types';
+import {TestableConnection} from '@malloydata/malloy';
 
 export interface ConnectionFactory {
   reset(): void;

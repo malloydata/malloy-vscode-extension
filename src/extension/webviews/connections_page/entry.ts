@@ -21,22 +21,22 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as _webviewAPI from "vscode-webview";
-import ReactDOM from "react-dom";
-import React from "react";
-import { App } from "./App";
+import * as _webviewAPI from 'vscode-webview';
+import ReactDOM from 'react-dom';
+import React from 'react';
+import {App} from './App';
 import {
   getVSCodeAPI,
   ConnectionsVSCodeContext,
-} from "./connections_vscode_context";
-import { ConnectionPanelMessage } from "../../message_types";
+} from './connections_vscode_context';
+import {ConnectionPanelMessage} from '../../message_types';
 
 (() => {
   const vscode = getVSCodeAPI<void, ConnectionPanelMessage>();
   const el = React.createElement(
     ConnectionsVSCodeContext.Provider,
-    { value: vscode },
-    [React.createElement(App, { key: "app" }, null)]
+    {value: vscode},
+    [React.createElement(App, {key: 'app'}, null)]
   );
-  ReactDOM.render(el, document.getElementById("app"));
+  ReactDOM.render(el, document.getElementById('app'));
 })();

@@ -20,14 +20,15 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+/* eslint-disable no-console */
 
 import {
   createConnection,
   BrowserMessageReader,
   BrowserMessageWriter,
-} from "vscode-languageserver/browser";
-import { ConnectionManager } from "../../common/connection_manager";
-import { WebConnectionFactory } from "../../extension/browser/connection_factory";
+} from 'vscode-languageserver/browser';
+import {ConnectionManager} from '../../common/connection_manager';
+import {WebConnectionFactory} from '../../extension/browser/connection_factory';
 
 const messageReader = new BrowserMessageReader(self);
 const messageWriter = new BrowserMessageWriter(self);
@@ -38,8 +39,8 @@ const fetchBinaryFile = async (
   uri: string
 ): Promise<Uint8Array | undefined> => {
   try {
-    console.info("fetchBinaryFile requesting", uri);
-    return await connection.sendRequest("malloy/fetchBinaryFile", { uri });
+    console.info('fetchBinaryFile requesting', uri);
+    return await connection.sendRequest('malloy/fetchBinaryFile', {uri});
   } catch (error) {
     console.error(error);
   }

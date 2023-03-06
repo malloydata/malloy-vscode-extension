@@ -21,9 +21,9 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as vscode from "vscode";
-import { MALLOY_EXTENSION_STATE } from "../state";
-import { runMalloyQuery } from "./run_query_utils";
+import * as vscode from 'vscode';
+import {MALLOY_EXTENSION_STATE} from '../state';
+import {runMalloyQuery} from './run_query_utils';
 
 export function runNamedQuery(name: string): void {
   const document =
@@ -31,7 +31,7 @@ export function runNamedQuery(name: string): void {
     MALLOY_EXTENSION_STATE.getActiveWebviewPanel()?.document;
   if (document) {
     runMalloyQuery(
-      { type: "named", name, file: document },
+      {type: 'named', name, file: document},
       `${document.uri.toString()} ${name}`,
       name
     );

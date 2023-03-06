@@ -20,16 +20,17 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+/* eslint-disable no-console */
 
-import { TextDocuments } from "vscode-languageserver/browser";
-import { Model, Runtime } from "@malloydata/malloy";
-import { TextDocument } from "vscode-languageserver-textdocument";
-import { ConnectionManager } from "../../common/connection_manager";
-import { TranslateCache } from "../types";
-import { connection } from "./connections_browser";
+import {TextDocuments} from 'vscode-languageserver/browser';
+import {Model, Runtime} from '@malloydata/malloy';
+import {TextDocument} from 'vscode-languageserver-textdocument';
+import {ConnectionManager} from '../../common/connection_manager';
+import {TranslateCache} from '../types';
+import {connection} from './connections_browser';
 
 export class TranslateCacheBrowser implements TranslateCache {
-  cache = new Map<string, { model: Model; version: number }>();
+  cache = new Map<string, {model: Model; version: number}>();
 
   async getDocumentText(
     documents: TextDocuments<TextDocument>,
@@ -39,8 +40,8 @@ export class TranslateCacheBrowser implements TranslateCache {
     if (cached) {
       return cached.getText();
     } else {
-      console.info("fetchFile requesting", uri);
-      return await connection.sendRequest("malloy/fetchFile", { uri });
+      console.info('fetchFile requesting', uri);
+      return await connection.sendRequest('malloy/fetchFile', {uri});
     }
   }
 
@@ -66,7 +67,7 @@ export class TranslateCacheBrowser implements TranslateCache {
     );
 
     const model = await runtime.getModel(new URL(uri));
-    this.cache.set(uri, { version: currentVersion, model });
+    this.cache.set(uri, {version: currentVersion, model});
     return model;
   }
 }

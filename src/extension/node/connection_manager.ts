@@ -21,8 +21,8 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { VSCodeConnectionManager } from "../connection_manager";
-import { DesktopConnectionFactory } from "./connection_factory";
+import {VSCodeConnectionManager} from '../connection_manager';
+import {DesktopConnectionFactory} from './connection_factory';
 
 export const connectionFactory = new DesktopConnectionFactory();
 export const connectionManager = new VSCodeConnectionManager(connectionFactory);

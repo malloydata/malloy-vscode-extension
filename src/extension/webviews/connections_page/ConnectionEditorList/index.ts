@@ -21,4 +21,4 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-export { ConnectionEditorList } from "./ConnectionEditorList";
+export {ConnectionEditorList} from './ConnectionEditorList';

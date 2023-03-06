@@ -22,17 +22,17 @@
  */
 /* eslint-disable no-console */
 
-import fetch from "node-fetch";
-import fs from "fs";
-import path from "path";
+import fetch from 'node-fetch';
+import fs from 'fs';
+import path from 'path';
 
-const GITHUB_API_URL = "https://api.github.com/repos";
-const GITHUB_API_MIME_TYPE = "application/vnd.github+json";
+const GITHUB_API_URL = 'https://api.github.com/repos';
+const GITHUB_API_MIME_TYPE = 'application/vnd.github+json';
 
-const GITHUB_UPLOAD_URL = "https://uploads.github.com/repos";
+const GITHUB_UPLOAD_URL = 'https://uploads.github.com/repos';
 
-const REPO = "malloy-vscode-extension";
-const REPO_OWNER = "malloydata";
+const REPO = 'malloy-vscode-extension';
+const REPO_OWNER = 'malloydata';
 
 /**
  * Publishes the cloud extension as a github release.
@@ -47,10 +47,10 @@ export async function publishCloudExtension(
   preRelease: boolean
 ): Promise<void> {
   const release = await createRelease(versionCode, preRelease);
-  const asset = await uploadAsset(release, path, "malloy-cloud-extension.vsix");
+  const asset = await uploadAsset(release, path, 'malloy-cloud-extension.vsix');
 
   console.log(`  Asset Download URL: ${asset.browser_download_url}`);
-  console.log("  Extension successfully published to GitHub");
+  console.log('  Extension successfully published to GitHub');
 }
 
 /**
@@ -63,14 +63,14 @@ async function createRelease(
   versionCode: string,
   preRelease: boolean
 ): Promise<GithubRelease> {
-  console.log("Creating Github Release for cloud extension:");
+  console.log('Creating Github Release for cloud extension:');
   console.log(`  Version: ${versionCode}`);
   console.log(`  Pre-Release: ${preRelease}`);
 
   const response = await fetch(
     `${GITHUB_API_URL}/${REPO_OWNER}/${REPO}/releases`,
     {
-      method: "POST",
+      method: 'POST',
       headers: {
         Accept: GITHUB_API_MIME_TYPE,
         Authorization: `Bearer ${process.env.GHAPI_PAT}`,
@@ -79,7 +79,7 @@ async function createRelease(
         repo: REPO,
         owner: REPO_OWNER,
         tag_name: versionCode,
-        target_commitish: "main",
+        target_commitish: 'main',
         name: versionCode,
         draft: false,
         prerelease: preRelease,
@@ -110,16 +110,16 @@ async function uploadAsset(
 ): Promise<GithubAsset> {
   console.log(`  Uploading release asset: ${assetPath}`);
 
-  const fullAssetPath = path.resolve(__dirname, "..", assetPath);
+  const fullAssetPath = path.resolve(__dirname, '..', assetPath);
   const uploadAssetUrl = `${GITHUB_UPLOAD_URL}/${REPO_OWNER}/${REPO}/releases/${release.id}/assets?name=${assetName}`;
 
   const response = await fetch(uploadAssetUrl, {
-    method: "POST",
+    method: 'POST',
     headers: {
       Accept: GITHUB_API_MIME_TYPE,
       Authorization: `Bearer ${process.env.GHAPI_PAT}`,
-      "Content-Type": "application/octet-stream",
-      "Content-Length": `${fs.statSync(fullAssetPath).size}`,
+      'Content-Type': 'application/octet-stream',
+      'Content-Length': `${fs.statSync(fullAssetPath).size}`,
     },
     body: fs.createReadStream(fullAssetPath),
   });

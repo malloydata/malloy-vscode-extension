@@ -20,47 +20,48 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-
 /* eslint-disable no-console */
-import fs from "fs";
-import { build, BuildOptions, context, Plugin } from "esbuild";
-import { nativeNodeModulesPlugin } from "../third_party/github.com/evanw/esbuild/native-modules-plugin";
-import * as path from "path";
-import { execSync } from "child_process";
-import { noNodeModulesSourceMaps } from "../third_party/github.com/evanw/esbuild/no-node-modules-sourcemaps";
-import svgrPlugin from "esbuild-plugin-svgr";
-import { fetchKeytar, targetKeytarMap } from "./utils/fetch_keytar";
-import { fetchDuckDB, targetDuckDBMap } from "./utils/fetch_duckdb";
+/* eslint-disable node/no-unpublished-import */
 
-import { generateDisclaimer } from "./license_disclaimer";
+import fs from 'fs';
+import {build, BuildOptions, context, Plugin} from 'esbuild';
+import {nativeNodeModulesPlugin} from '../third_party/github.com/evanw/esbuild/native-modules-plugin';
+import * as path from 'path';
+import {execSync} from 'child_process';
+import {noNodeModulesSourceMaps} from '../third_party/github.com/evanw/esbuild/no-node-modules-sourcemaps';
+import svgrPlugin from 'esbuild-plugin-svgr';
+import {fetchKeytar, targetKeytarMap} from './utils/fetch_keytar';
+import {fetchDuckDB, targetDuckDBMap} from './utils/fetch_duckdb';
+
+import {generateDisclaimer} from './license_disclaimer';
 
 export type Target =
-  | "linux-x64"
-  | "linux-arm64"
-  | "linux-armhf"
-  | "alpine-x64"
-  | "alpine-arm64"
-  | "darwin-x64"
-  | "darwin-arm64"
-  | "win32-x64"
-  | "web";
+  | 'linux-x64'
+  | 'linux-arm64'
+  | 'linux-armhf'
+  | 'alpine-x64'
+  | 'alpine-arm64'
+  | 'darwin-x64'
+  | 'darwin-arm64'
+  | 'win32-x64'
+  | 'web';
 
-export const outDir = "dist/";
+export const outDir = 'dist/';
 
 // This plugin replaces keytar's attempt to load the keytar.node native binary (built in node_modules
 // on npm install) with a require function to load a .node file from the filesystem
 const keytarReplacerPlugin: Plugin = {
-  name: "keytarReplacer",
+  name: 'keytarReplacer',
   setup(build) {
-    build.onResolve({ filter: /build\/Release\/keytar.node/ }, (args) => {
+    build.onResolve({filter: /build\/Release\/keytar.node/}, args => {
       return {
         path: args.path,
-        namespace: "keytar-replacer",
+        namespace: 'keytar-replacer',
       };
     });
     build.onLoad(
-      { filter: /build\/Release\/keytar.node/, namespace: "keytar-replacer" },
-      (_args) => {
+      {filter: /build\/Release\/keytar.node/, namespace: 'keytar-replacer'},
+      _args => {
         return {
           contents: /* javascript */ `
             try { module.exports = require('./keytar-native.node')}
@@ -73,25 +74,25 @@ const keytarReplacerPlugin: Plugin = {
 };
 
 function makeDuckdbNoNodePreGypPlugin(target: Target | undefined): Plugin {
-  const localPath = require.resolve("duckdb/lib/binding/duckdb.node");
+  const localPath = require.resolve('duckdb/lib/binding/duckdb.node');
   const posixPath = localPath.split(path.sep).join(path.posix.sep);
   const isDuckDBAvailable =
     target === undefined || targetDuckDBMap[target] !== undefined;
   return {
-    name: "duckdbNoNodePreGypPlugin",
+    name: 'duckdbNoNodePreGypPlugin',
     setup(build) {
-      build.onResolve({ filter: /duckdb-binding\.js/ }, (args) => {
+      build.onResolve({filter: /duckdb-binding\.js/}, args => {
         return {
           path: args.path,
-          namespace: "duckdb-no-node-pre-gyp-plugin",
+          namespace: 'duckdb-no-node-pre-gyp-plugin',
         };
       });
       build.onLoad(
         {
           filter: /duckdb-binding\.js/,
-          namespace: "duckdb-no-node-pre-gyp-plugin",
+          namespace: 'duckdb-no-node-pre-gyp-plugin',
         },
-        (_args) => {
+        _args => {
           return {
             contents: /* javascript */ `
               var path = require("path");
@@ -99,7 +100,7 @@ function makeDuckdbNoNodePreGypPlugin(target: Target | undefined): Plugin {
 
               var binding_path = ${
                 target
-                  ? `require.resolve("./duckdb-native.node")`
+                  ? 'require.resolve("./duckdb-native.node")'
                   : `"${posixPath}"`
               };
 
@@ -107,45 +108,45 @@ function makeDuckdbNoNodePreGypPlugin(target: Target | undefined): Plugin {
               // on linux where RTLD_LOCAL is the default.
               process.dlopen(module, binding_path, os.constants.dlopen.RTLD_NOW | os.constants.dlopen.RTLD_GLOBAL);
             `,
-            resolveDir: ".",
+            resolveDir: '.',
           };
         }
       );
-      build.onResolve({ filter: /duckdb_availability/ }, (args) => {
+      build.onResolve({filter: /duckdb_availability/}, args => {
         return {
           path: args.path,
-          namespace: "duckdb-no-node-pre-gyp-plugin",
+          namespace: 'duckdb-no-node-pre-gyp-plugin',
         };
       });
       build.onLoad(
         {
           filter: /duckdb_availability/,
-          namespace: "duckdb-no-node-pre-gyp-plugin",
+          namespace: 'duckdb-no-node-pre-gyp-plugin',
         },
-        (_args) => {
+        _args => {
           return {
             contents: `
               export const isDuckDBAvailable = ${isDuckDBAvailable};
             `,
-            resolveDir: ".",
+            resolveDir: '.',
           };
         }
       );
       if (!isDuckDBAvailable) {
-        build.onResolve({ filter: /^duckdb$/ }, (args) => {
+        build.onResolve({filter: /^duckdb$/}, args => {
           return {
             path: args.path,
-            namespace: "duckdb-no-node-pre-gyp-plugin",
+            namespace: 'duckdb-no-node-pre-gyp-plugin',
           };
         });
         build.onLoad(
-          { filter: /^duckdb$/, namespace: "duckdb-no-node-pre-gyp-plugin" },
-          (_args) => {
+          {filter: /^duckdb$/, namespace: 'duckdb-no-node-pre-gyp-plugin'},
+          _args => {
             return {
               contents: `
               module.exports = {};
             `,
-              resolveDir: ".",
+              resolveDir: '.',
             };
           }
         );
@@ -156,11 +157,11 @@ function makeDuckdbNoNodePreGypPlugin(target: Target | undefined): Plugin {
 
 const DEFINITIONS: Record<string, string> = {};
 
-const ENV_PASSTHROUGH = ["GA_API_SECRET", "GA_MEASUREMENT_ID"];
+const ENV_PASSTHROUGH = ['GA_API_SECRET', 'GA_MEASUREMENT_ID'];
 
 for (const variable of ENV_PASSTHROUGH) {
   DEFINITIONS[`process.env.${variable}`] = JSON.stringify(
-    process.env[variable] || ""
+    process.env[variable] || ''
   );
 }
 
@@ -170,20 +171,20 @@ export async function doBuild(
   target?: Target,
   metadata = false
 ): Promise<void> {
-  development = development || process.env.NODE_ENV == "development";
+  development = development || process.env['NODE_ENV'] === 'development';
 
-  if (target && !targetKeytarMap[target] && target !== "web") {
+  if (target && !targetKeytarMap[target] && target !== 'web') {
     throw new Error(`Invalid target: ${target}`);
   }
 
-  fs.rmSync(outDir, { recursive: true, force: true });
-  fs.mkdirSync(outDir, { recursive: true });
+  fs.rmSync(outDir, {recursive: true, force: true});
+  fs.mkdirSync(outDir, {recursive: true});
 
   const fullLicenseFilePath = path.join(
     __dirname,
-    "..",
+    '..',
     outDir,
-    "third_party_notices.txt"
+    'third_party_notices.txt'
   );
 
   if (fs.existsSync(fullLicenseFilePath)) {
@@ -191,28 +192,28 @@ export async function doBuild(
   }
   if (!development) {
     generateDisclaimer(
-      path.join(__dirname, "..", "package.json"),
-      path.join(__dirname, "..", "node_modules"),
+      path.join(__dirname, '..', 'package.json'),
+      path.join(__dirname, '..', 'node_modules'),
       fullLicenseFilePath
     );
   } else {
-    fs.writeFileSync(fullLicenseFilePath, "LICENSES GO HERE\n");
+    fs.writeFileSync(fullLicenseFilePath, 'LICENSES GO HERE\n');
   }
 
   fs.writeFileSync(
-    path.join(outDir, "build-sha"),
-    execSync("git rev-parse HEAD")
+    path.join(outDir, 'build-sha'),
+    execSync('git rev-parse HEAD')
   );
 
   const baseOptions: BuildOptions = {
     bundle: true,
     minify: !development,
-    sourcemap: development ? "inline" : false,
+    sourcemap: development ? 'inline' : false,
     outdir: outDir,
-    loader: { [".svg"]: "file" },
+    loader: {['.svg']: 'file'},
     metafile: true,
-    logLevel: "info",
-    target: "node12.22",
+    logLevel: 'info',
+    target: 'node12.22',
   };
 
   let nodeOptions: BuildOptions | null = null;
@@ -221,15 +222,15 @@ export async function doBuild(
   let browserServerOptions: BuildOptions | null = null;
   let nodeWebviewPlugins: Plugin[] = [];
 
-  if (target !== "web") {
+  if (target !== 'web') {
     if (target) {
       const file = await fetchKeytar(target);
-      fs.copyFileSync(file, path.join(outDir, "keytar-native.node"));
+      fs.copyFileSync(file, path.join(outDir, 'keytar-native.node'));
       const duckDBBinaryName = targetDuckDBMap[target];
       const isDuckDBAvailable = duckDBBinaryName !== undefined;
       if (isDuckDBAvailable) {
         const file = await fetchDuckDB(target);
-        fs.copyFileSync(file, path.join(outDir, "duckdb-native.node"));
+        fs.copyFileSync(file, path.join(outDir, 'duckdb-native.node'));
       }
     }
     const duckDBPlugin = makeDuckdbNoNodePreGypPlugin(target);
@@ -237,7 +238,7 @@ export async function doBuild(
 
     if (development) {
       extensionPlugins.push(noNodeModulesSourceMaps);
-      console.log("Entering watch mode");
+      console.log('Entering watch mode');
     }
 
     const nodeExtensionPlugins = extensionPlugins;
@@ -254,35 +255,35 @@ export async function doBuild(
     const commonNodeOptions: BuildOptions = {
       ...baseOptions,
       entryPoints: [
-        "./src/extension/node/extension_node.ts",
-        "./src/server/node/server_node.ts",
-        "./src/worker/node/worker_node.ts",
+        './src/extension/node/extension_node.ts',
+        './src/server/node/server_node.ts',
+        './src/worker/node/worker_node.ts',
       ],
-      entryNames: "[name]",
-      platform: "node",
-      loader: { [".png"]: "file", [".svg"]: "file" },
+      entryNames: '[name]',
+      platform: 'node',
+      loader: {['.png']: 'file', ['.svg']: 'file'},
       plugins: nodeExtensionPlugins,
       define: DEFINITIONS,
     };
 
     nodeOptions = {
       ...commonNodeOptions,
-      entryPoints: ["./src/extension/node/extension_node.ts"],
+      entryPoints: ['./src/extension/node/extension_node.ts'],
       external: [
-        "vscode",
-        "pg-native",
-        "./keytar-native.node",
-        "./duckdb-native.node",
+        'vscode',
+        'pg-native',
+        './keytar-native.node',
+        './duckdb-native.node',
       ],
     };
 
     nodeServerOptions = {
       ...commonNodeOptions,
       entryPoints: [
-        "./src/server/node/server_node.ts",
-        "./src/worker/node/worker_node.ts",
+        './src/server/node/server_node.ts',
+        './src/worker/node/worker_node.ts',
       ],
-      external: ["pg-native", "./keytar-native.node", "./duckdb-native.node"],
+      external: ['pg-native', './keytar-native.node', './duckdb-native.node'],
     };
 
     nodeWebviewPlugins = [duckDBPlugin];
@@ -303,54 +304,54 @@ export async function doBuild(
   const webviewOptions: BuildOptions = {
     ...baseOptions,
     entryPoints: [
-      "./src/extension/webviews/query_page/entry.ts",
-      "./src/extension/webviews/connections_page/entry.ts",
+      './src/extension/webviews/query_page/entry.ts',
+      './src/extension/webviews/connections_page/entry.ts',
     ],
-    entryNames: "[dir]",
-    platform: "browser",
+    entryNames: '[dir]',
+    platform: 'browser',
     define: {
-      "process.env.NODE_DEBUG": "false", // TODO this is a hack because some package we include assumed process.env exists :(
+      'process.env.NODE_DEBUG': 'false', // TODO this is a hack because some package we include assumed process.env exists :(
     },
     plugins: webviewPlugins,
   };
 
-  if (!target || target === "web") {
+  if (!target || target === 'web') {
     const browserPlugins: Plugin[] = [];
 
     // build the web extension
     const commonBrowserOptions: BuildOptions = {
       ...baseOptions,
-      entryNames: "[name]",
-      format: "cjs",
-      platform: "browser",
+      entryNames: '[name]',
+      format: 'cjs',
+      platform: 'browser',
       define: {
-        "process.env.NODE_DEBUG": "false", // TODO this is a hack because some package we include assumed process.env exists :(
+        'process.env.NODE_DEBUG': 'false', // TODO this is a hack because some package we include assumed process.env exists :(
         ...DEFINITIONS,
       },
-      tsconfig: "./tsconfig.browser.json",
+      tsconfig: './tsconfig.browser.json',
       plugins: browserPlugins,
       banner: {
-        js: "globalThis.require = globalThis.require || null;\nglobalThis.module = globalThis.module || {};",
+        js: 'globalThis.require = globalThis.require || null;\nglobalThis.module = globalThis.module || {};',
       },
     };
 
     browserOptions = {
       ...commonBrowserOptions,
-      entryPoints: ["./src/extension/browser/extension_browser.ts"],
-      external: ["vscode"],
+      entryPoints: ['./src/extension/browser/extension_browser.ts'],
+      external: ['vscode'],
     };
 
     browserServerOptions = {
       ...commonBrowserOptions,
       entryPoints: [
-        "./src/server/browser/server_browser.ts",
-        "./src/worker/browser/worker_browser.ts",
+        './src/server/browser/server_browser.ts',
+        './src/worker/browser/worker_browser.ts',
       ],
     };
   }
 
   if (development) {
-    console.log("[watch] build started");
+    console.log('[watch] build started');
     if (nodeOptions && nodeServerOptions) {
       const nodeContext = await context(nodeOptions);
       const nodeServerContext = await context(nodeServerOptions);
@@ -370,9 +371,9 @@ export async function doBuild(
       const nodeResult = await build(nodeOptions);
       const nodeServerResult = await build(nodeServerOptions);
       if (metadata) {
-        fs.writeFileSync("meta-node.json", JSON.stringify(nodeResult.metafile));
+        fs.writeFileSync('meta-node.json', JSON.stringify(nodeResult.metafile));
         fs.writeFileSync(
-          "meta-node-server.json",
+          'meta-node-server.json',
           JSON.stringify(nodeServerResult.metafile)
         );
       }
@@ -380,7 +381,7 @@ export async function doBuild(
     const webviewResult = await build(webviewOptions);
     if (metadata) {
       fs.writeFileSync(
-        "meta-webview.json",
+        'meta-webview.json',
         JSON.stringify(webviewResult.metafile)
       );
     }
@@ -389,11 +390,11 @@ export async function doBuild(
       const browserServerResult = await build(browserServerOptions);
       if (metadata) {
         fs.writeFileSync(
-          "meta-browser.json",
+          'meta-browser.json',
           JSON.stringify(browserResult.metafile)
         );
         fs.writeFileSync(
-          "meta-browser-server.json",
+          'meta-browser-server.json',
           JSON.stringify(browserServerResult.metafile)
         );
       }

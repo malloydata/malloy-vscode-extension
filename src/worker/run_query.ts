@@ -21,25 +21,25 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { QueryMaterializer, Runtime, URLReader } from "@malloydata/malloy";
-import { DataStyles } from "@malloydata/render";
+import {QueryMaterializer, Runtime, URLReader} from '@malloydata/malloy';
+import {DataStyles} from '@malloydata/render';
 
-import { HackyDataStylesAccumulator } from "./data_styles";
-import { log } from "./logger";
+import {HackyDataStylesAccumulator} from './data_styles';
+import {log} from './logger';
 import {
   MessageCancel,
   MessageHandler,
   MessageRun,
   WorkerQueryPanelMessage,
-} from "./types";
+} from './types';
 
 import {
   QueryMessageType,
   QueryPanelMessage,
   QueryRunStatus,
-} from "../extension/message_types";
-import { createRunnable } from "./utils";
-import { ConnectionManager } from "../common/connection_manager";
+} from '../extension/message_types';
+import {createRunnable} from './utils';
+import {ConnectionManager} from '../common/connection_manager';
 
 interface QueryEntry {
   panelId: string;
@@ -54,7 +54,7 @@ const sendMessage = (
   panelId: string
 ) => {
   const msg: WorkerQueryPanelMessage = {
-    type: "query_panel",
+    type: 'query_panel',
     panelId,
     message,
   };
@@ -67,7 +67,7 @@ export const runQuery = async (
   reader: URLReader,
   connectionManager: ConnectionManager,
   isBrowser: boolean,
-  { query, panelId }: MessageRun
+  {query, panelId}: MessageRun
 ): Promise<void> => {
   const files = new HackyDataStylesAccumulator(reader);
   const url = new URL(panelId);
@@ -78,7 +78,7 @@ export const runQuery = async (
       connectionManager.getConnectionLookup(url)
     );
 
-    runningQueries[panelId] = { panelId, canceled: false };
+    runningQueries[panelId] = {panelId, canceled: false};
     sendMessage(
       messageHandler,
       {
@@ -101,11 +101,11 @@ export const runQuery = async (
     const dialect =
       (runnable instanceof QueryMaterializer
         ? (await runnable.getPreparedQuery()).dialect
-        : undefined) || "unknown";
+        : undefined) || 'unknown';
 
     try {
       sql = await runnable.getSQL();
-      dataStyles = { ...dataStyles, ...files.getHackyAccumulatedDataStyles() };
+      dataStyles = {...dataStyles, ...files.getHackyAccumulatedDataStyles()};
 
       if (runningQueries[panelId].canceled) return;
       log(sql);
@@ -115,7 +115,7 @@ export const runQuery = async (
         {
           type: QueryMessageType.QueryStatus,
           status: QueryRunStatus.Error,
-          error: error.message || "Something went wrong",
+          error: error.message || 'Something went wrong',
         },
         panelId
       );
@@ -132,7 +132,7 @@ export const runQuery = async (
       },
       panelId
     );
-    const queryResult = await runnable.run({ rowLimit });
+    const queryResult = await runnable.run({rowLimit});
     if (runningQueries[panelId].canceled) return;
 
     sendMessage(
@@ -161,7 +161,7 @@ export const runQuery = async (
   }
 };
 
-export const cancelQuery = ({ panelId }: MessageCancel): void => {
+export const cancelQuery = ({panelId}: MessageCancel): void => {
   if (runningQueries[panelId]) {
     runningQueries[panelId].canceled = true;
   }

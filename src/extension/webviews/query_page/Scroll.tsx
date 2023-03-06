@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import styled from "styled-components";
+import styled from 'styled-components';
 
 export const Scroll = styled.div`
   height: 100%;

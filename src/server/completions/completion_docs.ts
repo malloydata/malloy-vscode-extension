@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-const DOCS_ROOT = "https://malloydata.github.io/documentation";
+const DOCS_ROOT = 'https://malloydata.github.io/documentation';
 
 const MODEL_SOURCE_DOC = `Use \`source\` to name, describe, and augment a data source.
 
@@ -337,7 +337,7 @@ Note: \`declare\` is an experimental feature.
 `;
 
 export const COMPLETION_DOCS: {
-  [kind: string]: { [property: string]: string };
+  [kind: string]: {[property: string]: string};
 } = {
   model_property: {
     source: MODEL_SOURCE_DOC,

@@ -21,15 +21,15 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { TestableConnection } from "@malloydata/malloy";
-import { ConnectionFactory } from "../../common/connections/types";
+import {TestableConnection} from '@malloydata/malloy';
+import {ConnectionFactory} from '../../common/connections/types';
 import {
   ConfigOptions,
   ConnectionBackend,
   ConnectionConfig,
-} from "../../common/connection_manager_types";
-import { createDuckDbWasmConnection } from "../../common/connections/duckdb_wasm_connection";
-import { DuckDBWASMConnection } from "@malloydata/db-duckdb/wasm";
+} from '../../common/connection_manager_types';
+import {createDuckDbWasmConnection} from '../../common/connections/duckdb_wasm_connection';
+import {DuckDBWASMConnection} from '@malloydata/db-duckdb/wasm';
 
 export type FetchCallback = (uri: string) => Promise<Uint8Array>;
 
@@ -40,9 +40,7 @@ export class WebConnectionFactory implements ConnectionFactory {
 
   async reset() {
     await Promise.all(
-      Object.values(this.connectionCache).map((connection) =>
-        connection.close()
-      )
+      Object.values(this.connectionCache).map(connection => connection.close())
     );
     this.connectionCache = {};
   }
@@ -54,10 +52,10 @@ export class WebConnectionFactory implements ConnectionFactory {
   async getConnectionForConfig(
     connectionConfig: ConnectionConfig,
     configOptions: ConfigOptions = {
-      workingDirectory: "/",
+      workingDirectory: '/',
     }
   ): Promise<TestableConnection> {
-    const { useCache, workingDirectory } = configOptions;
+    const {useCache, workingDirectory} = configOptions;
     const cacheKey = `${connectionConfig.name}::${workingDirectory}`;
     let connection: TestableConnection;
     if (useCache && this.connectionCache[cacheKey]) {
@@ -93,17 +91,17 @@ export class WebConnectionFactory implements ConnectionFactory {
   }
 
   getWorkingDirectory(url: URL): string {
-    const baseUrl = new URL(".", url);
+    const baseUrl = new URL('.', url);
     return baseUrl.toString();
   }
 
   addDefaults(configs: ConnectionConfig[]): ConnectionConfig[] {
     // Create a default duckdb connection if one isn't configured
-    if (!configs.find((config) => config.name === "duckdb")) {
+    if (!configs.find(config => config.name === 'duckdb')) {
       configs.push({
-        name: "duckdb",
+        name: 'duckdb',
         backend: ConnectionBackend.DuckDB,
-        id: "duckdb-default",
+        id: 'duckdb-default',
         isDefault: false,
         isGenerated: true,
       });

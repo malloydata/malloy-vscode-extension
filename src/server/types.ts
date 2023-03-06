@@ -21,11 +21,11 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import type { ConnectionManager } from "../common/connection_manager";
-import type { TextDocuments } from "vscode-languageserver";
-import type { TextDocument } from "vscode-languageserver-textdocument";
+import {ConnectionManager} from '../common/connection_manager';
+import {TextDocuments} from 'vscode-languageserver';
+import {TextDocument} from 'vscode-languageserver-textdocument';
 
-import { Model } from "@malloydata/malloy";
+import {Model} from '@malloydata/malloy';
 
 export interface TranslateCache {
   translateWithCache(

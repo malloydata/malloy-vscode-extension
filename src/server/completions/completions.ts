@@ -26,17 +26,17 @@ import {
   CompletionItem,
   CompletionItemKind,
   MarkupKind,
-} from "vscode-languageserver/node";
-import { TextDocument } from "vscode-languageserver-textdocument";
-import { COMPLETION_DOCS } from "./completion_docs";
-import { parseWithCache } from "../parse_cache";
+} from 'vscode-languageserver/node';
+import {TextDocument} from 'vscode-languageserver-textdocument';
+import {COMPLETION_DOCS} from './completion_docs';
+import {parseWithCache} from '../parse_cache';
 
 export function getCompletionItems(
   document: TextDocument,
   context: CompletionParams
 ): CompletionItem[] {
   const completions = parseWithCache(document).completions(context.position);
-  return completions.map((completion) => {
+  return completions.map(completion => {
     return {
       kind: CompletionItemKind.Property,
       label: completion.text,

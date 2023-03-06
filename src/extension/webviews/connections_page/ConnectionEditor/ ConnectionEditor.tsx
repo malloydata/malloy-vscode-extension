@@ -21,26 +21,26 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import React from "react";
-import styled from "styled-components";
+import React from 'react';
+import styled from 'styled-components';
 import {
   ConnectionBackend,
   ConnectionBackendNames,
   ConnectionConfig,
-} from "../../../../common/connection_manager_types";
-import { ConnectionMessageTest } from "../../../message_types";
-import { Dropdown } from "../../components";
+} from '../../../../common/connection_manager_types';
+import {ConnectionMessageTest} from '../../../message_types';
+import {Dropdown} from '../../components';
 import {
   VSCodeButton,
   VSCodeDivider,
   VSCodeTag,
-} from "@vscode/webview-ui-toolkit/react";
-import { ButtonGroup } from "../ButtonGroup";
-import { BigQueryConnectionEditor } from "./BigQueryConnectionEditor";
-import { Label } from "./Label";
-import { LabelCell } from "./LabelCell";
-import { PostgresConnectionEditor } from "./PostgresConnectionEditor";
-import { DuckDBConnectionEditor } from "./DuckDBConnectionEditor";
+} from '@vscode/webview-ui-toolkit/react';
+import {ButtonGroup} from '../ButtonGroup';
+import {BigQueryConnectionEditor} from './BigQueryConnectionEditor';
+import {Label} from './Label';
+import {LabelCell} from './LabelCell';
+import {PostgresConnectionEditor} from './PostgresConnectionEditor';
+import {DuckDBConnectionEditor} from './DuckDBConnectionEditor';
 
 interface ConnectionEditorProps {
   config: ConnectionConfig;
@@ -72,23 +72,23 @@ export const ConnectionEditor: React.FC<ConnectionEditorProps> = ({
   ];
 
   const backendOptions = allBackendOptions
-    .filter((option) => availableBackends.includes(option))
-    .map((value) => ({ value, label: ConnectionBackendNames[value] }));
+    .filter(option => availableBackends.includes(option))
+    .map(value => ({value, label: ConnectionBackendNames[value]}));
 
   return (
     <ConnectionEditorBox>
       <div
         style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "5px",
-          justifyContent: "space-between",
+          display: 'flex',
+          alignItems: 'center',
+          gap: '5px',
+          justifyContent: 'space-between',
         }}
       >
         <ConnectionTitle>CONNECTION</ConnectionTitle>
         {isDefault && <VSCodeTag>Default</VSCodeTag>}
         {!isDefault && (
-          <VSCodeButton onClick={makeDefault} style={{ height: "25px" }}>
+          <VSCodeButton onClick={makeDefault} style={{height: '25px'}}>
             Make Default
           </VSCodeButton>
         )}
@@ -137,13 +137,13 @@ export const ConnectionEditor: React.FC<ConnectionEditorProps> = ({
           <tr>
             <LabelCell></LabelCell>
             <td>
-              <ButtonGroup style={{ marginTop: "5px" }}>
+              <ButtonGroup style={{marginTop: '5px'}}>
                 <VSCodeButton onClick={deleteConfig} appearance="secondary">
                   Delete
                 </VSCodeButton>
                 <VSCodeButton onClick={testConfig}>Test</VSCodeButton>
                 {testStatus && <VSCodeTag>{testStatus?.status}</VSCodeTag>}
-                {testStatus?.status === "error" && testStatus.error}
+                {testStatus?.status === 'error' && testStatus.error}
               </ButtonGroup>
             </td>
           </tr>

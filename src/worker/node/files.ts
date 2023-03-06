@@ -21,8 +21,8 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { URLReader } from "@malloydata/malloy";
-import { Message } from "../types";
+import {URLReader} from '@malloydata/malloy';
+import {Message} from '../types';
 
 let idx = 1;
 
@@ -42,18 +42,18 @@ export async function fetchFile(uri: string): Promise<string> {
     // a tight coupling with the worker controller.
     const id = `${uri}-${idx++}`;
     const callback = (message: Message) => {
-      if (message.type === "read" && message.id === id) {
-        if (message.data != null) {
+      if (message.type === 'read' && message.id === id) {
+        if (message.data !== null) {
           resolve(message.data);
-        } else if (message.error != null) {
+        } else if (message.error !== null) {
           reject(new Error(message.error));
         }
-        process.off("message", callback);
+        process.off('message', callback);
       }
     };
-    process.on("message", callback);
+    process.on('message', callback);
     process.send?.({
-      type: "read",
+      type: 'read',
       uri,
       id,
     });

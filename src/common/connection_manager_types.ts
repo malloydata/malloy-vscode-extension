@@ -22,17 +22,17 @@
  */
 
 export enum ConnectionBackend {
-  BigQuery = "bigquery",
-  Postgres = "postgres",
-  DuckDB = "duckdb",
-  DuckDBWASM_DEPRECATED = "duckdb_wasm",
+  BigQuery = 'bigquery',
+  Postgres = 'postgres',
+  DuckDB = 'duckdb',
+  DuckDBWASM_DEPRECATED = 'duckdb_wasm',
 }
 
 export const ConnectionBackendNames: Record<ConnectionBackend, string> = {
-  [ConnectionBackend.BigQuery]: "BigQuery",
-  [ConnectionBackend.Postgres]: "Postgres",
-  [ConnectionBackend.DuckDB]: "DuckDB",
-  [ConnectionBackend.DuckDBWASM_DEPRECATED]: "duckdDuckDBb_wasm",
+  [ConnectionBackend.BigQuery]: 'BigQuery',
+  [ConnectionBackend.Postgres]: 'Postgres',
+  [ConnectionBackend.DuckDB]: 'DuckDB',
+  [ConnectionBackend.DuckDBWASM_DEPRECATED]: 'duckdDuckDBb_wasm',
 };
 
 /*
@@ -100,7 +100,7 @@ export interface ConfigOptions {
 export function getDefaultIndex(
   connections: ConnectionConfig[]
 ): number | undefined {
-  const index = connections.findIndex((connection) => connection.isDefault);
+  const index = connections.findIndex(connection => connection.isDefault);
   if (index === -1) {
     if (connections.length >= 1) {
       return 0;

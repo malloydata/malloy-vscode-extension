@@ -21,19 +21,19 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as fs from "fs";
-import { fileURLToPath } from "url";
+import * as fs from 'fs';
+import {fileURLToPath} from 'url';
 
-import { CSVWriter, JSONWriter, Runtime } from "@malloydata/malloy";
+import {CSVWriter, JSONWriter, Runtime} from '@malloydata/malloy';
 
-import { MessageDownload, WorkerDownloadMessage } from "../types";
-import { createRunnable } from "../utils";
-import { WorkerURLReader } from "./files";
-import { ConnectionManager } from "../../common/connection_manager";
+import {MessageDownload, WorkerDownloadMessage} from '../types';
+import {createRunnable} from '../utils';
+import {WorkerURLReader} from './files';
+import {ConnectionManager} from '../../common/connection_manager';
 
 const sendMessage = (name: string, error?: string) => {
   const msg: WorkerDownloadMessage = {
-    type: "download",
+    type: 'download',
     name,
     error,
   };
@@ -42,7 +42,7 @@ const sendMessage = (name: string, error?: string) => {
 
 export async function downloadQuery(
   connectionManager: ConnectionManager,
-  { query, panelId, downloadOptions, name, uri }: MessageDownload
+  {query, panelId, downloadOptions, name, uri}: MessageDownload
 ): Promise<void> {
   const files = new WorkerURLReader();
   const url = new URL(panelId);
@@ -56,11 +56,11 @@ export async function downloadQuery(
     const runnable = createRunnable(query, runtime);
     const writeStream = fs.createWriteStream(fileURLToPath(uri));
     const writer =
-      downloadOptions.format === "json"
+      downloadOptions.format === 'json'
         ? new JSONWriter(writeStream)
         : new CSVWriter(writeStream);
     const rowLimit =
-      typeof downloadOptions.amount === "number"
+      typeof downloadOptions.amount === 'number'
         ? downloadOptions.amount
         : undefined;
     const rowStream = runnable.runStream({

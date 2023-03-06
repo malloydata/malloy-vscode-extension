@@ -21,9 +21,9 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { CodeLens } from "vscode-languageserver/node";
-import { TextDocument } from "vscode-languageserver-textdocument";
-import { parseWithCache } from "../parse_cache";
+import {CodeLens} from 'vscode-languageserver/node';
+import {TextDocument} from 'vscode-languageserver-textdocument';
+import {parseWithCache} from '../parse_cache';
 
 // const explain = `
 //   index
@@ -51,34 +51,34 @@ export function getMalloyLenses(document: TextDocument): CodeLens[] {
 
   let currentUnnamedQueryIndex = 0;
   let currentUnnamedSQLBlockIndex = 0;
-  symbols.forEach((symbol) => {
-    if (symbol.type === "query") {
+  symbols.forEach(symbol => {
+    if (symbol.type === 'query') {
       lenses.push({
         range: symbol.range.toJSON(),
         command: {
-          title: "Run",
-          command: "malloy.runNamedQuery",
+          title: 'Run',
+          command: 'malloy.runNamedQuery',
           arguments: [symbol.name],
         },
       });
-    } else if (symbol.type === "unnamed_query") {
+    } else if (symbol.type === 'unnamed_query') {
       lenses.push({
         range: symbol.range.toJSON(),
         command: {
-          title: "Run",
-          command: "malloy.runQueryFile",
+          title: 'Run',
+          command: 'malloy.runQueryFile',
           arguments: [currentUnnamedQueryIndex],
         },
       });
       currentUnnamedQueryIndex++;
-    } else if (symbol.type === "explore") {
+    } else if (symbol.type === 'explore') {
       const children = symbol.children;
       const exploreName = symbol.name;
       lenses.push({
         range: symbol.range.toJSON(),
         command: {
-          title: "Preview",
-          command: "malloy.runQuery",
+          title: 'Preview',
+          command: 'malloy.runQuery',
           arguments: [
             `query: ${exploreName}->{ project: *; limit: 20 }`,
             `preview ${exploreName}`,
@@ -96,14 +96,14 @@ export function getMalloyLenses(document: TextDocument): CodeLens[] {
       //     ],
       //   },
       // });
-      children.forEach((child) => {
-        if (child.type === "query") {
+      children.forEach(child => {
+        if (child.type === 'query') {
           const queryName = child.name;
           lenses.push({
             range: child.range.toJSON(),
             command: {
-              title: "Run",
-              command: "malloy.runQuery",
+              title: 'Run',
+              command: 'malloy.runQuery',
               arguments: [
                 `query: ${exploreName}->${queryName}`,
                 `${exploreName}->${queryName}`,
@@ -112,12 +112,12 @@ export function getMalloyLenses(document: TextDocument): CodeLens[] {
           });
         }
       });
-    } else if (symbol.type === "sql") {
+    } else if (symbol.type === 'sql') {
       lenses.push({
         range: symbol.range.toJSON(),
         command: {
-          title: "Run",
-          command: "malloy.runNamedSQLBlock",
+          title: 'Run',
+          command: 'malloy.runNamedSQLBlock',
           arguments: [symbol.name],
         },
       });
@@ -127,12 +127,12 @@ export function getMalloyLenses(document: TextDocument): CodeLens[] {
       //      a separate list. Anyway, this means that at the moment, _named_ SQL blocks are also
       //      indexable.
       currentUnnamedSQLBlockIndex++;
-    } else if (symbol.type === "unnamed_sql") {
+    } else if (symbol.type === 'unnamed_sql') {
       lenses.push({
         range: symbol.range.toJSON(),
         command: {
-          title: "Run",
-          command: "malloy.runUnnamedSQLBlock",
+          title: 'Run',
+          command: 'malloy.runUnnamedSQLBlock',
           arguments: [currentUnnamedSQLBlockIndex],
         },
       });

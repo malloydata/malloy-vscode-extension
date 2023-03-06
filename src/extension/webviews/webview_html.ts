@@ -21,8 +21,8 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as vscode from "vscode";
-import { v1 as uuid } from "uuid";
+import * as vscode from 'vscode';
+import {v1 as uuid} from 'uuid';
 
 export function getWebviewHtml(
   entrySrc: string,

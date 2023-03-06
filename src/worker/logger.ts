@@ -22,16 +22,16 @@
  */
 
 /* eslint-disable no-console */
-import { WorkerLogMessage } from "./types";
+import {WorkerLogMessage} from './types';
 export const log = (message: string): void => {
   const msg: WorkerLogMessage = {
-    type: "log",
+    type: 'log',
     message,
   };
-  if (typeof process !== "undefined") {
+  if (typeof process !== 'undefined') {
     process.send?.(msg);
   } else {
     // self.postMessage(msg);
-    console.log("Malloy Worker", message);
+    console.log('Malloy Worker', message);
   }
 };

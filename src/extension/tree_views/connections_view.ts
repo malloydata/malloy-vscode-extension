@@ -21,16 +21,16 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as vscode from "vscode";
-import { Utils } from "vscode-uri";
+import * as vscode from 'vscode';
+import {Utils} from 'vscode-uri';
 
 import {
   ConnectionBackendNames,
   ConnectionConfig,
   getDefaultIndex,
-} from "../../common/connection_manager_types";
-import connectionIcon from "../../media/database.svg";
-import { VSCodeConnectionManager } from "../connection_manager";
+} from '../../common/connection_manager_types';
+import connectionIcon from '../../media/database.svg';
+import {VSCodeConnectionManager} from '../connection_manager';
 
 export class ConnectionsProvider
   implements vscode.TreeDataProvider<ConnectionItem>
@@ -84,14 +84,14 @@ class ConnectionItem extends vscode.TreeItem {
   ) {
     super(config.name, vscode.TreeItemCollapsibleState.None);
     const backendName = ConnectionBackendNames[config.backend];
-    this.description = `(${backendName}${isDefault ? ", default" : ""}${
-      config.isGenerated ? ", automatically generated" : ""
-    }) ${isAvailable ? "" : "(Not available)"}`;
+    this.description = `(${backendName}${isDefault ? ', default' : ''}${
+      config.isGenerated ? ', automatically generated' : ''
+    }) ${isAvailable ? '' : '(Not available)'}`;
 
     const uri = this.context.extensionUri;
     this.iconPath = {
-      light: Utils.joinPath(uri, "dist", connectionIcon),
-      dark: Utils.joinPath(uri, "dist", connectionIcon),
+      light: Utils.joinPath(uri, 'dist', connectionIcon),
+      dark: Utils.joinPath(uri, 'dist', connectionIcon),
     };
   }
 }

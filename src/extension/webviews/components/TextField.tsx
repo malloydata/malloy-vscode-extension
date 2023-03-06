@@ -21,9 +21,9 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { TextFieldType } from "@vscode/webview-ui-toolkit";
-import React, { FormEvent } from "react";
-import { VSCodeTextField } from "@vscode/webview-ui-toolkit/react";
+import {TextFieldType} from '@vscode/webview-ui-toolkit';
+import React, {FormEvent} from 'react';
+import {VSCodeTextField} from '@vscode/webview-ui-toolkit/react';
 
 interface TextFieldProps {
   value: string;
@@ -44,7 +44,7 @@ export const TextField: React.FC<TextFieldProps> = ({
   id,
   style,
 }) => {
-  const onChange: OnChange<HTMLInputElement> = (event) => {
+  const onChange: OnChange<HTMLInputElement> = event => {
     setValue(event.currentTarget.value);
   };
 

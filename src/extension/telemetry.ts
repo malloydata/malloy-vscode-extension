@@ -21,16 +21,16 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as vscode from "vscode";
-import { MALLOY_EXTENSION_STATE } from "./state";
-import fetch from "node-fetch";
+import * as vscode from 'vscode';
+import {MALLOY_EXTENSION_STATE} from './state';
+import fetch from 'node-fetch';
 
-const telemetryLog = vscode.window.createOutputChannel("Malloy Telemetry");
+const telemetryLog = vscode.window.createOutputChannel('Malloy Telemetry');
 
 function isTelemetryEnabled() {
   const vsCodeValue = vscode.env.isTelemetryEnabled;
   const configValue =
-    vscode.workspace.getConfiguration("malloy").get("telemetry") ?? false;
+    vscode.workspace.getConfiguration('malloy').get('telemetry') ?? false;
   return vsCodeValue && configValue;
 }
 
@@ -39,8 +39,8 @@ export interface GATrackingEvent {
   params: Record<string, string>;
 }
 
-const MEASUREMENT_ID = process.env.GA_MEASUREMENT_ID;
-const API_SECRET = process.env.GA_API_SECRET;
+const MEASUREMENT_ID = process.env['GA_MEASUREMENT_ID'];
+const API_SECRET = process.env['GA_API_SECRET'];
 
 async function track(event: GATrackingEvent) {
   if (!isTelemetryEnabled()) return;
@@ -52,7 +52,7 @@ async function track(event: GATrackingEvent) {
     await fetch(
       `https://www.google-analytics.com/mp/collect?measurement_id=${MEASUREMENT_ID}&api_secret=${API_SECRET}`,
       {
-        method: "POST",
+        method: 'POST',
         body: JSON.stringify({
           client_id: MALLOY_EXTENSION_STATE.getClientId(),
           events: [event],
@@ -65,23 +65,23 @@ async function track(event: GATrackingEvent) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function trackQueryRun({ dialect }: { dialect: string }): Promise<void> {
+export function trackQueryRun({dialect}: {dialect: string}): Promise<void> {
   return track({
-    name: "query_run",
+    name: 'query_run',
     params: {},
   });
 }
 
 export function trackModelLoad(): Promise<void> {
   return track({
-    name: "model_load",
+    name: 'model_load',
     params: {},
   });
 }
 
 export function trackModelSave(): Promise<void> {
   return track({
-    name: "model_save",
+    name: 'model_save',
     params: {},
   });
 }

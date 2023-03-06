@@ -21,36 +21,36 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as vscode from "vscode";
-import { Utils } from "vscode-uri";
-import { getWebviewHtml } from "../../webviews";
+import * as vscode from 'vscode';
+import {Utils} from 'vscode-uri';
+import {getWebviewHtml} from '../../webviews';
 import {
   ConnectionMessageType,
   ConnectionPanelMessage,
   ConnectionServiceAccountKeyRequestStatus,
   ConnectionTestStatus,
-} from "../../message_types";
-import { WebviewMessageManager } from "../../webview_message_manager";
+} from '../../message_types';
+import {WebviewMessageManager} from '../../webview_message_manager';
 import {
   ConnectionConfig,
   getDefaultIndex,
-} from "../../../common/connection_manager_types";
+} from '../../../common/connection_manager_types';
 
-import { connectionManager } from "../connection_manager";
-import { MALLOY_EXTENSION_STATE } from "../../state";
+import {connectionManager} from '../connection_manager';
+import {MALLOY_EXTENSION_STATE} from '../../state';
 
 export function editConnectionsCommand(): void {
   const panel = vscode.window.createWebviewPanel(
-    "malloyConnections",
-    "Edit Connections",
+    'malloyConnections',
+    'Edit Connections',
     vscode.ViewColumn.One,
-    { enableScripts: true, retainContextWhenHidden: true }
+    {enableScripts: true, retainContextWhenHidden: true}
   );
 
   const onDiskPath = Utils.joinPath(
     MALLOY_EXTENSION_STATE.getExtensionUri(),
-    "dist",
-    "connections_page.js"
+    'dist',
+    'connections_page.js'
   );
 
   const entrySrc = panel.webview.asWebviewUri(onDiskPath);
@@ -70,21 +70,21 @@ export function editConnectionsCommand(): void {
     availableBackends,
   });
 
-  messageManager.onReceiveMessage(async (message) => {
+  messageManager.onReceiveMessage(async message => {
     switch (message.type) {
       case ConnectionMessageType.SetConnections: {
         const connections = await handleConnectionsPreSave(message.connections);
-        const malloyConfig = vscode.workspace.getConfiguration("malloy");
+        const malloyConfig = vscode.workspace.getConfiguration('malloy');
         const hasWorkspaceConfig =
-          malloyConfig.inspect("connections")?.workspaceValue !== undefined;
+          malloyConfig.inspect('connections')?.workspaceValue !== undefined;
         malloyConfig.update(
-          "connections",
+          'connections',
           connections,
           vscode.ConfigurationTarget.Global
         );
         if (hasWorkspaceConfig) {
           malloyConfig.update(
-            "connections",
+            'connections',
             connections,
             vscode.ConfigurationTarget.Workspace
           );
@@ -121,7 +121,7 @@ export function editConnectionsCommand(): void {
         const result = await vscode.window.showOpenDialog({
           canSelectMany: false,
           filters: {
-            JSON: ["json"],
+            JSON: ['json'],
           },
         });
         if (result) {

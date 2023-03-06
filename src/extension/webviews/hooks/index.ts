@@ -21,4 +21,4 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-export { useClickOutside } from "./use_click_outside";
+export {useClickOutside} from './use_click_outside';

@@ -32,26 +32,26 @@ import {
   CompletionItem,
   HoverParams,
   Hover,
-} from "vscode-languageserver/node";
-import debounce from "lodash/debounce";
+} from 'vscode-languageserver/node';
+import debounce from 'lodash/debounce';
 
-import { TextDocument } from "vscode-languageserver-textdocument";
-import { getMalloyDiagnostics } from "../diagnostics";
-import { getMalloySymbols } from "../symbols";
+import {TextDocument} from 'vscode-languageserver-textdocument';
+import {getMalloyDiagnostics} from '../diagnostics';
+import {getMalloySymbols} from '../symbols';
 import {
   TOKEN_TYPES,
   TOKEN_MODIFIERS,
   stubMalloyHighlights,
-} from "../highlights";
-import { getMalloyLenses } from "../lenses";
-import { connectionManager } from "./connections_node";
+} from '../highlights';
+import {getMalloyLenses} from '../lenses';
+import {connectionManager} from './connections_node';
 import {
   getCompletionItems,
   resolveCompletionItem,
-} from "../completions/completions";
-import { getHover } from "../hover/hover";
-import { getMalloyDefinitionReference } from "../definitions/definitions";
-import { TranslateCacheNode } from "./translate_cache";
+} from '../completions/completions';
+import {getHover} from '../hover/hover';
+import {getMalloyDefinitionReference} from '../definitions/definitions';
+import {TranslateCacheNode} from './translate_cache';
 
 const connection = createConnection(ProposedFeatures.all);
 
@@ -100,7 +100,7 @@ async function diagnoseDocument(document: TextDocument) {
   if (haveConnectionsBeenSet) {
     // Necessary to copy the versions, because they're mutated in the same document object
     const versionsAtRequestTime = new Map(
-      documents.all().map((document) => [document.uri, document.version])
+      documents.all().map(document => [document.uri, document.version])
     );
     const diagnostics = await getMalloyDiagnostics(
       translateCache,
@@ -127,28 +127,28 @@ async function diagnoseDocument(document: TextDocument) {
 
 const debouncedDiagnoseDocument = debounce(diagnoseDocument, 300);
 
-documents.onDidChangeContent((change) => {
+documents.onDidChangeContent(change => {
   debouncedDiagnoseDocument(change.document);
 });
 
-connection.onDocumentSymbol((handler) => {
+connection.onDocumentSymbol(handler => {
   const document = documents.get(handler.textDocument.uri);
   return document ? getMalloySymbols(document) : [];
 });
 
-connection.languages.semanticTokens.on((handler) => {
+connection.languages.semanticTokens.on(handler => {
   const document = documents.get(handler.textDocument.uri);
   return document
     ? stubMalloyHighlights(document)
     : new SemanticTokensBuilder().build();
 });
 
-connection.onCodeLens((handler) => {
+connection.onCodeLens(handler => {
   const document = documents.get(handler.textDocument.uri);
   return document ? getMalloyLenses(document) : [];
 });
 
-connection.onDefinition((handler) => {
+connection.onDefinition(handler => {
   const document = documents.get(handler.textDocument.uri);
   return document
     ? getMalloyDefinitionReference(
@@ -161,7 +161,7 @@ connection.onDefinition((handler) => {
     : [];
 });
 
-connection.onDidChangeConfiguration(async (change) => {
+connection.onDidChangeConfiguration(async change => {
   await connectionManager.setConnectionsConfig(
     change.settings.malloy.connections
   );

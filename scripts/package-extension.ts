@@ -21,16 +21,18 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 /* eslint-disable no-console */
+/* eslint-disable no-process-exit */
+/* eslint-disable node/no-unpublished-import */
 
-import { doBuild, outDir, Target } from "./build_common";
-import * as path from "path";
-import * as semver from "semver";
-import { createVSIX } from "vsce";
+import {doBuild, outDir, Target} from './build_common';
+import * as path from 'path';
+import * as semver from 'semver';
+import {createVSIX} from 'vsce';
 
 // importing this in normal fashion seems to import an older API?!
 // for ex, when imported, "Property 'rmSync' does not exist on type 'typeof import("fs")'"
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const fs = require("fs");
+const fs = require('fs');
 
 export async function doPackage(
   target?: Target,
@@ -45,7 +47,7 @@ export async function doPackage(
   //
   // the hack here is to load package.json, change the version, write it out, package the VSIX,
   // then replace package.json with the original version. :(
-  const packageJSON = JSON.parse(fs.readFileSync("package.json", "utf8"));
+  const packageJSON = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 
   if (!version) version = packageJSON.version; // get version info from package.json if it isn't passed in
   if (!semver.valid(version)) throw new Error(`Invalid semver: ${version}`);
@@ -57,19 +59,19 @@ export async function doPackage(
       : `malloy-vscode-${version}.vsix`
   );
 
-  fs.copyFileSync("package.json", "package.json.original");
+  fs.copyFileSync('package.json', 'package.json.original');
 
   packageJSON.version = version;
-  if (target === "web") {
-    delete packageJSON["main"];
+  if (target === 'web') {
+    delete packageJSON['main'];
   } else {
-    delete packageJSON["browser"];
+    delete packageJSON['browser'];
   }
-  fs.writeFileSync("package.json", JSON.stringify(packageJSON, null, 2));
+  fs.writeFileSync('package.json', JSON.stringify(packageJSON, null, 2));
 
   try {
     await createVSIX({
-      githubBranch: "main",
+      githubBranch: 'main',
       preRelease,
       useYarn: false,
       target,
@@ -77,29 +79,29 @@ export async function doPackage(
       dependencies: false,
     });
   } finally {
-    fs.copyFileSync("package.json.original", "package.json");
-    fs.rmSync("package.json.original");
+    fs.copyFileSync('package.json.original', 'package.json');
+    fs.rmSync('package.json.original');
   }
 
   return packagePath;
 }
 
 const args = process.argv.slice(2);
-if (args[0] == "package") {
+if (args[0] === 'package') {
   const target = args[1] ? (args[1] as Target) : undefined;
   const version = args[2];
   console.log(
     target
       ? `Packaging extension for ${target}`
-      : "Packaging extension with no target specified, using current machine as target"
+      : 'Packaging extension with no target specified, using current machine as target'
   );
 
   doPackage(target, version)
     .then(() => {
-      console.log("Extension packaged successfully");
+      console.log('Extension packaged successfully');
     })
-    .catch((error) => {
-      console.error("Extension packaged with errors");
+    .catch(error => {
+      console.error('Extension packaged with errors');
       console.log(error);
       process.exit(1);
     });

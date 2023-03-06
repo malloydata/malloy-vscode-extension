@@ -21,47 +21,47 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { Result } from "@malloydata/malloy";
-import { HTMLView } from "@malloydata/render";
+import {Result} from '@malloydata/malloy';
+import {HTMLView} from '@malloydata/render';
 import React, {
   DOMElement,
   useCallback,
   useEffect,
   useRef,
   useState,
-} from "react";
-import styled from "styled-components";
+} from 'react';
+import styled from 'styled-components';
 import {
   QueryMessageType,
   QueryPanelMessage,
   QueryRunStatus,
-} from "../../message_types";
-import { Spinner } from "../components";
-import { ResultKind, ResultKindToggle } from "./ResultKindToggle";
-import Prism from "prismjs";
-import "prismjs/components/prism-json";
-import "prismjs/components/prism-sql";
-import { usePopperTooltip } from "react-popper-tooltip";
-import { useQueryVSCodeContext } from "./query_vscode_context";
-import { DownloadButton } from "./DownloadButton";
-import { CopyButton } from "./CopyButton";
-import { Scroll } from "./Scroll";
+} from '../../message_types';
+import {Spinner} from '../components';
+import {ResultKind, ResultKindToggle} from './ResultKindToggle';
+import Prism from 'prismjs';
+import 'prismjs/components/prism-json';
+import 'prismjs/components/prism-sql';
+import {usePopperTooltip} from 'react-popper-tooltip';
+import {useQueryVSCodeContext} from './query_vscode_context';
+import {DownloadButton} from './DownloadButton';
+import {CopyButton} from './CopyButton';
+import {Scroll} from './Scroll';
 
 enum Status {
-  Ready = "ready",
-  Compiling = "compiling",
-  Running = "running",
-  Error = "error",
-  Displaying = "displaying",
-  Rendering = "rendering",
-  Done = "done",
+  Ready = 'ready',
+  Compiling = 'compiling',
+  Running = 'running',
+  Error = 'error',
+  Displaying = 'displaying',
+  Rendering = 'rendering',
+  Done = 'done',
 }
 
 export const App: React.FC = () => {
   const [status, setStatus] = useState<Status>(Status.Ready);
-  const [html, setHTML] = useState<HTMLElement>(document.createElement("span"));
-  const [json, setJSON] = useState("");
-  const [sql, setSQL] = useState("");
+  const [html, setHTML] = useState<HTMLElement>(document.createElement('span'));
+  const [json, setJSON] = useState('');
+  const [sql, setSQL] = useState('');
   const [error, setError] = useState<string | undefined>(undefined);
   const [warning, setWarning] = useState<string | undefined>(undefined);
   const [resultKind, setResultKind] = useState<ResultKind>(ResultKind.HTML);
@@ -71,20 +71,20 @@ export const App: React.FC = () => {
   const [canDownload, setCanDownload] = useState(false);
   const [canDownloadStream, setCanDownloadStream] = useState(false);
   const tooltipId = useRef(0);
-  const { setTooltipRef, setTriggerRef, getTooltipProps } = usePopperTooltip({
+  const {setTooltipRef, setTriggerRef, getTooltipProps} = usePopperTooltip({
     visible: tooltipVisible,
-    placement: "top",
+    placement: 'top',
   });
 
   const vscode = useQueryVSCodeContext();
 
   useEffect(() => {
-    vscode.postMessage({ type: "app-ready" } as QueryPanelMessage);
+    vscode.postMessage({type: 'app-ready'} as QueryPanelMessage);
   }, []);
 
   const themeCallback = useCallback(() => {
-    const themeKind = document.body.dataset.vscodeThemeKind;
-    setDarkMode(themeKind === "vscode-dark");
+    const themeKind = document.body.dataset['vscodeThemeKind'];
+    setDarkMode(themeKind === 'vscode-dark');
   }, []);
 
   useEffect(() => {
@@ -95,7 +95,7 @@ export const App: React.FC = () => {
   useEffect(() => {
     if (!observer) return;
     observer.observe(document.body, {
-      attributeFilter: ["data-vscode-theme-kind"],
+      attributeFilter: ['data-vscode-theme-kind'],
     });
     return () => {
       if (observer) {
@@ -117,7 +117,7 @@ export const App: React.FC = () => {
             setError(undefined);
           }
           if (message.status === QueryRunStatus.Done) {
-            const { resultJson, dataStyles, canDownloadStream } = message;
+            const {resultJson, dataStyles, canDownloadStream} = message;
             setWarning(undefined);
             // TODO(web) Figure out some way to download current result set
             setCanDownload(canDownloadStream);
@@ -157,9 +157,9 @@ export const App: React.FC = () => {
               }, 0);
             }, 0);
           } else {
-            setHTML(document.createElement("span"));
-            setJSON("");
-            setSQL("");
+            setHTML(document.createElement('span'));
+            setJSON('');
+            setSQL('');
             switch (message.status) {
               case QueryRunStatus.Compiling:
                 setStatus(Status.Compiling);
@@ -171,12 +171,12 @@ export const App: React.FC = () => {
           }
       }
     };
-    window.addEventListener("message", listener);
-    return () => window.removeEventListener("message", listener);
+    window.addEventListener('message', listener);
+    return () => window.removeEventListener('message', listener);
   });
 
   const copyToClipboard = useCallback(
-    ({ target }: MouseEvent) => {
+    ({target}: MouseEvent) => {
       switch (resultKind) {
         case ResultKind.HTML:
           navigator.clipboard.writeText(getStyledHTML(html));
@@ -203,10 +203,10 @@ export const App: React.FC = () => {
   return (
     <div
       style={{
-        height: "100%",
-        margin: "0",
-        display: "flex",
-        flexDirection: "column",
+        height: '100%',
+        margin: '0',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       {[
@@ -215,9 +215,9 @@ export const App: React.FC = () => {
         Status.Rendering,
         Status.Displaying,
       ].includes(status) ? (
-        <Spinner text={getStatusLabel(status) || ""} />
+        <Spinner text={getStatusLabel(status) || ''} />
       ) : (
-        ""
+        ''
       )}
       {!error && (
         <ResultControlsBar>
@@ -227,7 +227,7 @@ export const App: React.FC = () => {
             {canDownload && (
               <DownloadButton
                 canStream={canDownloadStream}
-                onDownload={async (downloadOptions) => {
+                onDownload={async downloadOptions => {
                   vscode.postMessage({
                     type: QueryMessageType.StartDownload,
                     downloadOptions,
@@ -240,7 +240,7 @@ export const App: React.FC = () => {
       )}
       {!error && resultKind === ResultKind.HTML && (
         <Scroll>
-          <div style={{ margin: "10px" }}>
+          <div style={{margin: '10px'}}>
             <CopyButton onClick={copyToClipboard} />
             <DOMElement element={html} />
           </div>
@@ -249,7 +249,7 @@ export const App: React.FC = () => {
       {!error && resultKind === ResultKind.JSON && (
         <Scroll>
           <CopyButton onClick={copyToClipboard} />
-          <PrismContainer darkMode={darkMode} style={{ margin: "10px" }}>
+          <PrismContainer darkMode={darkMode} style={{margin: '10px'}}>
             {json}
           </PrismContainer>
         </Scroll>
@@ -257,17 +257,17 @@ export const App: React.FC = () => {
       {!error && resultKind === ResultKind.SQL && (
         <Scroll>
           <CopyButton onClick={copyToClipboard} />
-          <PrismContainer darkMode={darkMode} style={{ margin: "10px" }}>
+          <PrismContainer darkMode={darkMode} style={{margin: '10px'}}>
             <div
               dangerouslySetInnerHTML={{
-                __html: Prism.highlight(sql, Prism.languages["sql"], "sql"),
+                __html: Prism.highlight(sql, Prism.languages['sql'], 'sql'),
               }}
-              style={{ margin: "10px" }}
+              style={{margin: '10px'}}
             />
           </PrismContainer>
         </Scroll>
       )}
-      {error && <Error multiline={error.includes("\n")}>{error}</Error>}
+      {error && <Error multiline={error.includes('\n')}>{error}</Error>}
       {warning && <Warning>{warning}</Warning>}
       {tooltipVisible && (
         <Tooltip ref={setTooltipRef} {...getTooltipProps()}>
@@ -281,13 +281,13 @@ export const App: React.FC = () => {
 function getStatusLabel(status: Status) {
   switch (status) {
     case Status.Compiling:
-      return "Compiling";
+      return 'Compiling';
     case Status.Running:
-      return "Running";
+      return 'Running';
     case Status.Rendering:
-      return "Rendering";
+      return 'Rendering';
     case Status.Displaying:
-      return "Displaying";
+      return 'Displaying';
   }
 }
 
@@ -296,24 +296,24 @@ function getStyledHTML(html: HTMLElement): string {
   const styles = `<style>
   :root {
     --malloy-font-family: ${resolveStyles.getPropertyValue(
-      "--malloy-font-family"
+      '--malloy-font-family'
     )};
     --malloy-title-color: ${resolveStyles.getPropertyValue(
-      "--malloy-title-color"
+      '--malloy-title-color'
     )};
     --malloy-label-color: ${resolveStyles.getPropertyValue(
-      "--malloy-label-color"
+      '--malloy-label-color'
     )};
     --malloy-border-color: ${resolveStyles.getPropertyValue(
-      "--malloy-border-color"
+      '--malloy-border-color'
     )};
     --malloy-tile-background-color: ${resolveStyles.getPropertyValue(
-      "--malloy-tile-background-color"
+      '--malloy-tile-background-color'
     )};
   }
   body {
-    color: ${resolveStyles.getPropertyValue("--foreground")};
-    background: ${resolveStyles.getPropertyValue("--background")};
+    color: ${resolveStyles.getPropertyValue('--foreground')};
+    background: ${resolveStyles.getPropertyValue('--background')};
     font-family: var(--malloy-font-family);
     font-size: 11px;
   }
@@ -330,63 +330,63 @@ interface PrismContainerProps {
 }
 
 const PrismContainer = styled.pre<PrismContainerProps>`
-  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
   font-size: 14px;
-  color: ${(props) => (props.darkMode ? "#9cdcfe" : "#333388")};
+  color: ${props => (props.darkMode ? '#9cdcfe' : '#333388')};
 
   span.token.keyword {
-    color: ${(props) => (props.darkMode ? "#c586c0" : "#af00db")};
+    color: ${props => (props.darkMode ? '#c586c0' : '#af00db')};
   }
 
   span.token.comment {
-    color: ${(props) => (props.darkMode ? "#6a9955" : "#4f984f")};
+    color: ${props => (props.darkMode ? '#6a9955' : '#4f984f')};
   }
 
   span.token.function,
   span.token.function_keyword {
-    color: ${(props) => (props.darkMode ? "#ce9178" : "#795e26")};
+    color: ${props => (props.darkMode ? '#ce9178' : '#795e26')};
   }
 
   span.token.string {
-    color: ${(props) => (props.darkMode ? "#d16969" : "#ca4c4c")};
+    color: ${props => (props.darkMode ? '#d16969' : '#ca4c4c')};
   }
 
   span.token.regular_expression {
-    color: ${(props) => (props.darkMode ? "#f03e91" : "#88194d")};
+    color: ${props => (props.darkMode ? '#f03e91' : '#88194d')};
   }
 
   span.token.operator,
   span.token.punctuation {
-    color: ${(props) => (props.darkMode ? "#dadada" : "#505050")};
+    color: ${props => (props.darkMode ? '#dadada' : '#505050')};
   }
 
   span.token.number {
-    color: ${(props) => (props.darkMode ? "#4ec9b0" : "#09866a")};
+    color: ${props => (props.darkMode ? '#4ec9b0' : '#09866a')};
   }
 
   span.token.type,
   span.token.timeframe {
-    color: ${(props) => (props.darkMode ? "#569cd6 " : "#0070c1")};
+    color: ${props => (props.darkMode ? '#569cd6 ' : '#0070c1')};
   }
 
   span.token.date {
-    color: ${(props) => (props.darkMode ? "#4ec9b0" : "#09866a")};
-    /* color: ${(props) => (props.darkMode ? "#8730b3" : "#8730b3")};; */
+    color: ${props => (props.darkMode ? '#4ec9b0' : '#09866a')};
+    /* color: ${props => (props.darkMode ? '#8730b3' : '#8730b3')};; */
   }
 
   span.token.property {
-    color: ${(props) => (props.darkMode ? "#dcdcaa" : "#b98f13")};
+    color: ${props => (props.darkMode ? '#dcdcaa' : '#b98f13')};
   }
 `;
 
-const DOMElement: React.FC<{ element: HTMLElement }> = ({ element }) => {
+const DOMElement: React.FC<{element: HTMLElement}> = ({element}) => {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const parent = ref.current;
     if (parent) {
-      parent.innerHTML = "";
+      parent.innerHTML = '';
       parent.appendChild(element);
     }
   }, [element]);
@@ -415,8 +415,8 @@ interface ErrorProps {
 const Error = styled.div<ErrorProps>`
   background-color: var(--vscode-inputValidation-errorBackground);
   padding: 5px;
-  white-space: ${(props) => (props.multiline ? "pre" : "normal")};
-  font-family: ${(props) => (props.multiline ? "monospace" : "inherit")};
+  white-space: ${props => (props.multiline ? 'pre' : 'normal')};
+  font-family: ${props => (props.multiline ? 'monospace' : 'inherit')};
   font-size: var(--vscode-editor-font-size);
 `;
 

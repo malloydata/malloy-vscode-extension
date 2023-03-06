@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import React from "react";
+import React from 'react';
 /*
  * Copyright 2023 Google LLC
  *
@@ -45,15 +45,15 @@ import React from "react";
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import DownloadIcon from "../assets/copy.svg";
-import styled from "styled-components";
-import { Scroll } from "./Scroll";
+import DownloadIcon from '../assets/copy.svg';
+import styled from 'styled-components';
+import {Scroll} from './Scroll';
 
 interface CopyHTMLButtonProps {
   onClick: (event: MouseEvent) => void;
 }
 
-export const CopyButton: React.FC<CopyHTMLButtonProps> = ({ onClick }) => {
+export const CopyButton: React.FC<CopyHTMLButtonProps> = ({onClick}) => {
   return <StyledDownloadIcon onClick={onClick} />;
 };
 

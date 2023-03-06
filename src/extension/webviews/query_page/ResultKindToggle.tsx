@@ -21,13 +21,13 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import React from "react";
-import styled from "styled-components";
+import React from 'react';
+import styled from 'styled-components';
 
 export enum ResultKind {
-  HTML = "html",
-  JSON = "json",
-  SQL = "sql",
+  HTML = 'html',
+  JSON = 'json',
+  SQL = 'sql',
 }
 
 interface ResultKindToggleProps {
@@ -82,7 +82,7 @@ const ResultControl = styled.button`
   color: #b1b1b1;
 
   &:hover,
-  &[data-selected="true"] {
+  &[data-selected='true'] {
     border-bottom: 1px solid #4285f4;
     color: #4285f4;
   }

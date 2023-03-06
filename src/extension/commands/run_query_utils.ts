@@ -21,57 +21,22 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as vscode from "vscode";
-import { Utils } from "vscode-uri";
+import * as vscode from 'vscode';
+import {Utils} from 'vscode-uri';
 
-import { MALLOY_EXTENSION_STATE, RunState } from "../state";
-import { Result } from "@malloydata/malloy";
-import turtleIcon from "../../media/turtle.svg";
-import { getWebviewHtml } from "../webviews";
-import { QueryMessageType, QueryRunStatus } from "../message_types";
-import { WebviewMessageManager } from "../webview_message_manager";
-import { queryDownload } from "./query_download";
-import { WorkerMessage } from "../../worker/types";
-import { getWorker } from "../../worker/worker";
-import { trackQueryRun } from "../telemetry";
+import {MALLOY_EXTENSION_STATE, RunState} from '../state';
+import {Result} from '@malloydata/malloy';
+import turtleIcon from '../../media/turtle.svg';
+import {getWebviewHtml} from '../webviews';
+import {QueryMessageType, QueryRunStatus} from '../message_types';
+import {WebviewMessageManager} from '../webview_message_manager';
+import {queryDownload} from './query_download';
+import {WorkerMessage} from '../../worker/types';
+import {getWorker} from '../../worker/worker';
+import {trackQueryRun} from '../telemetry';
+import {QuerySpec} from './query_spec';
 
-const malloyLog = vscode.window.createOutputChannel("Malloy");
-interface NamedQuerySpec {
-  type: "named";
-  name: string;
-  file: vscode.TextDocument;
-}
-
-interface QueryStringSpec {
-  type: "string";
-  text: string;
-  file: vscode.TextDocument;
-}
-
-interface QueryFileSpec {
-  type: "file";
-  index: number;
-  file: vscode.TextDocument;
-}
-
-interface NamedSQLQuerySpec {
-  type: "named_sql";
-  name: string;
-  file: vscode.TextDocument;
-}
-
-interface UnnamedSQLQuerySpec {
-  type: "unnamed_sql";
-  index: number;
-  file: vscode.TextDocument;
-}
-
-export type QuerySpec =
-  | NamedQuerySpec
-  | QueryStringSpec
-  | QueryFileSpec
-  | NamedSQLQuerySpec
-  | UnnamedSQLQuerySpec;
+const malloyLog = vscode.window.createOutputChannel('Malloy');
 
 export function runMalloyQuery(
   query: QuerySpec,
@@ -87,7 +52,7 @@ export function runMalloyQuery(
     (progress, token) => {
       const cancel = () => {
         worker.send({
-          type: "cancel",
+          type: 'cancel',
           panelId,
         });
         if (current) {
@@ -122,17 +87,17 @@ export function runMalloyQuery(
         }
       } else {
         const panel = vscode.window.createWebviewPanel(
-          "malloyQuery",
+          'malloyQuery',
           name,
-          { viewColumn: vscode.ViewColumn.Beside, preserveFocus: true },
-          { enableScripts: true, retainContextWhenHidden: true }
+          {viewColumn: vscode.ViewColumn.Beside, preserveFocus: true},
+          {enableScripts: true, retainContextWhenHidden: true}
         );
 
         panel.onDidChangeViewState(
           (e: vscode.WebviewPanelOnDidChangeViewStateEvent) => {
             vscode.commands.executeCommand(
-              "setContext",
-              "malloy.webviewPanelFocused",
+              'setContext',
+              'malloy.webviewPanelFocused',
               e.webviewPanel.active
             );
           }
@@ -147,7 +112,7 @@ export function runMalloyQuery(
         };
         current.panel.iconPath = Utils.joinPath(
           MALLOY_EXTENSION_STATE.getExtensionUri(),
-          "dist",
+          'dist',
           turtleIcon
         );
         MALLOY_EXTENSION_STATE.setRunState(panelId, current);
@@ -155,8 +120,8 @@ export function runMalloyQuery(
 
       const onDiskPath = Utils.joinPath(
         MALLOY_EXTENSION_STATE.getExtensionUri(),
-        "dist",
-        "query_page.js"
+        'dist',
+        'query_page.js'
       );
 
       const entrySrc = current.panel.webview.asWebviewUri(onDiskPath);
@@ -171,18 +136,18 @@ export function runMalloyQuery(
       });
 
       MALLOY_EXTENSION_STATE.setActiveWebviewPanelId(current.panelId);
-      current.panel.onDidChangeViewState((event) => {
+      current.panel.onDidChangeViewState(event => {
         if (event.webviewPanel.active) {
           MALLOY_EXTENSION_STATE.setActiveWebviewPanelId(current.panelId);
-          vscode.commands.executeCommand("malloy.refreshSchema");
+          vscode.commands.executeCommand('malloy.refreshSchema');
         }
       });
 
-      const { file, ...params } = query;
+      const {file, ...params} = query;
       const uri = file.uri.toString();
       const worker = getWorker();
       worker.send({
-        type: "run",
+        type: 'run',
         query: {
           uri,
           ...params,
@@ -194,9 +159,9 @@ export function runMalloyQuery(
       const compileBegin = allBegin;
       let runBegin: number;
 
-      return new Promise((resolve) => {
+      return new Promise(resolve => {
         const listener = (msg: WorkerMessage) => {
-          if (msg.type === "dead") {
+          if (msg.type === 'dead') {
             current.messages.postMessage({
               type: QueryMessageType.QueryStatus,
               status: QueryRunStatus.Error,
@@ -205,13 +170,13 @@ This is possibly the result of a database bug. \
 Please consider filing an issue with as much detail as possible at \
 https://github.com/malloydata/malloy/issues.`,
             });
-            worker.off("message", listener);
+            worker.off('message', listener);
             resolve(undefined);
             return;
-          } else if (msg.type !== "query_panel") {
+          } else if (msg.type !== 'query_panel') {
             return;
           }
-          const { message, panelId: msgPanelId } = msg;
+          const {message, panelId: msgPanelId} = msg;
           if (msgPanelId !== panelId) {
             return;
           }
@@ -224,7 +189,7 @@ https://github.com/malloydata/malloy/issues.`,
               switch (message.status) {
                 case QueryRunStatus.Compiling:
                   {
-                    progress.report({ increment: 20, message: "Compiling" });
+                    progress.report({increment: 20, message: 'Compiling'});
                   }
                   break;
                 case QueryRunStatus.Running:
@@ -232,27 +197,27 @@ https://github.com/malloydata/malloy/issues.`,
                     const compileEnd = Date.now();
                     runBegin = compileEnd;
                     malloyLog.appendLine(message.sql);
-                    logTime("Compile", compileBegin, compileEnd);
+                    logTime('Compile', compileBegin, compileEnd);
 
-                    trackQueryRun({ dialect: message.dialect });
+                    trackQueryRun({dialect: message.dialect});
 
-                    progress.report({ increment: 40, message: "Running" });
+                    progress.report({increment: 40, message: 'Running'});
                   }
                   break;
                 case QueryRunStatus.Done:
                   {
                     const runEnd = Date.now();
-                    if (runBegin != null) {
-                      logTime("Run", runBegin, runEnd);
+                    if (runBegin !== null) {
+                      logTime('Run', runBegin, runEnd);
                     }
-                    const { resultJson } = message;
+                    const {resultJson} = message;
                     const queryResult = Result.fromJSON(resultJson);
                     current.result = queryResult;
-                    progress.report({ increment: 100, message: "Rendering" });
+                    progress.report({increment: 100, message: 'Rendering'});
                     const allEnd = Date.now();
-                    logTime("Total", allBegin, allEnd);
+                    logTime('Total', allBegin, allEnd);
 
-                    current.messages.onReceiveMessage((message) => {
+                    current.messages.onReceiveMessage(message => {
                       if (message.type === QueryMessageType.StartDownload) {
                         queryDownload(
                           query,
@@ -264,13 +229,13 @@ https://github.com/malloydata/malloy/issues.`,
                       }
                     });
 
-                    worker.off("message", listener);
+                    worker.off('message', listener);
                     resolve(undefined);
                   }
                   break;
                 case QueryRunStatus.Error:
                   {
-                    worker.off("message", listener);
+                    worker.off('message', listener);
                     resolve(undefined);
                   }
                   break;
@@ -278,7 +243,7 @@ https://github.com/malloydata/malloy/issues.`,
           }
         };
 
-        worker.on("message", listener);
+        worker.on('message', listener);
       });
     }
   );

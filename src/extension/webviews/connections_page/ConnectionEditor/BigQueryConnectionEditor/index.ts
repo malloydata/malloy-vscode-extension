@@ -21,4 +21,4 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-export { BigQueryConnectionEditor } from "./BigQueryConnectionEditor";
+export {BigQueryConnectionEditor} from './BigQueryConnectionEditor';

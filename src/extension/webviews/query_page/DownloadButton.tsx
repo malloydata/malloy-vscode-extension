@@ -21,12 +21,12 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import React, { useState } from "react";
-import styled from "styled-components";
-import { QueryDownloadOptions } from "../../message_types";
-import { Popover } from "../components/Popover";
-import { DownloadForm } from "./DownloadForm";
-import DownloadIcon from "../assets/download_hover.svg";
+import React, {useState} from 'react';
+import styled from 'styled-components';
+import {QueryDownloadOptions} from '../../message_types';
+import {Popover} from '../components/Popover';
+import {DownloadForm} from './DownloadForm';
+import DownloadIcon from '../assets/download_hover.svg';
 
 interface DownloadButtonProps {
   onDownload: (options: QueryDownloadOptions) => Promise<void>;
@@ -56,7 +56,7 @@ export const DownloadButton: React.FC<DownloadButtonProps> = ({
         <PopoverContent>
           <DownloadForm
             canStream={canStream}
-            onDownload={async (options) => {
+            onDownload={async options => {
               onDownload(options);
               setOpen(false);
             }}

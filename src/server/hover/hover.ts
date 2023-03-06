@@ -21,20 +21,20 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { Hover, HoverParams, MarkupKind } from "vscode-languageserver/node";
-import { TextDocument } from "vscode-languageserver-textdocument";
+import {Hover, HoverParams, MarkupKind} from 'vscode-languageserver/node';
+import {TextDocument} from 'vscode-languageserver-textdocument';
 
-import { COMPLETION_DOCS } from "../completions/completion_docs";
-import { parseWithCache } from "../parse_cache";
+import {COMPLETION_DOCS} from '../completions/completion_docs';
+import {parseWithCache} from '../parse_cache';
 
 export const getHover = (
   document: TextDocument,
-  { position }: HoverParams
+  {position}: HoverParams
 ): Hover | null => {
   const context = parseWithCache(document).helpContext(position);
 
   if (context?.token) {
-    const name = context.token.replace(/:$/, "");
+    const name = context.token.replace(/:$/, '');
 
     if (name) {
       const value = COMPLETION_DOCS[context.type][name];

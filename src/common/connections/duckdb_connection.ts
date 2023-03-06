@@ -20,30 +20,32 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-import { DuckDBConnection } from "@malloydata/db-duckdb";
+/* eslint-disable no-console */
+
+import {DuckDBConnection} from '@malloydata/db-duckdb';
 import {
   ConfigOptions,
   DuckDBConnectionConfig,
-} from "../connection_manager_types";
-import { isDuckDBAvailable } from "../../common/duckdb_availability";
+} from '../connection_manager_types';
+import {isDuckDBAvailable} from '../../common/duckdb_availability';
 
 export const createDuckDbConnection = async (
   connectionConfig: DuckDBConnectionConfig,
-  { workingDirectory, rowLimit }: ConfigOptions
+  {workingDirectory, rowLimit}: ConfigOptions
 ) => {
   if (!isDuckDBAvailable) {
-    throw new Error("DuckDB is not available.");
+    throw new Error('DuckDB is not available.');
   }
   try {
     const connection = new DuckDBConnection(
       connectionConfig.name,
-      ":memory:",
+      ':memory:',
       connectionConfig.workingDirectory || workingDirectory,
-      () => ({ rowLimit })
+      () => ({rowLimit})
     );
     return connection;
   } catch (error) {
-    console.error("Could not create DuckDB connection:", error);
+    console.error('Could not create DuckDB connection:', error);
     throw error;
   }
 };

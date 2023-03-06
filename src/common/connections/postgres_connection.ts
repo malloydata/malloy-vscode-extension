@@ -21,16 +21,16 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { getPassword } from "keytar";
-import { PostgresConnection } from "@malloydata/db-postgres";
+import {getPassword} from 'keytar';
+import {PostgresConnection} from '@malloydata/db-postgres';
 import {
   PostgresConnectionConfig,
   ConfigOptions,
-} from "../connection_manager_types";
+} from '../connection_manager_types';
 
 export const createPostgresConnection = async (
   connectionConfig: PostgresConnectionConfig,
-  { rowLimit }: ConfigOptions
+  {rowLimit}: ConfigOptions
 ): Promise<PostgresConnection> => {
   const configReader = async () => {
     let password: string;
@@ -39,7 +39,7 @@ export const createPostgresConnection = async (
     } else if (connectionConfig.useKeychainPassword) {
       password =
         (await getPassword(
-          "com.malloy-lang.vscode-extension",
+          'com.malloy-lang.vscode-extension',
           `connections.${connectionConfig.id}.password`
         )) || undefined;
     }
@@ -53,7 +53,7 @@ export const createPostgresConnection = async (
   };
   const connection = new PostgresConnection(
     connectionConfig.name,
-    () => ({ rowLimit }),
+    () => ({rowLimit}),
     configReader
   );
   return connection;
