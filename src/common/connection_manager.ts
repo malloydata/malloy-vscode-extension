@@ -25,11 +25,11 @@ import {
   Connection,
   LookupConnection,
   TestableConnection,
-} from "@malloydata/malloy";
-import { ConfigOptions, ConnectionConfig } from "./connection_manager_types";
-import { ConnectionFactory } from "./connections/types";
+} from '@malloydata/malloy';
+import {ConfigOptions, ConnectionConfig} from './connection_manager_types';
+import {ConnectionFactory} from './connections/types';
 
-const DEFAULT_CONFIG = Symbol("default-config");
+const DEFAULT_CONFIG = Symbol('default-config');
 
 export class DynamicConnectionLookup implements LookupConnection<Connection> {
   connections: Record<string | symbol, Promise<Connection>> = {};
@@ -84,7 +84,7 @@ export class ConnectionManager {
     connectionConfig: ConnectionConfig
   ): Promise<TestableConnection> {
     return this.connectionFactory.getConnectionForConfig(connectionConfig, {
-      workingDirectory: "/",
+      workingDirectory: '/',
     });
   }
 
@@ -128,7 +128,7 @@ export class ConnectionManager {
     connectionsConfig: ConnectionConfig[]
   ): ConnectionConfig[] {
     const availableBackends = this.connectionFactory.getAvailableBackends();
-    return connectionsConfig.filter((config) =>
+    return connectionsConfig.filter(config =>
       availableBackends.includes(config.backend)
     );
   }
@@ -138,7 +138,7 @@ export class ConnectionManager {
     this.connectionCache = {};
 
     const configs = this.connectionFactory.addDefaults(this.configList);
-    configs.forEach((config) => {
+    configs.forEach(config => {
       if (config.isDefault) {
         this.configMap[DEFAULT_CONFIG] = config;
       }

@@ -21,17 +21,17 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as vscode from "vscode";
-import { ConnectionManager } from "../common/connection_manager";
-import { ConnectionConfig } from "../common/connection_manager_types";
-import { ConnectionFactory } from "../common/connections/types";
+import * as vscode from 'vscode';
+import {ConnectionManager} from '../common/connection_manager';
+import {ConnectionConfig} from '../common/connection_manager_types';
+import {ConnectionFactory} from '../common/connections/types';
 
 const DEFAULT_ROW_LIMIT = 50;
 
 const getConnectionsConfig = (): ConnectionConfig[] => {
   return vscode.workspace
-    .getConfiguration("malloy")
-    .get("connections") as ConnectionConfig[];
+    .getConfiguration('malloy')
+    .get('connections') as ConnectionConfig[];
 };
 
 export class VSCodeConnectionManager extends ConnectionManager {
@@ -49,19 +49,19 @@ export class VSCodeConnectionManager extends ConnectionManager {
     // runs queries, and because it's slightly harder to get settings from within the language
     // server.
     const rowLimitRaw = vscode.workspace
-      .getConfiguration("malloy")
-      .get("rowLimit");
+      .getConfiguration('malloy')
+      .get('rowLimit');
     if (rowLimitRaw === undefined) {
       return DEFAULT_ROW_LIMIT;
     }
-    if (typeof rowLimitRaw === "string") {
+    if (typeof rowLimitRaw === 'string') {
       try {
         return parseInt(rowLimitRaw);
       } catch (_error) {
         return DEFAULT_ROW_LIMIT;
       }
     }
-    if (typeof rowLimitRaw !== "number") {
+    if (typeof rowLimitRaw !== 'number') {
       return DEFAULT_ROW_LIMIT;
     }
     return rowLimitRaw;

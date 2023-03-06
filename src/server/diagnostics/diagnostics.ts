@@ -25,15 +25,15 @@ import {
   Diagnostic,
   DiagnosticSeverity,
   TextDocuments,
-} from "vscode-languageserver";
-import { LogMessage, MalloyError } from "@malloydata/malloy";
-import type { TextDocument } from "vscode-languageserver-textdocument";
-import type { ConnectionManager } from "../../common/connection_manager";
-import type { TranslateCache } from "../types";
+} from 'vscode-languageserver';
+import {LogMessage, MalloyError} from '@malloydata/malloy';
+import {TextDocument} from 'vscode-languageserver-textdocument';
+import {ConnectionManager} from '../../common/connection_manager';
+import {TranslateCache} from '../types';
 
 const DEFAULT_RANGE = {
-  start: { line: 0, character: 0 },
-  end: { line: 0, character: Number.MAX_VALUE },
+  start: {line: 0, character: 0},
+  end: {line: 0, character: Number.MAX_VALUE},
 };
 
 export async function getMalloyDiagnostics(
@@ -41,8 +41,8 @@ export async function getMalloyDiagnostics(
   connectionManager: ConnectionManager,
   documents: TextDocuments<TextDocument>,
   document: TextDocument
-): Promise<{ [uri: string]: Diagnostic[] }> {
-  const byURI: { [uri: string]: Diagnostic[] } = {
+): Promise<{[uri: string]: Diagnostic[]}> {
+  const byURI: {[uri: string]: Diagnostic[]} = {
     // Important that the requested document starts out as empty array,
     // so that we clear old diagnostics
     [document.uri]: [],
@@ -63,16 +63,16 @@ export async function getMalloyDiagnostics(
         severity: DiagnosticSeverity.Error,
         range: DEFAULT_RANGE,
         message: error.message,
-        source: "malloy",
+        source: 'malloy',
       });
     }
   }
 
   for (const err of errors) {
     const sev =
-      err.severity === "warn"
+      err.severity === 'warn'
         ? DiagnosticSeverity.Warning
-        : err.severity === "debug"
+        : err.severity === 'debug'
         ? DiagnosticSeverity.Information
         : DiagnosticSeverity.Error;
 
@@ -86,7 +86,7 @@ export async function getMalloyDiagnostics(
       severity: sev,
       range: err.at?.range || DEFAULT_RANGE,
       message: err.message,
-      source: "malloy",
+      source: 'malloy',
     });
   }
 

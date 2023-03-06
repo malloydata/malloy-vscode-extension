@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { WebviewPanel, WebviewView } from "vscode";
+import {WebviewPanel, WebviewView} from 'vscode';
 
 export class WebviewMessageManager<T> {
   constructor(private panel: WebviewPanel | WebviewView) {
@@ -31,7 +31,7 @@ export class WebviewMessageManager<T> {
       }
       this.callback(message);
     });
-    if ("onDidChangeViewState" in this.panel) {
+    if ('onDidChangeViewState' in this.panel) {
       this.panel.onDidChangeViewState(() => {
         if (this.panelCanReceiveMessages && !this.panel.visible) {
           this.panelCanReceiveMessages = false;
@@ -62,7 +62,7 @@ export class WebviewMessageManager<T> {
   }
 
   private flushPendingMessages() {
-    this.pendingMessages.forEach((message) => {
+    this.pendingMessages.forEach(message => {
       this.panel.webview.postMessage(message);
     });
     this.pendingMessages.splice(0, this.pendingMessages.length);

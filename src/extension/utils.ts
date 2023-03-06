@@ -20,14 +20,15 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+/* eslint-disable no-console */
 
-import { URLReader } from "@malloydata/malloy";
-import * as vscode from "vscode";
+import {URLReader} from '@malloydata/malloy';
+import * as vscode from 'vscode';
 
 export async function fetchFile(uri: string): Promise<string> {
   const openFiles = vscode.workspace.textDocuments;
   const openDocument = openFiles.find(
-    (document) => document.uri.toString() === uri
+    document => document.uri.toString() === uri
   );
   // Only get the text from VSCode's open files if the file is already open in VSCode,
   // otherwise, just read the file from the file system
@@ -35,7 +36,7 @@ export async function fetchFile(uri: string): Promise<string> {
     return openDocument.getText();
   } else {
     const contents = await vscode.workspace.fs.readFile(vscode.Uri.parse(uri));
-    return new TextDecoder("utf-8").decode(contents);
+    return new TextDecoder('utf-8').decode(contents);
   }
 }
 

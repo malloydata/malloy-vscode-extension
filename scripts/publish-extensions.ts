@@ -21,21 +21,23 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 /* eslint-disable no-console */
+/* eslint-disable no-process-exit */
+/* eslint-disable node/no-unpublished-import */
 
-import * as semver from "semver";
-import { readFileSync } from "fs";
-import { publishVSIX } from "vsce";
-import { Target } from "./build_common";
-import { targetKeytarMap } from "./utils/fetch_keytar";
-import { doPackage } from "./package-extension";
-import { publishCloudExtension } from "./publish-cloud-extension";
+import * as semver from 'semver';
+import {readFileSync} from 'fs';
+import {publishVSIX} from 'vsce';
+import {Target} from './build_common';
+import {targetKeytarMap} from './utils/fetch_keytar';
+import {doPackage} from './package-extension';
+import {publishCloudExtension} from './publish-cloud-extension';
 
 /**
  * @returns Array of version bits. [major, minor, patch]
  */
 function getVersionBits(): Array<number> {
-  return JSON.parse(readFileSync("package.json", "utf-8"))
-    .version.split(".")
+  return JSON.parse(readFileSync('package.json', 'utf-8'))
+    .version.split('.')
     .map(Number);
 }
 
@@ -47,27 +49,27 @@ async function doPublish(version: string) {
   // See: https://code.visualstudio.com/api/working-with-extensions/publishing-extension
   // Only release versions incrementing major or minor should be committed. (until incrementing is automated)
   // The final version bit (patch) will be auto-generated.
-  if (versionBits[1] % 2 != 0) {
+  if (versionBits[1] % 2 !== 0) {
     throw new Error(
-      "Invalid release version found in package.json. Release minor version should be even."
+      'Invalid release version found in package.json. Release minor version should be even.'
     );
   }
   switch (version) {
-    case "pre-release":
+    case 'pre-release':
       versionBits[1] += 1;
       versionBits[2] = Math.floor(Date.now() / 1000);
       preRelease = true;
       break;
-    case "patch":
-    case "minor":
-    case "major":
+    case 'patch':
+    case 'minor':
+    case 'major':
       versionBits[2] = Math.floor(Date.now() / 1000);
       break;
     default:
       throw new Error(`Unknown version tag: ${version}.`);
   }
 
-  const versionCode = versionBits.join(".");
+  const versionCode = versionBits.join('.');
   if (!semver.valid(versionCode))
     throw new Error(`Invalid semver: ${versionCode}`);
 
@@ -84,17 +86,17 @@ async function doPublish(version: string) {
     );
 
     await publishVSIX(packagePath, {
-      githubBranch: "main",
+      githubBranch: 'main',
       preRelease: preRelease,
       useYarn: false,
       pat: process.env.VSCE_PAT,
     });
   }
 
-  const packagePath = await doPackage("web", versionCode, preRelease);
+  const packagePath = await doPackage('web', versionCode, preRelease);
 
   await publishVSIX(packagePath, {
-    githubBranch: "main",
+    githubBranch: 'main',
     preRelease: preRelease,
     useYarn: false,
     pat: process.env.VSCE_PAT,
@@ -102,7 +104,7 @@ async function doPublish(version: string) {
 
   if (!preRelease) {
     const cloudPackagePath = await doPackage(
-      "linux-x64" as Target,
+      'linux-x64' as Target,
       versionCode,
       preRelease
     );
@@ -121,10 +123,10 @@ console.log(`Starting ${version} publish for extensions`);
 
 doPublish(version)
   .then(() => {
-    console.log("Extensions published successfully");
+    console.log('Extensions published successfully');
   })
-  .catch((error) => {
-    console.error("Extension publishing errors:");
+  .catch(error => {
+    console.error('Extension publishing errors:');
     console.log(error);
     process.exit(1);
   });

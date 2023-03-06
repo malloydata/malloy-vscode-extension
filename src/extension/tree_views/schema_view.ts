@@ -21,8 +21,8 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as vscode from "vscode";
-import { Utils } from "vscode-uri";
+import * as vscode from 'vscode';
+import {Utils} from 'vscode-uri';
 
 import {
   Explore,
@@ -32,19 +32,19 @@ import {
   QueryField,
   AtomicField,
   URLReader,
-} from "@malloydata/malloy";
-import numberIcon from "../../media/number.svg";
-import numberAggregateIcon from "../../media/number-aggregate.svg";
-import booleanIcon from "../../media/boolean.svg";
-import timeIcon from "../../media/time.svg";
-import structIcon from "../../media/struct.svg";
-import queryIcon from "../../media/turtle.svg";
-import stringIcon from "../../media/string.svg";
-import oneToManyIcon from "../../media/one_to_many.svg";
-import manyToOneIcon from "../../media/many_to_one.svg";
-import oneToOneIcon from "../../media/one_to_one.svg";
-import { MALLOY_EXTENSION_STATE } from "../state";
-import { ConnectionManager } from "../../common/connection_manager";
+} from '@malloydata/malloy';
+import numberIcon from '../../media/number.svg';
+import numberAggregateIcon from '../../media/number-aggregate.svg';
+import booleanIcon from '../../media/boolean.svg';
+import timeIcon from '../../media/time.svg';
+import structIcon from '../../media/struct.svg';
+import queryIcon from '../../media/turtle.svg';
+import stringIcon from '../../media/string.svg';
+import oneToManyIcon from '../../media/one_to_many.svg';
+import manyToOneIcon from '../../media/many_to_one.svg';
+import oneToOneIcon from '../../media/one_to_one.svg';
+import {MALLOY_EXTENSION_STATE} from '../state';
+import {ConnectionManager} from '../../common/connection_manager';
 
 export class SchemaProvider
   implements vscode.TreeDataProvider<ExploreItem | FieldItem>
@@ -80,7 +80,7 @@ export class SchemaProvider
     element?: ExploreItem
   ): Promise<(ExploreItem | FieldItem)[]> {
     if (element) {
-      return element.explore.allFields.sort(byKindThenName).map((field) => {
+      return element.explore.allFields.sort(byKindThenName).map(field => {
         const newPath = [...element.accessPath, field.name];
         if (field.isExploreField()) {
           return new ExploreItem(
@@ -125,7 +125,7 @@ export class SchemaProvider
         return this.resultCache.get(cacheKey) || [];
       } else {
         const results = explores.map(
-          (explore) =>
+          explore =>
             new ExploreItem(
               this.context,
               explore.name,
@@ -181,14 +181,14 @@ class ExploreItem extends vscode.TreeItem {
       const relationship = explore.joinRelationship;
       subtype =
         relationship === JoinRelationship.ManyToOne
-          ? "many_to_one"
+          ? 'many_to_one'
           : relationship === JoinRelationship.OneToMany
-          ? "one_to_many"
+          ? 'one_to_many'
           : JoinRelationship.OneToOne
-          ? "one_to_one"
-          : "base";
+          ? 'one_to_one'
+          : 'base';
     } else {
-      subtype = "base";
+      subtype = 'base';
     }
 
     this.iconPath = {
@@ -211,7 +211,7 @@ class FieldItem extends vscode.TreeItem {
       `
 $(symbol-field) \`${field.name}\`
 
-**Path**: \`${this.accessPath.join(".")}\`
+**Path**: \`${this.accessPath.join('.')}\`
 
 **Type**: \`${this.type()}\`
     `,
@@ -220,9 +220,9 @@ $(symbol-field) \`${field.name}\`
   }
 
   command = {
-    title: "Copy Field path",
-    command: "malloy.copyFieldPath",
-    arguments: [this.accessPath.join(".")],
+    title: 'Copy Field path',
+    command: 'malloy.copyFieldPath',
+    arguments: [this.accessPath.join('.')],
   };
 
   iconPath = {
@@ -235,7 +235,7 @@ $(symbol-field) \`${field.name}\`
   }
 
   type() {
-    return this.field.isAtomicField() ? this.field.type.toString() : "query";
+    return this.field.isAtomicField() ? this.field.type.toString() : 'query';
   }
 }
 
@@ -249,49 +249,49 @@ function getIconPath(
     imageFileName = numberAggregateIcon;
   } else {
     switch (fieldType) {
-      case "number":
+      case 'number':
         imageFileName = numberIcon;
         break;
-      case "string":
+      case 'string':
         imageFileName = stringIcon;
         break;
-      case "date":
-      case "timestamp":
+      case 'date':
+      case 'timestamp':
         imageFileName = timeIcon;
         break;
-      case "struct_base":
+      case 'struct_base':
         imageFileName = structIcon;
         break;
-      case "struct_one_to_many":
+      case 'struct_one_to_many':
         imageFileName = oneToManyIcon;
         break;
-      case "struct_one_to_one":
+      case 'struct_one_to_one':
         imageFileName = oneToOneIcon;
         break;
-      case "struct_many_to_one":
+      case 'struct_many_to_one':
         imageFileName = manyToOneIcon;
         break;
-      case "boolean":
+      case 'boolean':
         imageFileName = booleanIcon;
         break;
-      case "query":
+      case 'query':
         imageFileName = queryIcon;
 
         break;
       default:
-        imageFileName = "unknown";
+        imageFileName = 'unknown';
     }
   }
 
   const uri = context.extensionUri;
-  return Utils.joinPath(uri, "dist", imageFileName);
+  return Utils.joinPath(uri, 'dist', imageFileName);
 }
 
 export function runTurtleFromSchemaCommand(fieldItem: FieldItem): void {
   vscode.commands.executeCommand(
-    "malloy.runQuery",
-    `query: ${fieldItem.topLevelExplore}->${fieldItem.accessPath.join(".")}`,
-    `${fieldItem.topLevelExplore}->${fieldItem.accessPath.join(".")}`
+    'malloy.runQuery',
+    `query: ${fieldItem.topLevelExplore}->${fieldItem.accessPath.join('.')}`,
+    `${fieldItem.topLevelExplore}->${fieldItem.accessPath.join('.')}`
   );
 }
 

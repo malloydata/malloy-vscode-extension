@@ -22,11 +22,11 @@
  */
 
 /* eslint-disable no-console */
-import * as child_process from "child_process";
-import * as vscode from "vscode";
-import { fetchFile } from "../../extension/utils";
-import { Message, WorkerMessage, WorkerReadMessage } from "../types";
-const workerLog = vscode.window.createOutputChannel("Malloy Worker");
+import * as child_process from 'child_process';
+import * as vscode from 'vscode';
+import {fetchFile} from '../../extension/utils';
+import {Message, WorkerMessage, WorkerReadMessage} from '../types';
+const workerLog = vscode.window.createOutputChannel('Malloy Worker');
 
 const DEFAULT_RESTART_SECONDS = 1;
 
@@ -34,36 +34,36 @@ export class WorkerConnection {
   worker!: child_process.ChildProcess;
 
   constructor(context: vscode.ExtensionContext) {
-    const workerModule = context.asAbsolutePath("dist/worker_node.js");
-    const execArgv = ["--no-lazy"];
+    const workerModule = context.asAbsolutePath('dist/worker_node.js');
+    const execArgv = ['--no-lazy'];
     if (context.extensionMode === vscode.ExtensionMode.Development) {
       execArgv.push(
-        "--inspect=6010",
-        "--preserve-symlinks",
-        "--enable-source-maps"
+        '--inspect=6010',
+        '--preserve-symlinks',
+        '--enable-source-maps'
       );
     }
 
     const startWorker = () => {
       this.worker = child_process
-        .fork(workerModule, { execArgv })
-        .on("error", console.error)
-        .on("exit", (status) => {
+        .fork(workerModule, {execArgv})
+        .on('error', console.error)
+        .on('exit', status => {
           if (status !== 0) {
             console.error(`Worker exited with ${status}`);
             console.info(`Restarting in ${DEFAULT_RESTART_SECONDS} seconds`);
             // Maybe exponential backoff? Not sure what our failure
             // modes are going to be
             setTimeout(startWorker, DEFAULT_RESTART_SECONDS * 1000);
-            this.notifyListeners({ type: "dead" });
+            this.notifyListeners({type: 'dead'});
           }
         })
-        .on("message", (message: WorkerMessage) => {
+        .on('message', (message: WorkerMessage) => {
           switch (message.type) {
-            case "log":
+            case 'log':
               workerLog.appendLine(`worker: ${message.message}`);
               break;
-            case "read": {
+            case 'read': {
               workerLog.appendLine(`worker: reading file ${message.uri}`);
               this.readFile(message);
               break;
@@ -79,7 +79,7 @@ export class WorkerConnection {
   }
 
   notifyListeners(message: WorkerMessage): void {
-    this.worker.emit("message", message);
+    this.worker.emit('message', message);
   }
 
   on(event: string, listener: (message: WorkerMessage) => void): void {
@@ -91,16 +91,16 @@ export class WorkerConnection {
   }
 
   stop(): void {
-    this.worker.kill("SIGHUP");
+    this.worker.kill('SIGHUP');
   }
 
   async readFile(message: WorkerReadMessage): Promise<void> {
-    const { id, uri } = message;
+    const {id, uri} = message;
     try {
       const data = await fetchFile(uri);
-      this.send?.({ type: "read", id, uri, data });
+      this.send?.({type: 'read', id, uri, data});
     } catch (error) {
-      this.send?.({ type: "read", id, uri, error: error.message });
+      this.send?.({type: 'read', id, uri, error: error.message});
     }
   }
 }

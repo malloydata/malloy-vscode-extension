@@ -21,13 +21,13 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { TextFieldType } from "@vscode/webview-ui-toolkit";
-import React, { useState } from "react";
-import { PostgresConnectionConfig } from "../../../../../common/connection_manager_types";
-import { TextField } from "../../../components";
-import { VSCodeCheckbox, VSCodeRadio } from "@vscode/webview-ui-toolkit/react";
-import { Label } from "../Label";
-import { LabelCell } from "../LabelCell";
+import {TextFieldType} from '@vscode/webview-ui-toolkit';
+import React, {useState} from 'react';
+import {PostgresConnectionConfig} from '../../../../../common/connection_manager_types';
+import {TextField} from '../../../components';
+import {VSCodeCheckbox, VSCodeRadio} from '@vscode/webview-ui-toolkit/react';
+import {Label} from '../Label';
+import {LabelCell} from '../LabelCell';
 
 interface PostgresConnectionEditorProps {
   config: PostgresConnectionConfig;
@@ -36,7 +36,7 @@ interface PostgresConnectionEditorProps {
 
 export const PostgresConnectionEditor: React.FC<
   PostgresConnectionEditorProps
-> = ({ config, setConfig }) => {
+> = ({config, setConfig}) => {
   const [showPassword, setShowPassword] = useState(false);
   return (
     <table>
@@ -48,8 +48,8 @@ export const PostgresConnectionEditor: React.FC<
           <td>
             <TextField
               value={config.name}
-              setValue={(name) => {
-                setConfig({ ...config, name });
+              setValue={name => {
+                setConfig({...config, name});
               }}
             />
           </td>
@@ -60,9 +60,9 @@ export const PostgresConnectionEditor: React.FC<
           </LabelCell>
           <td>
             <TextField
-              value={config.host || ""}
-              setValue={(host) => {
-                setConfig({ ...config, host });
+              value={config.host || ''}
+              setValue={host => {
+                setConfig({...config, host});
               }}
             ></TextField>
           </td>
@@ -73,9 +73,9 @@ export const PostgresConnectionEditor: React.FC<
           </LabelCell>
           <td>
             <TextField
-              value={config.port ? config.port.toString() : ""}
-              setValue={(port) => {
-                setConfig({ ...config, port: parseInt(port) });
+              value={config.port ? config.port.toString() : ''}
+              setValue={port => {
+                setConfig({...config, port: parseInt(port)});
               }}
             ></TextField>
           </td>
@@ -86,9 +86,9 @@ export const PostgresConnectionEditor: React.FC<
           </LabelCell>
           <td>
             <TextField
-              value={config.databaseName || ""}
-              setValue={(databaseName) => {
-                setConfig({ ...config, databaseName });
+              value={config.databaseName || ''}
+              setValue={databaseName => {
+                setConfig({...config, databaseName});
               }}
             ></TextField>
           </td>
@@ -99,9 +99,9 @@ export const PostgresConnectionEditor: React.FC<
           </LabelCell>
           <td>
             <TextField
-              value={config.username || ""}
-              setValue={(username) => {
-                setConfig({ ...config, username });
+              value={config.username || ''}
+              setValue={username => {
+                setConfig({...config, username});
               }}
             />
           </td>
@@ -116,7 +116,7 @@ export const PostgresConnectionEditor: React.FC<
                 <VSCodeRadio
                   value="keychain"
                   checked={config.useKeychainPassword}
-                  onChange={(event) => {
+                  onChange={event => {
                     if (event.target?.checked) {
                       setConfig({
                         ...config,
@@ -137,7 +137,7 @@ export const PostgresConnectionEditor: React.FC<
                 checked={
                   !config.useKeychainPassword && config.password === undefined
                 }
-                onChange={(event) => {
+                onChange={event => {
                   if (event.target?.checked) {
                     setConfig({
                       ...config,
@@ -158,11 +158,11 @@ export const PostgresConnectionEditor: React.FC<
                 value="specified"
                 key="specified"
                 checked={config.password !== undefined}
-                onChange={(event) => {
+                onChange={event => {
                   if (event.target?.checked) {
                     setConfig({
                       ...config,
-                      password: "",
+                      password: '',
                       useKeychainPassword:
                         config.useKeychainPassword === undefined
                           ? undefined
@@ -172,7 +172,7 @@ export const PostgresConnectionEditor: React.FC<
                 }}
               >
                 Enter a password
-                {config.password !== undefined && ":"}
+                {config.password !== undefined && ':'}
               </VSCodeRadio>
             </div>
           </td>
@@ -183,7 +183,7 @@ export const PostgresConnectionEditor: React.FC<
             <td>
               <TextField
                 value={config.password}
-                setValue={(password) => {
+                setValue={password => {
                   setConfig({
                     ...config,
                     password,
@@ -195,10 +195,10 @@ export const PostgresConnectionEditor: React.FC<
                 placeholder="Optional"
               />
             </td>
-            <td style={{ paddingLeft: "10px" }}>
+            <td style={{paddingLeft: '10px'}}>
               <VSCodeCheckbox
                 checked={showPassword}
-                onChange={(event) => {
+                onChange={event => {
                   setShowPassword(event.target?.checked);
                 }}
               >

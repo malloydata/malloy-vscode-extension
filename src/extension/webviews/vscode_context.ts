@@ -21,9 +21,9 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as _webviewAPI from "vscode-webview";
-import React, { useContext } from "react";
-import { WebviewApi } from "./vscode_wrapper";
+import * as _webviewAPI from 'vscode-webview';
+import React, {useContext} from 'react';
+import {WebviewApi} from './vscode_wrapper';
 
 export function makeVSCodeContext<S, M>(): React.Context<WebviewApi<S, M>> {
   return React.createContext<WebviewApi<S, M>>(
@@ -41,4 +41,4 @@ export function makeUseVSCodeContext<S, M>(
   };
 }
 
-export { getVSCodeAPI } from "./vscode_wrapper";
+export {getVSCodeAPI} from './vscode_wrapper';

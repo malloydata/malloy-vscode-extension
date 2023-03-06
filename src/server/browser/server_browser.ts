@@ -20,6 +20,7 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+/* eslint-disable no-console */
 
 import {
   TextDocuments,
@@ -30,33 +31,33 @@ import {
   CompletionItem,
   HoverParams,
   Hover,
-} from "vscode-languageserver/browser";
-import debounce from "lodash/debounce";
+} from 'vscode-languageserver/browser';
+import debounce from 'lodash/debounce';
 
-import { TextDocument } from "vscode-languageserver-textdocument";
-import { getMalloyDiagnostics } from "../diagnostics";
-import { getMalloySymbols } from "../symbols";
+import {TextDocument} from 'vscode-languageserver-textdocument';
+import {getMalloyDiagnostics} from '../diagnostics';
+import {getMalloySymbols} from '../symbols';
 import {
   TOKEN_TYPES,
   TOKEN_MODIFIERS,
   stubMalloyHighlights,
-} from "../highlights";
-import { getMalloyLenses } from "../lenses";
-import { connection, connectionManager } from "./connections_browser";
+} from '../highlights';
+import {getMalloyLenses} from '../lenses';
+import {connection, connectionManager} from './connections_browser';
 import {
   getCompletionItems,
   resolveCompletionItem,
-} from "../completions/completions";
-import { getHover } from "../hover/hover";
-import { getMalloyDefinitionReference } from "../definitions/definitions";
-import { TranslateCacheBrowser } from "./translate_cache";
+} from '../completions/completions';
+import {getHover} from '../hover/hover';
+import {getMalloyDefinitionReference} from '../definitions/definitions';
+import {TranslateCacheBrowser} from './translate_cache';
 
-console.info("Server loaded");
+console.info('Server loaded');
 
 const documents = new TextDocuments(TextDocument);
 let haveConnectionsBeenSet = false;
 connection.onInitialize((params: InitializeParams) => {
-  console.info("Server onInitialize");
+  console.info('Server onInitialize');
   const capabilities = params.capabilities;
 
   const result: InitializeResult = {
@@ -99,7 +100,7 @@ async function diagnoseDocument(document: TextDocument) {
   if (haveConnectionsBeenSet) {
     // Necessary to copy the versions, because they're mutated in the same document object
     const versionsAtRequestTime = new Map(
-      documents.all().map((document) => [document.uri, document.version])
+      documents.all().map(document => [document.uri, document.version])
     );
     const diagnostics = await getMalloyDiagnostics(
       translateCache,
@@ -126,32 +127,32 @@ async function diagnoseDocument(document: TextDocument) {
 
 const debouncedDiagnoseDocument = debounce(diagnoseDocument, 300);
 
-documents.onDidChangeContent((change) => {
-  console.info("Server onDidChangeContent");
+documents.onDidChangeContent(change => {
+  console.info('Server onDidChangeContent');
   debouncedDiagnoseDocument(change.document);
 });
 
-connection.onDocumentSymbol((handler) => {
-  console.info("Server onDocumentSymbol");
+connection.onDocumentSymbol(handler => {
+  console.info('Server onDocumentSymbol');
   const document = documents.get(handler.textDocument.uri);
   return document ? getMalloySymbols(document) : [];
 });
 
-connection.languages.semanticTokens.on((handler) => {
+connection.languages.semanticTokens.on(handler => {
   const document = documents.get(handler.textDocument.uri);
   return document
     ? stubMalloyHighlights(document)
     : new SemanticTokensBuilder().build();
 });
 
-connection.onCodeLens((handler) => {
-  console.info("Server onCodeLens");
+connection.onCodeLens(handler => {
+  console.info('Server onCodeLens');
   const document = documents.get(handler.textDocument.uri);
   return document ? getMalloyLenses(document) : [];
 });
 
-connection.onDefinition((handler) => {
-  console.info("Server onDefinition");
+connection.onDefinition(handler => {
+  console.info('Server onDefinition');
   const document = documents.get(handler.textDocument.uri);
   return document
     ? getMalloyDefinitionReference(
@@ -164,8 +165,8 @@ connection.onDefinition((handler) => {
     : [];
 });
 
-connection.onDidChangeConfiguration((change) => {
-  console.info("Server onDidChangeConfiguration");
+connection.onDidChangeConfiguration(change => {
+  console.info('Server onDidChangeConfiguration');
   connectionManager.setConnectionsConfig(change.settings.malloy.connections);
   haveConnectionsBeenSet = true;
   documents.all().forEach(diagnoseDocument);
@@ -173,7 +174,7 @@ connection.onDidChangeConfiguration((change) => {
 
 // This handler provides the initial list of the completion items.
 connection.onCompletion((params): CompletionItem[] => {
-  console.info("Server onCompletion");
+  console.info('Server onCompletion');
   const document = documents.get(params.textDocument.uri);
   return document ? getCompletionItems(document, params) : [];
 });
@@ -181,12 +182,12 @@ connection.onCompletion((params): CompletionItem[] => {
 // This handler resolves additional information for the item selected in
 // the completion list.
 connection.onCompletionResolve((item: CompletionItem): CompletionItem => {
-  console.info("Server onCompletionResolve");
+  console.info('Server onCompletionResolve');
   return resolveCompletionItem(item);
 });
 
 connection.onHover((params: HoverParams): Hover | null => {
-  console.info("Server onHover");
+  console.info('Server onHover');
   const document = documents.get(params.textDocument.uri);
 
   return document ? getHover(document, params) : null;

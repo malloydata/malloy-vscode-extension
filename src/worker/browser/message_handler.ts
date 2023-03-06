@@ -20,45 +20,46 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+/* eslint-disable no-console */
 
-import { log } from "../logger";
-import { cancelQuery, runQuery } from "../run_query";
+import {log} from '../logger';
+import {cancelQuery, runQuery} from '../run_query';
 // TODO(web) import { downloadQuery } from "./download_query";
-import { Message, MessageHandler, WorkerMessage } from "../types";
-import { refreshConfig } from "../refresh_config";
-import { ConnectionManager } from "../../common/connection_manager";
-import { WorkerURLReader } from "./files";
+import {Message, MessageHandler, WorkerMessage} from '../types';
+import {refreshConfig} from '../refresh_config';
+import {ConnectionManager} from '../../common/connection_manager';
+import {WorkerURLReader} from './files';
 
 export class BrowserMessageHandler implements MessageHandler {
   constructor(connectionManager: ConnectionManager) {
-    log("Worker started");
-    self.postMessage({ type: "started" });
+    log('Worker started');
+    self.postMessage({type: 'started'});
 
     const reader = new WorkerURLReader();
 
     const heartBeat = setInterval(() => {
-      log("Heartbeat");
+      log('Heartbeat');
     }, 60 * 1000);
 
-    self.addEventListener("message", (event: MessageEvent) => {
+    self.addEventListener('message', (event: MessageEvent) => {
       const message: Message = event.data;
-      console.info("Worker received", message);
+      console.info('Worker received', message);
 
       switch (message.type) {
-        case "cancel":
+        case 'cancel':
           cancelQuery(message);
           break;
-        case "config":
+        case 'config':
           refreshConfig(connectionManager, message);
           break;
         // TODO(web)
         // case "download":
         //   downloadQuery(connectionManager, message);
         //   break;
-        case "exit":
+        case 'exit':
           clearInterval(heartBeat);
           break;
-        case "run":
+        case 'run':
           runQuery(this, reader, connectionManager, true, message);
           break;
       }

@@ -21,10 +21,10 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { TextDocument } from "vscode-languageserver-textdocument";
-import { DocumentSymbol as MalloyDocumentSymbol } from "@malloydata/malloy";
-import { DocumentSymbol, SymbolKind } from "vscode-languageserver/node";
-import { parseWithCache } from "../parse_cache";
+import {TextDocument} from 'vscode-languageserver-textdocument';
+import {DocumentSymbol as MalloyDocumentSymbol} from '@malloydata/malloy';
+import {DocumentSymbol, SymbolKind} from 'vscode-languageserver/node';
+import {parseWithCache} from '../parse_cache';
 
 function mapSymbol(symbol: MalloyDocumentSymbol): DocumentSymbol {
   const type = symbol.type;
@@ -33,11 +33,11 @@ function mapSymbol(symbol: MalloyDocumentSymbol): DocumentSymbol {
     range: symbol.range.toJSON(),
     detail: symbol.type,
     kind:
-      type === "explore"
+      type === 'explore'
         ? SymbolKind.Namespace
-        : type === "query"
+        : type === 'query'
         ? SymbolKind.Class
-        : type === "join"
+        : type === 'join'
         ? SymbolKind.Interface
         : SymbolKind.Field,
     selectionRange: symbol.range.toJSON(),

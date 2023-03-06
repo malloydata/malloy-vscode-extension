@@ -21,16 +21,16 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as vscode from "vscode";
-import { runMalloyQuery } from "./run_query_utils";
+import * as vscode from 'vscode';
+import {runMalloyQuery} from './run_query_utils';
 
 export function runQueryFileCommand(queryIndex = -1): void {
   const document = vscode.window.activeTextEditor?.document;
   if (document) {
     runMalloyQuery(
-      { type: "file", index: queryIndex, file: document },
+      {type: 'file', index: queryIndex, file: document},
       document.uri.toString(),
-      document.fileName.split("/").pop() || document.fileName
+      document.fileName.split('/').pop() || document.fileName
     );
   }
 }

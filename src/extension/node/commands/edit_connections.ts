@@ -21,38 +21,38 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as vscode from "vscode";
-import { Utils } from "vscode-uri";
+import * as vscode from 'vscode';
+import {Utils} from 'vscode-uri';
 
-import { getWebviewHtml } from "../../webviews";
+import {getWebviewHtml} from '../../webviews';
 import {
   ConnectionMessageType,
   ConnectionPanelMessage,
   ConnectionServiceAccountKeyRequestStatus,
   ConnectionTestStatus,
-} from "../../message_types";
-import { WebviewMessageManager } from "../../webview_message_manager";
-import { connectionManager } from "../connection_manager";
+} from '../../message_types';
+import {WebviewMessageManager} from '../../webview_message_manager';
+import {connectionManager} from '../connection_manager';
 import {
   ConnectionBackend,
   ConnectionConfig,
   getDefaultIndex,
-} from "../../../common/connection_manager_types";
-import { deletePassword, setPassword } from "keytar";
-import { MALLOY_EXTENSION_STATE } from "../../state";
+} from '../../../common/connection_manager_types';
+import {deletePassword, setPassword} from 'keytar';
+import {MALLOY_EXTENSION_STATE} from '../../state';
 
 export function editConnectionsCommand(): void {
   const panel = vscode.window.createWebviewPanel(
-    "malloyConnections",
-    "Edit Connections",
+    'malloyConnections',
+    'Edit Connections',
     vscode.ViewColumn.One,
-    { enableScripts: true, retainContextWhenHidden: true }
+    {enableScripts: true, retainContextWhenHidden: true}
   );
 
   const onDiskPath = Utils.joinPath(
     MALLOY_EXTENSION_STATE.getExtensionUri(),
-    "dist",
-    "connections_page.js"
+    'dist',
+    'connections_page.js'
   );
 
   const entrySrc = panel.webview.asWebviewUri(onDiskPath);
@@ -72,21 +72,21 @@ export function editConnectionsCommand(): void {
     availableBackends,
   });
 
-  messageManager.onReceiveMessage(async (message) => {
+  messageManager.onReceiveMessage(async message => {
     switch (message.type) {
       case ConnectionMessageType.SetConnections: {
         const connections = await handleConnectionsPreSave(message.connections);
-        const malloyConfig = vscode.workspace.getConfiguration("malloy");
+        const malloyConfig = vscode.workspace.getConfiguration('malloy');
         const hasWorkspaceConfig =
-          malloyConfig.inspect("connections")?.workspaceValue !== undefined;
+          malloyConfig.inspect('connections')?.workspaceValue !== undefined;
         malloyConfig.update(
-          "connections",
+          'connections',
           connections,
           vscode.ConfigurationTarget.Global
         );
         if (hasWorkspaceConfig) {
           malloyConfig.update(
-            "connections",
+            'connections',
             connections,
             vscode.ConfigurationTarget.Workspace
           );
@@ -123,7 +123,7 @@ export function editConnectionsCommand(): void {
         const result = await vscode.window.showOpenDialog({
           canSelectMany: false,
           filters: {
-            JSON: ["json"],
+            JSON: ['json'],
           },
         });
         if (result) {
@@ -162,7 +162,7 @@ async function handleConnectionsPreSave(
       if (connection.useKeychainPassword === false) {
         connection.useKeychainPassword = undefined;
         await deletePassword(
-          "com.malloy-lang.vscode-extension",
+          'com.malloy-lang.vscode-extension',
           `connections.${connection.id}.password`
         );
       }
@@ -170,7 +170,7 @@ async function handleConnectionsPreSave(
     if (
       connection.backend === ConnectionBackend.Postgres &&
       connection.password !== undefined &&
-      connection.password !== ""
+      connection.password !== ''
     ) {
       modifiedConnections.push({
         ...connection,
@@ -178,7 +178,7 @@ async function handleConnectionsPreSave(
         useKeychainPassword: true,
       });
       await setPassword(
-        "com.malloy-lang.vscode-extension",
+        'com.malloy-lang.vscode-extension',
         `connections.${connection.id}.password`,
         connection.password
       );

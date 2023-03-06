@@ -24,35 +24,35 @@
 import {
   QueryDownloadOptions,
   QueryPanelMessage,
-} from "../extension/message_types";
-import { MalloyConfig } from "../extension/types";
+} from '../extension/message_types';
+import {MalloyConfig} from '../extension/types';
 
 interface NamedQuerySpec {
-  type: "named";
+  type: 'named';
   name: string;
   uri: string;
 }
 
 interface QueryStringSpec {
-  type: "string";
+  type: 'string';
   text: string;
   uri: string;
 }
 
 interface QueryFileSpec {
-  type: "file";
+  type: 'file';
   index: number;
   uri: string;
 }
 
 interface NamedSQLQuerySpec {
-  type: "named_sql";
+  type: 'named_sql';
   name: string;
   uri: string;
 }
 
 interface UnnamedSQLQuerySpec {
-  type: "unnamed_sql";
+  type: 'unnamed_sql';
   index: number;
   uri: string;
 }
@@ -69,28 +69,28 @@ export type WorkerQuerySpec =
  */
 
 export interface MessageExit {
-  type: "exit";
+  type: 'exit';
 }
 
 export interface MessageRun {
-  type: "run";
+  type: 'run';
   query: WorkerQuerySpec;
   panelId: string;
   name: string;
 }
 
 export interface MessageCancel {
-  type: "cancel";
+  type: 'cancel';
   panelId: string;
 }
 
 export interface MessageConfig {
-  type: "config";
+  type: 'config';
   config: MalloyConfig;
 }
 
 export interface MessageRead {
-  type: "read";
+  type: 'read';
   id: string;
   uri: string;
   data?: string;
@@ -98,7 +98,7 @@ export interface MessageRead {
 }
 
 export interface MessageDownload {
-  type: "download";
+  type: 'download';
   query: WorkerQuerySpec;
   panelId: string;
   name: string;
@@ -119,32 +119,32 @@ export type Message =
  */
 
 export interface WorkerDeadMessage {
-  type: "dead";
+  type: 'dead';
 }
 
 export interface WorkerDownloadMessage {
-  type: "download";
+  type: 'download';
   name: string;
   error?: string;
 }
 
 export interface WorkerLogMessage {
-  type: "log";
+  type: 'log';
   message: string;
 }
 
 export interface WorkerQueryPanelMessage {
-  type: "query_panel";
+  type: 'query_panel';
   panelId: string;
   message: QueryPanelMessage;
 }
 
 export interface WorkerStartMessage {
-  type: "start";
+  type: 'start';
 }
 
 export interface WorkerReadMessage {
-  type: "read";
+  type: 'read';
   id: string;
   uri: string;
 }

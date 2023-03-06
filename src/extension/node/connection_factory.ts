@@ -21,25 +21,25 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { TestableConnection } from "@malloydata/malloy";
-import { ConnectionFactory } from "../../common/connections/types";
+import {TestableConnection} from '@malloydata/malloy';
+import {ConnectionFactory} from '../../common/connections/types';
 import {
   ConfigOptions,
   ConnectionBackend,
   ConnectionConfig,
-} from "../../common/connection_manager_types";
-import { createBigQueryConnection } from "../../common/connections/bigquery_connection";
-import { createDuckDbConnection } from "../../common/connections/duckdb_connection";
-import { createPostgresConnection } from "../../common/connections/postgres_connection";
-import { isDuckDBAvailable } from "../../common/duckdb_availability";
+} from '../../common/connection_manager_types';
+import {createBigQueryConnection} from '../../common/connections/bigquery_connection';
+import {createDuckDbConnection} from '../../common/connections/duckdb_connection';
+import {createPostgresConnection} from '../../common/connections/postgres_connection';
+import {isDuckDBAvailable} from '../../common/duckdb_availability';
 
-import { fileURLToPath } from "url";
+import {fileURLToPath} from 'url';
 
 export class DesktopConnectionFactory implements ConnectionFactory {
   connectionCache: Record<string, TestableConnection> = {};
 
   reset() {
-    Object.values(this.connectionCache).forEach((connection) =>
+    Object.values(this.connectionCache).forEach(connection =>
       connection.close()
     );
     this.connectionCache = {};
@@ -56,10 +56,10 @@ export class DesktopConnectionFactory implements ConnectionFactory {
   async getConnectionForConfig(
     connectionConfig: ConnectionConfig,
     configOptions: ConfigOptions = {
-      workingDirectory: "/",
+      workingDirectory: '/',
     }
   ): Promise<TestableConnection> {
-    const { useCache, workingDirectory } = configOptions;
+    const {useCache, workingDirectory} = configOptions;
     const cacheKey = `${connectionConfig.name}::${workingDirectory}`;
 
     let connection: TestableConnection;
@@ -97,8 +97,8 @@ export class DesktopConnectionFactory implements ConnectionFactory {
 
   getWorkingDirectory(url: URL): string {
     let workingDirectory: string;
-    const baseUrl = new URL(".", url);
-    if (baseUrl.protocol === "file:") {
+    const baseUrl = new URL('.', url);
+    if (baseUrl.protocol === 'file:') {
       workingDirectory = fileURLToPath(baseUrl);
     } else {
       workingDirectory = baseUrl.toString();
@@ -109,23 +109,23 @@ export class DesktopConnectionFactory implements ConnectionFactory {
   addDefaults(configs: ConnectionConfig[]): ConnectionConfig[] {
     // Create a default bigquery connection if one isn't configured
     if (
-      !configs.find((config) => config.backend === ConnectionBackend.BigQuery)
+      !configs.find(config => config.backend === ConnectionBackend.BigQuery)
     ) {
       configs.push({
-        name: "bigquery",
+        name: 'bigquery',
         backend: ConnectionBackend.BigQuery,
-        id: "bigquery-default",
-        isDefault: !configs.find((config) => config.isDefault),
+        id: 'bigquery-default',
+        isDefault: !configs.find(config => config.isDefault),
         isGenerated: true,
       });
     }
 
     // Create a default duckdb connection if one isn't configured
-    if (!configs.find((config) => config.name === "duckdb")) {
+    if (!configs.find(config => config.name === 'duckdb')) {
       configs.push({
-        name: "duckdb",
+        name: 'duckdb',
         backend: ConnectionBackend.DuckDB,
-        id: "duckdb-default",
+        id: 'duckdb-default',
         isDefault: false,
         isGenerated: true,
       });

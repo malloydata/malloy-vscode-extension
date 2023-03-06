@@ -21,24 +21,24 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { ResultJSON } from "@malloydata/malloy";
-import { DataStyles } from "@malloydata/render";
+import {ResultJSON} from '@malloydata/malloy';
+import {DataStyles} from '@malloydata/render';
 import {
   ConnectionBackend,
   ConnectionConfig,
-} from "../common/connection_manager_types";
+} from '../common/connection_manager_types';
 
 export enum QueryRunStatus {
-  Compiling = "compiling",
-  Running = "running",
-  Error = "error",
-  Done = "done",
+  Compiling = 'compiling',
+  Running = 'running',
+  Error = 'error',
+  Done = 'done',
 }
 
 export enum QueryMessageType {
-  QueryStatus = "query-status",
-  AppReady = "app-ready",
-  StartDownload = "start-download",
+  QueryStatus = 'query-status',
+  AppReady = 'app-ready',
+  StartDownload = 'start-download',
 }
 
 interface QueryMessageStatusCompiling {
@@ -78,8 +78,8 @@ interface QueryMessageAppReady {
 }
 
 export interface QueryDownloadOptions {
-  format: "json" | "csv";
-  amount: "current" | "all" | number;
+  format: 'json' | 'csv';
+  amount: 'current' | 'all' | number;
 }
 
 interface QueryMessageStartDownload {
@@ -93,10 +93,10 @@ export type QueryPanelMessage =
   | QueryMessageStartDownload;
 
 export enum ConnectionMessageType {
-  SetConnections = "set-connections",
-  AppReady = "app-ready",
-  TestConnection = "test-connection",
-  RequestBigQueryServiceAccountKeyFile = "request-bigquery-service-account-key-file",
+  SetConnections = 'set-connections',
+  AppReady = 'app-ready',
+  TestConnection = 'test-connection',
+  RequestBigQueryServiceAccountKeyFile = 'request-bigquery-service-account-key-file',
 }
 
 interface ConnectionMessageSetConnections {
@@ -110,9 +110,9 @@ interface ConnectionMessageAppReady {
 }
 
 export enum ConnectionTestStatus {
-  Waiting = "waiting",
-  Success = "success",
-  Error = "error",
+  Waiting = 'waiting',
+  Success = 'success',
+  Error = 'error',
 }
 
 interface ConnectionMessageTestConnectionWaiting {
@@ -140,8 +140,8 @@ export type ConnectionMessageTest =
   | ConnectionMessageTestConnectionError;
 
 export enum ConnectionServiceAccountKeyRequestStatus {
-  Waiting = "waiting",
-  Success = "success",
+  Waiting = 'waiting',
+  Success = 'success',
 }
 
 interface ConnectionMessageServiceAccountKeyRequestWaiting {
@@ -168,8 +168,8 @@ export type ConnectionPanelMessage =
   | ConnectionMessageServiceAccountKeyRequest;
 
 export enum HelpMessageType {
-  AppReady = "app-ready",
-  EditConnections = "edit-connections",
+  AppReady = 'app-ready',
+  EditConnections = 'edit-connections',
 }
 
 interface HelpMessageAppReady {

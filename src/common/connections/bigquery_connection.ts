@@ -21,26 +21,26 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { BigQueryConnection } from "@malloydata/db-bigquery";
+import {BigQueryConnection} from '@malloydata/db-bigquery';
 import {
   ConfigOptions,
   BigQueryConnectionConfig,
-} from "../connection_manager_types";
-import { convertToBytes } from "../convert_to_bytes";
+} from '../connection_manager_types';
+import {convertToBytes} from '../convert_to_bytes';
 
 export const createBigQueryConnection = async (
   connectionConfig: BigQueryConnectionConfig,
-  { rowLimit }: ConfigOptions
+  {rowLimit}: ConfigOptions
 ): Promise<BigQueryConnection> => {
   const connection = new BigQueryConnection(
     connectionConfig.name,
-    () => ({ rowLimit }),
+    () => ({rowLimit}),
     {
       defaultProject: connectionConfig.projectName,
       serviceAccountKeyPath: connectionConfig.serviceAccountKeyPath,
       location: connectionConfig.location,
       maximumBytesBilled: convertToBytes(
-        connectionConfig.maximumBytesBilled || ""
+        connectionConfig.maximumBytesBilled || ''
       ),
       timeoutMs: connectionConfig.timeoutMs,
     }

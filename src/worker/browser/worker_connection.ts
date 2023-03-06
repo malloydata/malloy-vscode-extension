@@ -22,10 +22,10 @@
  */
 
 /* eslint-disable no-console */
-import * as vscode from "vscode";
-import { fetchFile } from "../../extension/utils";
-import { Message, WorkerMessage, WorkerReadMessage } from "../types";
-const workerLog = vscode.window.createOutputChannel("Malloy Worker");
+import * as vscode from 'vscode';
+import {fetchFile} from '../../extension/utils';
+import {Message, WorkerMessage, WorkerReadMessage} from '../types';
+const workerLog = vscode.window.createOutputChannel('Malloy Worker');
 
 // const DEFAULT_RESTART_SECONDS = 1;
 
@@ -38,7 +38,7 @@ export class WorkerConnection {
   constructor(context: vscode.ExtensionContext) {
     const workerModule = vscode.Uri.joinPath(
       context.extensionUri,
-      "dist/worker_browser.js"
+      'dist/worker_browser.js'
     );
 
     const startWorker = () => {
@@ -55,23 +55,21 @@ export class WorkerConnection {
       //     this.notifyListeners({ type: "dead" });
       //   }
       // })
-      this.worker.addEventListener("message", (event) => {
+      this.worker.addEventListener('message', event => {
         const message = event.data;
-        console.log("Extension received", message);
+        console.log('Extension received', message);
         switch (message.type) {
-          case "log":
+          case 'log':
             workerLog.appendLine(`worker: ${message.message}`);
             break;
-          case "read": {
+          case 'read': {
             workerLog.appendLine(`worker: reading file ${message.uri}`);
             this.readFile(message);
             break;
           }
           default: {
-            if (this.listeners["message"]) {
-              this.listeners["message"].forEach((listener) =>
-                listener(message)
-              );
+            if (this.listeners['message']) {
+              this.listeners['message'].forEach(listener => listener(message));
             }
           }
         }
@@ -85,8 +83,8 @@ export class WorkerConnection {
   }
 
   notifyListeners(message: WorkerMessage): void {
-    Object.keys(this.listeners).forEach((event) => {
-      this.listeners[event].forEach((listener) => listener(message));
+    Object.keys(this.listeners).forEach(event => {
+      this.listeners[event].forEach(listener => listener(message));
     });
   }
 
@@ -97,9 +95,7 @@ export class WorkerConnection {
 
   off(event: string, listener: (message: WorkerMessage) => void): void {
     if (this.listeners[event]) {
-      this.listeners[event] = this.listeners[event].filter(
-        (l) => l !== listener
-      );
+      this.listeners[event] = this.listeners[event].filter(l => l !== listener);
     }
   }
 
@@ -108,12 +104,12 @@ export class WorkerConnection {
   }
 
   async readFile(message: WorkerReadMessage): Promise<void> {
-    const { id, uri } = message;
+    const {id, uri} = message;
     try {
       const data = await fetchFile(uri);
-      this.send({ type: "read", id, uri, data });
+      this.send({type: 'read', id, uri, data});
     } catch (error) {
-      this.send({ type: "read", id, uri, error: error.message });
+      this.send({type: 'read', id, uri, error: error.message});
     }
   }
 }

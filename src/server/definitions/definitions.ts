@@ -21,10 +21,10 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { TextDocuments, Location, Position } from "vscode-languageserver/node";
-import { TextDocument } from "vscode-languageserver-textdocument";
-import { ConnectionManager } from "../../common/connection_manager";
-import { TranslateCache } from "../types";
+import {TextDocuments, Location, Position} from 'vscode-languageserver/node';
+import {TextDocument} from 'vscode-languageserver-textdocument';
+import {ConnectionManager} from '../../common/connection_manager';
+import {TranslateCache} from '../types';
 
 export async function getMalloyDefinitionReference(
   translateCache: TranslateCache,

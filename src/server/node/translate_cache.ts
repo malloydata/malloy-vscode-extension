@@ -21,16 +21,16 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as fs from "fs";
-import { TextDocuments } from "vscode-languageserver/node";
-import { Model, Runtime } from "@malloydata/malloy";
-import { TextDocument } from "vscode-languageserver-textdocument";
-import { ConnectionManager } from "../../common/connection_manager";
-import { TranslateCache } from "../types";
-import { fileURLToPath } from "url";
+import * as fs from 'fs';
+import {TextDocuments} from 'vscode-languageserver/node';
+import {Model, Runtime} from '@malloydata/malloy';
+import {TextDocument} from 'vscode-languageserver-textdocument';
+import {ConnectionManager} from '../../common/connection_manager';
+import {TranslateCache} from '../types';
+import {fileURLToPath} from 'url';
 
 export class TranslateCacheNode implements TranslateCache {
-  cache = new Map<string, { model: Model; version: number }>();
+  cache = new Map<string, {model: Model; version: number}>();
 
   async getDocumentText(
     documents: TextDocuments<TextDocument>,
@@ -41,7 +41,7 @@ export class TranslateCacheNode implements TranslateCache {
       return cached.getText();
     } else {
       // TODO catch a file read error
-      return fs.readFileSync(fileURLToPath(uri), "utf-8");
+      return fs.readFileSync(fileURLToPath(uri), 'utf-8');
     }
   }
 
@@ -67,7 +67,7 @@ export class TranslateCacheNode implements TranslateCache {
     );
 
     const model = await runtime.getModel(new URL(uri));
-    this.cache.set(uri, { version: currentVersion, model });
+    this.cache.set(uri, {version: currentVersion, model});
     return model;
   }
 }

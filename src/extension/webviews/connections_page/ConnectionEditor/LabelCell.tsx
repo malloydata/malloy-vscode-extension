@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import styled from "styled-components";
+import styled from 'styled-components';
 
 export const LabelCell = styled.td`
   width: 200px;

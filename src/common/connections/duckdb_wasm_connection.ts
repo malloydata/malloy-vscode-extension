@@ -20,34 +20,36 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-import { DuckDBWASMConnection } from "@malloydata/db-duckdb/wasm";
+/* eslint-disable no-console */
+
+import {DuckDBWASMConnection} from '@malloydata/db-duckdb/wasm';
 import {
   ConfigOptions,
   DuckDBConnectionConfig,
-} from "../connection_manager_types";
-import { isDuckDBAvailable } from "../duckdb_availability";
+} from '../connection_manager_types';
+import {isDuckDBAvailable} from '../duckdb_availability';
 
 export const createDuckDbWasmConnection = async (
   connectionConfig: DuckDBConnectionConfig,
-  { workingDirectory, rowLimit }: ConfigOptions
+  {workingDirectory, rowLimit}: ConfigOptions
 ) => {
   if (!isDuckDBAvailable) {
-    throw new Error("DuckDB is not available.");
+    throw new Error('DuckDB is not available.');
   }
   workingDirectory = connectionConfig.workingDirectory || workingDirectory;
-  if (workingDirectory.startsWith("file:")) {
+  if (workingDirectory.startsWith('file:')) {
     workingDirectory = workingDirectory.substring(7);
   }
   try {
     const connection = new DuckDBWASMConnection(
       connectionConfig.name,
-      ":memory:",
+      ':memory:',
       workingDirectory,
-      () => ({ rowLimit })
+      () => ({rowLimit})
     );
     return connection;
   } catch (error) {
-    console.error("Could not create DuckDB WASM connection:", error);
+    console.error('Could not create DuckDB WASM connection:', error);
     throw error;
   }
 };

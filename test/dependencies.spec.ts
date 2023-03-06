@@ -20,45 +20,27 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+/* eslint-disable node/no-unpublished-import */
 
-module.exports = {
-  env: {
-    browser: true,
-    jest: true,
-    node: true,
-  },
-  extends: [
-    "prettier",
-    "plugin:prettier/recommended",
-    "eslint:recommended",
-    "plugin:@typescript-eslint/eslint-recommended",
-    "plugin:@typescript-eslint/recommended",
-  ],
-  ignorePatterns: ["*.d.ts", "node_modules/"],
-  parser: "@typescript-eslint/parser",
-  parserOptions: {
-    warnOnUnsupportedTypeScriptVersion: false,
-  },
-  plugins: ["@typescript-eslint", "prettier"],
-  rules: {
-    "no-console": [
-      "error",
-      {
-        allow: ["info", "warn", "error"],
-      },
-    ],
-    "prettier/prettier": "error",
-    "sort-keys": "off",
-    "no-duplicate-imports": "error",
-    "no-restricted-imports": [
-      "error",
-      { patterns: ["@malloydata/malloy/src/*"] },
-    ],
-    "no-use-before-define": "off",
-    "no-throw-literal": "error",
-    "@typescript-eslint/no-unused-vars": [
-      "warn",
-      { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
-    ],
-  },
-};
+import {default as madge} from 'madge';
+
+describe('dependencies', () => {
+  function getMessage(circles: string[][]): string {
+    let message = 'Circular References:\n';
+    for (const circle of circles) {
+      message += '    ';
+      for (const dep of circle) {
+        message += `${dep} -> `;
+      }
+      message += `${circle[0]}\n`;
+    }
+    return message;
+  }
+
+  it('typescript references should not be circular', async () => {
+    const deps = await madge('.', {
+      fileExtensions: ['ts'],
+    });
+    expect(deps.circular().length, getMessage(deps.circular())).toBe(0);
+  });
+});

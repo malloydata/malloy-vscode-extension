@@ -21,18 +21,18 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import React, { useState } from "react";
-import styled from "styled-components";
-import { v4 as uuidv4 } from "uuid";
+import React, {useState} from 'react';
+import styled from 'styled-components';
+import {v4 as uuidv4} from 'uuid';
 import {
   ConnectionBackend,
   ConnectionConfig,
   getDefaultIndex,
-} from "../../../../common/connection_manager_types";
-import { ConnectionMessageTest } from "../../../message_types";
-import { VSCodeButton } from "../../components";
-import { ButtonGroup } from "../ButtonGroup";
-import { ConnectionEditor } from "../ConnectionEditor";
+} from '../../../../common/connection_manager_types';
+import {ConnectionMessageTest} from '../../../message_types';
+import {VSCodeButton} from '../../components';
+import {ButtonGroup} from '../ButtonGroup';
+import {ConnectionEditor} from '../ConnectionEditor';
 
 interface ConnectionEditorListProps {
   connections: ConnectionConfig[];
@@ -60,7 +60,7 @@ export const ConnectionEditorList: React.FC<ConnectionEditorListProps> = ({
     setConnections([
       ...connections,
       {
-        name: "",
+        name: '',
         backend: availableBackends[0],
         id: uuidv4(),
         isDefault: connections.length === 0,
@@ -77,22 +77,22 @@ export const ConnectionEditorList: React.FC<ConnectionEditorListProps> = ({
 
   const makeDefault = (defaultIndex: number) => {
     const newConnections = connections.map((connection, index) => {
-      return { ...connection, isDefault: index === defaultIndex };
+      return {...connection, isDefault: index === defaultIndex};
     });
     setConnections(newConnections);
     setDirty(true);
   };
 
   return (
-    <div style={{ marginTop: "20px" }}>
-      <ButtonGroup style={{ margin: "10px" }}>
+    <div style={{marginTop: '20px'}}>
+      <ButtonGroup style={{margin: '10px'}}>
         <VSCodeButton onClick={addConnection}>New Connection</VSCodeButton>
       </ButtonGroup>
       {connections.map((config, index) => (
         <ConnectionEditor
           key={index}
           config={config}
-          setConfig={(newConfig) => setConfig(newConfig, index)}
+          setConfig={newConfig => setConfig(newConfig, index)}
           deleteConfig={() => {
             const copy = [...connections];
             copy.splice(index, 1);
@@ -104,7 +104,7 @@ export const ConnectionEditorList: React.FC<ConnectionEditorListProps> = ({
           }}
           testStatus={[...testStatuses]
             .reverse()
-            .find((message) => message.connection.id === config.id)}
+            .find(message => message.connection.id === config.id)}
           requestServiceAccountKeyPath={requestServiceAccountKeyPath}
           isDefault={index === defaultConnectionIndex}
           makeDefault={() => makeDefault(index)}
@@ -115,7 +115,7 @@ export const ConnectionEditorList: React.FC<ConnectionEditorListProps> = ({
         <EmptyStateBox>NO CONNECTIONS</EmptyStateBox>
       )}
       {dirty && (
-        <ButtonGroup style={{ margin: "10px" }}>
+        <ButtonGroup style={{margin: '10px'}}>
           <VSCodeButton
             onClick={() => {
               setDirty(false);

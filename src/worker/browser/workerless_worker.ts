@@ -21,13 +21,13 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as vscode from "vscode";
-import { VSCodeURLReader as WorkerURLReader } from "../../extension/utils";
-import { BaseWorker, Message, WorkerMessage } from "../types";
-import { connectionManager } from "../../extension/browser/connection_manager";
-import { cancelQuery, runQuery } from "../run_query";
+import * as vscode from 'vscode';
+import {VSCodeURLReader as WorkerURLReader} from '../../extension/utils';
+import {BaseWorker, Message, WorkerMessage} from '../types';
+import {connectionManager} from '../../extension/browser/connection_manager';
+import {cancelQuery, runQuery} from '../run_query';
 
-const workerLog = vscode.window.createOutputChannel("Malloy Worker");
+const workerLog = vscode.window.createOutputChannel('Malloy Worker');
 
 export type ListenerType = (message: WorkerMessage) => void;
 
@@ -36,21 +36,21 @@ const reader = new WorkerURLReader();
 export class WorkerConnection implements BaseWorker {
   listeners: Record<string, ListenerType[]> = {};
   constructor(_context: vscode.ExtensionContext) {
-    workerLog.appendLine("Worker started");
+    workerLog.appendLine('Worker started');
   }
 
   send(message: Message): void {
     switch (message.type) {
-      case "config":
+      case 'config':
         // Shared with extension
         // refreshConfig(connectionManager, message);
         break;
-      case "cancel":
+      case 'cancel':
         cancelQuery(message);
         break;
-      case "run":
+      case 'run':
         runQuery(
-          { send: (message: WorkerMessage) => this._send(message) },
+          {send: (message: WorkerMessage) => this._send(message)},
           reader,
           connectionManager,
           true,
@@ -61,8 +61,8 @@ export class WorkerConnection implements BaseWorker {
   }
 
   _send(message: WorkerMessage): void {
-    this.listeners["message"] ??= [];
-    this.listeners["message"].forEach((listener) => listener(message));
+    this.listeners['message'] ??= [];
+    this.listeners['message'].forEach(listener => listener(message));
   }
 
   on(event: string, listener: ListenerType): void {
@@ -72,9 +72,7 @@ export class WorkerConnection implements BaseWorker {
 
   off(event: string, listener: ListenerType): void {
     if (this.listeners[event]) {
-      this.listeners[event] = this.listeners[event].filter(
-        (l) => l !== listener
-      );
+      this.listeners[event] = this.listeners[event].filter(l => l !== listener);
     }
   }
 

@@ -21,9 +21,9 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { URLReader } from "@malloydata/malloy";
-import { DataStyles } from "@malloydata/render";
-import { log } from "./logger";
+import {URLReader} from '@malloydata/malloy';
+import {DataStyles} from '@malloydata/render';
+import {log} from './logger';
 
 export function compileDataStyles(styles: string): DataStyles {
   try {
@@ -39,9 +39,9 @@ export async function dataStylesForFile(
   url: URL,
   text: string
 ): Promise<DataStyles> {
-  const PREFIX = "--! styles ";
+  const PREFIX = '--! styles ';
   let styles: DataStyles = {};
-  for (const line of text.split("\n")) {
+  for (const line of text.split('\n')) {
     if (line.startsWith(PREFIX)) {
       const fileName = line.trimEnd().substring(PREFIX.length);
       const styleUrl = new URL(fileName, url);
@@ -52,9 +52,9 @@ export async function dataStylesForFile(
         stylesText = await reader.readURL(styleUrl);
       } catch (error) {
         log(`Error loading data style '${fileName}': ${error}`);
-        stylesText = "{}";
+        stylesText = '{}';
       }
-      styles = { ...styles, ...compileDataStyles(stylesText) };
+      styles = {...styles, ...compileDataStyles(stylesText)};
     }
   }
 

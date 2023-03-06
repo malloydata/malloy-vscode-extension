@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 
 export function copyFieldPathCommand(fieldPath: string): void {
   vscode.env.clipboard.writeText(fieldPath);

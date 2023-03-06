@@ -21,9 +21,9 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as vscode from "vscode";
-import { MALLOY_EXTENSION_STATE } from "../state";
-import { runMalloyQuery } from "./run_query_utils";
+import * as vscode from 'vscode';
+import {MALLOY_EXTENSION_STATE} from '../state';
+import {runMalloyQuery} from './run_query_utils';
 
 export function runUnnamedSQLBlock(index: number): void {
   const document =
@@ -31,9 +31,9 @@ export function runUnnamedSQLBlock(index: number): void {
     MALLOY_EXTENSION_STATE.getActiveWebviewPanel()?.document;
   if (document) {
     runMalloyQuery(
-      { type: "unnamed_sql", index, file: document },
+      {type: 'unnamed_sql', index, file: document},
       document.uri.toString(),
-      document.fileName.split("/").pop() || document.fileName
+      document.fileName.split('/').pop() || document.fileName
     );
   }
 }

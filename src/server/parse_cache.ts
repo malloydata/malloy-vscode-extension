@@ -21,23 +21,23 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { TextDocument } from "vscode-languageserver-textdocument";
-import { Malloy } from "@malloydata/malloy";
+import {TextDocument} from 'vscode-languageserver-textdocument';
+import {Malloy} from '@malloydata/malloy';
 
 // TODO(whscullin): Export Parse from Malloy
 type Parse = ReturnType<typeof Malloy.parse>;
 
-const PARSE_CACHE = new Map<string, { parsed: Parse; version: number }>();
+const PARSE_CACHE = new Map<string, {parsed: Parse; version: number}>();
 
 export const parseWithCache = (document: TextDocument): Parse => {
-  const { version, uri } = document;
+  const {version, uri} = document;
 
   const entry = PARSE_CACHE.get(uri);
   if (entry && entry.version === version) {
     return entry.parsed;
   }
 
-  const parsed = Malloy.parse({ source: document.getText() });
-  PARSE_CACHE.set(uri, { parsed, version });
+  const parsed = Malloy.parse({source: document.getText()});
+  PARSE_CACHE.set(uri, {parsed, version});
   return parsed;
 };

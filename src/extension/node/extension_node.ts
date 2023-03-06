@@ -21,24 +21,24 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as vscode from "vscode";
-import * as os from "os";
+import * as vscode from 'vscode';
+import * as os from 'os';
 
 import {
   LanguageClient,
   LanguageClientOptions,
   ServerOptions,
   TransportKind,
-} from "vscode-languageclient/node";
-import { editConnectionsCommand } from "./commands/edit_connections";
-import { ConnectionsProvider } from "../tree_views/connections_view";
-import { WorkerConnection } from "../../worker/node/worker_connection";
-import { MalloyConfig } from "../types";
-import { connectionManager } from "./connection_manager";
-import { setupSubscriptions } from "../subscriptions";
-import { VSCodeURLReader } from "../utils";
-import { getWorker, setWorker } from "../../worker/worker";
-import { MALLOY_EXTENSION_STATE } from "../state";
+} from 'vscode-languageclient/node';
+import {editConnectionsCommand} from './commands/edit_connections';
+import {ConnectionsProvider} from '../tree_views/connections_view';
+import {WorkerConnection} from '../../worker/node/worker_connection';
+import {MalloyConfig} from '../types';
+import {connectionManager} from './connection_manager';
+import {setupSubscriptions} from '../subscriptions';
+import {VSCodeURLReader} from '../utils';
+import {getWorker, setWorker} from '../../worker/worker';
+import {MALLOY_EXTENSION_STATE} from '../state';
 
 let client: LanguageClient;
 
@@ -46,12 +46,12 @@ export let extensionModeProduction: boolean;
 
 const cloudshellEnv = () => {
   const cloudShellProject = vscode.workspace
-    .getConfiguration("cloudcode")
-    .get("cloudshell.project");
-  if (cloudShellProject && typeof cloudShellProject === "string") {
-    process.env.DEVSHELL_PROJECT_ID = cloudShellProject;
-    process.env.GOOGLE_CLOUD_PROJECT = cloudShellProject;
-    process.env.GOOGLE_CLOUD_QUOTA_PROJECT = cloudShellProject;
+    .getConfiguration('cloudcode')
+    .get('cloudshell.project');
+  if (cloudShellProject && typeof cloudShellProject === 'string') {
+    process.env['DEVSHELL_PROJECT_ID'] = cloudShellProject;
+    process.env['GOOGLE_CLOUD_PROJECT'] = cloudShellProject;
+    process.env['GOOGLE_CLOUD_QUOTA_PROJECT'] = cloudShellProject;
   }
 };
 
@@ -63,25 +63,25 @@ export function activate(context: vscode.ExtensionContext): void {
   MALLOY_EXTENSION_STATE.setHomeUri(vscode.Uri.file(os.homedir()));
 
   context.subscriptions.push(
-    vscode.window.registerTreeDataProvider("malloyConnections", connectionsTree)
+    vscode.window.registerTreeDataProvider('malloyConnections', connectionsTree)
   );
 
   context.subscriptions.push(
     vscode.commands.registerCommand(
-      "malloy.editConnections",
+      'malloy.editConnections',
       editConnectionsCommand
     )
   );
 
   cloudshellEnv();
   context.subscriptions.push(
-    vscode.workspace.onDidChangeConfiguration(async (e) => {
-      if (e.affectsConfiguration("malloy")) {
+    vscode.workspace.onDidChangeConfiguration(async e => {
+      if (e.affectsConfiguration('malloy')) {
         await connectionManager.onConfigurationUpdated();
         connectionsTree.refresh();
         sendWorkerConfig();
       }
-      if (e.affectsConfiguration("cloudshell")) {
+      if (e.affectsConfiguration('cloudshell')) {
         cloudshellEnv();
       }
     })
@@ -97,23 +97,23 @@ export async function deactivate(): Promise<void> | undefined {
   }
   const worker = getWorker();
   if (worker) {
-    worker.send({ type: "exit" });
+    worker.send({type: 'exit'});
   }
 }
 
 function setupLanguageServer(context: vscode.ExtensionContext): void {
-  const serverModule = context.asAbsolutePath("dist/server_node.js");
+  const serverModule = context.asAbsolutePath('dist/server_node.js');
   const debugOptions = {
     execArgv: [
-      "--nolazy",
-      "--inspect=6009",
-      "--preserve-symlinks",
-      "--enable-source-maps",
+      '--nolazy',
+      '--inspect=6009',
+      '--preserve-symlinks',
+      '--enable-source-maps',
     ],
   };
 
   const serverOptions: ServerOptions = {
-    run: { module: serverModule, transport: TransportKind.ipc },
+    run: {module: serverModule, transport: TransportKind.ipc},
     debug: {
       module: serverModule,
       transport: TransportKind.ipc,
@@ -122,16 +122,16 @@ function setupLanguageServer(context: vscode.ExtensionContext): void {
   };
 
   const clientOptions: LanguageClientOptions = {
-    documentSelector: [{ scheme: "file", language: "malloy" }],
+    documentSelector: [{scheme: 'file', language: 'malloy'}],
     synchronize: {
-      configurationSection: "malloy",
-      fileEvents: vscode.workspace.createFileSystemWatcher("**/.clientrc"),
+      configurationSection: 'malloy',
+      fileEvents: vscode.workspace.createFileSystemWatcher('**/.clientrc'),
     },
   };
 
   client = new LanguageClient(
-    "malloy",
-    "Malloy Language Server",
+    'malloy',
+    'Malloy Language Server',
     serverOptions,
     clientOptions
   );
@@ -141,9 +141,9 @@ function setupLanguageServer(context: vscode.ExtensionContext): void {
 
 function sendWorkerConfig() {
   getWorker().send({
-    type: "config",
+    type: 'config',
     config: vscode.workspace.getConfiguration(
-      "malloy"
+      'malloy'
     ) as unknown as MalloyConfig,
   });
 }

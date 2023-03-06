@@ -26,4 +26,4 @@ export {
   TOKEN_MODIFIERS,
   getMalloyHighlights,
   stubMalloyHighlights,
-} from "./highlights";
+} from './highlights';

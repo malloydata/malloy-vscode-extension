@@ -21,24 +21,24 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as vscode from "vscode";
-import { Utils } from "vscode-uri";
+import * as vscode from 'vscode';
+import {Utils} from 'vscode-uri';
 
-import { MALLOY_EXTENSION_STATE } from "../state";
+import {MALLOY_EXTENSION_STATE} from '../state';
 
 export async function showLicensesCommand(): Promise<void> {
   const licenseFilePath = Utils.joinPath(
     MALLOY_EXTENSION_STATE.getExtensionUri(),
-    "dist",
-    "third_party_notices.txt"
+    'dist',
+    'third_party_notices.txt'
   );
 
   const buffer = await vscode.workspace.fs.readFile(licenseFilePath);
-  const content = new TextDecoder("utf-8").decode(buffer);
+  const content = new TextDecoder('utf-8').decode(buffer);
   const document = await vscode.workspace.openTextDocument({
-    language: "text",
+    language: 'text',
     content: content.toString(),
   });
 
-  await vscode.window.showTextDocument(document, { preview: true });
+  await vscode.window.showTextDocument(document, {preview: true});
 }

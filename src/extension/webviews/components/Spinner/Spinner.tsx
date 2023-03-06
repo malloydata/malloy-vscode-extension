@@ -21,15 +21,15 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import React from "react";
-import styled, { keyframes } from "styled-components";
-import SpinnerSVG from "../../assets/spinner.svg";
+import React from 'react';
+import styled, {keyframes} from 'styled-components';
+import SpinnerSVG from '../../assets/spinner.svg';
 
 interface SpinnerProps {
   text: string;
 }
 
-export const Spinner: React.FC<SpinnerProps> = ({ text }) => {
+export const Spinner: React.FC<SpinnerProps> = ({text}) => {
   return (
     <VerticalCenter>
       <HorizontalCenter>

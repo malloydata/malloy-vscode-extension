@@ -21,11 +21,11 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import React from "react";
-import { DuckDBConnectionConfig } from "../../../../../common/connection_manager_types";
-import { TextField } from "../../../components";
-import { Label } from "../Label";
-import { LabelCell } from "../LabelCell";
+import React from 'react';
+import {DuckDBConnectionConfig} from '../../../../../common/connection_manager_types';
+import {TextField} from '../../../components';
+import {Label} from '../Label';
+import {LabelCell} from '../LabelCell';
 
 interface DuckDBConnectionEditorProps {
   config: DuckDBConnectionConfig;
@@ -46,8 +46,8 @@ export const DuckDBConnectionEditor: React.FC<DuckDBConnectionEditorProps> = ({
           <td>
             <TextField
               value={config.name}
-              setValue={(name) => {
-                setConfig({ ...config, name });
+              setValue={name => {
+                setConfig({...config, name});
               }}
             />
           </td>
@@ -58,9 +58,9 @@ export const DuckDBConnectionEditor: React.FC<DuckDBConnectionEditorProps> = ({
           </LabelCell>
           <td>
             <TextField
-              value={config.workingDirectory || ""}
-              setValue={(workingDirectory) => {
-                setConfig({ ...config, workingDirectory });
+              value={config.workingDirectory || ''}
+              setValue={workingDirectory => {
+                setConfig({...config, workingDirectory});
               }}
             />
           </td>

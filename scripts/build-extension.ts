@@ -20,52 +20,54 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-
 /* eslint-disable no-console */
-import * as yargs from "yargs";
-import { doBuild, outDir, Target } from "./build_common";
+/* eslint-disable no-process-exit */
+/* eslint-disable node/no-unpublished-import */
+
+import * as yargs from 'yargs';
+import {doBuild, outDir, Target} from './build_common';
 
 yargs
-  .scriptName("build-extension")
-  .usage("$0 <cmd> [args]")
+  .scriptName('build-extension')
+  .usage('$0 <cmd> [args]')
   .command(
-    "build [target]",
-    "Build extension",
+    'build [target]',
+    'Build extension',
     {
       development: {
-        alias: "D",
-        type: "boolean",
+        alias: 'D',
+        type: 'boolean',
         default: false,
-        describe: "Build in development mode",
+        describe: 'Build in development mode',
       },
       metadata: {
-        alias: "m",
-        type: "boolean",
+        alias: 'm',
+        type: 'boolean',
         default: false,
-        describe: "Output build metadata",
+        describe: 'Output build metadata',
       },
       target: {
-        type: "string",
+        type: 'string',
         default: undefined,
-        describe: "Target platform",
+        describe: 'Target platform',
       },
     },
-    ({ development, target, metadata }) => {
+    ({development, target, metadata}) => {
       console.log(
         `Building extension to ${outDir} in ${
-          development ? "development" : "production"
+          development ? 'development' : 'production'
         } mode`
       );
 
       doBuild(development, target as Target | undefined, metadata)
         .then(() => {
-          console.log("Extension built successfully");
+          console.log('Extension built successfully');
           if (!development) {
             process.exit(0);
           }
         })
-        .catch((error) => {
-          console.error("Extension built with errors");
+        .catch(error => {
+          console.error('Extension built with errors');
           console.log(error);
           process.exit(1);
         });

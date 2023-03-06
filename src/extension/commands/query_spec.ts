@@ -20,33 +20,41 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+import * as vscode from 'vscode';
 
-/* eslint-disable no-console */
-import * as fs from 'fs';
-import * as path from 'path';
+export interface NamedQuerySpec {
+  type: 'named';
+  name: string;
+  file: vscode.TextDocument;
+}
 
-import duckdbPackage from '@malloydata/db-duckdb/package.json';
-import {fetchNode} from './fetch_node';
+export interface QueryStringSpec {
+  type: 'string';
+  text: string;
+  file: vscode.TextDocument;
+}
 
-const DUCKDB_VERSION = duckdbPackage.dependencies.duckdb;
+export interface QueryFileSpec {
+  type: 'file';
+  index: number;
+  file: vscode.TextDocument;
+}
 
-export const targetDuckDBMap: Record<string, string> = {
-  'darwin-arm64': `duckdb-v${DUCKDB_VERSION}-node-v93-darwin-arm64.node`,
-  'darwin-x64': `duckdb-v${DUCKDB_VERSION}-node-v93-darwin-x64.node`,
-  'linux-x64': `duckdb-v${DUCKDB_VERSION}-node-v93-linux-x64.node`,
-  'win32-x64': `duckdb-v${DUCKDB_VERSION}-node-v93-win32-x64.node`,
-};
+export interface NamedSQLQuerySpec {
+  type: 'named_sql';
+  name: string;
+  file: vscode.TextDocument;
+}
 
-export const fetchDuckDB = async (target: string): Promise<string> => {
-  const file = targetDuckDBMap[target];
-  const url = `https://duckdb-node.s3.amazonaws.com/duckdb-v${DUCKDB_VERSION}-node-v93-${target}.tar.gz`;
-  const directoryPath = path.resolve(
-    path.join('third_party', 'github.com', 'duckdb', 'duckdb')
-  );
-  fs.mkdirSync(directoryPath, {recursive: true});
-  const filePath = path.join(directoryPath, file);
+export interface UnnamedSQLQuerySpec {
+  type: 'unnamed_sql';
+  index: number;
+  file: vscode.TextDocument;
+}
 
-  await fetchNode(filePath, url);
-
-  return filePath;
-};
+export type QuerySpec =
+  | NamedQuerySpec
+  | QueryStringSpec
+  | QueryFileSpec
+  | NamedSQLQuerySpec
+  | UnnamedSQLQuerySpec;

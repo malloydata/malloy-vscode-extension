@@ -21,14 +21,14 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import React, { FormEvent } from "react";
-import { VSCodeDropdown, VSCodeOption } from "@vscode/webview-ui-toolkit/react";
+import React, {FormEvent} from 'react';
+import {VSCodeDropdown, VSCodeOption} from '@vscode/webview-ui-toolkit/react';
 
 interface DropdownProps {
   value: string;
   setValue: (value: string) => void;
   id?: string;
-  options: { value: string; label: string }[];
+  options: {value: string; label: string}[];
   style?: React.CSSProperties;
 }
 
@@ -41,7 +41,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
   options,
   style,
 }) => {
-  const onChange: OnChange<HTMLInputElement> = ({ currentTarget }) => {
+  const onChange: OnChange<HTMLInputElement> = ({currentTarget}) => {
     setValue(currentTarget.value);
   };
 

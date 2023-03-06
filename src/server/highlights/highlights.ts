@@ -21,34 +21,34 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { TextDocument } from "vscode-languageserver-textdocument";
-import { HighlightType } from "@malloydata/malloy";
+import {TextDocument} from 'vscode-languageserver-textdocument';
+import {HighlightType} from '@malloydata/malloy';
 import {
   SemanticTokens,
   SemanticTokensBuilder,
-} from "vscode-languageserver/node";
-import { parseWithCache } from "../parse_cache";
+} from 'vscode-languageserver/node';
+import {parseWithCache} from '../parse_cache';
 
 export const TOKEN_TYPES = [
-  "class",
-  "interface",
-  "enum",
-  "function",
-  "variable",
-  "keyword",
-  "number",
-  "string",
-  "comment",
-  "type",
-  "regexp",
-  "macro",
-  "property.readonly",
-  "label",
-  "enumMember",
-  "operator",
+  'class',
+  'interface',
+  'enum',
+  'function',
+  'variable',
+  'keyword',
+  'number',
+  'string',
+  'comment',
+  'type',
+  'regexp',
+  'macro',
+  'property.readonly',
+  'label',
+  'enumMember',
+  'operator',
 ];
 
-export const TOKEN_MODIFIERS = ["declaration", "documentation"];
+export const TOKEN_MODIFIERS = ['declaration', 'documentation'];
 
 export function stubMalloyHighlights(_document: TextDocument): SemanticTokens {
   return new SemanticTokensBuilder().build();
@@ -60,10 +60,10 @@ export function getMalloyHighlights(document: TextDocument): SemanticTokens {
   const tokensBuilder = new SemanticTokensBuilder();
 
   const text = document.getText();
-  const textLines = text.split("\n");
+  const textLines = text.split('\n');
   const parse = parseWithCache(document);
 
-  parse.highlights.forEach((highlight) => {
+  parse.highlights.forEach(highlight => {
     for (
       let line = highlight.range.start.line;
       line <= highlight.range.end.line;
@@ -102,12 +102,12 @@ export function getMalloyHighlights(document: TextDocument): SemanticTokens {
 function mapTypes(type: string) {
   switch (type) {
     case HighlightType.Identifier:
-      return "variable";
+      return 'variable';
     case HighlightType.Call.Aggregate:
     case HighlightType.Keyword.AggregateModifier.Distinct:
-      return "function";
+      return 'function';
     case HighlightType.Type:
-      return "type";
+      return 'type';
     case HighlightType.Keyword.Is:
     case HighlightType.Keyword.With:
     case HighlightType.Keyword.On:
@@ -119,34 +119,34 @@ function mapTypes(type: string) {
     case HighlightType.Keyword.When:
     case HighlightType.Keyword.Else:
     case HighlightType.Keyword.Import:
-      return "keyword";
+      return 'keyword';
     // These are more like meta types, so maybe they should be highlighted differently
     case HighlightType.Keyword.JSON:
     case HighlightType.Keyword.Turtle:
-      return "keyword";
+      return 'keyword';
     case HighlightType.Call.TimeFrame:
-      return "variable";
+      return 'variable';
     case HighlightType.Literal.String:
-      return "string";
+      return 'string';
     case HighlightType.Literal.Boolean:
-      return "enumMember";
+      return 'enumMember';
     case HighlightType.Literal.Null:
-      return "keyword";
+      return 'keyword';
     case HighlightType.Literal.Number:
-      return "number";
+      return 'number';
     case HighlightType.Literal.RegularExpression:
-      return "regexp";
+      return 'regexp';
     case HighlightType.Literal.Date:
-      return "number";
+      return 'number';
     case HighlightType.Operator.Comparison:
-      return "operator";
+      return 'operator';
     case HighlightType.Operator.Boolean:
-      return "keyword";
+      return 'keyword';
     case HighlightType.Operator.Date:
-      return "keyword";
+      return 'keyword';
     case HighlightType.Comment.Line:
     case HighlightType.Comment.Block:
-      return "comment";
+      return 'comment';
     case HighlightType.Property.Accept:
     case HighlightType.Property.Aggregate:
     case HighlightType.Property.Dimension:
@@ -169,12 +169,12 @@ function mapTypes(type: string) {
     case HighlightType.Property.Top:
     case HighlightType.Property.Where:
     case HighlightType.Property.SQL:
-      return "keyword";
+      return 'keyword';
     case HighlightType.Call.Table:
     case HighlightType.Call.From:
     case HighlightType.Call.FromSQL:
     case HighlightType.Call.Function:
-      return "function";
+      return 'function';
     default:
       throw new Error(`Unexpected type ${type}`);
   }

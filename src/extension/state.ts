@@ -21,10 +21,10 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import vscode, { TextDocument, WebviewPanel } from "vscode";
-import { Result } from "@malloydata/malloy";
-import { QueryPanelMessage } from "./message_types";
-import { WebviewMessageManager } from "./webview_message_manager";
+import vscode, {TextDocument, WebviewPanel} from 'vscode';
+import {Result} from '@malloydata/malloy';
+import {QueryPanelMessage} from './message_types';
+import {WebviewMessageManager} from './webview_message_manager';
 
 export interface RunState {
   cancel: () => void;
@@ -73,14 +73,14 @@ class MalloyExtensionState {
 
   getClientId(): string {
     if (this.clientId === undefined) {
-      throw new Error("Client ID has not been set");
+      throw new Error('Client ID has not been set');
     }
     return this.clientId;
   }
 
   getExtensionUri(): vscode.Uri {
     if (this.extensionUri === undefined) {
-      throw new Error("extensionUri has not been set");
+      throw new Error('extensionUri has not been set');
     }
     return this.extensionUri;
   }

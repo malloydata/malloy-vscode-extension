@@ -21,11 +21,11 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import React from "react";
-import { BigQueryConnectionConfig } from "../../../../../common/connection_manager_types";
-import { TextField, VSCodeButton } from "../../../components";
-import { Label } from "../Label";
-import { LabelCell } from "../LabelCell";
+import React from 'react';
+import {BigQueryConnectionConfig} from '../../../../../common/connection_manager_types';
+import {TextField, VSCodeButton} from '../../../components';
+import {Label} from '../Label';
+import {LabelCell} from '../LabelCell';
 
 interface BigQueryConnectionEditorProps {
   config: BigQueryConnectionConfig;
@@ -35,7 +35,7 @@ interface BigQueryConnectionEditorProps {
 
 export const BigQueryConnectionEditor: React.FC<
   BigQueryConnectionEditorProps
-> = ({ config, setConfig, requestServiceAccountKeyPath }) => {
+> = ({config, setConfig, requestServiceAccountKeyPath}) => {
   return (
     <table>
       <tbody>
@@ -46,8 +46,8 @@ export const BigQueryConnectionEditor: React.FC<
           <td>
             <TextField
               value={config.name}
-              setValue={(name) => {
-                setConfig({ ...config, name });
+              setValue={name => {
+                setConfig({...config, name});
               }}
             />
           </td>
@@ -58,9 +58,9 @@ export const BigQueryConnectionEditor: React.FC<
           </LabelCell>
           <td>
             <TextField
-              value={config.projectName || ""}
-              setValue={(projectName) => {
-                setConfig({ ...config, projectName });
+              value={config.projectName || ''}
+              setValue={projectName => {
+                setConfig({...config, projectName});
               }}
               placeholder="Optional"
             />
@@ -72,9 +72,9 @@ export const BigQueryConnectionEditor: React.FC<
           </LabelCell>
           <td>
             <TextField
-              value={config.location || ""}
-              setValue={(location) => {
-                setConfig({ ...config, location });
+              value={config.location || ''}
+              setValue={location => {
+                setConfig({...config, location});
               }}
               placeholder="Optional (default US)"
             />
@@ -86,9 +86,9 @@ export const BigQueryConnectionEditor: React.FC<
           </LabelCell>
           <td>
             <TextField
-              value={config.serviceAccountKeyPath || ""}
-              setValue={(serviceAccountKeyPath) => {
-                setConfig({ ...config, serviceAccountKeyPath });
+              value={config.serviceAccountKeyPath || ''}
+              setValue={serviceAccountKeyPath => {
+                setConfig({...config, serviceAccountKeyPath});
               }}
               placeholder="Optional"
             />
@@ -96,7 +96,7 @@ export const BigQueryConnectionEditor: React.FC<
           <td>
             <VSCodeButton
               onClick={requestServiceAccountKeyPath}
-              style={{ height: "25px" }}
+              style={{height: '25px'}}
             >
               Pick File
             </VSCodeButton>
@@ -108,9 +108,9 @@ export const BigQueryConnectionEditor: React.FC<
           </LabelCell>
           <td>
             <TextField
-              value={config.maximumBytesBilled || ""}
-              setValue={(maximumBytesBilled) => {
-                setConfig({ ...config, maximumBytesBilled });
+              value={config.maximumBytesBilled || ''}
+              setValue={maximumBytesBilled => {
+                setConfig({...config, maximumBytesBilled});
               }}
               placeholder="Optional"
             />
@@ -122,9 +122,9 @@ export const BigQueryConnectionEditor: React.FC<
           </LabelCell>
           <td>
             <TextField
-              value={config.timeoutMs || ""}
-              setValue={(timeoutMs) => {
-                setConfig({ ...config, timeoutMs });
+              value={config.timeoutMs || ''}
+              setValue={timeoutMs => {
+                setConfig({...config, timeoutMs});
               }}
               placeholder="Optional"
             />

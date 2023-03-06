@@ -20,27 +20,28 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+/* eslint-disable no-console */
 
-import { CSVWriter, JSONWriter, Result, WriteStream } from "@malloydata/malloy";
-import { QueryDownloadOptions } from "../message_types";
-import { getWorker } from "../../worker/worker";
+import {CSVWriter, JSONWriter, Result, WriteStream} from '@malloydata/malloy';
+import {QueryDownloadOptions} from '../message_types';
+import {getWorker} from '../../worker/worker';
 
-import * as vscode from "vscode";
-import { Utils } from "vscode-uri";
-import { QuerySpec } from "./run_query_utils";
+import * as vscode from 'vscode';
+import {Utils} from 'vscode-uri';
+import {QuerySpec} from './query_spec';
 import {
   MessageDownload,
   WorkerMessage,
   WorkerQuerySpec,
-} from "../../worker/types";
-import { MALLOY_EXTENSION_STATE } from "../state";
+} from '../../worker/types';
+import {MALLOY_EXTENSION_STATE} from '../state';
 
 /**
  * VSCode doesn't support streaming writes, so fake it.
  */
 
 class VSCodeWriteStream implements WriteStream {
-  contents = "";
+  contents = '';
 
   constructor(private uri: vscode.Uri) {}
 
@@ -66,7 +67,7 @@ const sendDownloadMessage = (
 ) => {
   const worker = getWorker();
   const message: MessageDownload = {
-    type: "download",
+    type: 'download',
     query,
     panelId,
     name,
@@ -84,12 +85,12 @@ export async function queryDownload(
   name: string
 ): Promise<void> {
   const configDownloadPath = vscode.workspace
-    .getConfiguration("malloy")
-    .get("downloadsPath");
+    .getConfiguration('malloy')
+    .get('downloadsPath');
   let downloadPath =
-    configDownloadPath && typeof configDownloadPath === "string"
+    configDownloadPath && typeof configDownloadPath === 'string'
       ? configDownloadPath
-      : "~/Downloads";
+      : '~/Downloads';
 
   const homeUri = MALLOY_EXTENSION_STATE.getHomeUri();
   if (homeUri) {
@@ -112,7 +113,7 @@ export async function queryDownload(
     return;
   }
 
-  const fileExtension = downloadOptions.format === "json" ? "json" : "csv";
+  const fileExtension = downloadOptions.format === 'json' ? 'json' : 'csv';
   const fileUri = await dedupeFileName(downloadPathUri, name, fileExtension);
   vscode.window.withProgress(
     {
@@ -122,10 +123,10 @@ export async function queryDownload(
     },
     async () => {
       try {
-        if (downloadOptions.amount === "current") {
+        if (downloadOptions.amount === 'current') {
           const writeStream = new VSCodeWriteStream(fileUri);
           const writer =
-            downloadOptions.format === "json"
+            downloadOptions.format === 'json'
               ? new JSONWriter(writeStream)
               : new CSVWriter(writeStream);
           const rowStream = currentResults.data.inMemoryStream();
@@ -135,7 +136,7 @@ export async function queryDownload(
           );
         } else {
           const worker = getWorker();
-          const { file, ...params } = query;
+          const {file, ...params} = query;
           sendDownloadMessage(
             {
               uri: file.uri.toString(),
@@ -147,7 +148,7 @@ export async function queryDownload(
             downloadOptions
           );
           const listener = (msg: WorkerMessage) => {
-            if (msg.type === "dead") {
+            if (msg.type === 'dead') {
               vscode.window.showErrorMessage(
                 `Malloy Download (${name}): Error
 The worker process has died, and has been restarted.
@@ -156,12 +157,12 @@ Please consider filing an issue with as much detail as possible at \
 https://github.com/malloydata/malloy/issues.`
               );
 
-              worker.off("message", listener);
+              worker.off('message', listener);
               return;
-            } else if (msg.type !== "download") {
+            } else if (msg.type !== 'download') {
               return;
             }
-            const { name: msgName, error } = msg;
+            const {name: msgName, error} = msg;
             if (msgName !== name) {
               return;
             }
@@ -174,10 +175,10 @@ https://github.com/malloydata/malloy/issues.`
                 `Malloy Download (${name}): Complete`
               );
             }
-            worker.off("message", listener);
+            worker.off('message', listener);
           };
 
-          worker.on("message", listener);
+          worker.on('message', listener);
         }
       } catch (error) {
         vscode.window.showErrorMessage(
