@@ -73,7 +73,7 @@ async function createRelease(
       method: 'POST',
       headers: {
         Accept: GITHUB_API_MIME_TYPE,
-        Authorization: `Bearer ${process.env.GHAPI_PAT}`,
+        Authorization: `Bearer ${process.env['GHAPI_PAT']}`,
       },
       body: JSON.stringify({
         repo: REPO,
@@ -117,7 +117,7 @@ async function uploadAsset(
     method: 'POST',
     headers: {
       Accept: GITHUB_API_MIME_TYPE,
-      Authorization: `Bearer ${process.env.GHAPI_PAT}`,
+      Authorization: `Bearer ${process.env['GHAPI_PAT']}`,
       'Content-Type': 'application/octet-stream',
       'Content-Length': `${fs.statSync(fullAssetPath).size}`,
     },

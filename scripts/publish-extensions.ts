@@ -89,7 +89,7 @@ async function doPublish(version: string) {
       githubBranch: 'main',
       preRelease: preRelease,
       useYarn: false,
-      pat: process.env.VSCE_PAT,
+      pat: process.env['VSCE_PAT'],
     });
   }
 
@@ -99,7 +99,7 @@ async function doPublish(version: string) {
     githubBranch: 'main',
     preRelease: preRelease,
     useYarn: false,
-    pat: process.env.VSCE_PAT,
+    pat: process.env['VSCE_PAT'],
   });
 
   if (!preRelease) {
