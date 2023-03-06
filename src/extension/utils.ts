@@ -40,7 +40,6 @@ const fixNotebookUri = (uri: vscode.Uri) => {
 };
 
 export async function fetchFile(uriString: string): Promise<string> {
-  console.info('<<<<<', uriString);
   const uri = vscode.Uri.parse(uriString);
   const {path, fragment} = uri;
   const openFiles = vscode.workspace.textDocuments;
@@ -52,13 +51,13 @@ export async function fetchFile(uriString: string): Promise<string> {
     const cells = notebook.getCells();
     for (const cell of cells) {
       if (cell.kind === vscode.NotebookCellKind.Code) {
+        text += `\n// --! cell ${cell.document.uri.fragment}\n`;
         text += cell.document.getText();
       }
       if (fragment === cell.document.uri.fragment) {
         break;
       }
     }
-    console.info('>>>>>', text);
     return text;
   } else {
     const openDocument = openFiles.find(

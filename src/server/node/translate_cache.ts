@@ -39,7 +39,7 @@ export class TranslateCacheNode implements TranslateCache {
     if (cached && uri.protocol !== 'vscode-notebook-cell:') {
       return cached.getText();
     } else {
-      console.info('fetchFile requesting', uri);
+      console.info('fetchFile requesting', uri.toString());
       return await connection.sendRequest('malloy/fetchFile', {
         uri: uri.toString(),
       });

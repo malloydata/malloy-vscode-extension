@@ -28,6 +28,11 @@ import {TextDocument} from 'vscode-languageserver-textdocument';
 import {Model} from '@malloydata/malloy';
 
 export interface TranslateCache {
+  getDocumentText(
+    documents: TextDocuments<TextDocument>,
+    uri: URL
+  ): Promise<string>;
+
   translateWithCache(
     connectionManager: ConnectionManager,
     document: TextDocument,
