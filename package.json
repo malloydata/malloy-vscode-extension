@@ -380,11 +380,11 @@
     ]
   },
   "dependencies": {
-    "@malloydata/db-bigquery": "0.0.23",
-    "@malloydata/db-duckdb": "0.0.23",
-    "@malloydata/db-postgres": "0.0.23",
-    "@malloydata/malloy": "0.0.23",
-    "@malloydata/render": "0.0.23",
+    "@malloydata/db-bigquery": "0.0.24",
+    "@malloydata/db-duckdb": "0.0.24",
+    "@malloydata/db-postgres": "0.0.24",
+    "@malloydata/malloy": "0.0.24",
+    "@malloydata/render": "0.0.24",
     "@popperjs/core": "^2.11.6",
     "@vscode/webview-ui-toolkit": "^1.2.1",
     "duckdb": "0.6.1",
