@@ -48,7 +48,7 @@ async function track(event: GATrackingEvent) {
   telemetryLog.appendLine(`Logging telemetry event: ${JSON.stringify(event)}.`);
 
   try {
-    // process.env.NODE_DEBUG = "http";
+    // process.env['NODE_DEBUG'] = "http";
     await fetch(
       `https://www.google-analytics.com/mp/collect?measurement_id=${MEASUREMENT_ID}&api_secret=${API_SECRET}`,
       {
