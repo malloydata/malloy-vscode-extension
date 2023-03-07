@@ -25,6 +25,14 @@
 import {URLReader} from '@malloydata/malloy';
 import * as vscode from 'vscode';
 
+/**
+ * Transforms vscode-notebook-cell: Uris to file: or vscode-vfs: URLS
+ * based on the workspace, because VS Code can't use a vscode-notebook-cell:
+ * as a relative url for non-cells, like external Malloy files.
+ *
+ * @param uri Document uri
+ * @returns Uri with an appropriate protocol
+ */
 const fixNotebookUri = (uri: vscode.Uri) => {
   if (uri.scheme === 'vscode-notebook-cell') {
     const {scheme} = vscode.workspace.workspaceFolders[0].uri;
@@ -39,10 +47,24 @@ const fixNotebookUri = (uri: vscode.Uri) => {
   return uri;
 };
 
+/**
+ * Fetches the text contents of a Uri for the Malloy compiler. For most Uri
+ * types this means either from the open file cache, or from VS Code's
+ * file system.
+ *
+ * For notebook cell's we do additional work to create a document that
+ * includes the cells and all its predecessors.
+ *
+ * @param uriString Uri to fetch
+ * @returns Text contents for Uri
+ */
 export async function fetchFile(uriString: string): Promise<string> {
   const uri = vscode.Uri.parse(uriString);
   const {path, fragment} = uri;
   const openFiles = vscode.workspace.textDocuments;
+
+  // If we are fetching a specific notebook cell, we want to
+  // combine it with all the code cells before it.
   if (uri.scheme === 'vscode-notebook-cell' && fragment) {
     let text = '';
     const notebook = vscode.workspace.notebookDocuments.find(
@@ -51,6 +73,7 @@ export async function fetchFile(uriString: string): Promise<string> {
     const cells = notebook.getCells();
     for (const cell of cells) {
       if (cell.kind === vscode.NotebookCellKind.Code) {
+        // Insert a separator for processing error messages later
         text += `\n// --! cell ${cell.document.uri.fragment}\n`;
         text += cell.document.getText();
       }
