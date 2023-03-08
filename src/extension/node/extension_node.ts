@@ -33,10 +33,20 @@ import {
 import {editConnectionsCommand} from './commands/edit_connections';
 import {ConnectionsProvider} from '../tree_views/connections_view';
 import {WorkerConnection} from '../../worker/node/worker_connection';
-import {FetchBinaryFileEvent, FetchFileEvent, MalloyConfig} from '../types';
+import {
+  FetchBinaryFileEvent,
+  FetchCellDataEvent,
+  FetchFileEvent,
+  MalloyConfig,
+} from '../types';
 import {connectionManager} from './connection_manager';
 import {setupSubscriptions} from '../subscriptions';
-import {fetchFile, fetchBinaryFile, VSCodeURLReader} from '../utils';
+import {
+  fetchFile,
+  fetchBinaryFile,
+  VSCodeURLReader,
+  fetchCellData,
+} from '../utils';
 import {getWorker, setWorker} from '../../worker/worker';
 import {MALLOY_EXTENSION_STATE} from '../state';
 
@@ -151,6 +161,13 @@ async function setupLanguageServer(
     async (event: FetchBinaryFileEvent) => {
       console.info('fetchBinaryFile returning', event.uri);
       return await fetchBinaryFile(event.uri);
+    }
+  );
+  client.onRequest(
+    'malloy/fetchCellData',
+    async (event: FetchCellDataEvent) => {
+      console.info('fetchCellData returning', event.uri);
+      return await fetchCellData(event.uri);
     }
   );
 }

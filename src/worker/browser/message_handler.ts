@@ -28,7 +28,7 @@ import {cancelQuery, runQuery} from '../run_query';
 import {Message, MessageHandler, WorkerMessage} from '../types';
 import {refreshConfig} from '../refresh_config';
 import {ConnectionManager} from '../../common/connection_manager';
-import {WorkerURLReader} from './files';
+import {fetchCellData, WorkerURLReader} from './files';
 
 export class BrowserMessageHandler implements MessageHandler {
   constructor(connectionManager: ConnectionManager) {
@@ -60,7 +60,14 @@ export class BrowserMessageHandler implements MessageHandler {
           clearInterval(heartBeat);
           break;
         case 'run':
-          runQuery(this, reader, connectionManager, true, message);
+          runQuery(
+            this,
+            reader,
+            connectionManager,
+            true,
+            message,
+            fetchCellData
+          );
           break;
       }
     });

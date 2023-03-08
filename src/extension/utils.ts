@@ -24,7 +24,7 @@
 
 import {URLReader} from '@malloydata/malloy';
 import * as vscode from 'vscode';
-
+import {CellData} from './types';
 /**
  * Transforms vscode-notebook-cell: Uris to file: or vscode-vfs: URLS
  * based on the workspace, because VS Code can't use a vscode-notebook-cell:
@@ -52,48 +52,24 @@ const fixNotebookUri = (uri: vscode.Uri) => {
  * types this means either from the open file cache, or from VS Code's
  * file system.
  *
- * For notebook cell's we do additional work to create a document that
- * includes the cells and all its predecessors.
  *
  * @param uriString Uri to fetch
  * @returns Text contents for Uri
  */
 export async function fetchFile(uriString: string): Promise<string> {
   const uri = vscode.Uri.parse(uriString);
-  const {path, fragment} = uri;
   const openFiles = vscode.workspace.textDocuments;
 
-  // If we are fetching a specific notebook cell, we want to
-  // combine it with all the code cells before it.
-  if (uri.scheme === 'vscode-notebook-cell' && fragment) {
-    let text = '';
-    const notebook = vscode.workspace.notebookDocuments.find(
-      notebook => notebook.uri.path === path
-    );
-    const cells = notebook.getCells();
-    for (const cell of cells) {
-      if (cell.kind === vscode.NotebookCellKind.Code) {
-        // Insert a separator for processing error messages later
-        text += `\n// --! cell ${cell.document.uri.fragment}\n`;
-        text += cell.document.getText();
-      }
-      if (fragment === cell.document.uri.fragment) {
-        break;
-      }
-    }
-    return text;
+  const openDocument = openFiles.find(
+    document => document.uri.toString() === uriString
+  );
+  // Only get the text from VSCode's open files if the file is already open in VSCode,
+  // otherwise, just read the file from the file system
+  if (openDocument !== undefined) {
+    return openDocument.getText();
   } else {
-    const openDocument = openFiles.find(
-      document => document.uri.toString() === uriString
-    );
-    // Only get the text from VSCode's open files if the file is already open in VSCode,
-    // otherwise, just read the file from the file system
-    if (openDocument !== undefined) {
-      return openDocument.getText();
-    } else {
-      const contents = await vscode.workspace.fs.readFile(fixNotebookUri(uri));
-      return new TextDecoder('utf-8').decode(contents);
-    }
+    const contents = await vscode.workspace.fs.readFile(fixNotebookUri(uri));
+    return new TextDecoder('utf-8').decode(contents);
   }
 }
 
@@ -107,6 +83,28 @@ export async function fetchBinaryFile(
     console.error(error);
   }
   return undefined;
+}
+
+export async function fetchCellData(uriString: string): Promise<CellData[]> {
+  const uri = vscode.Uri.parse(uriString);
+  const notebook = vscode.workspace.notebookDocuments.find(
+    notebook => notebook.uri.path === uri.path
+  );
+  const result: CellData[] = [];
+  if (notebook) {
+    for (const cell of notebook.getCells()) {
+      if (cell.kind === vscode.NotebookCellKind.Code) {
+        result.push({
+          uri: cell.document.uri.toString(),
+          text: cell.document.getText(),
+        });
+      }
+      if (cell.document.uri.fragment === uri.fragment) {
+        break;
+      }
+    }
+  }
+  return result;
 }
 
 export class VSCodeURLReader implements URLReader {

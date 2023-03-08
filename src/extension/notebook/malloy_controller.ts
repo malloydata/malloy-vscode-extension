@@ -22,10 +22,14 @@
  */
 
 import * as vscode from 'vscode';
-import {Runtime, URLReader} from '@malloydata/malloy';
+import {
+  ModelMaterializer,
+  QueryMaterializer,
+  Runtime,
+  URLReader,
+} from '@malloydata/malloy';
 import {ConnectionManager} from '../../common/connection_manager';
 import {newUntitledNotebookCommand} from '../commands/new_untitled_notebook';
-import {fetchFile} from '../utils';
 
 const NO_QUERY = 'Model has no queries.';
 
@@ -75,15 +79,18 @@ class MalloyController {
 
   private _execute(
     cells: vscode.NotebookCell[],
-    _notebook: vscode.NotebookDocument,
+    notebook: vscode.NotebookDocument,
     _controller: vscode.NotebookController
   ): void {
     for (const cell of cells) {
-      this._doExecution(cell);
+      this._doExecution(notebook, cell);
     }
   }
 
-  private async _doExecution(cell: vscode.NotebookCell): Promise<void> {
+  private async _doExecution(
+    notebook: vscode.NotebookDocument,
+    cell: vscode.NotebookCell
+  ): Promise<void> {
     const execution = this._controller.createNotebookCellExecution(cell);
     execution.executionOrder = ++this._executionOrder;
     execution.start(Date.now());
@@ -95,19 +102,46 @@ class MalloyController {
         this.urlReader,
         this.connectionManager.getConnectionLookup(url)
       );
-      const query = runtime.loadQuery(url);
+
+      const allCells = notebook.getCells();
+      let mm: ModelMaterializer | null = null;
+      for (let idx = 0; idx < cell.index; idx++) {
+        if (allCells[idx].kind === vscode.NotebookCellKind.Code) {
+          const url = new URL(allCells[idx].document.uri.toString());
+          if (mm) {
+            mm = mm.extendModel(url);
+          } else {
+            mm = runtime.loadModel(url);
+          }
+        }
+      }
+      const text = cell.document.getText();
+      let query: QueryMaterializer;
+      if (mm) {
+        query = mm.loadQuery(url);
+      } else {
+        query = runtime.loadQuery(url);
+      }
       const results = await query.run();
-      execution.replaceOutput([
-        new vscode.NotebookCellOutput([
+
+      let meta = {};
+      const style = text.match(/\/\/ --! style ([a-z_]+)/m);
+      if (style) {
+        meta = {renderer: style[1]};
+      }
+      const output = new vscode.NotebookCellOutput(
+        [
           vscode.NotebookCellOutputItem.json(
             results.toJSON(),
             'x-application/malloy-results'
           ),
-        ]),
-      ]);
+        ],
+        meta
+      );
+
+      execution.replaceOutput([output]);
       execution.end(true, Date.now());
     } catch (error) {
-      const text = await fetchFile(cell.document.uri.toString());
       execution.replaceOutput([
         new vscode.NotebookCellOutput([
           vscode.NotebookCellOutputItem.text(error.message),

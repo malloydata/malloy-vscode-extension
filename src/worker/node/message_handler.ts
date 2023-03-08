@@ -27,7 +27,7 @@ import {downloadQuery} from './download_query';
 import {Message, MessageHandler, WorkerMessage} from '../types';
 import {refreshConfig} from '../refresh_config';
 import {ConnectionManager} from '../../common/connection_manager';
-import {WorkerURLReader} from './files';
+import {WorkerURLReader, fetchCellData} from './files';
 
 export class NodeMessageHandler implements MessageHandler {
   constructor(connectionManager: ConnectionManager) {
@@ -49,13 +49,20 @@ export class NodeMessageHandler implements MessageHandler {
           refreshConfig(connectionManager, message);
           break;
         case 'download':
-          downloadQuery(connectionManager, message);
+          downloadQuery(connectionManager, message, fetchCellData);
           break;
         case 'exit':
           clearInterval(heartBeat);
           break;
         case 'run':
-          runQuery(this, reader, connectionManager, false, message);
+          runQuery(
+            this,
+            reader,
+            connectionManager,
+            false,
+            message,
+            fetchCellData
+          );
           break;
       }
     });

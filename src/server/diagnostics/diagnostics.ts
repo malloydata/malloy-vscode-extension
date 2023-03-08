@@ -30,29 +30,10 @@ import {LogMessage, MalloyError} from '@malloydata/malloy';
 import {TextDocument} from 'vscode-languageserver-textdocument';
 import {ConnectionManager} from '../../common/connection_manager';
 import {TranslateCache} from '../types';
-import {DocumentRange} from '@malloydata/malloy/dist/model/malloy_types';
-import {
-  DocumentPosition,
-  DocumentRange as DocumentRangeImpl,
-} from '@malloydata/malloy/dist/malloy';
 
 const DEFAULT_RANGE = {
   start: {line: 0, character: 0},
   end: {line: 0, character: Number.MAX_VALUE},
-};
-
-const massageRange = (
-  range: DocumentRange | undefined,
-  delta: number
-): DocumentRange | undefined => {
-  if (!range) {
-    return range;
-  }
-
-  return new DocumentRangeImpl(
-    new DocumentPosition(range.start.line + delta, range.start.character),
-    new DocumentPosition(range.end.line + delta, range.end.character)
-  );
 };
 
 export async function getMalloyDiagnostics(
@@ -67,23 +48,6 @@ export async function getMalloyDiagnostics(
     [document.uri]: [],
   };
   let errors: LogMessage[] = [];
-
-  const text = await translateCache.getDocumentText(
-    documents,
-    new URL(document.uri.toString())
-  );
-  // Try and determine the offset into a cell instead of the whole
-  // document if we're in a notebook
-  let delta = 0;
-  const parts = text.split(/\n\/\/ --! cell .*\n/);
-  if (parts.length > 1) {
-    // Remove the last entry
-    parts.pop();
-    for (const part of parts) {
-      const lines = part.split('\n');
-      delta += lines.length + 1; // body + header
-    }
-  }
 
   try {
     await translateCache.translateWithCache(
@@ -119,7 +83,7 @@ export async function getMalloyDiagnostics(
       byURI[uri] = [];
     }
 
-    const range = massageRange(err.at?.range, -delta) || DEFAULT_RANGE;
+    const range = err.at?.range || DEFAULT_RANGE;
 
     if (range.start.line >= 0) {
       byURI[uri].push({

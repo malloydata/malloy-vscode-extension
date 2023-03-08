@@ -37,7 +37,7 @@ export const activate: ActivationFunction = () => {
         shadow.append(root);
       }
       ReactDOM.render(
-        <MalloyRenderer results={info.json()} />,
+        <MalloyRenderer results={info.json()} meta={info.metadata} />,
         shadow.querySelector('#root')
       );
     },

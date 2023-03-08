@@ -24,11 +24,12 @@
 /* eslint-disable no-console */
 import * as child_process from 'child_process';
 import * as vscode from 'vscode';
-import {fetchBinaryFile, fetchFile} from '../../extension/utils';
+import {fetchBinaryFile, fetchCellData, fetchFile} from '../../extension/utils';
 import {
   Message,
   WorkerMessage,
   WorkerReadBinaryMessage,
+  WorkerReadCellDataMessage,
   WorkerReadMessage,
 } from '../types';
 const workerLog = vscode.window.createOutputChannel('Malloy Worker');
@@ -74,8 +75,17 @@ export class WorkerConnection {
               break;
             }
             case 'read_binary': {
-              workerLog.appendLine(`worker: reading file ${message.uri}`);
+              workerLog.appendLine(
+                `worker: reading binary file ${message.uri}`
+              );
               this.readFileBinary(message);
+              break;
+            }
+            case 'read_cell_data': {
+              workerLog.appendLine(
+                `worker: reading cell data for ${message.uri}`
+              );
+              this.readCellData(message);
               break;
             }
           }
@@ -121,6 +131,16 @@ export class WorkerConnection {
       this.send?.({type: 'read_binary', id, uri, data});
     } catch (error) {
       this.send?.({type: 'read_binary', id, uri, error: error.message});
+    }
+  }
+
+  async readCellData(message: WorkerReadCellDataMessage): Promise<void> {
+    const {id, uri} = message;
+    try {
+      const data = await fetchCellData(uri);
+      this.send?.({type: 'read_cell_data', id, uri, data});
+    } catch (error) {
+      this.send?.({type: 'read_cell_data', id, uri, error: error.message});
     }
   }
 }

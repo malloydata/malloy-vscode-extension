@@ -24,18 +24,22 @@
 import * as React from 'react';
 import {Result, ResultJSON} from '@malloydata/malloy';
 import {HTMLView} from '@malloydata/render';
+import {RenderDef} from '@malloydata/render/dist/data_styles';
 
 export interface ResultProps {
   results: ResultJSON;
+  meta: RenderDef;
 }
 
-export const MalloyRenderer: React.FC<ResultProps> = ({results}) => {
+export const MalloyRenderer: React.FC<ResultProps> = ({results, meta}) => {
   const [html, setHtml] = React.useState<HTMLElement>();
 
   React.useEffect(() => {
     if (results) {
       const {data} = Result.fromJSON(results);
-      const rendering = new HTMLView(document).render(data, {dataStyles: {}});
+      const rendering = new HTMLView(document).render(data, {
+        dataStyles: {__stage0: meta},
+      });
       rendering.then(rendered => {
         setHtml(rendered);
       });

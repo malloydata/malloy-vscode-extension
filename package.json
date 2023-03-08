@@ -150,6 +150,10 @@
         "category": "Create",
         "command": "malloy.newUntitledNotebook",
         "title": "Malloy Notebook"
+      },
+      {
+        "command": "malloy.notebookSelectRenderer",
+        "title": "Select Renderer"
       }
     ],
     "menus": {
@@ -176,6 +180,12 @@
         {
           "command": "malloy.newUntitledNotebook",
           "group": "notebook"
+        }
+      ],
+      "notebook/cell/title": [
+        {
+          "command": "malloy.notebookSelectRenderer",
+          "when": "notebookType == malloy-notebook && notebookCellType == code"
         }
       ]
     },
@@ -431,11 +441,11 @@
     ]
   },
   "dependencies": {
-    "@malloydata/db-bigquery": "0.0.24",
-    "@malloydata/db-duckdb": "0.0.24",
-    "@malloydata/db-postgres": "0.0.24",
-    "@malloydata/malloy": "0.0.24",
-    "@malloydata/render": "0.0.24",
+    "@malloydata/db-bigquery": "0.0.25",
+    "@malloydata/db-duckdb": "0.0.25",
+    "@malloydata/db-postgres": "0.0.25",
+    "@malloydata/malloy": "0.0.25",
+    "@malloydata/render": "0.0.25",
     "@popperjs/core": "^2.11.6",
     "@types/vscode-notebook-renderer": "^1.72.0",
     "@vscode/webview-ui-toolkit": "^1.2.1",

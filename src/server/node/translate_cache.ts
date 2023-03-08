@@ -22,11 +22,13 @@
  */
 
 import {TextDocuments} from 'vscode-languageserver/node';
-import {Model, Runtime} from '@malloydata/malloy';
+import {Model, ModelMaterializer, Runtime} from '@malloydata/malloy';
 import {TextDocument} from 'vscode-languageserver-textdocument';
+
 import {ConnectionManager} from '../../common/connection_manager';
 import {TranslateCache} from '../types';
 import {connection} from './connections_node';
+import {CellData} from '../../extension/types';
 
 export class TranslateCacheNode implements TranslateCache {
   cache = new Map<string, {model: Model; version: number}>();
@@ -36,7 +38,7 @@ export class TranslateCacheNode implements TranslateCache {
     uri: URL
   ): Promise<string> {
     const cached = documents.get(uri.toString());
-    if (cached && uri.protocol !== 'vscode-notebook-cell:') {
+    if (cached) {
       return cached.getText();
     } else {
       console.info('fetchFile requesting', uri.toString());
@@ -44,6 +46,12 @@ export class TranslateCacheNode implements TranslateCache {
         uri: uri.toString(),
       });
     }
+  }
+
+  async getCellData(uri: URL): Promise<CellData[]> {
+    return await connection.sendRequest('malloy/fetchCellData', {
+      uri: uri.toString(),
+    });
   }
 
   async translateWithCache(
@@ -67,8 +75,23 @@ export class TranslateCacheNode implements TranslateCache {
       connectionManager.getConnectionLookup(new URL(document.uri))
     );
 
-    const model = await runtime.getModel(new URL(uri));
-    this.cache.set(uri, {version: currentVersion, model});
+    let model: Model;
+    if (document.uri.startsWith('vscode-notebook-cell:')) {
+      const allCells = await this.getCellData(new URL(document.uri));
+      let mm: ModelMaterializer | null = null;
+      for (let idx = 0; idx < allCells.length; idx++) {
+        const url = new URL(allCells[idx].uri);
+        if (mm) {
+          mm = mm.extendModel(url);
+        } else {
+          mm = runtime.loadModel(url);
+        }
+      }
+      model = await mm.getModel();
+    } else {
+      model = await runtime.getModel(new URL(uri));
+      this.cache.set(uri, {version: currentVersion, model});
+    }
     return model;
   }
 }
