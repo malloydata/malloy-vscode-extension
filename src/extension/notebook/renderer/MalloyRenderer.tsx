@@ -25,6 +25,7 @@ import * as React from 'react';
 import {Result, ResultJSON} from '@malloydata/malloy';
 import {HTMLView} from '@malloydata/render';
 import {RenderDef} from '@malloydata/render/dist/data_styles';
+import styled from 'styled-components';
 
 export interface ResultProps {
   results: ResultJSON;
@@ -63,5 +64,13 @@ const DOMElement: React.FC<{element: HTMLElement}> = ({element}) => {
     }
   }, [element]);
 
-  return <div ref={ref} />;
+  return <Wrapper ref={ref} />;
 };
+
+const Wrapper = styled.div`
+  --malloy-font-family: var(--vscode-font-family, Roboto);
+  --malloy-title-color: var(--vscode-titleBar-activeForeground);
+  --malloy-label-color: var(--vscode-tab-activeForeground);
+  --malloy-border-color: var(--vscode-notifications-border);
+  --malloy-tile-background-color: var(--vscode-notifications-background);
+`;

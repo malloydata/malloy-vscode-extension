@@ -23,6 +23,7 @@
 
 import ReactDOM from 'react-dom';
 import React from 'react';
+import {StyleSheetManager} from 'styled-components';
 import {ActivationFunction} from 'vscode-notebook-renderer';
 import {MalloyRenderer} from './MalloyRenderer';
 
@@ -36,8 +37,11 @@ export const activate: ActivationFunction = () => {
         root.id = 'root';
         shadow.append(root);
       }
+      const root = shadow.querySelector<HTMLElement>('#root');
       ReactDOM.render(
-        <MalloyRenderer results={info.json()} meta={info.metadata} />,
+        <StyleSheetManager target={root}>
+          <MalloyRenderer results={info.json()} meta={info.metadata} />
+        </StyleSheetManager>,
         shadow.querySelector('#root')
       );
     },
