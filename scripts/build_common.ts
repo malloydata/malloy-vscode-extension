@@ -360,6 +360,7 @@ export async function doBuild(
     }
   } else {
     for (const name in buildOptions) {
+      console.log(`\nBuilding ${name}`);
       const result = await build(buildOptions[name]);
       if (metadata) {
         fs.writeFileSync(`meta-${name}.json`, JSON.stringify(result));

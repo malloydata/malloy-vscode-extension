@@ -15,8 +15,8 @@
     ]
   },
   "engines": {
-    "vscode": "^1.63.0",
-    "node": ">=11"
+    "vscode": "^1.68.0",
+    "node": ">=12"
   },
   "scripts": {
     "build": "tsc --build && npm run build-extension",
@@ -150,10 +150,6 @@
         "category": "Create",
         "command": "malloy.newUntitledNotebook",
         "title": "Malloy Notebook"
-      },
-      {
-        "command": "malloy.notebookSelectRenderer",
-        "title": "Select Renderer"
       }
     ],
     "menus": {
@@ -180,12 +176,6 @@
         {
           "command": "malloy.newUntitledNotebook",
           "group": "notebook"
-        }
-      ],
-      "notebook/cell/title": [
-        {
-          "command": "malloy.notebookSelectRenderer",
-          "when": "notebookType == malloy-notebook && notebookCellType == code"
         }
       ]
     },
@@ -483,7 +473,7 @@
     "@types/styled-components": "^5.1.19",
     "@types/tar-stream": "^2.2.2",
     "@types/uuid": "^8.3.4",
-    "@types/vscode": "1.75.1",
+    "@types/vscode": "1.68.0",
     "@types/vscode-webview": "^1.57.0",
     "@typescript-eslint/eslint-plugin": "^5.48.2",
     "@typescript-eslint/parser": "^5.48.2",
