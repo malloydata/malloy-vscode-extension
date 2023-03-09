@@ -32,6 +32,8 @@ import {
   QueryField,
   AtomicField,
   URLReader,
+  Model,
+  ModelMaterializer,
 } from '@malloydata/malloy';
 import numberIcon from '../../media/number.svg';
 import numberAggregateIcon from '../../media/number-aggregate.svg';
@@ -152,7 +154,30 @@ async function getStructs(
       reader,
       connectionManager.getConnectionLookup(url)
     );
-    const model = await runtime.getModel(url);
+    let model: Model;
+    if (url.protocol === 'vscode-notebook-cell:') {
+      const notebook = vscode.workspace.notebookDocuments.find(
+        notebook => notebook.uri.path === document.uri.path
+      );
+      let mm: ModelMaterializer | null = null;
+      for (const cell of notebook.getCells()) {
+        const {uri: cellUri} = cell.document;
+        if (cell.kind === vscode.NotebookCellKind.Code) {
+          const cellUrl = new URL(cellUri.toString());
+          if (mm) {
+            mm = mm.extendModel(cellUrl);
+          } else {
+            mm = runtime.loadModel(cellUrl);
+          }
+        }
+        if (cellUri.fragment === document.uri.fragment) {
+          break;
+        }
+      }
+      model = await mm.getModel();
+    } else {
+      model = await runtime.getModel(url);
+    }
 
     return Object.values(model.explores).sort(exploresByName);
   } catch (error) {

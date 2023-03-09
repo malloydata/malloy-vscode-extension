@@ -21,21 +21,29 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {ConnectionManager} from '../common/connection_manager';
-import {TextDocuments} from 'vscode-languageserver';
-import {TextDocument} from 'vscode-languageserver-textdocument';
+import ReactDOM from 'react-dom';
+import React from 'react';
+import {StyleSheetManager} from 'styled-components';
+import {ActivationFunction} from 'vscode-notebook-renderer';
+import {JsonRenderer} from './JsonRenderer';
 
-import {Model} from '@malloydata/malloy';
-
-export interface TranslateCache {
-  getDocumentText(
-    documents: TextDocuments<TextDocument>,
-    uri: URL
-  ): Promise<string>;
-
-  translateWithCache(
-    connectionManager: ConnectionManager,
-    document: TextDocument,
-    documents: TextDocuments<TextDocument>
-  ): Promise<Model>;
-}
+export const activate: ActivationFunction = () => {
+  return {
+    renderOutputItem(info, element) {
+      let shadow = element.shadowRoot;
+      if (!shadow) {
+        shadow = element.attachShadow({mode: 'open'});
+        const root = document.createElement('div');
+        root.id = 'root';
+        shadow.append(root);
+      }
+      const root = shadow.querySelector<HTMLElement>('#root');
+      ReactDOM.render(
+        <StyleSheetManager target={root}>
+          <JsonRenderer results={info.json()} />
+        </StyleSheetManager>,
+        root
+      );
+    },
+  };
+};

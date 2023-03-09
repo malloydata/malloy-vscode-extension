@@ -21,8 +21,11 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import {createConnection, ProposedFeatures} from 'vscode-languageserver/node';
 import {ConnectionManager} from '../../common/connection_manager';
 import {DesktopConnectionFactory} from '../../extension/node/connection_factory';
+
+export const connection = createConnection(ProposedFeatures.all);
 
 export const connectionManager = new ConnectionManager(
   new DesktopConnectionFactory(),

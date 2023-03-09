@@ -48,6 +48,7 @@ export async function getMalloyDiagnostics(
     [document.uri]: [],
   };
   let errors: LogMessage[] = [];
+
   try {
     await translateCache.translateWithCache(
       connectionManager,
@@ -82,12 +83,16 @@ export async function getMalloyDiagnostics(
       byURI[uri] = [];
     }
 
-    byURI[uri].push({
-      severity: sev,
-      range: err.at?.range || DEFAULT_RANGE,
-      message: err.message,
-      source: 'malloy',
-    });
+    const range = err.at?.range || DEFAULT_RANGE;
+
+    if (range.start.line >= 0) {
+      byURI[uri].push({
+        severity: sev,
+        range,
+        message: err.message,
+        source: 'malloy',
+      });
+    }
   }
 
   return byURI;

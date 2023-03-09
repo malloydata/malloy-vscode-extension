@@ -21,21 +21,36 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {ConnectionManager} from '../common/connection_manager';
-import {TextDocuments} from 'vscode-languageserver';
-import {TextDocument} from 'vscode-languageserver-textdocument';
+import * as React from 'react';
+import Prism from 'prismjs';
+import {Result, ResultJSON} from '@malloydata/malloy';
+import {PrismContainer} from '../../webviews/components/PrismContainer';
 
-import {Model} from '@malloydata/malloy';
-
-export interface TranslateCache {
-  getDocumentText(
-    documents: TextDocuments<TextDocument>,
-    uri: URL
-  ): Promise<string>;
-
-  translateWithCache(
-    connectionManager: ConnectionManager,
-    document: TextDocument,
-    documents: TextDocuments<TextDocument>
-  ): Promise<Model>;
+export interface ResultProps {
+  results: ResultJSON;
 }
+
+export const SqlRenderer: React.FC<ResultProps> = ({results}) => {
+  const [sql, setSql] = React.useState<string>();
+
+  React.useEffect(() => {
+    if (results) {
+      const {sql} = Result.fromJSON(results);
+      setSql(sql);
+    }
+  }, [results]);
+
+  if (sql) {
+    return (
+      <PrismContainer darkMode={false} style={{margin: '10px'}}>
+        <div
+          dangerouslySetInnerHTML={{
+            __html: Prism.highlight(sql, Prism.languages['sql'], 'sql'),
+          }}
+          style={{margin: '10px'}}
+        />
+      </PrismContainer>
+    );
+  }
+  return null;
+};

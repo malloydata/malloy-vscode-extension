@@ -27,9 +27,10 @@ import {fileURLToPath} from 'url';
 import {CSVWriter, JSONWriter, Runtime} from '@malloydata/malloy';
 
 import {MessageDownload, WorkerDownloadMessage} from '../types';
-import {createRunnable} from '../utils';
+import {createRunnable} from '../create_runnable';
 import {WorkerURLReader} from './files';
 import {ConnectionManager} from '../../common/connection_manager';
+import {CellData} from '../../extension/types';
 
 const sendMessage = (name: string, error?: string) => {
   const msg: WorkerDownloadMessage = {
@@ -42,7 +43,8 @@ const sendMessage = (name: string, error?: string) => {
 
 export async function downloadQuery(
   connectionManager: ConnectionManager,
-  {query, panelId, downloadOptions, name, uri}: MessageDownload
+  {query, panelId, downloadOptions, name, uri}: MessageDownload,
+  fetchCellData: (uri: string) => Promise<CellData[]>
 ): Promise<void> {
   const files = new WorkerURLReader();
   const url = new URL(panelId);
@@ -53,7 +55,7 @@ export async function downloadQuery(
       connectionManager.getConnectionLookup(url)
     );
 
-    const runnable = createRunnable(query, runtime);
+    const runnable = await createRunnable(query, runtime, fetchCellData);
     const writeStream = fs.createWriteStream(fileURLToPath(uri));
     const writer =
       downloadOptions.format === 'json'

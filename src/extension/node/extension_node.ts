@@ -33,10 +33,20 @@ import {
 import {editConnectionsCommand} from './commands/edit_connections';
 import {ConnectionsProvider} from '../tree_views/connections_view';
 import {WorkerConnection} from '../../worker/node/worker_connection';
-import {MalloyConfig} from '../types';
+import {
+  FetchBinaryFileEvent,
+  FetchCellDataEvent,
+  FetchFileEvent,
+  MalloyConfig,
+} from '../types';
 import {connectionManager} from './connection_manager';
 import {setupSubscriptions} from '../subscriptions';
-import {VSCodeURLReader} from '../utils';
+import {
+  fetchFile,
+  fetchBinaryFile,
+  VSCodeURLReader,
+  fetchCellData,
+} from '../utils';
 import {getWorker, setWorker} from '../../worker/worker';
 import {MALLOY_EXTENSION_STATE} from '../state';
 
@@ -101,7 +111,9 @@ export async function deactivate(): Promise<void> | undefined {
   }
 }
 
-function setupLanguageServer(context: vscode.ExtensionContext): void {
+async function setupLanguageServer(
+  context: vscode.ExtensionContext
+): Promise<void> {
   const serverModule = context.asAbsolutePath('dist/server_node.js');
   const debugOptions = {
     execArgv: [
@@ -122,7 +134,7 @@ function setupLanguageServer(context: vscode.ExtensionContext): void {
   };
 
   const clientOptions: LanguageClientOptions = {
-    documentSelector: [{scheme: 'file', language: 'malloy'}],
+    documentSelector: [{language: 'malloy'}],
     synchronize: {
       configurationSection: 'malloy',
       fileEvents: vscode.workspace.createFileSystemWatcher('**/.clientrc'),
@@ -137,6 +149,27 @@ function setupLanguageServer(context: vscode.ExtensionContext): void {
   );
 
   client.start();
+  await client.onReady();
+
+  client.onRequest('malloy/fetchFile', async (event: FetchFileEvent) => {
+    console.info('fetchFile returning', event.uri);
+    return await fetchFile(event.uri);
+  });
+
+  client.onRequest(
+    'malloy/fetchBinaryFile',
+    async (event: FetchBinaryFileEvent) => {
+      console.info('fetchBinaryFile returning', event.uri);
+      return await fetchBinaryFile(event.uri);
+    }
+  );
+  client.onRequest(
+    'malloy/fetchCellData',
+    async (event: FetchCellDataEvent) => {
+      console.info('fetchCellData returning', event.uri);
+      return await fetchCellData(event.uri);
+    }
+  );
 }
 
 function sendWorkerConfig() {

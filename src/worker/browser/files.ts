@@ -22,28 +22,20 @@
  */
 
 import {URLReader} from '@malloydata/malloy';
-import {Message} from '../types';
+import {CellData} from '../../extension/types';
+import {FetchMessage} from '../types';
 
 let idx = 1;
 
-/**
- * Requests a file from the worker's controller. Although the
- * file path is a file system path, reading the file off
- * disk doesn't take into account unsaved changes that only
- * VS Code is aware of.
- *
- * @param file File path to resolve
- * @returns File contents
- */
-export async function fetchFile(uri: string): Promise<string> {
+const fetchHelper = async (type: FetchMessage['type'], uri: string) => {
   return new Promise((resolve, reject) => {
     // This could probably use some more error handling (timeout?).
     // For now just be relentlessly optimistic because there's
     // a tight coupling with the worker controller.
     const id = `${uri}-${idx++}`;
     const callback = (event: MessageEvent) => {
-      const message: Message = event.data;
-      if (message.type === 'read' && message.id === id) {
+      const message: FetchMessage = event.data;
+      if (message.type === type && message.id === id) {
         if (message.data !== null) {
           resolve(message.data);
         } else if (message.error !== null) {
@@ -54,11 +46,44 @@ export async function fetchFile(uri: string): Promise<string> {
     };
     self.addEventListener('message', callback);
     self.postMessage({
-      type: 'read',
+      type,
       uri,
       id,
     });
   });
+};
+
+/**
+ * Requests a file from the worker's controller. Although the
+ * file path is a file system path, reading the file off
+ * disk doesn't take into account unsaved changes that only
+ * VS Code is aware of.
+ *
+ * @param uri URI to resolve
+ * @returns File contents
+ */
+export async function fetchFile(uri: string): Promise<string> {
+  return fetchHelper('read', uri) as Promise<string>;
+}
+
+/**
+ * Requests a binary file from the worker's controller.
+ *
+ * @param uri URI to resolve
+ * @returns File contents
+ */
+export async function fetchFileBinary(uri: string): Promise<Uint8Array> {
+  return fetchHelper('read_binary', uri) as Promise<Uint8Array>;
+}
+
+/**
+ * Requests cell data from the worker's controller.
+ *
+ * @param uri URI to resolve
+ * @returns File contents
+ */
+export async function fetchCellData(uri: string): Promise<CellData[]> {
+  return fetchHelper('read_cell_data', uri) as Promise<CellData[]>;
 }
 
 export class WorkerURLReader implements URLReader {

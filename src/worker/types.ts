@@ -25,7 +25,7 @@ import {
   QueryDownloadOptions,
   QueryPanelMessage,
 } from '../extension/message_types';
-import {MalloyConfig} from '../extension/types';
+import {CellData, MalloyConfig} from '../extension/types';
 
 interface NamedQuerySpec {
   type: 'named';
@@ -97,6 +97,22 @@ export interface MessageRead {
   error?: string;
 }
 
+export interface MessageReadBinary {
+  type: 'read_binary';
+  id: string;
+  uri: string;
+  data?: Uint8Array;
+  error?: string;
+}
+
+export interface MessageReadCellData {
+  type: 'read_cell_data';
+  id: string;
+  uri: string;
+  data?: CellData[];
+  error?: string;
+}
+
 export interface MessageDownload {
   type: 'download';
   query: WorkerQuerySpec;
@@ -106,11 +122,18 @@ export interface MessageDownload {
   downloadOptions: QueryDownloadOptions;
 }
 
+export type FetchMessage =
+  | MessageRead
+  | MessageReadBinary
+  | MessageReadCellData;
+
 export type Message =
   | MessageCancel
   | MessageConfig
   | MessageExit
   | MessageRead
+  | MessageReadBinary
+  | MessageReadCellData
   | MessageRun
   | MessageDownload;
 
@@ -143,6 +166,18 @@ export interface WorkerStartMessage {
   type: 'start';
 }
 
+export interface WorkerReadBinaryMessage {
+  type: 'read_binary';
+  id: string;
+  uri: string;
+}
+
+export interface WorkerReadCellDataMessage {
+  type: 'read_cell_data';
+  id: string;
+  uri: string;
+}
+
 export interface WorkerReadMessage {
   type: 'read';
   id: string;
@@ -154,7 +189,9 @@ export type WorkerMessage =
   | WorkerDownloadMessage
   | WorkerLogMessage
   | WorkerQueryPanelMessage
+  | WorkerReadBinaryMessage
   | WorkerReadMessage
+  | WorkerReadCellDataMessage
   | WorkerStartMessage;
 
 export interface BaseWorker {

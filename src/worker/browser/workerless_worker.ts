@@ -22,7 +22,10 @@
  */
 
 import * as vscode from 'vscode';
-import {VSCodeURLReader as WorkerURLReader} from '../../extension/utils';
+import {
+  VSCodeURLReader as WorkerURLReader,
+  fetchCellData,
+} from '../../extension/utils';
 import {BaseWorker, Message, WorkerMessage} from '../types';
 import {connectionManager} from '../../extension/browser/connection_manager';
 import {cancelQuery, runQuery} from '../run_query';
@@ -54,7 +57,8 @@ export class WorkerConnection implements BaseWorker {
           reader,
           connectionManager,
           true,
-          message
+          message,
+          fetchCellData
         );
         break;
     }

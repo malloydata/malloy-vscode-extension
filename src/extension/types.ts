@@ -39,3 +39,12 @@ export interface FetchFileEvent {
 export interface FetchBinaryFileEvent {
   uri: string;
 }
+
+export interface FetchCellDataEvent {
+  uri: string;
+}
+
+export interface CellData {
+  uri: string;
+  text: string;
+}

@@ -21,21 +21,4 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {ConnectionManager} from '../common/connection_manager';
-import {TextDocuments} from 'vscode-languageserver';
-import {TextDocument} from 'vscode-languageserver-textdocument';
-
-import {Model} from '@malloydata/malloy';
-
-export interface TranslateCache {
-  getDocumentText(
-    documents: TextDocuments<TextDocument>,
-    uri: URL
-  ): Promise<string>;
-
-  translateWithCache(
-    connectionManager: ConnectionManager,
-    document: TextDocument,
-    documents: TextDocuments<TextDocument>
-  ): Promise<Model>;
-}
+export {PrismContainer} from './PrismContainer';

@@ -21,21 +21,24 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {ConnectionManager} from '../common/connection_manager';
-import {TextDocuments} from 'vscode-languageserver';
-import {TextDocument} from 'vscode-languageserver-textdocument';
+import * as vscode from 'vscode';
 
-import {Model} from '@malloydata/malloy';
+const NOTEBOOK_TYPE = 'malloy-notebook';
 
-export interface TranslateCache {
-  getDocumentText(
-    documents: TextDocuments<TextDocument>,
-    uri: URL
-  ): Promise<string>;
-
-  translateWithCache(
-    connectionManager: ConnectionManager,
-    document: TextDocument,
-    documents: TextDocuments<TextDocument>
-  ): Promise<Model>;
+export async function newUntitledNotebookCommand(): Promise<void> {
+  const language = 'malloy';
+  const defaultValue = '// Enter Malloy here';
+  const cell = new vscode.NotebookCellData(
+    vscode.NotebookCellKind.Code,
+    defaultValue,
+    language
+  );
+  const data = new vscode.NotebookData([cell]);
+  data.metadata = {
+    custom: {
+      cells: [],
+    },
+  };
+  const doc = await vscode.workspace.openNotebookDocument(NOTEBOOK_TYPE, data);
+  await vscode.window.showNotebookDocument(doc);
 }

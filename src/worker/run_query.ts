@@ -38,8 +38,9 @@ import {
   QueryPanelMessage,
   QueryRunStatus,
 } from '../extension/message_types';
-import {createRunnable} from './utils';
+import {createRunnable} from './create_runnable';
 import {ConnectionManager} from '../common/connection_manager';
+import {CellData} from '../extension/types';
 
 interface QueryEntry {
   panelId: string;
@@ -67,7 +68,8 @@ export const runQuery = async (
   reader: URLReader,
   connectionManager: ConnectionManager,
   isBrowser: boolean,
-  {query, panelId}: MessageRun
+  {query, panelId}: MessageRun,
+  fetchCellData: (uri: string) => Promise<CellData[]>
 ): Promise<void> => {
   const files = new HackyDataStylesAccumulator(reader);
   const url = new URL(panelId);
@@ -90,7 +92,7 @@ export const runQuery = async (
 
     let dataStyles: DataStyles = {};
     let sql;
-    const runnable = createRunnable(query, runtime);
+    const runnable = await createRunnable(query, runtime, fetchCellData);
 
     // Set the row limit to the limit provided in the final stage of the query, if present
     const rowLimit =

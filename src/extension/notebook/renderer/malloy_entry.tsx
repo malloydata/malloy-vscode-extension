@@ -21,35 +21,25 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {
-  QueryMaterializer,
-  Runtime,
-  SQLBlockMaterializer,
-} from '@malloydata/malloy';
-import {WorkerQuerySpec} from './types';
+import ReactDOM from 'react-dom';
+import React from 'react';
+import {ActivationFunction} from 'vscode-notebook-renderer';
+import {MalloyRenderer} from './MalloyRenderer';
 
-export const createRunnable = (
-  query: WorkerQuerySpec,
-  runtime: Runtime
-): SQLBlockMaterializer | QueryMaterializer => {
-  let runnable: QueryMaterializer | SQLBlockMaterializer;
-  const queryFileURL = new URL(query.uri);
-  if (query.type === 'string') {
-    runnable = runtime.loadModel(queryFileURL).loadQuery(query.text);
-  } else if (query.type === 'named') {
-    runnable = runtime.loadQueryByName(queryFileURL, query.name);
-  } else if (query.type === 'file') {
-    if (query.index === -1) {
-      runnable = runtime.loadQuery(queryFileURL);
-    } else {
-      runnable = runtime.loadQueryByIndex(queryFileURL, query.index);
-    }
-  } else if (query.type === 'named_sql') {
-    runnable = runtime.loadSQLBlockByName(queryFileURL, query.name);
-  } else if (query.type === 'unnamed_sql') {
-    runnable = runtime.loadSQLBlockByIndex(queryFileURL, query.index);
-  } else {
-    throw new Error('Internal Error: Unexpected query type');
-  }
-  return runnable;
+export const activate: ActivationFunction = () => {
+  return {
+    renderOutputItem(info, element) {
+      let shadow = element.shadowRoot;
+      if (!shadow) {
+        shadow = element.attachShadow({mode: 'open'});
+        const root = document.createElement('div');
+        root.id = 'root';
+        shadow.append(root);
+      }
+      ReactDOM.render(
+        <MalloyRenderer results={info.json()} meta={info.metadata} />,
+        shadow.querySelector('#root')
+      );
+    },
+  };
 };

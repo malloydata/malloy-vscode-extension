@@ -15,8 +15,8 @@
     ]
   },
   "engines": {
-    "vscode": "^1.63.0",
-    "node": ">=11"
+    "vscode": "^1.68.0",
+    "node": ">=12"
   },
   "scripts": {
     "build": "tsc --build && npm run build-extension",
@@ -61,7 +61,8 @@
     "onView:malloyConnections",
     "onView:malloySchema",
     "onWebviewPanel:malloyQuery",
-    "onWebviewPanel:malloyConnections"
+    "onWebviewPanel:malloyConnections",
+    "onNotebook:malloy-notebook"
   ],
   "main": "./dist/extension_node",
   "browser": "./dist/extension_browser",
@@ -144,6 +145,11 @@
         "title": "Run Unnamed SQL Block",
         "category": "Malloy",
         "enablement": "false"
+      },
+      {
+        "category": "Create",
+        "command": "malloy.newUntitledNotebook",
+        "title": "Malloy Notebook"
       }
     ],
     "menus": {
@@ -165,13 +171,20 @@
           "when": "view == malloySchema && viewItem == query",
           "group": "inline"
         }
+      ],
+      "file/newFile": [
+        {
+          "command": "malloy.newUntitledNotebook",
+          "group": "notebook"
+        }
       ]
     },
     "languages": [
       {
         "id": "malloy",
         "extensions": [
-          ".malloy"
+          ".malloy",
+          ".malloynb"
         ],
         "aliases": [
           "Malloy",
@@ -197,12 +210,12 @@
         {
           "id": "malloySchema",
           "name": "Malloy Schema",
-          "when": "malloy.webviewPanelFocused == true || resourceFilename =~ /\\.malloy$/"
+          "when": "malloy.webviewPanelFocused == true || resourceFilename =~ /\\.malloy(nb)?$/"
         },
         {
           "id": "malloyConnections",
           "name": "Malloy Connections",
-          "when": "malloy.webviewPanelFocused == true || resourceFilename =~ /\\.malloy$/"
+          "when": "malloy.webviewPanelFocused == true || resourceFilename =~ /\\.malloy(nb)?$/"
         }
       ]
     },
@@ -377,15 +390,54 @@
           }
         ]
       }
+    ],
+    "notebooks": [
+      {
+        "id": "malloy-notebook",
+        "type": "malloy-notebook",
+        "displayName": "Malloy Notebook",
+        "selector": [
+          {
+            "filenamePattern": "*.malloynb"
+          }
+        ]
+      }
+    ],
+    "notebookRenderer": [
+      {
+        "displayName": "Malloy",
+        "entrypoint": "./dist/malloy_entry.js",
+        "id": "malloy.notebook-renderer",
+        "mimeTypes": [
+          "x-application/malloy-results"
+        ]
+      },
+      {
+        "displayName": "JSON",
+        "entrypoint": "./dist/json_entry.js",
+        "id": "malloy.notebook-renderer-json",
+        "mimeTypes": [
+          "x-application/malloy-results"
+        ]
+      },
+      {
+        "displayName": "SQL",
+        "entrypoint": "./dist/sql_entry.js",
+        "id": "malloy.notebook-renderer-sql",
+        "mimeTypes": [
+          "x-application/malloy-results"
+        ]
+      }
     ]
   },
   "dependencies": {
-    "@malloydata/db-bigquery": "0.0.24",
-    "@malloydata/db-duckdb": "0.0.24",
-    "@malloydata/db-postgres": "0.0.24",
-    "@malloydata/malloy": "0.0.24",
-    "@malloydata/render": "0.0.24",
+    "@malloydata/db-bigquery": "0.0.25",
+    "@malloydata/db-duckdb": "0.0.25",
+    "@malloydata/db-postgres": "0.0.25",
+    "@malloydata/malloy": "0.0.25",
+    "@malloydata/render": "0.0.25",
     "@popperjs/core": "^2.11.6",
+    "@types/vscode-notebook-renderer": "^1.72.0",
     "@vscode/webview-ui-toolkit": "^1.2.1",
     "duckdb": "0.7.1",
     "keytar": "7.7.0",
@@ -421,7 +473,7 @@
     "@types/styled-components": "^5.1.19",
     "@types/tar-stream": "^2.2.2",
     "@types/uuid": "^8.3.4",
-    "@types/vscode": "1.56.0",
+    "@types/vscode": "1.68.0",
     "@types/vscode-webview": "^1.57.0",
     "@typescript-eslint/eslint-plugin": "^5.48.2",
     "@typescript-eslint/parser": "^5.48.2",

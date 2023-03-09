@@ -21,21 +21,47 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {ConnectionManager} from '../common/connection_manager';
-import {TextDocuments} from 'vscode-languageserver';
-import {TextDocument} from 'vscode-languageserver-textdocument';
+import * as React from 'react';
+import {Result, ResultJSON} from '@malloydata/malloy';
+import {HTMLView} from '@malloydata/render';
+import {RenderDef} from '@malloydata/render/dist/data_styles';
 
-import {Model} from '@malloydata/malloy';
-
-export interface TranslateCache {
-  getDocumentText(
-    documents: TextDocuments<TextDocument>,
-    uri: URL
-  ): Promise<string>;
-
-  translateWithCache(
-    connectionManager: ConnectionManager,
-    document: TextDocument,
-    documents: TextDocuments<TextDocument>
-  ): Promise<Model>;
+export interface ResultProps {
+  results: ResultJSON;
+  meta: RenderDef;
 }
+
+export const MalloyRenderer: React.FC<ResultProps> = ({results, meta}) => {
+  const [html, setHtml] = React.useState<HTMLElement>();
+
+  React.useEffect(() => {
+    if (results) {
+      const {data} = Result.fromJSON(results);
+      const rendering = new HTMLView(document).render(data, {
+        dataStyles: {__stage0: meta},
+      });
+      rendering.then(rendered => {
+        setHtml(rendered);
+      });
+    }
+  }, [results]);
+
+  if (html) {
+    return <DOMElement element={html} />;
+  }
+  return null;
+};
+
+const DOMElement: React.FC<{element: HTMLElement}> = ({element}) => {
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const parent = ref.current;
+    if (parent) {
+      parent.innerHTML = '';
+      parent.appendChild(element);
+    }
+  }, [element]);
+
+  return <div ref={ref} />;
+};
