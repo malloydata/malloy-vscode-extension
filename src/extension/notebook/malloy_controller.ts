@@ -129,12 +129,14 @@ class MalloyController {
       if (style) {
         meta = {renderer: style[1]};
       }
+      const jsonResults = results.toJSON();
       const output = new vscode.NotebookCellOutput(
         [
           vscode.NotebookCellOutputItem.json(
-            results.toJSON(),
+            jsonResults,
             'x-application/malloy-results'
           ),
+          vscode.NotebookCellOutputItem.json(jsonResults.queryResult.result),
         ],
         meta
       );

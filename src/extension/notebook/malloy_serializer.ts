@@ -74,6 +74,6 @@ class MalloySerializer implements vscode.NotebookSerializer {
       contents.push({kind, language, value});
     }
 
-    return new TextEncoder().encode(JSON.stringify(contents));
+    return new TextEncoder().encode(JSON.stringify(contents, null, 2));
   }
 }
