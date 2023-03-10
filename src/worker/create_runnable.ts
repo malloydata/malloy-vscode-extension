@@ -56,7 +56,11 @@ export const createRunnable = async (
         runnable = mm.loadQueryByName(query.name);
         break;
       case 'file':
-        runnable = mm.loadFinalQuery();
+        if (query.index === -1) {
+          runnable = mm.loadFinalQuery();
+        } else {
+          runnable = mm.loadQueryByIndex(query.index);
+        }
         break;
       case 'named_sql':
         runnable = mm.loadSQLBlockByName(query.name);
