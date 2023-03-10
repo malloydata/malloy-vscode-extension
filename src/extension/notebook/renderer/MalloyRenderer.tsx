@@ -39,7 +39,7 @@ export const MalloyRenderer: React.FC<ResultProps> = ({results, meta}) => {
     if (results) {
       const {data} = Result.fromJSON(results);
       const rendering = new HTMLView(document).render(data, {
-        dataStyles: {__stage0: meta},
+        dataStyles: {[results.queryResult.lastStageName]: meta},
       });
       rendering.then(rendered => {
         setHtml(rendered);
