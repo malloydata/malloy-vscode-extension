@@ -38,8 +38,14 @@ export const MalloyRenderer: React.FC<ResultProps> = ({results, meta}) => {
   React.useEffect(() => {
     if (results) {
       const {data} = Result.fromJSON(results);
+      const dataStyles = {
+        [results.queryResult.lastStageName]: meta,
+      };
+      if (results.queryResult.queryName) {
+        dataStyles[results.queryResult.queryName] = meta;
+      }
       const rendering = new HTMLView(document).render(data, {
-        dataStyles: {[results.queryResult.lastStageName]: meta},
+        dataStyles,
       });
       rendering.then(rendered => {
         setHtml(rendered);
