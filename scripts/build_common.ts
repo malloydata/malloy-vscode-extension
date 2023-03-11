@@ -303,6 +303,7 @@ export async function doBuild(
     entryPoints: [
       './src/extension/webviews/query_page/entry.ts',
       './src/extension/webviews/connections_page/entry.ts',
+      './src/extension/webviews/help_page/entry.ts',
     ],
     entryNames: '[dir]',
     platform: 'browser',
