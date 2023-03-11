@@ -144,7 +144,7 @@ export async function queryDownload(
             },
             panelId,
             name,
-            fileUri.fsPath,
+            fileUri.toString(),
             downloadOptions
           );
           const listener = (msg: WorkerMessage) => {
