@@ -29,7 +29,7 @@ import {
 import {LogMessage, MalloyError} from '@malloydata/malloy';
 import {TextDocument} from 'vscode-languageserver-textdocument';
 import {ConnectionManager} from '../../common/connection_manager';
-import {TranslateCache} from '../types';
+import {TranslateCache} from '../translate_cache';
 
 const DEFAULT_RANGE = {
   start: {line: 0, character: 0},

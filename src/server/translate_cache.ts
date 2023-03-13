@@ -20,24 +20,18 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* eslint-disable no-console */
 
-import {TextDocuments} from 'vscode-languageserver/browser';
+import {Connection, TextDocuments} from 'vscode-languageserver';
 import {Model, ModelMaterializer, Runtime} from '@malloydata/malloy';
 import {TextDocument} from 'vscode-languageserver-textdocument';
-import {ConnectionManager} from '../../common/connection_manager';
-import {TranslateCache} from '../types';
-import {connection} from './connections_browser';
-import {CellData} from '../../extension/types';
 
-export class TranslateCacheBrowser implements TranslateCache {
+import {ConnectionManager} from '../common/connection_manager';
+import {CellData} from '../extension/types';
+
+export class TranslateCache implements TranslateCache {
   cache = new Map<string, {model: Model; version: number}>();
 
-  async getCellData(uri: URL): Promise<CellData[]> {
-    return await connection.sendRequest('malloy/fetchCellData', {
-      uri: uri.toString(),
-    });
-  }
+  constructor(private connection: Connection) {}
 
   async getDocumentText(
     documents: TextDocuments<TextDocument>,
@@ -47,11 +41,18 @@ export class TranslateCacheBrowser implements TranslateCache {
     if (cached) {
       return cached.getText();
     } else {
+      /* eslint-disable-next-line no-console */
       console.info('fetchFile requesting', uri.toString());
-      return await connection.sendRequest('malloy/fetchFile', {
+      return await this.connection.sendRequest('malloy/fetchFile', {
         uri: uri.toString(),
       });
     }
+  }
+
+  async getCellData(uri: URL): Promise<CellData[]> {
+    return await this.connection.sendRequest('malloy/fetchCellData', {
+      uri: uri.toString(),
+    });
   }
 
   async translateWithCache(
@@ -92,7 +93,6 @@ export class TranslateCacheBrowser implements TranslateCache {
       model = await runtime.getModel(new URL(uri));
       this.cache.set(uri, {version: currentVersion, model});
     }
-    this.cache.set(uri, {version: currentVersion, model});
     return model;
   }
 }

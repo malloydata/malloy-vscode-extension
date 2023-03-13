@@ -24,7 +24,7 @@
 import {TextDocuments, Location, Position} from 'vscode-languageserver/node';
 import {TextDocument} from 'vscode-languageserver-textdocument';
 import {ConnectionManager} from '../../common/connection_manager';
-import {TranslateCache} from '../types';
+import {TranslateCache} from '../translate_cache';
 
 export async function getMalloyDefinitionReference(
   translateCache: TranslateCache,
