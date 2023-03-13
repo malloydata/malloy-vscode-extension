@@ -41,6 +41,7 @@ export class TranslateCache implements TranslateCache {
     if (cached) {
       return cached.getText();
     } else {
+      /* eslint-disable-next-line no-console */
       console.info('fetchFile requesting', uri.toString());
       return await this.connection.sendRequest('malloy/fetchFile', {
         uri: uri.toString(),
