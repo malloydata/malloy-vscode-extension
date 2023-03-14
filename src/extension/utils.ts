@@ -23,8 +23,15 @@
 /* eslint-disable no-console */
 
 import {URLReader} from '@malloydata/malloy';
+import {BaseLanguageClient} from 'vscode-languageclient';
 import * as vscode from 'vscode';
-import {CellData} from './types';
+import {
+  FetchBinaryFileEvent,
+  FetchCellDataEvent,
+  FetchFileEvent,
+  CellData,
+} from './types';
+
 /**
  * Transforms vscode-notebook-cell: Uris to file: or vscode-vfs: URLS
  * based on the workspace, because VS Code can't use a vscode-notebook-cell:
@@ -112,3 +119,25 @@ export class VSCodeURLReader implements URLReader {
     return fetchFile(url.toString());
   }
 }
+
+export const initFileMessaging = (client: BaseLanguageClient) => {
+  client.onRequest('malloy/fetchFile', async (event: FetchFileEvent) => {
+    console.info('fetchFile returning', event.uri);
+    return await fetchFile(event.uri);
+  });
+
+  client.onRequest(
+    'malloy/fetchBinaryFile',
+    async (event: FetchBinaryFileEvent) => {
+      console.info('fetchBinaryFile returning', event.uri);
+      return await fetchBinaryFile(event.uri);
+    }
+  );
+  client.onRequest(
+    'malloy/fetchCellData',
+    async (event: FetchCellDataEvent) => {
+      console.info('fetchCellData returning', event.uri);
+      return await fetchCellData(event.uri);
+    }
+  );
+};

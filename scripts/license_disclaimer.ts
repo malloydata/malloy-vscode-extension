@@ -49,7 +49,9 @@ export function generateDisclaimer(
     throw new Error(`${filePath} already exists`);
   }
 
+  console.log('Generating third party licenses');
   doDependencies(nodeModulesPath, rootPackageJson);
+  console.log(`Wrote ${filePath}`);
 }
 
 function doDependencies(nodeModulesPath: string, packageJson: any): void {

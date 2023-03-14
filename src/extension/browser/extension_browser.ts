@@ -32,21 +32,11 @@ import {
 // import { WorkerConnection } from "../../worker/browser/worker_connection";
 import {WorkerConnection} from '../../worker/browser/workerless_worker';
 import {setupSubscriptions} from '../subscriptions';
-import {
-  FetchBinaryFileEvent,
-  FetchCellDataEvent,
-  FetchFileEvent,
-  MalloyConfig,
-} from '../types';
+import {MalloyConfig} from '../types';
 import {connectionManager} from './connection_manager';
 import {ConnectionsProvider} from '../tree_views/connections_view';
 import {editConnectionsCommand} from './commands/edit_connections';
-import {
-  fetchFile,
-  fetchBinaryFile,
-  fetchCellData,
-  VSCodeURLReader,
-} from '../utils';
+import {initFileMessaging, VSCodeURLReader} from '../utils';
 import {setWorker} from '../../worker/worker';
 
 let client: LanguageClient;
@@ -109,25 +99,7 @@ async function setupLanguageServer(
   client.start();
   await client.onReady();
 
-  client.onRequest('malloy/fetchFile', async (event: FetchFileEvent) => {
-    console.info('fetchFile returning', event.uri);
-    return await fetchFile(event.uri);
-  });
-
-  client.onRequest(
-    'malloy/fetchBinaryFile',
-    async (event: FetchBinaryFileEvent) => {
-      console.info('fetchBinaryFile returning', event.uri);
-      return await fetchBinaryFile(event.uri);
-    }
-  );
-  client.onRequest(
-    'malloy/fetchCellData',
-    async (event: FetchCellDataEvent) => {
-      console.info('fetchCellData returning', event.uri);
-      return await fetchCellData(event.uri);
-    }
-  );
+  initFileMessaging(client);
 }
 
 function sendWorkerConfig() {
