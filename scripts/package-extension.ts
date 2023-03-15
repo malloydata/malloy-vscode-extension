@@ -59,17 +59,17 @@ export async function doPackage(
       : `malloy-vscode-${version}.vsix`
   );
 
-  fs.copyFileSync('package.json', 'package.json.original');
-
-  packageJSON.version = version;
-  if (target === 'web') {
-    delete packageJSON['main'];
-  } else {
-    delete packageJSON['browser'];
-  }
-  fs.writeFileSync('package.json', JSON.stringify(packageJSON, null, 2));
-
   try {
+    fs.copyFileSync('package.json', 'package.json.original');
+
+    packageJSON.version = version;
+    if (target === 'web') {
+      delete packageJSON['main'];
+    } else {
+      delete packageJSON['browser'];
+    }
+    fs.writeFileSync('package.json', JSON.stringify(packageJSON, null, 2));
+
     await createVSIX({
       githubBranch: 'main',
       preRelease,
