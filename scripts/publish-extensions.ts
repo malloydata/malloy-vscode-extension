@@ -31,6 +31,7 @@ import {Target} from './build_common';
 import {targetKeytarMap} from './utils/fetch_keytar';
 import {doPackage} from './package-extension';
 import {publishCloudExtension} from './publish-cloud-extension';
+import {execSync} from 'child_process';
 
 /**
  * @returns Array of version bits. [major, minor, patch]
@@ -78,19 +79,25 @@ async function doPublish(version: string) {
   );
   console.log(`Pre-release: ${preRelease}`);
 
-  for (const target in targetKeytarMap) {
+  for (const target in ['web']) {
+    console.log('Before doPackage');
+    console.log(execSync('ls -l dist').toString('utf-8'));
+    // TODO(DEBUGGING) targetKeytarMap) {
     const packagePath = await doPackage(
       target as Target,
       versionCode,
       preRelease
     );
 
-    await publishVSIX(packagePath, {
-      githubBranch: 'main',
-      preRelease: preRelease,
-      useYarn: false,
-      pat: process.env['VSCE_PAT'],
-    });
+    console.log('After doPackage');
+    console.log(execSync('ls -l dist').toString('utf-8'));
+
+    // await publishVSIX(packagePath, {
+    //   githubBranch: 'main',
+    //   preRelease: preRelease,
+    //   useYarn: false,
+    //   pat: process.env['VSCE_PAT'],
+    // });
   }
 
   const packagePath = await doPackage('web', versionCode, preRelease);
