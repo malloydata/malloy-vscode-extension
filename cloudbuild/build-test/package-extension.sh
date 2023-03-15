@@ -6,5 +6,6 @@ nix-shell --quiet --pure --command "$(cat <<NIXCMD
   npm ci --silent
   npm run package-extension
   ls -l dist
+  unzip -l dist/malloy-vscode-0.2.0.vsix
 NIXCMD
 )"
