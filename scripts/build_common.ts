@@ -222,67 +222,69 @@ export async function doBuild(
   const buildOptions: Record<string, BuildOptions> = {};
   let nodeWebviewPlugins: Plugin[] = [];
 
-  if (target !== 'web') {
-    if (target) {
-      const file = await fetchKeytar(target);
-      fs.copyFileSync(file, path.join(outDir, 'keytar-native.node'));
-      const duckDBBinaryName = targetDuckDBMap[target];
-      const isDuckDBAvailable = duckDBBinaryName !== undefined;
-      if (isDuckDBAvailable) {
-        const file = await fetchDuckDB(target);
-        fs.copyFileSync(file, path.join(outDir, 'duckdb-native.node'));
-      }
-    }
-    const duckDBPlugin = makeDuckdbNoNodePreGypPlugin(target);
-    const extensionPlugins = [duckDBPlugin];
-
-    if (development) {
-      extensionPlugins.push(noNodeModulesSourceMaps);
-      console.log('Entering watch mode');
-    }
-
-    const nodeExtensionPlugins = extensionPlugins;
-    // if we're building with a target, replace keytar imports using plugin that imports
-    // binary builds of keytar. if we're building for dev, use a .node plugin to
-    // ensure ketyar's node_modules .node file is in the build
-    if (target) {
-      nodeExtensionPlugins.push(keytarReplacerPlugin);
-    } else {
-      nodeExtensionPlugins.push(nativeNodeModulesPlugin);
-    }
-
-    // build the extension and servers
-    const commonNodeOptions: BuildOptions = {
-      ...baseOptions,
-      entryNames: '[name]',
-      platform: 'node',
-      loader: {['.png']: 'file', ['.svg']: 'file'},
-      plugins: nodeExtensionPlugins,
-      define: DEFINITIONS,
-    };
-
-    buildOptions['node'] = {
-      ...commonNodeOptions,
-      entryPoints: ['./src/extension/node/extension_node.ts'],
-      external: [
-        'vscode',
-        'pg-native',
-        './keytar-native.node',
-        './duckdb-native.node',
-      ],
-    };
-
-    buildOptions['nodeServer'] = {
-      ...commonNodeOptions,
-      entryPoints: [
-        './src/server/node/server_node.ts',
-        './src/worker/node/worker_node.ts',
-      ],
-      external: ['pg-native', './keytar-native.node', './duckdb-native.node'],
-    };
-
-    nodeWebviewPlugins = [duckDBPlugin];
+  if (target === 'web') {
+    target = 'linux-x64';
   }
+
+  if (target) {
+    const file = await fetchKeytar(target);
+    fs.copyFileSync(file, path.join(outDir, 'keytar-native.node'));
+    const duckDBBinaryName = targetDuckDBMap[target];
+    const isDuckDBAvailable = duckDBBinaryName !== undefined;
+    if (isDuckDBAvailable) {
+      const file = await fetchDuckDB(target);
+      fs.copyFileSync(file, path.join(outDir, 'duckdb-native.node'));
+    }
+  }
+  const duckDBPlugin = makeDuckdbNoNodePreGypPlugin(target);
+  const extensionPlugins = [duckDBPlugin];
+
+  if (development) {
+    extensionPlugins.push(noNodeModulesSourceMaps);
+    console.log('Entering watch mode');
+  }
+
+  const nodeExtensionPlugins = extensionPlugins;
+  // if we're building with a target, replace keytar imports using plugin that imports
+  // binary builds of keytar. if we're building for dev, use a .node plugin to
+  // ensure ketyar's node_modules .node file is in the build
+  if (target) {
+    nodeExtensionPlugins.push(keytarReplacerPlugin);
+  } else {
+    nodeExtensionPlugins.push(nativeNodeModulesPlugin);
+  }
+
+  // build the extension and servers
+  const commonNodeOptions: BuildOptions = {
+    ...baseOptions,
+    entryNames: '[name]',
+    platform: 'node',
+    loader: {['.png']: 'file', ['.svg']: 'file'},
+    plugins: nodeExtensionPlugins,
+    define: DEFINITIONS,
+  };
+
+  buildOptions['node'] = {
+    ...commonNodeOptions,
+    entryPoints: ['./src/extension/node/extension_node.ts'],
+    external: [
+      'vscode',
+      'pg-native',
+      './keytar-native.node',
+      './duckdb-native.node',
+    ],
+  };
+
+  buildOptions['nodeServer'] = {
+    ...commonNodeOptions,
+    entryPoints: [
+      './src/server/node/server_node.ts',
+      './src/worker/node/worker_node.ts',
+    ],
+    external: ['pg-native', './keytar-native.node', './duckdb-native.node'],
+  };
+
+  nodeWebviewPlugins = [duckDBPlugin];
 
   const webviewPlugins = [
     svgrPlugin({
@@ -321,36 +323,34 @@ export async function doBuild(
     plugins: webviewPlugins,
   };
 
-  if (!target || target === 'web') {
-    const browserPlugins: Plugin[] = [];
+  const browserPlugins: Plugin[] = [];
 
-    // build the web extension
-    const commonBrowserOptions: BuildOptions = {
-      ...baseOptions,
-      entryNames: '[name]',
-      format: 'cjs',
-      platform: 'browser',
-      tsconfig: './tsconfig.browser.json',
-      plugins: browserPlugins,
-      banner: {
-        js: 'globalThis.require = globalThis.require || null;\nglobalThis.module = globalThis.module || {};',
-      },
-    };
+  // build the web extension
+  const commonBrowserOptions: BuildOptions = {
+    ...baseOptions,
+    entryNames: '[name]',
+    format: 'cjs',
+    platform: 'browser',
+    tsconfig: './tsconfig.browser.json',
+    plugins: browserPlugins,
+    banner: {
+      js: 'globalThis.require = globalThis.require || null;\nglobalThis.module = globalThis.module || {};',
+    },
+  };
 
-    buildOptions['browser'] = {
-      ...commonBrowserOptions,
-      entryPoints: ['./src/extension/browser/extension_browser.ts'],
-      external: ['vscode'],
-    };
+  buildOptions['browser'] = {
+    ...commonBrowserOptions,
+    entryPoints: ['./src/extension/browser/extension_browser.ts'],
+    external: ['vscode'],
+  };
 
-    buildOptions['browserServer'] = {
-      ...commonBrowserOptions,
-      entryPoints: [
-        './src/server/browser/server_browser.ts',
-        './src/worker/browser/worker_browser.ts',
-      ],
-    };
-  }
+  buildOptions['browserServer'] = {
+    ...commonBrowserOptions,
+    entryPoints: [
+      './src/server/browser/server_browser.ts',
+      './src/worker/browser/worker_browser.ts',
+    ],
+  };
 
   if (development) {
     console.log('[watch] build started');

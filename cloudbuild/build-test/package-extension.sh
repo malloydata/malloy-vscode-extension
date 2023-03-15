@@ -5,5 +5,6 @@ nix-shell --quiet --pure --command "$(cat <<NIXCMD
   cd /workspace
   npm ci --silent
   npm run package-extension
+  ls -l dist
 NIXCMD
 )"
