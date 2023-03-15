@@ -79,33 +79,34 @@ async function doPublish(version: string) {
   );
   console.log(`Pre-release: ${preRelease}`);
 
-  // for (const target in targetKeytarMap) {
-  //   const packagePath = await doPackage(
-  //     target as Target,
-  //     versionCode,
-  //     preRelease
-  //   );
+  for (const target in targetKeytarMap) {
+    const packagePath = await doPackage(
+      target as Target,
+      versionCode,
+      preRelease
+    );
 
-  //   await publishVSIX(packagePath, {
-  //     githubBranch: 'main',
-  //     preRelease: preRelease,
-  //     useYarn: false,
-  //     pat: process.env['VSCE_PAT'],
-  //   });
-  // }
+    await publishVSIX(packagePath, {
+      githubBranch: 'main',
+      preRelease: preRelease,
+      useYarn: false,
+      pat: process.env['VSCE_PAT'],
+    });
+  }
 
   console.log('Before doPackage');
   console.log(execSync('ls -l dist').toString('utf-8'));
   const packagePath = await doPackage('web', versionCode, preRelease);
-  console.log('After doPackage');
+  console.log('Before publishVSIX');
   console.log(execSync('ls -l dist').toString('utf-8'));
-
-  // await publishVSIX(packagePath, {
-  //   githubBranch: 'main',
-  //   preRelease: preRelease,
-  //   useYarn: false,
-  //   pat: process.env['VSCE_PAT'],
-  // });
+  await publishVSIX(packagePath, {
+    githubBranch: 'main',
+    preRelease: preRelease,
+    useYarn: false,
+    pat: process.env['VSCE_PAT'],
+  });
+  console.log('After publishVSIX');
+  console.log(execSync('ls -l dist').toString('utf-8'));
 
   if (!preRelease) {
     const cloudPackagePath = await doPackage(
