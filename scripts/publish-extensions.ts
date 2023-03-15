@@ -80,18 +80,24 @@ async function doPublish(version: string) {
   console.log(`Pre-release: ${preRelease}`);
 
   for (const target in targetKeytarMap) {
+    console.log('Before doPackage');
+    console.log(execSync('ls -l dist').toString('utf-8'));
     const packagePath = await doPackage(
       target as Target,
       versionCode,
       preRelease
     );
 
+    console.log('Before publishVSIX');
+    console.log(execSync('ls -l dist').toString('utf-8'));
     await publishVSIX(packagePath, {
       githubBranch: 'main',
       preRelease: preRelease,
       useYarn: false,
       pat: process.env['VSCE_PAT'],
     });
+    console.log('After publishVSIX');
+    console.log(execSync('ls -l dist').toString('utf-8'));
   }
 
   console.log('Before doPackage');
