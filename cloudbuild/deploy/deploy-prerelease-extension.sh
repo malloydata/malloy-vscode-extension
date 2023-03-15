@@ -6,6 +6,5 @@ nix-shell --pure --keep VSCE_PAT --keep GA_API_SECRET --keep GA_MEASUREMENT_ID -
   cd /workspace
   npm ci --loglevel error
   npm run build && npm run publish-extensions pre-release
-  ls -l dist
 NIXCMD
 )"

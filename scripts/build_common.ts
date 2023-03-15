@@ -27,7 +27,7 @@ import fs from 'fs';
 import {build, BuildOptions, context, Plugin} from 'esbuild';
 import {nativeNodeModulesPlugin} from '../third_party/github.com/evanw/esbuild/native-modules-plugin';
 import * as path from 'path';
-import {exec, execSync} from 'child_process';
+import {execSync} from 'child_process';
 import {noNodeModulesSourceMaps} from '../third_party/github.com/evanw/esbuild/no-node-modules-sourcemaps';
 import svgrPlugin from 'esbuild-plugin-svgr';
 import {fetchKeytar, targetKeytarMap} from './utils/fetch_keytar';
@@ -192,8 +192,6 @@ export async function doBuild(
   if (fs.existsSync(fullLicenseFilePath)) {
     fs.rmSync(fullLicenseFilePath);
   }
-  console.log('before generateDisclaimer');
-  console.log(execSync('ls -l dist').toString('utf-8'));
   if (!development) {
     generateDisclaimer(
       path.join(__dirname, '..', 'package.json'),
@@ -203,8 +201,6 @@ export async function doBuild(
   } else {
     fs.writeFileSync(fullLicenseFilePath, 'LICENSES GO HERE\n');
   }
-  console.log('after generateDisclaimer');
-  console.log(execSync('ls -l dist').toString('utf-8'));
 
   fs.writeFileSync(
     path.join(outDir, 'build-sha'),
@@ -371,5 +367,4 @@ export async function doBuild(
       }
     }
   }
-  execSync('ls -l dist');
 }
