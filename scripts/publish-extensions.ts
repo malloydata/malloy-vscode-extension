@@ -94,7 +94,6 @@ async function doPublish(version: string) {
   }
 
   const packagePath = await doPackage('web', versionCode, preRelease);
-
   await publishVSIX(packagePath, {
     githubBranch: 'main',
     preRelease: preRelease,
