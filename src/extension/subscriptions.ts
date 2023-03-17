@@ -36,8 +36,9 @@ import {
   showLicensesCommand,
 } from './commands';
 import {trackModelLoad, trackModelSave} from './telemetry';
+import {HelpViewProvider} from './webviews/help_view';
 import {ConnectionManager} from '../common/connection_manager';
-import {URLReader} from '@malloydata/malloy';
+import {Malloy, DocumentHighlight, URLReader} from '@malloydata/malloy';
 import {v4 as uuid} from 'uuid';
 
 import {MALLOY_EXTENSION_STATE} from './state';
@@ -138,6 +139,33 @@ export const setupSubscriptions = (
     })
   );
 
+  // Malloy HelpView provider.
+  const provider = new HelpViewProvider(context.extensionUri);
+
+  context.subscriptions.push(
+    vscode.window.onDidChangeTextEditorSelection(
+      (e: vscode.TextEditorSelectionChangeEvent) => {
+        const document = e.textEditor.document;
+        if (document.languageId === 'malloy') {
+          const parse = Malloy.parse({source: document.getText()});
+          const highlight = highlightForPosition(
+            parse.highlights,
+            e.selections[0].start
+          );
+
+          if (highlight) {
+            provider.showHelpFor(highlight.type);
+          }
+        }
+      }
+    )
+  );
+
+  // Malloy help view.
+  context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider('malloyHelp', provider)
+  );
+
   activateNotebookSerializer(context);
   activateNotebookController(context, connectionManager, urlReader);
 
@@ -148,4 +176,19 @@ export const setupSubscriptions = (
     context.globalState.update('malloy_client_id', clientId);
   }
   MALLOY_EXTENSION_STATE.setClientId(clientId);
+};
+
+const highlightForPosition = (
+  highlights: DocumentHighlight[],
+  {character, line}: vscode.Position
+) => {
+  return highlights.find(highlight => {
+    const {start, end} = highlight.range;
+    const afterStart =
+      line > start.line ||
+      (line === start.line && character >= start.character);
+    const beforeEnd =
+      line < end.line || (line === end.line && character <= end.character);
+    return afterStart && beforeEnd;
+  });
 };

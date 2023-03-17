@@ -65,7 +65,6 @@
     "onNotebook:malloy-notebook"
   ],
   "main": "./dist/extension_node",
-  "browser": "./dist/extension_browser",
   "configurationDefaults": {
     "[malloy]": {
       "editor.semanticHighlighting.enabled": true
@@ -76,6 +75,15 @@
     "url": "https://github.com/malloydata/malloy-vscode-extension"
   },
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "malloy",
+          "title": "Malloy",
+          "icon": "img/logo.png"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "malloy.showLicenses",
@@ -206,6 +214,14 @@
       }
     ],
     "views": {
+      "malloy": [
+        {
+          "id": "malloyHelp",
+          "name": "Help",
+          "type": "webview",
+          "when": "malloy.extensionStatus == installed || resourceFilename =~ /\\.malloy$/"
+        }
+      ],
       "explorer": [
         {
           "id": "malloySchema",
@@ -442,6 +458,7 @@
     "duckdb": "0.7.1",
     "keytar": "7.7.0",
     "lodash": "^4.17.21",
+    "markdown-to-jsx": "^7.1.9",
     "node-fetch": "^2.6.6",
     "prismjs": "^1.28.0",
     "react": "^17.0.2",
