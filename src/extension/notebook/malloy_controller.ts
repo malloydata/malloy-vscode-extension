@@ -30,6 +30,7 @@ import {
 } from '@malloydata/malloy';
 import {ConnectionManager} from '../../common/connection_manager';
 import {newUntitledNotebookCommand} from '../commands/new_untitled_notebook';
+import {registerRendererCommands} from './commands/renderer';
 
 const NO_QUERY = 'Model has no queries.';
 
@@ -48,6 +49,8 @@ export function activateNotebookController(
       newUntitledNotebookCommand
     )
   );
+
+  registerRendererCommands(context);
 }
 
 class MalloyController {
@@ -123,8 +126,7 @@ class MalloyController {
         query = runtime.loadQuery(url);
       }
       const results = await query.run();
-
-      let meta = {};
+      let meta = cell.metadata ? {...cell.metadata} : {};
       const style = text.match(/\/\/ --! style ([a-z_]+)/m);
       if (style) {
         meta = {renderer: style[1]};
