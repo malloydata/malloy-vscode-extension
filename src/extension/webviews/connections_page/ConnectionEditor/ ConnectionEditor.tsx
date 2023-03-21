@@ -28,41 +28,25 @@ import {
   ConnectionBackend,
   ConnectionBackendNames,
   ConnectionConfig,
-<<<<<<< HEAD
-} from '../../../../common/connection_manager_types';
-import {ConnectionMessageTest} from '../../../../common/message_types';
-import {Dropdown} from '../../components';
-=======
   DuckDBConnectionConfig,
   ExternalConnection,
   ExternalConnectionConfig,
   PostgresConnectionConfig,
-} from "../../../../common/connection_manager_types";
-import { ConnectionMessageTest } from "../../../message_types";
-import { Dropdown } from "../../components";
->>>>>>> 983bb58 (Basic dynamic connection loading)
+} from '../../../../common/connection_manager_types';
+import {ConnectionMessageTest} from '../../../../common/message_types';
+import {Dropdown} from '../../components';
 import {
   VSCodeButton,
   VSCodeDivider,
   VSCodeTag,
-<<<<<<< HEAD
 } from '@vscode/webview-ui-toolkit/react';
-import {ButtonGroup} from '../ButtonGroup';
+import {ButtonGroup} from '../../components/ButtonGroup';
 import {BigQueryConnectionEditor} from './BigQueryConnectionEditor';
-import {Label} from './Label';
-import {LabelCell} from './LabelCell';
+import {Label} from '../../components/Label';
+import {LabelCell} from '../../components/LabelCell';
 import {PostgresConnectionEditor} from './PostgresConnectionEditor';
 import {DuckDBConnectionEditor} from './DuckDBConnectionEditor';
-=======
-} from "@vscode/webview-ui-toolkit/react";
-import { ButtonGroup } from "../../components/ButtonGroup";
-import { BigQueryConnectionEditor } from "./BigQueryConnectionEditor";
-import { Label } from "../../components/Label";
-import { LabelCell } from "../../components/LabelCell";
-import { PostgresConnectionEditor } from "./PostgresConnectionEditor";
-import { DuckDBConnectionEditor } from "./DuckDBConnectionEditor";
-import { ExternalConnectionEditor } from "./ExternalConnectionEditor";
->>>>>>> 983bb58 (Basic dynamic connection loading)
+import {ExternalConnectionEditor} from './ExternalConnectionEditor';
 
 interface ConnectionEditorProps {
   config: ConnectionConfig;
@@ -89,22 +73,10 @@ export const ConnectionEditor: React.FC<ConnectionEditorProps> = ({
   availableBackends,
   externalConnections,
 }) => {
-<<<<<<< HEAD
-  const allBackendOptions: ConnectionBackend[] = [
-    ConnectionBackend.BigQuery,
-    ConnectionBackend.Postgres,
-    ConnectionBackend.DuckDB,
-  ];
-
-  const backendOptions = allBackendOptions
-    .filter(option => availableBackends.includes(option))
-    .map(value => ({value, label: ConnectionBackendNames[value]}));
-=======
-  const backendOptions = availableBackends.map((value) => ({
+  const backendOptions = availableBackends.map(value => ({
     value,
     label: ConnectionBackendNames[value] || externalConnections[value]?.title,
   }));
->>>>>>> 983bb58 (Basic dynamic connection loading)
 
   return (
     <ConnectionEditorBox>
