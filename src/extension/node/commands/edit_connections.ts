@@ -182,7 +182,7 @@ async function handleConnectionsPreSave(
         `connections.${connection.id}.password`,
         connection.password
       );
-    } else {
+    } else if (!connection.isGenerated) {
       modifiedConnections.push(connection);
     }
   }

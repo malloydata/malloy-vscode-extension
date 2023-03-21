@@ -156,7 +156,9 @@ async function handleConnectionsPreSave(
   for (let index = 0; index < connections.length; index++) {
     const connection = connections[index];
     connection.isDefault = index === defaultIndex;
-    modifiedConnections.push(connection);
+    if (!connection.isGenerated) {
+      modifiedConnections.push(connection);
+    }
   }
   return modifiedConnections;
 }
