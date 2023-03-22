@@ -31,16 +31,16 @@ import {
   MessageHandler,
   MessageRun,
   WorkerQueryPanelMessage,
-} from './types';
+} from '../common/worker_message_types';
 
 import {
   QueryMessageType,
   QueryPanelMessage,
   QueryRunStatus,
-} from '../extension/message_types';
+} from '../common/message_types';
 import {createRunnable} from './create_runnable';
 import {ConnectionManager} from '../common/connection_manager';
-import {CellData} from '../extension/types';
+import {CellData} from '../common/types';
 
 interface QueryEntry {
   panelId: string;

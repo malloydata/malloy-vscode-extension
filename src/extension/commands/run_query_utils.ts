@@ -28,10 +28,10 @@ import {MALLOY_EXTENSION_STATE, RunState} from '../state';
 import {Result} from '@malloydata/malloy';
 import turtleIcon from '../../media/turtle.svg';
 import {getWebviewHtml} from '../webviews';
-import {QueryMessageType, QueryRunStatus} from '../message_types';
+import {QueryMessageType, QueryRunStatus} from '../../common/message_types';
 import {WebviewMessageManager} from '../webview_message_manager';
 import {queryDownload} from './query_download';
-import {BaseWorker, WorkerMessage} from '../../worker/types';
+import {BaseWorker, WorkerMessage} from '../../common/worker_message_types';
 import {trackQueryRun} from '../telemetry';
 import {QuerySpec} from './query_spec';
 

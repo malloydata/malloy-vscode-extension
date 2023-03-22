@@ -29,7 +29,7 @@ import {
   ConnectionConfig,
   getDefaultIndex,
 } from '../../../../common/connection_manager_types';
-import {ConnectionMessageTest} from '../../../message_types';
+import {ConnectionMessageTest} from '../../../../common/message_types';
 import {VSCodeButton} from '../../components';
 import {ButtonGroup} from '../ButtonGroup';
 import {ConnectionEditor} from '../ConnectionEditor';

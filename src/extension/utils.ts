@@ -30,7 +30,7 @@ import {
   FetchCellDataEvent,
   FetchFileEvent,
   CellData,
-} from './types';
+} from '../common/types';
 
 /**
  * Transforms vscode-notebook-cell: Uris to file: or vscode-vfs: URLS

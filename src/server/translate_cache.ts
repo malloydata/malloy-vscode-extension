@@ -26,7 +26,7 @@ import {Model, ModelMaterializer, Runtime} from '@malloydata/malloy';
 import {TextDocument} from 'vscode-languageserver-textdocument';
 
 import {ConnectionManager} from '../common/connection_manager';
-import {CellData} from '../extension/types';
+import {CellData} from '../common/types';
 
 export class TranslateCache implements TranslateCache {
   cache = new Map<string, {model: Model; version: number}>();

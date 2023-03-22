@@ -29,7 +29,7 @@ import {
   ConnectionPanelMessage,
   ConnectionServiceAccountKeyRequestStatus,
   ConnectionTestStatus,
-} from '../../message_types';
+} from '../../../common/message_types';
 import {WebviewMessageManager} from '../../webview_message_manager';
 import {
   ConnectionConfig,

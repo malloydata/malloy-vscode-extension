@@ -22,105 +22,106 @@
  */
 
 /* eslint-disable no-console */
-import * as child_process from 'child_process';
 import * as vscode from 'vscode';
-import {fetchBinaryFile, fetchCellData, fetchFile} from '../../extension/utils';
+import {fetchBinaryFile, fetchCellData, fetchFile} from '../utils';
 import {
   Message,
   WorkerMessage,
   WorkerReadBinaryMessage,
   WorkerReadCellDataMessage,
   WorkerReadMessage,
-} from '../types';
+} from '../../common/worker_message_types';
 const workerLog = vscode.window.createOutputChannel('Malloy Worker');
 
-const DEFAULT_RESTART_SECONDS = 1;
+// const DEFAULT_RESTART_SECONDS = 1;
+
+export type ListenerType = (message: WorkerMessage) => void;
 
 export class WorkerConnection {
-  worker!: child_process.ChildProcess;
+  worker!: Worker;
+  listeners: Record<string, ListenerType[]> = {};
 
   constructor(context: vscode.ExtensionContext) {
-    const workerModule = context.asAbsolutePath('dist/worker_node.js');
-    const execArgv = ['--no-lazy'];
-    if (context.extensionMode === vscode.ExtensionMode.Development) {
-      execArgv.push(
-        '--inspect=6010',
-        '--preserve-symlinks',
-        '--enable-source-maps'
-      );
-    }
+    const workerModule = vscode.Uri.joinPath(
+      context.extensionUri,
+      'dist/worker_browser.js'
+    );
 
     const startWorker = () => {
-      this.worker = child_process
-        .fork(workerModule, {execArgv})
-        .on('error', console.error)
-        .on('exit', status => {
-          if (status !== 0) {
-            console.error(`Worker exited with ${status}`);
-            console.info(`Restarting in ${DEFAULT_RESTART_SECONDS} seconds`);
-            // Maybe exponential backoff? Not sure what our failure
-            // modes are going to be
-            setTimeout(startWorker, DEFAULT_RESTART_SECONDS * 1000);
-            this.notifyListeners({type: 'dead'});
-          }
-        })
-        .on('message', (message: WorkerMessage) => {
-          switch (message.type) {
-            case 'log':
-              workerLog.appendLine(`worker: ${message.message}`);
-              break;
-            case 'read': {
-              workerLog.appendLine(`worker: reading file ${message.uri}`);
-              this.readFile(message);
-              break;
+      this.worker = new Worker(workerModule.toString());
+
+      // .on("error", console.error)
+      // .on("exit", (status) => {
+      //   if (status !== 0) {
+      //     console.error(`Worker exited with ${status}`);
+      //     console.info(`Restarting in ${DEFAULT_RESTART_SECONDS} seconds`);
+      //     // Maybe exponential backoff? Not sure what our failure
+      //     // modes are going to be
+      //     setTimeout(startWorker, DEFAULT_RESTART_SECONDS * 1000);
+      //     this.notifyListeners({ type: "dead" });
+      //   }
+      // })
+      this.worker.addEventListener('message', event => {
+        const message = event.data;
+        console.log('Extension received', message);
+        switch (message.type) {
+          case 'log':
+            workerLog.appendLine(`worker: ${message.message}`);
+            break;
+          case 'read':
+            workerLog.appendLine(`worker: reading file ${message.uri}`);
+            this.readFile(message);
+            break;
+          case 'read_binary':
+            workerLog.appendLine(`worker: reading binary file ${message.uri}`);
+            this.readFileBinary(message);
+            break;
+          case 'read_cell_data':
+            workerLog.appendLine(`worker: reading cell data ${message.uri}`);
+            this.readCellData(message);
+            break;
+          default:
+            if (this.listeners['message']) {
+              this.listeners['message'].forEach(listener => listener(message));
             }
-            case 'read_binary': {
-              workerLog.appendLine(
-                `worker: reading binary file ${message.uri}`
-              );
-              this.readFileBinary(message);
-              break;
-            }
-            case 'read_cell_data': {
-              workerLog.appendLine(
-                `worker: reading cell data for ${message.uri}`
-              );
-              this.readCellData(message);
-              break;
-            }
-          }
-        });
+        }
+      });
     };
     startWorker();
   }
 
   send(message: Message): void {
-    this.worker.send?.(message);
+    this.worker.postMessage(message);
   }
 
   notifyListeners(message: WorkerMessage): void {
-    this.worker.emit('message', message);
+    Object.keys(this.listeners).forEach(event => {
+      this.listeners[event].forEach(listener => listener(message));
+    });
   }
 
   on(event: string, listener: (message: WorkerMessage) => void): void {
-    this.worker.on(event, listener);
+    this.listeners[event] ??= [];
+    this.listeners[event].push(listener);
   }
 
   off(event: string, listener: (message: WorkerMessage) => void): void {
-    this.worker.off(event, listener);
+    if (this.listeners[event]) {
+      this.listeners[event] = this.listeners[event].filter(l => l !== listener);
+    }
   }
 
   stop(): void {
-    this.worker.kill('SIGHUP');
+    this.worker.terminate();
   }
 
   async readFile(message: WorkerReadMessage): Promise<void> {
     const {id, uri} = message;
     try {
       const data = await fetchFile(uri);
-      this.send?.({type: 'read', id, uri, data});
+      this.send({type: 'read', id, uri, data});
     } catch (error) {
-      this.send?.({type: 'read', id, uri, error: error.message});
+      this.send({type: 'read', id, uri, error: error.message});
     }
   }
 

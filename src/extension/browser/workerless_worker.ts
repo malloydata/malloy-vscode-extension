@@ -22,13 +22,17 @@
  */
 
 import * as vscode from 'vscode';
+import {VSCodeURLReader as WorkerURLReader, fetchCellData} from '../utils';
 import {
-  VSCodeURLReader as WorkerURLReader,
-  fetchCellData,
-} from '../../extension/utils';
-import {BaseWorker, Message, WorkerMessage} from '../types';
-import {connectionManager} from '../../extension/browser/connection_manager';
-import {cancelQuery, runQuery} from '../run_query';
+  BaseWorker,
+  Message,
+  WorkerMessage,
+} from '../../common/worker_message_types';
+import {connectionManager} from './connection_manager';
+// Required because this is a stub for the worker because of
+// https://github.com/malloydata/malloy-vscode-extension/issues/58
+// eslint-disable-next-line no-restricted-imports
+import {cancelQuery, runQuery} from '../../worker/run_query';
 
 const workerLog = vscode.window.createOutputChannel('Malloy Worker');
 

@@ -22,7 +22,7 @@
  */
 
 import {ConnectionManager} from '../../common/connection_manager';
-import {WebConnectionFactory} from '../../extension/browser/connection_factory';
+import {WebConnectionFactory} from '../../common/connections/browser/connection_factory';
 import {fetchFileBinary} from './files';
 
 export const connectionManager = new ConnectionManager(

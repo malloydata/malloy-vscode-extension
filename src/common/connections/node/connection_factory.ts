@@ -22,16 +22,16 @@
  */
 
 import {TestableConnection} from '@malloydata/malloy';
-import {ConnectionFactory} from '../../common/connections/types';
+import {ConnectionFactory} from '../types';
 import {
   ConfigOptions,
   ConnectionBackend,
   ConnectionConfig,
-} from '../../common/connection_manager_types';
-import {createBigQueryConnection} from '../../common/connections/bigquery_connection';
-import {createDuckDbConnection} from '../../common/connections/duckdb_connection';
-import {createPostgresConnection} from '../../common/connections/postgres_connection';
-import {isDuckDBAvailable} from '../../common/duckdb_availability';
+} from '../../connection_manager_types';
+import {createBigQueryConnection} from '../bigquery_connection';
+import {createDuckDbConnection} from '../duckdb_connection';
+import {createPostgresConnection} from '../postgres_connection';
+import {isDuckDBAvailable} from '../../duckdb_availability';
 
 import {fileURLToPath} from 'url';
 

@@ -26,7 +26,7 @@ import * as _webviewAPI from 'vscode-webview';
 import ReactDOM from 'react-dom';
 import React from 'react';
 import {App} from './App';
-import {QueryPanelMessage} from '../../message_types';
+import {QueryPanelMessage} from '../../../common/message_types';
 import {getVSCodeAPI, QueryVSCodeContext} from './query_vscode_context';
 
 (() => {

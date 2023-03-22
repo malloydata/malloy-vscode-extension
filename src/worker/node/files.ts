@@ -22,8 +22,8 @@
  */
 
 import {URLReader} from '@malloydata/malloy';
-import {CellData} from '../../extension/types';
-import {FetchMessage} from '../types';
+import {CellData} from '../../common/types';
+import {FetchMessage} from '../../common/worker_message_types';
 
 let idx = 1;
 

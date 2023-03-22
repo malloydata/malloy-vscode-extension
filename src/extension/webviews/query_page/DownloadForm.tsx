@@ -23,7 +23,7 @@
 
 import React, {useState} from 'react';
 import styled from 'styled-components';
-import {QueryDownloadOptions} from '../../message_types';
+import {QueryDownloadOptions} from '../../../common/message_types';
 import {Dropdown, TextField, VSCodeButton} from '../components';
 
 interface DownloadFormProps {

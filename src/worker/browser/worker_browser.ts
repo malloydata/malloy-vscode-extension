@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {connectionManager} from '../../server/browser/connections_browser';
+import {connectionManager} from './connections_browser';
 import {BrowserMessageHandler} from './message_handler';
 
 export const messageHandler = new BrowserMessageHandler(connectionManager);

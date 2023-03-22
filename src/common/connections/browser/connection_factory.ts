@@ -22,13 +22,13 @@
  */
 
 import {TestableConnection} from '@malloydata/malloy';
-import {ConnectionFactory} from '../../common/connections/types';
+import {ConnectionFactory} from '../types';
 import {
   ConfigOptions,
   ConnectionBackend,
   ConnectionConfig,
-} from '../../common/connection_manager_types';
-import {createDuckDbWasmConnection} from '../../common/connections/duckdb_wasm_connection';
+} from '../../connection_manager_types';
+import {createDuckDbWasmConnection} from '../duckdb_wasm_connection';
 import {DuckDBWASMConnection} from '@malloydata/db-duckdb/wasm';
 
 export type FetchCallback = (uri: string) => Promise<Uint8Array>;

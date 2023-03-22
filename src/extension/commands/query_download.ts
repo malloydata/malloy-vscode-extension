@@ -23,7 +23,7 @@
 /* eslint-disable no-console */
 
 import {CSVWriter, JSONWriter, Result, WriteStream} from '@malloydata/malloy';
-import {QueryDownloadOptions} from '../message_types';
+import {QueryDownloadOptions} from '../../common/message_types';
 
 import * as vscode from 'vscode';
 import {Utils} from 'vscode-uri';
@@ -33,7 +33,7 @@ import {
   MessageDownload,
   WorkerMessage,
   WorkerQuerySpec,
-} from '../../worker/types';
+} from '../../common/worker_message_types';
 import {MALLOY_EXTENSION_STATE} from '../state';
 
 /**

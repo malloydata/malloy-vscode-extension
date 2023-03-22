@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {HelpPanelMessage} from '../../message_types';
+import {HelpPanelMessage} from '../../../common/message_types';
 import {makeVSCodeContext, makeUseVSCodeContext} from '../vscode_context';
 
 export const HelpVSCodeContext = makeVSCodeContext<void, HelpPanelMessage>();

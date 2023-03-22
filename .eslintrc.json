@@ -39,5 +39,62 @@
       "warn",
       {"prefer": "parameter-property"}
     ]
-  }
+  },
+  "overrides": [
+    {
+      "files": ["src/server/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": ["**/extension/**", "**/worker/**", "vscode"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/worker/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": ["**/extension/**", "**/server/**", "vscode"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/extension/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": ["**/worker/**", "**/server/**"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/common/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": ["vscode"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["**/browser/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": ["fs", "path"]
+          }
+        ]
+      }
+    }
+  ]
 }

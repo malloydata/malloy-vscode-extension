@@ -22,7 +22,7 @@
  */
 
 import * as vscode from 'vscode';
-import {BaseWorker} from '../../worker/types';
+import {BaseWorker} from '../../common/worker_message_types';
 import {MALLOY_EXTENSION_STATE} from '../state';
 import {runMalloyQuery} from './run_query_utils';
 
