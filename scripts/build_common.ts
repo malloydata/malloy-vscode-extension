@@ -213,7 +213,7 @@ export async function doBuild(
     sourcemap: development ? 'inline' : false,
     outdir: outDir,
     loader: {['.svg']: 'file'},
-    metafile: true,
+    metafile: metadata,
     logLevel: 'info',
     target: 'node12.22',
     define: DEFINITIONS,
@@ -364,7 +364,7 @@ export async function doBuild(
       console.log(`\nBuilding ${name}`);
       const result = await build(buildOptions[name]);
       if (metadata) {
-        fs.writeFileSync(`meta-${name}.json`, JSON.stringify(result));
+        fs.writeFileSync(`meta-${name}.json`, JSON.stringify(result.metafile));
       }
     }
   }
