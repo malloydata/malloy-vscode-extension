@@ -44,6 +44,7 @@ import {v4 as uuid} from 'uuid';
 import {MALLOY_EXTENSION_STATE} from './state';
 import {activateNotebookSerializer} from './notebook/malloy_serializer';
 import {activateNotebookController} from './notebook/malloy_controller';
+import {BaseWorker} from '../worker/types';
 
 function getNewClientId(): string {
   return uuid();
@@ -52,35 +53,46 @@ function getNewClientId(): string {
 export const setupSubscriptions = (
   context: vscode.ExtensionContext,
   urlReader: URLReader,
-  connectionManager: ConnectionManager
+  connectionManager: ConnectionManager,
+  worker: BaseWorker
 ) => {
   MALLOY_EXTENSION_STATE.setExtensionUri(context.extensionUri);
 
   // Run Query (whole file)
   context.subscriptions.push(
-    vscode.commands.registerCommand('malloy.runQueryFile', runQueryFileCommand)
+    vscode.commands.registerCommand(
+      'malloy.runQueryFile',
+      (queryIndex?: number) => runQueryFileCommand(worker, queryIndex)
+    )
   );
 
   // Run query
   context.subscriptions.push(
-    vscode.commands.registerCommand('malloy.runQuery', runQueryCommand)
+    vscode.commands.registerCommand(
+      'malloy.runQuery',
+      (query: string, name?: string) => runQueryCommand(worker, query, name)
+    )
   );
 
   // Run named query
   context.subscriptions.push(
-    vscode.commands.registerCommand('malloy.runNamedQuery', runNamedQuery)
+    vscode.commands.registerCommand('malloy.runNamedQuery', (name: string) =>
+      runNamedQuery(worker, name)
+    )
   );
 
   // Run named SQL block
   context.subscriptions.push(
-    vscode.commands.registerCommand('malloy.runNamedSQLBlock', runNamedSQLBlock)
+    vscode.commands.registerCommand('malloy.runNamedSQLBlock', (name: string) =>
+      runNamedSQLBlock(worker, name)
+    )
   );
 
   // Run unnamed SQL block
   context.subscriptions.push(
     vscode.commands.registerCommand(
       'malloy.runUnnamedSQLBlock',
-      runUnnamedSQLBlock
+      (index: number) => runUnnamedSQLBlock(worker, index)
     )
   );
 

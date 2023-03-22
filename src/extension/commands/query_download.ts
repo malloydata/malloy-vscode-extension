@@ -24,12 +24,12 @@
 
 import {CSVWriter, JSONWriter, Result, WriteStream} from '@malloydata/malloy';
 import {QueryDownloadOptions} from '../message_types';
-import {getWorker} from '../../worker/worker';
 
 import * as vscode from 'vscode';
 import {Utils} from 'vscode-uri';
 import {QuerySpec} from './query_spec';
 import {
+  BaseWorker,
   MessageDownload,
   WorkerMessage,
   WorkerQuerySpec,
@@ -59,13 +59,13 @@ class VSCodeWriteStream implements WriteStream {
 }
 
 const sendDownloadMessage = (
+  worker: BaseWorker,
   query: WorkerQuerySpec,
   panelId: string,
   name: string,
   uri: string,
   downloadOptions: QueryDownloadOptions
 ) => {
-  const worker = getWorker();
   const message: MessageDownload = {
     type: 'download',
     query,
@@ -78,6 +78,7 @@ const sendDownloadMessage = (
 };
 
 export async function queryDownload(
+  worker: BaseWorker,
   query: QuerySpec,
   downloadOptions: QueryDownloadOptions,
   currentResults: Result,
@@ -135,9 +136,9 @@ export async function queryDownload(
             `Malloy Download (${name}): Complete`
           );
         } else {
-          const worker = getWorker();
           const {file, ...params} = query;
           sendDownloadMessage(
+            worker,
             {
               uri: file.uri.toString(),
               ...params,

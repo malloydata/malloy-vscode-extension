@@ -37,7 +37,6 @@ import {connectionManager} from './connection_manager';
 import {ConnectionsProvider} from '../tree_views/connections_view';
 import {editConnectionsCommand} from './commands/edit_connections';
 import {initFileMessaging, VSCodeURLReader} from '../utils';
-import {setWorker} from '../../worker/worker';
 
 let client: LanguageClient;
 let worker: WorkerConnection;
@@ -46,7 +45,8 @@ export let extensionModeProduction: boolean;
 
 export function activate(context: vscode.ExtensionContext): void {
   const urlReader = new VSCodeURLReader();
-  setupSubscriptions(context, urlReader, connectionManager);
+  setupWorker(context);
+  setupSubscriptions(context, urlReader, connectionManager, worker);
 
   const connectionsTree = new ConnectionsProvider(context, connectionManager);
   context.subscriptions.push(
@@ -68,7 +68,6 @@ export function activate(context: vscode.ExtensionContext): void {
     )
   );
   setupLanguageServer(context);
-  setupWorker(context);
 }
 
 export async function deactivate(): Promise<void> | undefined {
@@ -114,7 +113,6 @@ function sendWorkerConfig() {
 
 function setupWorker(context: vscode.ExtensionContext): void {
   worker = new WorkerConnection(context);
-  setWorker(worker);
   sendWorkerConfig();
 }
 
