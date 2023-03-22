@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {ConnectionPanelMessage} from '../../message_types';
+import {ConnectionPanelMessage} from '../../../common/message_types';
 import {makeUseVSCodeContext, makeVSCodeContext} from '../vscode_context';
 
 export const ConnectionsVSCodeContext = makeVSCodeContext<

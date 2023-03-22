@@ -28,7 +28,7 @@ import {
   ConnectionBackendNames,
   ConnectionConfig,
 } from '../../../../common/connection_manager_types';
-import {ConnectionMessageTest} from '../../../message_types';
+import {ConnectionMessageTest} from '../../../../common/message_types';
 import {Dropdown} from '../../components';
 import {
   VSCodeButton,

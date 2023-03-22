@@ -21,11 +21,8 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {
-  QueryDownloadOptions,
-  QueryPanelMessage,
-} from '../extension/message_types';
-import {CellData, MalloyConfig} from '../extension/types';
+import {QueryDownloadOptions, QueryPanelMessage} from './message_types';
+import {CellData, MalloyConfig} from './types';
 
 interface NamedQuerySpec {
   type: 'named';

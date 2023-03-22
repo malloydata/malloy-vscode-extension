@@ -35,7 +35,7 @@ import {
   QueryMessageType,
   QueryPanelMessage,
   QueryRunStatus,
-} from '../../message_types';
+} from '../../../common/message_types';
 import {Spinner} from '../components';
 import {ResultKind, ResultKindToggle} from './ResultKindToggle';
 import Prism from 'prismjs';

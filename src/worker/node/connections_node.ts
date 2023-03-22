@@ -22,7 +22,7 @@
  */
 
 import {ConnectionManager} from '../../common/connection_manager';
-import {DesktopConnectionFactory} from '../../extension/node/connection_factory';
+import {DesktopConnectionFactory} from '../../common/connections/node/connection_factory';
 
 export const connectionManager = new ConnectionManager(
   new DesktopConnectionFactory(),

@@ -27,8 +27,8 @@ import {
   Runtime,
   SQLBlockMaterializer,
 } from '@malloydata/malloy';
-import {CellData} from '../extension/types';
-import {WorkerQuerySpec} from './types';
+import {CellData} from '../common/types';
+import {WorkerQuerySpec} from '../common/worker_message_types';
 
 export const createRunnable = async (
   query: WorkerQuerySpec,

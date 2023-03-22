@@ -26,11 +26,14 @@ import {fileURLToPath} from 'url';
 
 import {CSVWriter, JSONWriter, Runtime} from '@malloydata/malloy';
 
-import {MessageDownload, WorkerDownloadMessage} from '../types';
+import {
+  MessageDownload,
+  WorkerDownloadMessage,
+} from '../../common/worker_message_types';
 import {createRunnable} from '../create_runnable';
 import {WorkerURLReader} from './files';
 import {ConnectionManager} from '../../common/connection_manager';
-import {CellData} from '../../extension/types';
+import {CellData} from '../../common/types';
 
 const sendMessage = (name: string, error?: string) => {
   const msg: WorkerDownloadMessage = {

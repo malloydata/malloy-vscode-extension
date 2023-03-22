@@ -23,7 +23,7 @@
 
 import {createConnection, ProposedFeatures} from 'vscode-languageserver/node';
 import {ConnectionManager} from '../../common/connection_manager';
-import {DesktopConnectionFactory} from '../../extension/node/connection_factory';
+import {DesktopConnectionFactory} from '../../common/connections/node/connection_factory';
 
 export const connection = createConnection(ProposedFeatures.all);
 

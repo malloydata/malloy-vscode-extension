@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {ConnectionConfig} from '../common/connection_manager_types';
+import {ConnectionConfig} from './connection_manager_types';
 
 export interface MalloyConfig {
   /** Maximum number of top-level rows to fetch when running queries. */

@@ -29,7 +29,7 @@ import {
   getVSCodeAPI,
   ConnectionsVSCodeContext,
 } from './connections_vscode_context';
-import {ConnectionPanelMessage} from '../../message_types';
+import {ConnectionPanelMessage} from '../../../common/message_types';
 
 (() => {
   const vscode = getVSCodeAPI<void, ConnectionPanelMessage>();

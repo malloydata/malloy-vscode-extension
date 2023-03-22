@@ -25,10 +25,10 @@ import React, {useEffect, useState} from 'react';
 import styled from 'styled-components';
 import Markdown from 'markdown-to-jsx';
 
-import {HelpMessageType} from '../../message_types';
+import {HelpMessageType} from '../../../common/message_types';
 import {VSCodeButton} from '@vscode/webview-ui-toolkit/react';
 import {useHelpVSCodeContext} from './help_vscode_context';
-import {COMPLETION_DOCS} from '../../../server/completions/completion_docs';
+import {COMPLETION_DOCS} from '../../../common/completion_docs';
 
 export const App: React.FC = () => {
   const [help, setHelp] = useState('');

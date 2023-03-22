@@ -44,7 +44,7 @@ import {v4 as uuid} from 'uuid';
 import {MALLOY_EXTENSION_STATE} from './state';
 import {activateNotebookSerializer} from './notebook/malloy_serializer';
 import {activateNotebookController} from './notebook/malloy_controller';
-import {BaseWorker} from '../worker/types';
+import {BaseWorker} from '../common/worker_message_types';
 
 function getNewClientId(): string {
   return uuid();

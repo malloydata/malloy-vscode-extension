@@ -22,7 +22,7 @@
  */
 
 /* eslint-disable no-console */
-import {WorkerLogMessage} from './types';
+import {WorkerLogMessage} from '../common/worker_message_types';
 export const log = (message: string): void => {
   const msg: WorkerLogMessage = {
     type: 'log',

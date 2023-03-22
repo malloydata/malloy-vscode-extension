@@ -23,10 +23,12 @@
 
 import {ResultJSON} from '@malloydata/malloy';
 import {DataStyles} from '@malloydata/render';
-import {
-  ConnectionBackend,
-  ConnectionConfig,
-} from '../common/connection_manager_types';
+import {ConnectionBackend, ConnectionConfig} from './connection_manager_types';
+
+/*
+ * These messages are used to pass status back from the worker to
+ * the query result web view
+ */
 
 export enum QueryRunStatus {
   Compiling = 'compiling',

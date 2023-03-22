@@ -25,7 +25,11 @@
 import {log} from '../logger';
 import {cancelQuery, runQuery} from '../run_query';
 // TODO(web) import { downloadQuery } from "./download_query";
-import {Message, MessageHandler, WorkerMessage} from '../types';
+import {
+  Message,
+  MessageHandler,
+  WorkerMessage,
+} from '../../common/worker_message_types';
 import {refreshConfig} from '../refresh_config';
 import {ConnectionManager} from '../../common/connection_manager';
 import {fetchCellData, WorkerURLReader} from './files';

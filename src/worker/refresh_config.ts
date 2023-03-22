@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {MessageConfig} from './types';
+import {MessageConfig} from '../common/worker_message_types';
 import {log} from './logger';
 import {ConnectionManager} from '../common/connection_manager';
 

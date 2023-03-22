@@ -22,7 +22,7 @@
  */
 
 import * as vscode from 'vscode';
-import {BaseWorker} from '../../worker/types';
+import {BaseWorker} from '../../common/worker_message_types';
 import {runMalloyQuery} from './run_query_utils';
 
 export function runQueryFileCommand(worker: BaseWorker, queryIndex = -1): void {
