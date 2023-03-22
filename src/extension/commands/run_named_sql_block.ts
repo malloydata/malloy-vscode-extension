@@ -22,15 +22,17 @@
  */
 
 import * as vscode from 'vscode';
+import {BaseWorker} from '../../worker/types';
 import {MALLOY_EXTENSION_STATE} from '../state';
 import {runMalloyQuery} from './run_query_utils';
 
-export function runNamedSQLBlock(name: string): void {
+export function runNamedSQLBlock(worker: BaseWorker, name: string): void {
   const document =
     vscode.window.activeTextEditor?.document ||
     MALLOY_EXTENSION_STATE.getActiveWebviewPanel()?.document;
   if (document) {
     runMalloyQuery(
+      worker,
       {type: 'named_sql', name, file: document},
       `${document.uri.toString()} ${name}`,
       name

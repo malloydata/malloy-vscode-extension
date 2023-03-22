@@ -31,14 +31,14 @@ import {getWebviewHtml} from '../webviews';
 import {QueryMessageType, QueryRunStatus} from '../message_types';
 import {WebviewMessageManager} from '../webview_message_manager';
 import {queryDownload} from './query_download';
-import {WorkerMessage} from '../../worker/types';
-import {getWorker} from '../../worker/worker';
+import {BaseWorker, WorkerMessage} from '../../worker/types';
 import {trackQueryRun} from '../telemetry';
 import {QuerySpec} from './query_spec';
 
 const malloyLog = vscode.window.createOutputChannel('Malloy');
 
 export function runMalloyQuery(
+  worker: BaseWorker,
   query: QuerySpec,
   panelId: string,
   name: string
@@ -145,7 +145,6 @@ export function runMalloyQuery(
 
       const {file, ...params} = query;
       const uri = file.uri.toString();
-      const worker = getWorker();
       worker.send({
         type: 'run',
         query: {
@@ -220,6 +219,7 @@ https://github.com/malloydata/malloy/issues.`,
                     current.messages.onReceiveMessage(message => {
                       if (message.type === QueryMessageType.StartDownload) {
                         queryDownload(
+                          worker,
                           query,
                           message.downloadOptions,
                           queryResult,

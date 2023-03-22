@@ -37,10 +37,11 @@ import {MalloyConfig} from '../types';
 import {connectionManager} from './connection_manager';
 import {setupSubscriptions} from '../subscriptions';
 import {initFileMessaging, VSCodeURLReader} from '../utils';
-import {getWorker, setWorker} from '../../worker/worker';
 import {MALLOY_EXTENSION_STATE} from '../state';
+import {BaseWorker} from '../../worker/types';
 
 let client: LanguageClient;
+let worker: BaseWorker;
 
 export let extensionModeProduction: boolean;
 
@@ -57,7 +58,9 @@ const cloudshellEnv = () => {
 
 export function activate(context: vscode.ExtensionContext): void {
   const urlReader = new VSCodeURLReader();
-  setupSubscriptions(context, urlReader, connectionManager);
+  setupWorker(context);
+  setupSubscriptions(context, urlReader, connectionManager, worker);
+
   const connectionsTree = new ConnectionsProvider(context, connectionManager);
 
   MALLOY_EXTENSION_STATE.setHomeUri(vscode.Uri.file(os.homedir()));
@@ -88,14 +91,12 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 
   setupLanguageServer(context);
-  setupWorker(context);
 }
 
 export async function deactivate(): Promise<void> | undefined {
   if (client) {
     await client.stop();
   }
-  const worker = getWorker();
   if (worker) {
     worker.send({type: 'exit'});
   }
@@ -145,7 +146,7 @@ async function setupLanguageServer(
 }
 
 function sendWorkerConfig() {
-  getWorker().send({
+  worker.send({
     type: 'config',
     config: vscode.workspace.getConfiguration(
       'malloy'
@@ -154,7 +155,6 @@ function sendWorkerConfig() {
 }
 
 function setupWorker(context: vscode.ExtensionContext): void {
-  const worker = new WorkerConnection(context);
-  setWorker(worker);
+  worker = new WorkerConnection(context);
   sendWorkerConfig();
 }

@@ -22,15 +22,21 @@
  */
 
 import * as vscode from 'vscode';
+import {BaseWorker} from '../../worker/types';
 import {MALLOY_EXTENSION_STATE} from '../state';
 import {runMalloyQuery} from './run_query_utils';
 
-export function runQueryCommand(query: string, name?: string): void {
+export function runQueryCommand(
+  worker: BaseWorker,
+  query: string,
+  name?: string
+): void {
   const document =
     vscode.window.activeTextEditor?.document ||
     MALLOY_EXTENSION_STATE.getActiveWebviewPanel()?.document;
   if (document) {
     runMalloyQuery(
+      worker,
       {type: 'string', text: query, file: document},
       `${document.uri.toString()} ${name}`,
       name || document.uri.toString()
