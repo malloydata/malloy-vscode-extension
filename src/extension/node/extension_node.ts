@@ -33,7 +33,7 @@ import {
 import {editConnectionsCommand} from './commands/edit_connections';
 import {ConnectionsProvider} from '../tree_views/connections_view';
 import {WorkerConnection} from './worker_connection';
-import {MalloyConfig} from '../types';
+import {MalloyConfig} from '../../common/types';
 import {connectionManager} from './connection_manager';
 import {setupSubscriptions} from '../subscriptions';
 import {initFileMessaging, VSCodeURLReader} from '../utils';
