@@ -21,17 +21,14 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import React, {useEffect, useState} from 'react';
+import React, {useEffect} from 'react';
 import styled from 'styled-components';
-import Markdown from 'markdown-to-jsx';
 
 import {HelpMessageType} from '../../../common/message_types';
 import {VSCodeButton} from '@vscode/webview-ui-toolkit/react';
 import {useHelpVSCodeContext} from './help_vscode_context';
-import {COMPLETION_DOCS} from '../../../common/completion_docs';
 
 export const App: React.FC = () => {
-  const [help, setHelp] = useState('');
   const vscode = useHelpVSCodeContext();
 
   // TODO crs this might only be necessary because the MessageManager makes it necessary
@@ -39,40 +36,38 @@ export const App: React.FC = () => {
     vscode.postMessage({type: HelpMessageType.AppReady});
   });
 
-  useEffect(() => {
-    const listener = (event: MessageEvent) => {
-      const {keyword} = event.data;
-      const [_, malloy_keyword] = keyword.split('.');
-      let hint_text = '';
-      if (COMPLETION_DOCS['model_property'][malloy_keyword]) {
-        hint_text = COMPLETION_DOCS['model_property'][malloy_keyword];
-      } else if (COMPLETION_DOCS['query_property'][malloy_keyword]) {
-        hint_text = COMPLETION_DOCS['query_property'][malloy_keyword];
-      } else if (COMPLETION_DOCS['explore_property'][malloy_keyword]) {
-        hint_text = COMPLETION_DOCS['explore_property'][malloy_keyword];
-      }
-      setHelp(hint_text);
-    };
-    window.addEventListener('message', listener);
-    return () => window.removeEventListener('message', listener);
-  });
-
   return (
     <ViewDiv>
-      <ButtonLink href="https://malloydata.github.io/documentation/">
-        View Documentation
-      </ButtonLink>
+      <Help>
+        <h3 id="about-malloy">About Malloy</h3>
+        <p>
+          Malloy is an experimental language for describing data relationships
+          and transformations. It is both a semantic modeling language and a
+          querying language that runs queries against a relational database.
+          Malloy currently supports BigQuery, Postgres, and DuckDB.
+          <br />
+          <br />
+          The installed Visual Studio Code extension supports building Malloy
+          data models, querying and transforming data, and creating simple
+          visualizations and dashboards.
+        </p>
+      </Help>
+      <Help>
+        <h3>Malloy Resources</h3>
+      </Help>
+
       <ButtonLink href="https://malloydata.github.io/documentation/user_guides/basic.html">
         Quick Start Guide
       </ButtonLink>
-      <ButtonLink href="https://github.com/malloydata/malloy-samples/releases">
+      <ButtonLink href="https://malloydata.github.io/documentation/language/sql_to_malloy.html">
+        Language Reference
+      </ButtonLink>
+      <ButtonLink href="https://github.com/malloydata/malloy-samples/releases/latest">
         Download Sample Models
       </ButtonLink>
-      <Help>
-        <h3>Quick Help</h3>
-        {help && <Markdown>{help}</Markdown>}
-        {!help && <span>Select a keyword for quick help.</span>}
-      </Help>
+      <ButtonLink href="https://malloydata.github.io/documentation/index.html">
+        View Documentation
+      </ButtonLink>
     </ViewDiv>
   );
 };
