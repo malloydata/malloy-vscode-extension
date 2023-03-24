@@ -562,7 +562,6 @@
     "duckdb": "0.7.1",
     "keytar": "7.7.0",
     "lodash": "^4.17.21",
-    "markdown-to-jsx": "^7.1.9",
     "node-fetch": "^2.6.6",
     "prismjs": "^1.28.0",
     "react": "^17.0.2",
