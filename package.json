@@ -324,18 +324,18 @@
           "id": "malloyHelp",
           "name": "Help",
           "type": "webview",
-          "when": "malloy.extensionStatus == installed || resourceFilename =~ /\\.malloy$/"
+          "when": "malloy.extensionStatus == installed || resourceFilename =~ /\\.malloy(nb)?$/"
+        },
+        {
+          "id": "malloyConnections",
+          "name": "Malloy Connections",
+          "when": "malloy.extensionStatus == installed || resourceFilename =~ /\\.malloy(nb)?$/"
         }
       ],
       "explorer": [
         {
           "id": "malloySchema",
           "name": "Malloy Schema",
-          "when": "malloy.webviewPanelFocused == true || resourceFilename =~ /\\.malloy(nb)?$/"
-        },
-        {
-          "id": "malloyConnections",
-          "name": "Malloy Connections",
           "when": "malloy.webviewPanelFocused == true || resourceFilename =~ /\\.malloy(nb)?$/"
         }
       ]
