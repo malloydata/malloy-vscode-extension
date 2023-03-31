@@ -23,7 +23,6 @@
 
 import {URLReader} from '@malloydata/malloy';
 import {DataStyles} from '@malloydata/render';
-import {log} from './logger';
 
 export function compileDataStyles(styles: string): DataStyles {
   try {
@@ -51,7 +50,8 @@ export async function dataStylesForFile(
       try {
         stylesText = await reader.readURL(styleUrl);
       } catch (error) {
-        // TODO(fixme) log(`Error loading data style '${fileName}': ${error}`);
+        // eslint-disable-next-line no-console
+        console.error(`Error loading data style '${fileName}': ${error}`);
         stylesText = '{}';
       }
       styles = {...styles, ...compileDataStyles(stylesText)};

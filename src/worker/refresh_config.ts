@@ -22,7 +22,6 @@
  */
 
 import {MessageConfig, MessageHandler} from '../common/worker_message_types';
-import {log} from './logger';
 import {ConnectionManager} from '../common/connection_manager';
 
 const DEFAULT_ROW_LIMIT = 50;
@@ -34,7 +33,7 @@ export const refreshConfig = (
 ): void => {
   const {rowLimit: rowLimitRaw, connections} = config;
 
-  log(messageHandler, 'Config updated');
+  messageHandler.log('Config updated');
 
   connectionManager.setConnectionsConfig(connections);
   const rowLimit = rowLimitRaw || DEFAULT_ROW_LIMIT;

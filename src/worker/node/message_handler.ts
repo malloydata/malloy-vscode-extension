@@ -22,7 +22,6 @@
  */
 
 import * as rpc from 'vscode-jsonrpc/node';
-import {log} from '../logger';
 import {cancelQuery, runQuery} from '../run_query';
 import {downloadQuery} from './download_query';
 import {
@@ -31,41 +30,54 @@ import {
   MessageDownload,
   MessageHandler,
   MessageRun,
+  WorkerLogMessage,
   WorkerMessage,
 } from '../../common/worker_message_types';
 import {refreshConfig} from '../refresh_config';
 import {ConnectionManager} from '../../common/connection_manager';
-import {WorkerURLReader, fetchCellData} from './files';
+import {DesktopConnectionFactory} from '../../common/connections/node/connection_factory';
+
+import {FileHandler} from '../file_handler';
 
 export class NodeMessageHandler implements MessageHandler {
-  constructor(
-    private connection: rpc.MessageConnection,
-    connectionManager: ConnectionManager
-  ) {
-    log(this, 'Worker started');
+  private connection: rpc.MessageConnection;
 
-    const reader = new WorkerURLReader();
+  constructor() {
+    this.connection = rpc.createMessageConnection(
+      new rpc.IPCMessageReader(process),
+      new rpc.IPCMessageWriter(process)
+    );
+    this.connection.listen();
+
+    const connectionManager = new ConnectionManager(
+      new DesktopConnectionFactory(),
+      []
+    );
+
+    this.log('Worker started');
+
+    const reader = new FileHandler(this.connection);
 
     const heartBeat = setInterval(() => {
-      log(this, 'Heartbeat');
+      this.log('Heartbeat');
     }, 60 * 1000);
 
-    connection.onRequest('cancel', (message: MessageCancel) =>
+    this.connection.onRequest('cancel', (message: MessageCancel) =>
       cancelQuery(message)
     );
-    connection.onRequest('config', (message: MessageConfig) =>
+    this.connection.onRequest('config', (message: MessageConfig) =>
       refreshConfig(this, connectionManager, message)
     );
-    connection.onRequest('download', (message: MessageDownload) =>
-      downloadQuery(connectionManager, message, fetchCellData)
+    this.connection.onRequest('download', (message: MessageDownload) =>
+      downloadQuery(this, connectionManager, message, reader)
     );
-    connection.onRequest('exit', () => clearInterval(heartBeat));
-    connection.onRequest('run', (message: MessageRun) =>
-      runQuery(this, reader, connectionManager, false, message, fetchCellData)
+    this.connection.onRequest('exit', () => clearInterval(heartBeat));
+    this.connection.onRequest('run', (message: MessageRun) =>
+      runQuery(this, reader, connectionManager, false, message)
     );
 
     process.on('exit', () => {
-      log(this, 'Worker exited');
+      this.log('Worker exited');
     });
 
     process.on('SIGHUP', () => {
@@ -75,5 +87,13 @@ export class NodeMessageHandler implements MessageHandler {
 
   send(message: WorkerMessage) {
     this.connection.sendRequest(message.type, message);
+  }
+
+  log(message: string) {
+    const msg: WorkerLogMessage = {
+      type: 'log',
+      message,
+    };
+    this.send(msg);
   }
 }

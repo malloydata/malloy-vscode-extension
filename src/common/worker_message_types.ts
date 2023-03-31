@@ -199,4 +199,5 @@ export interface BaseWorker {
 
 export interface MessageHandler {
   send(message: WorkerMessage): void;
+  log(message: string): void;
 }

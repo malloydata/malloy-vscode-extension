@@ -23,7 +23,6 @@
 /* eslint-disable no-console */
 
 import * as rpc from 'vscode-jsonrpc/browser';
-import {log} from '../logger';
 import {cancelQuery, runQuery} from '../run_query';
 // TODO(web) import { downloadQuery } from "./download_query";
 import {
@@ -32,41 +31,60 @@ import {
   // MessageDownload,
   MessageHandler,
   MessageRun,
+  WorkerLogMessage,
   WorkerMessage,
 } from '../../common/worker_message_types';
 import {refreshConfig} from '../refresh_config';
 import {ConnectionManager} from '../../common/connection_manager';
-import {fetchCellData, WorkerURLReader} from './files';
+import {FileHandler} from '../file_handler';
+import {WebConnectionFactory} from '../../common/connections/browser/connection_factory';
 
 export class BrowserMessageHandler implements MessageHandler {
-  constructor(
-    private connection: rpc.MessageConnection,
-    connectionManager: ConnectionManager
-  ) {
-    log(this, 'Worker started');
+  connection: rpc.MessageConnection;
 
-    const reader = new WorkerURLReader();
+  constructor() {
+    this.connection = rpc.createMessageConnection(
+      new rpc.BrowserMessageReader(self),
+      new rpc.BrowserMessageWriter(self)
+    );
+    this.connection.listen();
+    const reader = new FileHandler(this.connection);
+
+    const connectionManager = new ConnectionManager(
+      new WebConnectionFactory(uri => reader.fetchFileBinary(uri)),
+      []
+    );
+
+    this.log('Worker started');
 
     const heartBeat = setInterval(() => {
-      log(this, 'Heartbeat');
+      this.log('Heartbeat');
     }, 60 * 1000);
 
-    connection.onRequest('cancel', (message: MessageCancel) =>
+    this.connection.onRequest('cancel', (message: MessageCancel) =>
       cancelQuery(message)
     );
-    connection.onRequest('config', (message: MessageConfig) =>
+    this.connection.onRequest('config', (message: MessageConfig) =>
       refreshConfig(this, connectionManager, message)
     );
     // connection.onRequest('download', (message: MessageDownload) =>
     //   downloadQuery(connectionManager, message, fetchCellData)
     // );
-    connection.onRequest('exit', () => clearInterval(heartBeat));
-    connection.onRequest('run', (message: MessageRun) =>
-      runQuery(this, reader, connectionManager, false, message, fetchCellData)
+    this.connection.onRequest('exit', () => clearInterval(heartBeat));
+    this.connection.onRequest('run', (message: MessageRun) =>
+      runQuery(this, reader, connectionManager, false, message)
     );
   }
 
   send(message: WorkerMessage) {
     this.connection.sendRequest(message.type, message);
+  }
+
+  log(message: string) {
+    const msg: WorkerLogMessage = {
+      type: 'log',
+      message,
+    };
+    this.send(msg);
   }
 }

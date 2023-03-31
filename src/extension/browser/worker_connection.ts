@@ -40,8 +40,8 @@ const workerLog = vscode.window.createOutputChannel('Malloy Worker');
 export type ListenerType = (message: WorkerMessage) => void;
 
 export class WorkerConnection {
-  worker!: Worker;
-  connection!: rpc.MessageConnection;
+  worker: Worker;
+  connection: rpc.MessageConnection;
 
   constructor(context: vscode.ExtensionContext) {
     const workerModule = vscode.Uri.joinPath(
@@ -52,17 +52,9 @@ export class WorkerConnection {
     const startWorker = () => {
       this.worker = new Worker(workerModule.toString());
 
-      // .on("error", console.error)
-      // .on("exit", (status) => {
-      //   if (status !== 0) {
-      //     console.error(`Worker exited with ${status}`);
-      //     console.info(`Restarting in ${DEFAULT_RESTART_SECONDS} seconds`);
-      //     // Maybe exponential backoff? Not sure what our failure
-      //     // modes are going to be
-      //     setTimeout(startWorker, DEFAULT_RESTART_SECONDS * 1000);
-      //     this.notifyListeners({ type: "dead" });
-      //   }
-      // })
+      // TODO - Detect if worker is not responding and
+      // restart
+
       this.connection = rpc.createMessageConnection(
         new rpc.BrowserMessageReader(this.worker),
         new rpc.BrowserMessageWriter(this.worker)
