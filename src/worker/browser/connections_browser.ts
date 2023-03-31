@@ -21,9 +21,16 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import * as rpc from 'vscode-jsonrpc/browser';
 import {ConnectionManager} from '../../common/connection_manager';
 import {WebConnectionFactory} from '../../common/connections/browser/connection_factory';
 import {fetchFileBinary} from './files';
+
+export const connection = rpc.createMessageConnection(
+  new rpc.BrowserMessageReader(self),
+  new rpc.BrowserMessageWriter(self)
+);
+connection.listen();
 
 export const connectionManager = new ConnectionManager(
   new WebConnectionFactory(fetchFileBinary),

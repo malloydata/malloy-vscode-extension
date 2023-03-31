@@ -21,7 +21,10 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {connectionManager} from './connections_node';
+import {connection, connectionManager} from './connections_node';
 import {NodeMessageHandler} from './message_handler';
 
-export const messageHandler = new NodeMessageHandler(connectionManager);
+export const messageHandler = new NodeMessageHandler(
+  connection,
+  connectionManager
+);

@@ -33,6 +33,7 @@ import {connectionManager} from './connection_manager';
 // https://github.com/malloydata/malloy-vscode-extension/issues/58
 // eslint-disable-next-line no-restricted-imports
 import {cancelQuery, runQuery} from '../../worker/run_query';
+import {Disposable} from 'vscode-jsonrpc';
 
 const workerLog = vscode.window.createOutputChannel('Malloy Worker');
 
@@ -69,13 +70,14 @@ export class WorkerConnection implements BaseWorker {
   }
 
   _send(message: WorkerMessage): void {
-    this.listeners['message'] ??= [];
-    this.listeners['message'].forEach(listener => listener(message));
+    this.listeners[message.type] ??= [];
+    this.listeners[message.type].forEach(listener => listener(message));
   }
 
-  on(event: string, listener: ListenerType): void {
+  on(event: string, listener: ListenerType): Disposable {
     this.listeners[event] ??= [];
     this.listeners[event].push(listener);
+    return {dispose: () => {}};
   }
 
   off(event: string, listener: ListenerType): void {

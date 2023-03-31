@@ -23,37 +23,7 @@
 
 import {URLReader} from '@malloydata/malloy';
 import {CellData} from '../../common/types';
-import {FetchMessage} from '../../common/worker_message_types';
-
-let idx = 1;
-
-const fetchUtil = async (
-  type: FetchMessage['type'],
-  uri: string
-): Promise<string | Uint8Array | CellData[]> => {
-  return new Promise((resolve, reject) => {
-    // This could probably use some more error handling (timeout?).
-    // For now just be relentlessly optimistic because there's
-    // a tight coupling with the worker controller.
-    const id = `${uri}-${idx++}`;
-    const callback = (message: FetchMessage) => {
-      if (message.type === type && message.id === id) {
-        if (message.data !== null) {
-          resolve(message.data);
-        } else if (message.error !== null) {
-          reject(new Error(message.error));
-        }
-        process.off('message', callback);
-      }
-    };
-    process.on('message', callback);
-    process.send?.({
-      type,
-      uri,
-      id,
-    });
-  });
-};
+import {connection} from './connections_node';
 
 /**
  * Requests a file from the worker's controller. Although the
@@ -65,7 +35,7 @@ const fetchUtil = async (
  * @returns File contents
  */
 export async function fetchFile(uri: string): Promise<string> {
-  return fetchUtil('read', uri) as Promise<string>;
+  return connection.sendRequest('read', {uri}) as Promise<string>;
 }
 
 /**
@@ -75,7 +45,7 @@ export async function fetchFile(uri: string): Promise<string> {
  * @returns File contents
  */
 export async function fetchFileBinary(uri: string): Promise<Uint8Array> {
-  return fetchUtil('read_binary', uri) as Promise<Uint8Array>;
+  return connection.sendRequest('read_binary', {uri}) as Promise<Uint8Array>;
 }
 
 /**
@@ -85,7 +55,7 @@ export async function fetchFileBinary(uri: string): Promise<Uint8Array> {
  * @returns File contents
  */
 export async function fetchCellData(uri: string): Promise<CellData[]> {
-  return fetchUtil('read_cell_data', uri) as Promise<CellData[]>;
+  return connection.sendRequest('read_cell_data', {uri}) as Promise<CellData[]>;
 }
 
 export class WorkerURLReader implements URLReader {

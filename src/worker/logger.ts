@@ -22,16 +22,13 @@
  */
 
 /* eslint-disable no-console */
-import {WorkerLogMessage} from '../common/worker_message_types';
-export const log = (message: string): void => {
+import {MessageHandler, WorkerLogMessage} from '../common/worker_message_types';
+export const log = (messageHandler: MessageHandler, message: string): void => {
+  console.log('Malloy Worker', message);
+
   const msg: WorkerLogMessage = {
     type: 'log',
     message,
   };
-  if (typeof process !== 'undefined') {
-    process.send?.(msg);
-  } else {
-    // self.postMessage(msg);
-    console.log('Malloy Worker', message);
-  }
+  messageHandler.send(msg);
 };

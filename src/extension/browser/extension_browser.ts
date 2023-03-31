@@ -31,6 +31,7 @@ import {
 
 // import { WorkerConnection } from "../../worker/browser/worker_connection";
 import {WorkerConnection} from './workerless_worker';
+// import {WorkerConnection} from './worker_connection';
 import {setupSubscriptions} from '../subscriptions';
 import {MalloyConfig} from '../../common/types';
 import {connectionManager} from './connection_manager';

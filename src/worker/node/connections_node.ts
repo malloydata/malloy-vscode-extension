@@ -21,8 +21,15 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import * as rpc from 'vscode-jsonrpc/node';
 import {ConnectionManager} from '../../common/connection_manager';
 import {DesktopConnectionFactory} from '../../common/connections/node/connection_factory';
+
+export const connection = rpc.createMessageConnection(
+  new rpc.IPCMessageReader(process),
+  new rpc.IPCMessageWriter(process)
+);
+connection.listen();
 
 export const connectionManager = new ConnectionManager(
   new DesktopConnectionFactory(),

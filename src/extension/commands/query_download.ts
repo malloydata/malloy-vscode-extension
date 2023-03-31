@@ -35,6 +35,7 @@ import {
   WorkerQuerySpec,
 } from '../../common/worker_message_types';
 import {MALLOY_EXTENSION_STATE} from '../state';
+import {Disposable} from 'vscode-jsonrpc';
 
 /**
  * VSCode doesn't support streaming writes, so fake it.
@@ -124,6 +125,7 @@ export async function queryDownload(
     },
     async () => {
       try {
+        let off: Disposable;
         if (downloadOptions.amount === 'current') {
           const writeStream = new VSCodeWriteStream(fileUri);
           const writer =
@@ -158,7 +160,7 @@ Please consider filing an issue with as much detail as possible at \
 https://github.com/malloydata/malloy/issues.`
               );
 
-              worker.off('message', listener);
+              off?.dispose();
               return;
             } else if (msg.type !== 'download') {
               return;
@@ -176,10 +178,10 @@ https://github.com/malloydata/malloy/issues.`
                 `Malloy Download (${name}): Complete`
               );
             }
-            worker.off('message', listener);
+            off?.dispose();
           };
 
-          worker.on('message', listener);
+          off = worker.on('download', listener);
         }
       } catch (error) {
         vscode.window.showErrorMessage(

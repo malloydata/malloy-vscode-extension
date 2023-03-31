@@ -21,19 +21,20 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {MessageConfig} from '../common/worker_message_types';
+import {MessageConfig, MessageHandler} from '../common/worker_message_types';
 import {log} from './logger';
 import {ConnectionManager} from '../common/connection_manager';
 
 const DEFAULT_ROW_LIMIT = 50;
 
 export const refreshConfig = (
+  messageHandler: MessageHandler,
   connectionManager: ConnectionManager,
   {config}: MessageConfig
 ): void => {
   const {rowLimit: rowLimitRaw, connections} = config;
 
-  log('Config updated');
+  log(messageHandler, 'Config updated');
 
   connectionManager.setConnectionsConfig(connections);
   const rowLimit = rowLimitRaw || DEFAULT_ROW_LIMIT;

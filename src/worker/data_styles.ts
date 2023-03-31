@@ -51,7 +51,7 @@ export async function dataStylesForFile(
       try {
         stylesText = await reader.readURL(styleUrl);
       } catch (error) {
-        log(`Error loading data style '${fileName}': ${error}`);
+        // TODO(fixme) log(`Error loading data style '${fileName}': ${error}`);
         stylesText = '{}';
       }
       styles = {...styles, ...compileDataStyles(stylesText)};

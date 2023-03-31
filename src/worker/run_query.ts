@@ -110,7 +110,7 @@ export const runQuery = async (
       dataStyles = {...dataStyles, ...files.getHackyAccumulatedDataStyles()};
 
       if (runningQueries[panelId].canceled) return;
-      log(sql);
+      log(messageHandler, sql);
     } catch (error) {
       sendMessage(
         messageHandler,

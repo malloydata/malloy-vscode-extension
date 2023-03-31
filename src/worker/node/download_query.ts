@@ -22,6 +22,7 @@
  */
 
 import * as fs from 'fs';
+import * as rpc from 'vscode-jsonrpc/node';
 import {fileURLToPath} from 'url';
 
 import {CSVWriter, JSONWriter, Runtime} from '@malloydata/malloy';
@@ -33,6 +34,7 @@ import {
 import {createRunnable} from '../create_runnable';
 import {WorkerURLReader} from './files';
 import {ConnectionManager} from '../../common/connection_manager';
+import {connection} from './connections_node';
 import {CellData} from '../../common/types';
 
 const sendMessage = (name: string, error?: string) => {
@@ -41,7 +43,7 @@ const sendMessage = (name: string, error?: string) => {
     name,
     error,
   };
-  process.send?.(msg);
+  connection.sendRequest(msg.type, msg);
 };
 
 export async function downloadQuery(
