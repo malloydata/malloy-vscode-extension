@@ -22,78 +22,46 @@
  */
 
 import * as rpc from 'vscode-jsonrpc/node';
-import {cancelQuery, runQuery} from '../run_query';
 import {downloadQuery} from './download_query';
-import {
-  MessageCancel,
-  MessageConfig,
-  MessageDownload,
-  MessageHandler,
-  MessageRun,
-  WorkerLogMessage,
-  WorkerMessage,
-} from '../../common/worker_message_types';
-import {refreshConfig} from '../refresh_config';
+import {MessageDownload} from '../../common/worker_message_types';
 import {ConnectionManager} from '../../common/connection_manager';
 import {DesktopConnectionFactory} from '../../common/connections/node/connection_factory';
+import {MessageHandler} from '../message_handler';
+import {RpcFileHandler} from '../file_handler';
 
-import {FileHandler} from '../file_handler';
-
-export class NodeMessageHandler implements MessageHandler {
-  private connection: rpc.MessageConnection;
-
+export class NodeMessageHandler {
   constructor() {
-    this.connection = rpc.createMessageConnection(
+    const connection = rpc.createMessageConnection(
       new rpc.IPCMessageReader(process),
       new rpc.IPCMessageWriter(process)
     );
-    this.connection.listen();
+    connection.listen();
 
     const connectionManager = new ConnectionManager(
       new DesktopConnectionFactory(),
       []
     );
 
-    this.log('Worker started');
+    const fileHandler = new RpcFileHandler(connection);
 
-    const reader = new FileHandler(this.connection);
+    const messageHandler = new MessageHandler(
+      connection,
+      connectionManager,
+      fileHandler
+    );
 
-    const heartBeat = setInterval(() => {
-      this.log('Heartbeat');
-    }, 60 * 1000);
+    messageHandler.log('Worker started');
 
-    this.connection.onRequest('cancel', (message: MessageCancel) =>
-      cancelQuery(message)
-    );
-    this.connection.onRequest('config', (message: MessageConfig) =>
-      refreshConfig(this, connectionManager, message)
-    );
-    this.connection.onRequest('download', (message: MessageDownload) =>
-      downloadQuery(this, connectionManager, message, reader)
-    );
-    this.connection.onRequest('exit', () => clearInterval(heartBeat));
-    this.connection.onRequest('run', (message: MessageRun) =>
-      runQuery(this, reader, connectionManager, false, message)
+    connection.onRequest('download', (message: MessageDownload) =>
+      downloadQuery(messageHandler, connectionManager, message, fileHandler)
     );
 
     process.on('exit', () => {
-      this.log('Worker exited');
+      messageHandler.log('Worker exited');
     });
 
     process.on('SIGHUP', () => {
-      clearInterval(heartBeat);
+      messageHandler.dispose();
     });
-  }
-
-  send(message: WorkerMessage) {
-    this.connection.sendRequest(message.type, message);
-  }
-
-  log(message: string) {
-    const msg: WorkerLogMessage = {
-      type: 'log',
-      message,
-    };
-    this.send(msg);
   }
 }

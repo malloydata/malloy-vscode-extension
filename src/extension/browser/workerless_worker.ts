@@ -22,7 +22,12 @@
  */
 
 import * as vscode from 'vscode';
-import {VSCodeURLReader as WorkerURLReader, fetchCellData} from '../utils';
+import {
+  VSCodeURLReader,
+  fetchCellData,
+  fetchBinaryFile,
+  fetchFile,
+} from '../utils';
 import {
   BaseWorker,
   Message,
@@ -39,7 +44,19 @@ const workerLog = vscode.window.createOutputChannel('Malloy Worker');
 
 export type ListenerType = (message: WorkerMessage) => void;
 
-const reader = new WorkerURLReader();
+class FileHandler extends VSCodeURLReader {
+  fetchFile(uri: string) {
+    return fetchFile(uri);
+  }
+  fetchBinaryFile(uri: string) {
+    return fetchBinaryFile(uri);
+  }
+  fetchCellData(uri: string) {
+    return fetchCellData(uri);
+  }
+}
+
+const fileHandler = new FileHandler();
 
 export class WorkerConnection implements BaseWorker {
   listeners: Record<string, ListenerType[]> = {};
@@ -58,12 +75,17 @@ export class WorkerConnection implements BaseWorker {
         break;
       case 'run':
         runQuery(
-          {send: (message: WorkerMessage) => this._send(message)},
-          reader,
+          {
+            send: (message: WorkerMessage) => this._send(message),
+            log(message: string) {
+              // eslint-disable-next-line no-console
+              console.log(message);
+            },
+          },
+          fileHandler,
           connectionManager,
           true,
-          message,
-          fetchCellData
+          message
         );
         break;
     }

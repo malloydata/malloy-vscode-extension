@@ -23,68 +23,32 @@
 /* eslint-disable no-console */
 
 import * as rpc from 'vscode-jsonrpc/browser';
-import {cancelQuery, runQuery} from '../run_query';
-// TODO(web) import { downloadQuery } from "./download_query";
-import {
-  MessageCancel,
-  MessageConfig,
-  // MessageDownload,
-  MessageHandler,
-  MessageRun,
-  WorkerLogMessage,
-  WorkerMessage,
-} from '../../common/worker_message_types';
-import {refreshConfig} from '../refresh_config';
 import {ConnectionManager} from '../../common/connection_manager';
-import {FileHandler} from '../file_handler';
 import {WebConnectionFactory} from '../../common/connections/browser/connection_factory';
+import {MessageHandler} from '../message_handler';
+import {RpcFileHandler} from '../file_handler';
 
-export class BrowserMessageHandler implements MessageHandler {
-  connection: rpc.MessageConnection;
-
+export class BrowserMessageHandler {
   constructor() {
-    this.connection = rpc.createMessageConnection(
+    const connection = rpc.createMessageConnection(
       new rpc.BrowserMessageReader(self),
       new rpc.BrowserMessageWriter(self)
     );
-    this.connection.listen();
-    const reader = new FileHandler(this.connection);
+    connection.listen();
 
     const connectionManager = new ConnectionManager(
-      new WebConnectionFactory(uri => reader.fetchFileBinary(uri)),
+      new WebConnectionFactory(uri => fileHandler.fetchBinaryFile(uri)),
       []
     );
 
-    this.log('Worker started');
+    const fileHandler = new RpcFileHandler(connection);
 
-    const heartBeat = setInterval(() => {
-      this.log('Heartbeat');
-    }, 60 * 1000);
-
-    this.connection.onRequest('cancel', (message: MessageCancel) =>
-      cancelQuery(message)
+    const messageHandler = new MessageHandler(
+      connection,
+      connectionManager,
+      fileHandler
     );
-    this.connection.onRequest('config', (message: MessageConfig) =>
-      refreshConfig(this, connectionManager, message)
-    );
-    // connection.onRequest('download', (message: MessageDownload) =>
-    //   downloadQuery(connectionManager, message, fetchCellData)
-    // );
-    this.connection.onRequest('exit', () => clearInterval(heartBeat));
-    this.connection.onRequest('run', (message: MessageRun) =>
-      runQuery(this, reader, connectionManager, false, message)
-    );
-  }
 
-  send(message: WorkerMessage) {
-    this.connection.sendRequest(message.type, message);
-  }
-
-  log(message: string) {
-    const msg: WorkerLogMessage = {
-      type: 'log',
-      message,
-    };
-    this.send(msg);
+    messageHandler.log('Worker started');
   }
 }

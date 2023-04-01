@@ -25,7 +25,36 @@ import * as rpc from 'vscode-jsonrpc';
 import {URLReader} from '@malloydata/malloy';
 import {CellData} from '../common/types';
 
-export class FileHandler implements URLReader {
+export interface FileHandler extends URLReader {
+  /**
+   * Requests a file from the worker's controller. Although the
+   * file path is a file system path, reading the file off
+   * disk doesn't take into account unsaved changes that only
+   * VS Code is aware of.
+   *
+   * @param uri URI to resolve
+   * @returns File contents
+   */
+  fetchFile(uri: string): Promise<string>;
+  /**
+   * Requests a binary file from the worker's controller.
+   *
+   * @param uri URI to resolve
+   * @returns File contents
+   */
+
+  fetchBinaryFile(uri: string): Promise<Uint8Array>;
+
+  /**
+   * Requests a set of cell data from the worker's controller.
+   *
+   * @param uri URI to resolve
+   * @returns File contents
+   */
+  fetchCellData(uri: string): Promise<CellData[]>;
+}
+
+export class RpcFileHandler implements FileHandler {
   constructor(private connection: rpc.MessageConnection) {}
 
   /**
@@ -48,7 +77,7 @@ export class FileHandler implements URLReader {
    * @returns File contents
    */
 
-  async fetchFileBinary(uri: string): Promise<Uint8Array> {
+  async fetchBinaryFile(uri: string): Promise<Uint8Array> {
     return this.connection.sendRequest('read_binary', {
       uri,
     }) as Promise<Uint8Array>;
