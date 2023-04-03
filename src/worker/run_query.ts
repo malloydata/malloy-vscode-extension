@@ -21,11 +21,10 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {QueryMaterializer, Runtime, URLReader} from '@malloydata/malloy';
+import {QueryMaterializer, Runtime} from '@malloydata/malloy';
 import {DataStyles} from '@malloydata/render';
 
 import {HackyDataStylesAccumulator} from './data_styles';
-import {log} from './logger';
 import {
   MessageCancel,
   MessageHandler,
@@ -40,7 +39,7 @@ import {
 } from '../common/message_types';
 import {createRunnable} from './create_runnable';
 import {ConnectionManager} from '../common/connection_manager';
-import {CellData} from '../common/types';
+import {FileHandler} from './file_handler';
 
 interface QueryEntry {
   panelId: string;
@@ -65,13 +64,12 @@ const sendMessage = (
 
 export const runQuery = async (
   messageHandler: MessageHandler,
-  reader: URLReader,
+  fileHandler: FileHandler,
   connectionManager: ConnectionManager,
   isBrowser: boolean,
-  {query, panelId}: MessageRun,
-  fetchCellData: (uri: string) => Promise<CellData[]>
+  {query, panelId}: MessageRun
 ): Promise<void> => {
-  const files = new HackyDataStylesAccumulator(reader);
+  const files = new HackyDataStylesAccumulator(fileHandler);
   const url = new URL(panelId);
 
   try {
@@ -91,8 +89,8 @@ export const runQuery = async (
     );
 
     let dataStyles: DataStyles = {};
-    let sql;
-    const runnable = await createRunnable(query, runtime, fetchCellData);
+    let sql: string;
+    const runnable = await createRunnable(query, runtime, fileHandler);
 
     // Set the row limit to the limit provided in the final stage of the query, if present
     const rowLimit =
@@ -110,7 +108,7 @@ export const runQuery = async (
       dataStyles = {...dataStyles, ...files.getHackyAccumulatedDataStyles()};
 
       if (runningQueries[panelId].canceled) return;
-      log(sql);
+      messageHandler.log(sql);
     } catch (error) {
       sendMessage(
         messageHandler,

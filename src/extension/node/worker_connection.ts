@@ -24,9 +24,11 @@
 /* eslint-disable no-console */
 import * as child_process from 'child_process';
 import * as vscode from 'vscode';
+import * as rpc from 'vscode-jsonrpc/node';
 import {fetchBinaryFile, fetchCellData, fetchFile} from '../utils';
 import {
   Message,
+  WorkerLogMessage,
   WorkerMessage,
   WorkerReadBinaryMessage,
   WorkerReadCellDataMessage,
@@ -38,6 +40,8 @@ const DEFAULT_RESTART_SECONDS = 1;
 
 export class WorkerConnection {
   worker!: child_process.ChildProcess;
+  connection!: rpc.MessageConnection;
+  listeners: Array<(message: WorkerMessage) => void> = [];
 
   constructor(context: vscode.ExtensionContext) {
     const workerModule = context.asAbsolutePath('dist/worker_node.js');
@@ -63,84 +67,86 @@ export class WorkerConnection {
             setTimeout(startWorker, DEFAULT_RESTART_SECONDS * 1000);
             this.notifyListeners({type: 'dead'});
           }
-        })
-        .on('message', (message: WorkerMessage) => {
-          switch (message.type) {
-            case 'log':
-              workerLog.appendLine(`worker: ${message.message}`);
-              break;
-            case 'read': {
-              workerLog.appendLine(`worker: reading file ${message.uri}`);
-              this.readFile(message);
-              break;
-            }
-            case 'read_binary': {
-              workerLog.appendLine(
-                `worker: reading binary file ${message.uri}`
-              );
-              this.readFileBinary(message);
-              break;
-            }
-            case 'read_cell_data': {
-              workerLog.appendLine(
-                `worker: reading cell data for ${message.uri}`
-              );
-              this.readCellData(message);
-              break;
-            }
-          }
         });
+
+      this.connection = rpc.createMessageConnection(
+        new rpc.IPCMessageReader(this.worker),
+        new rpc.IPCMessageWriter(this.worker)
+      );
+      this.connection.listen();
+      context.subscriptions.push(this.connection);
+
+      context.subscriptions.push(
+        this.connection.onRequest('log', (message: WorkerLogMessage) => {
+          workerLog.appendLine(`worker: ${message.message}`);
+        })
+      );
+
+      context.subscriptions.push(
+        this.connection.onRequest(
+          'read',
+          async (message: WorkerReadMessage) => {
+            workerLog.appendLine(`worker: reading file ${message.uri}`);
+            return await fetchFile(message.uri);
+          }
+        )
+      );
+
+      context.subscriptions.push(
+        this.connection.onRequest(
+          'read_binary',
+          async (message: WorkerReadBinaryMessage) => {
+            workerLog.appendLine(`worker: reading binary file ${message.uri}`);
+            return await fetchBinaryFile(message.uri);
+          }
+        )
+      );
+
+      context.subscriptions.push(
+        this.connection.onRequest(
+          'read_cell_data',
+          async (message: WorkerReadCellDataMessage) => {
+            workerLog.appendLine(
+              `worker: reading cell data for ${message.uri}`
+            );
+            return await fetchCellData(message.uri);
+          }
+        )
+      );
+
+      context.subscriptions.push({
+        dispose: () => {
+          this.worker.kill();
+        },
+      });
     };
+
     startWorker();
   }
 
   send(message: Message): void {
-    this.worker.send?.(message);
+    this.connection.sendRequest(message.type, message);
   }
 
   notifyListeners(message: WorkerMessage): void {
-    this.worker.emit('message', message);
+    this.listeners.forEach(listener => listener(message));
   }
 
-  on(event: string, listener: (message: WorkerMessage) => void): void {
-    this.worker.on(event, listener);
-  }
-
-  off(event: string, listener: (message: WorkerMessage) => void): void {
-    this.worker.off(event, listener);
+  on(
+    event: string,
+    listener: (message: WorkerMessage) => void
+  ): vscode.Disposable {
+    this.listeners.push(listener);
+    const disposable = this.connection.onRequest(event, listener);
+    return {
+      dispose: () => {
+        disposable.dispose();
+        this.listeners = this.listeners.filter(l => l !== listener);
+      },
+    };
   }
 
   stop(): void {
     this.worker.kill('SIGHUP');
-  }
-
-  async readFile(message: WorkerReadMessage): Promise<void> {
-    const {id, uri} = message;
-    try {
-      const data = await fetchFile(uri);
-      this.send?.({type: 'read', id, uri, data});
-    } catch (error) {
-      this.send?.({type: 'read', id, uri, error: error.message});
-    }
-  }
-
-  async readFileBinary(message: WorkerReadBinaryMessage): Promise<void> {
-    const {id, uri} = message;
-    try {
-      const data = await fetchBinaryFile(uri);
-      this.send?.({type: 'read_binary', id, uri, data});
-    } catch (error) {
-      this.send?.({type: 'read_binary', id, uri, error: error.message});
-    }
-  }
-
-  async readCellData(message: WorkerReadCellDataMessage): Promise<void> {
-    const {id, uri} = message;
-    try {
-      const data = await fetchCellData(uri);
-      this.send?.({type: 'read_cell_data', id, uri, data});
-    } catch (error) {
-      this.send?.({type: 'read_cell_data', id, uri, error: error.message});
-    }
   }
 }

@@ -21,66 +21,47 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {log} from '../logger';
-import {cancelQuery, runQuery} from '../run_query';
+import * as rpc from 'vscode-jsonrpc/node';
 import {downloadQuery} from './download_query';
-import {
-  Message,
-  MessageHandler,
-  WorkerMessage,
-} from '../../common/worker_message_types';
-import {refreshConfig} from '../refresh_config';
+import {MessageDownload} from '../../common/worker_message_types';
 import {ConnectionManager} from '../../common/connection_manager';
-import {WorkerURLReader, fetchCellData} from './files';
+import {DesktopConnectionFactory} from '../../common/connections/node/connection_factory';
+import {MessageHandler} from '../message_handler';
+import {RpcFileHandler} from '../file_handler';
 
-export class NodeMessageHandler implements MessageHandler {
-  constructor(connectionManager: ConnectionManager) {
-    log('Worker started');
-    const reader = new WorkerURLReader();
+export class NodeMessageHandler {
+  constructor() {
+    const connection = rpc.createMessageConnection(
+      new rpc.IPCMessageReader(process),
+      new rpc.IPCMessageWriter(process)
+    );
+    connection.listen();
 
-    process.send?.({type: 'started'});
+    const connectionManager = new ConnectionManager(
+      new DesktopConnectionFactory(),
+      []
+    );
 
-    const heartBeat = setInterval(() => {
-      log('Heartbeat');
-    }, 60 * 1000);
+    const fileHandler = new RpcFileHandler(connection);
 
-    process.on('message', (message: Message) => {
-      switch (message.type) {
-        case 'cancel':
-          cancelQuery(message);
-          break;
-        case 'config':
-          refreshConfig(connectionManager, message);
-          break;
-        case 'download':
-          downloadQuery(connectionManager, message, fetchCellData);
-          break;
-        case 'exit':
-          clearInterval(heartBeat);
-          break;
-        case 'run':
-          runQuery(
-            this,
-            reader,
-            connectionManager,
-            false,
-            message,
-            fetchCellData
-          );
-          break;
-      }
-    });
+    const messageHandler = new MessageHandler(
+      connection,
+      connectionManager,
+      fileHandler
+    );
+
+    messageHandler.log('Worker started');
+
+    connection.onRequest('download', (message: MessageDownload) =>
+      downloadQuery(messageHandler, connectionManager, message, fileHandler)
+    );
 
     process.on('exit', () => {
-      log('Worker exited');
+      messageHandler.log('Worker exited');
     });
 
     process.on('SIGHUP', () => {
-      clearInterval(heartBeat);
+      messageHandler.dispose();
     });
-  }
-
-  send(message: WorkerMessage) {
-    process.send?.(message);
   }
 }

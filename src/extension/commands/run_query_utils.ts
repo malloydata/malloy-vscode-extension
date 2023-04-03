@@ -34,6 +34,7 @@ import {queryDownload} from './query_download';
 import {BaseWorker, WorkerMessage} from '../../common/worker_message_types';
 import {trackQueryRun} from '../telemetry';
 import {QuerySpec} from './query_spec';
+import {Disposable} from 'vscode-jsonrpc';
 
 const malloyLog = vscode.window.createOutputChannel('Malloy');
 
@@ -159,6 +160,7 @@ export function runMalloyQuery(
       let runBegin: number;
 
       return new Promise(resolve => {
+        let off: Disposable | null = null;
         const listener = (msg: WorkerMessage) => {
           if (msg.type === 'dead') {
             current.messages.postMessage({
@@ -169,7 +171,7 @@ This is possibly the result of a database bug. \
 Please consider filing an issue with as much detail as possible at \
 https://github.com/malloydata/malloy/issues.`,
             });
-            worker.off('message', listener);
+            off?.dispose();
             resolve(undefined);
             return;
           } else if (msg.type !== 'query_panel') {
@@ -229,13 +231,13 @@ https://github.com/malloydata/malloy/issues.`,
                       }
                     });
 
-                    worker.off('message', listener);
+                    off?.dispose();
                     resolve(undefined);
                   }
                   break;
                 case QueryRunStatus.Error:
                   {
-                    worker.off('message', listener);
+                    off?.dispose();
                     resolve(undefined);
                   }
                   break;
@@ -243,7 +245,7 @@ https://github.com/malloydata/malloy/issues.`,
           }
         };
 
-        worker.on('message', listener);
+        off = worker.on('query_panel', listener);
       });
     }
   );

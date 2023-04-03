@@ -142,7 +142,7 @@ async function setupLanguageServer(
   client.start();
   await client.onReady();
 
-  initFileMessaging(client);
+  initFileMessaging(context, client);
 }
 
 function sendWorkerConfig() {

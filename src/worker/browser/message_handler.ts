@@ -20,64 +20,34 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* eslint-disable no-console */
 
-import {log} from '../logger';
-import {cancelQuery, runQuery} from '../run_query';
-// TODO(web) import { downloadQuery } from "./download_query";
-import {
-  Message,
-  MessageHandler,
-  WorkerMessage,
-} from '../../common/worker_message_types';
-import {refreshConfig} from '../refresh_config';
+import * as rpc from 'vscode-jsonrpc/browser';
 import {ConnectionManager} from '../../common/connection_manager';
-import {fetchCellData, WorkerURLReader} from './files';
+import {WebConnectionFactory} from '../../common/connections/browser/connection_factory';
+import {MessageHandler} from '../message_handler';
+import {RpcFileHandler} from '../file_handler';
 
-export class BrowserMessageHandler implements MessageHandler {
-  constructor(connectionManager: ConnectionManager) {
-    log('Worker started');
-    self.postMessage({type: 'started'});
+export class BrowserMessageHandler {
+  constructor() {
+    const connection = rpc.createMessageConnection(
+      new rpc.BrowserMessageReader(self),
+      new rpc.BrowserMessageWriter(self)
+    );
+    connection.listen();
 
-    const reader = new WorkerURLReader();
+    const connectionManager = new ConnectionManager(
+      new WebConnectionFactory(uri => fileHandler.fetchBinaryFile(uri)),
+      []
+    );
 
-    const heartBeat = setInterval(() => {
-      log('Heartbeat');
-    }, 60 * 1000);
+    const fileHandler = new RpcFileHandler(connection);
 
-    self.addEventListener('message', (event: MessageEvent) => {
-      const message: Message = event.data;
-      console.info('Worker received', message);
+    const messageHandler = new MessageHandler(
+      connection,
+      connectionManager,
+      fileHandler
+    );
 
-      switch (message.type) {
-        case 'cancel':
-          cancelQuery(message);
-          break;
-        case 'config':
-          refreshConfig(connectionManager, message);
-          break;
-        // TODO(web)
-        // case "download":
-        //   downloadQuery(connectionManager, message);
-        //   break;
-        case 'exit':
-          clearInterval(heartBeat);
-          break;
-        case 'run':
-          runQuery(
-            this,
-            reader,
-            connectionManager,
-            true,
-            message,
-            fetchCellData
-          );
-          break;
-      }
-    });
-  }
-
-  send(message: WorkerMessage) {
-    self.postMessage(message);
+    messageHandler.log('Worker started');
   }
 }

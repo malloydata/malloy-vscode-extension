@@ -120,24 +120,33 @@ export class VSCodeURLReader implements URLReader {
   }
 }
 
-export const initFileMessaging = (client: BaseLanguageClient) => {
-  client.onRequest('malloy/fetchFile', async (event: FetchFileEvent) => {
-    console.info('fetchFile returning', event.uri);
-    return await fetchFile(event.uri);
-  });
-
-  client.onRequest(
-    'malloy/fetchBinaryFile',
-    async (event: FetchBinaryFileEvent) => {
-      console.info('fetchBinaryFile returning', event.uri);
-      return await fetchBinaryFile(event.uri);
-    }
+export const initFileMessaging = (
+  context: vscode.ExtensionContext,
+  client: BaseLanguageClient
+) => {
+  context.subscriptions.push(
+    client.onRequest('malloy/fetchFile', async (event: FetchFileEvent) => {
+      console.info('fetchFile returning', event.uri);
+      return await fetchFile(event.uri);
+    })
   );
-  client.onRequest(
-    'malloy/fetchCellData',
-    async (event: FetchCellDataEvent) => {
-      console.info('fetchCellData returning', event.uri);
-      return await fetchCellData(event.uri);
-    }
+
+  context.subscriptions.push(
+    client.onRequest(
+      'malloy/fetchBinaryFile',
+      async (event: FetchBinaryFileEvent) => {
+        console.info('fetchBinaryFile returning', event.uri);
+        return await fetchBinaryFile(event.uri);
+      }
+    )
+  );
+  context.subscriptions.push(
+    client.onRequest(
+      'malloy/fetchCellData',
+      async (event: FetchCellDataEvent) => {
+        console.info('fetchCellData returning', event.uri);
+        return await fetchCellData(event.uri);
+      }
+    )
   );
 };

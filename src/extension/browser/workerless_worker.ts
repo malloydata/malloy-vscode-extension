@@ -22,7 +22,12 @@
  */
 
 import * as vscode from 'vscode';
-import {VSCodeURLReader as WorkerURLReader, fetchCellData} from '../utils';
+import {
+  VSCodeURLReader,
+  fetchCellData,
+  fetchBinaryFile,
+  fetchFile,
+} from '../utils';
 import {
   BaseWorker,
   Message,
@@ -33,12 +38,25 @@ import {connectionManager} from './connection_manager';
 // https://github.com/malloydata/malloy-vscode-extension/issues/58
 // eslint-disable-next-line no-restricted-imports
 import {cancelQuery, runQuery} from '../../worker/run_query';
+import {Disposable} from 'vscode-jsonrpc';
 
 const workerLog = vscode.window.createOutputChannel('Malloy Worker');
 
 export type ListenerType = (message: WorkerMessage) => void;
 
-const reader = new WorkerURLReader();
+class FileHandler extends VSCodeURLReader {
+  fetchFile(uri: string) {
+    return fetchFile(uri);
+  }
+  fetchBinaryFile(uri: string) {
+    return fetchBinaryFile(uri);
+  }
+  fetchCellData(uri: string) {
+    return fetchCellData(uri);
+  }
+}
+
+const fileHandler = new FileHandler();
 
 export class WorkerConnection implements BaseWorker {
   listeners: Record<string, ListenerType[]> = {};
@@ -57,25 +75,31 @@ export class WorkerConnection implements BaseWorker {
         break;
       case 'run':
         runQuery(
-          {send: (message: WorkerMessage) => this._send(message)},
-          reader,
+          {
+            send: (message: WorkerMessage) => this._send(message),
+            log(message: string) {
+              // eslint-disable-next-line no-console
+              console.log(message);
+            },
+          },
+          fileHandler,
           connectionManager,
           true,
-          message,
-          fetchCellData
+          message
         );
         break;
     }
   }
 
   _send(message: WorkerMessage): void {
-    this.listeners['message'] ??= [];
-    this.listeners['message'].forEach(listener => listener(message));
+    this.listeners[message.type] ??= [];
+    this.listeners[message.type].forEach(listener => listener(message));
   }
 
-  on(event: string, listener: ListenerType): void {
+  on(event: string, listener: ListenerType): Disposable {
     this.listeners[event] ??= [];
     this.listeners[event].push(listener);
+    return {dispose: () => {}};
   }
 
   off(event: string, listener: ListenerType): void {

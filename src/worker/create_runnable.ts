@@ -27,19 +27,19 @@ import {
   Runtime,
   SQLBlockMaterializer,
 } from '@malloydata/malloy';
-import {CellData} from '../common/types';
 import {WorkerQuerySpec} from '../common/worker_message_types';
+import {FileHandler} from './file_handler';
 
 export const createRunnable = async (
   query: WorkerQuerySpec,
   runtime: Runtime,
-  fetchCellData: (uri: string) => Promise<CellData[]>
+  fileHandler: FileHandler
 ): Promise<SQLBlockMaterializer | QueryMaterializer> => {
   let runnable: QueryMaterializer | SQLBlockMaterializer;
   const queryFileURL = new URL(query.uri);
   let mm: ModelMaterializer | null = null;
   if (queryFileURL.protocol === 'vscode-notebook-cell:') {
-    const allCells = await fetchCellData(query.uri);
+    const allCells = await fileHandler.fetchCellData(query.uri);
     for (let idx = 0; idx < allCells.length; idx++) {
       const url = new URL(allCells[idx].uri);
       if (mm) {

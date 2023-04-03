@@ -21,6 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import {Disposable} from 'vscode-jsonrpc';
 import {QueryDownloadOptions, QueryPanelMessage} from './message_types';
 import {CellData, MalloyConfig} from './types';
 
@@ -193,10 +194,10 @@ export type WorkerMessage =
 
 export interface BaseWorker {
   send(message: Message): void;
-  off(name: string, callback: (...args: unknown[]) => void): void;
-  on(name: string, callback: (...args: unknown[]) => void): void;
+  on(name: string, callback: (...args: unknown[]) => void): Disposable;
 }
 
 export interface MessageHandler {
   send(message: WorkerMessage): void;
+  log(message: string): void;
 }
