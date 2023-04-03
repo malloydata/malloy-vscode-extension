@@ -41,6 +41,7 @@ const DEFAULT_RESTART_SECONDS = 1;
 export class WorkerConnection {
   worker!: child_process.ChildProcess;
   connection!: rpc.MessageConnection;
+  listeners: Array<(message: WorkerMessage) => void> = [];
 
   constructor(context: vscode.ExtensionContext) {
     const workerModule = context.asAbsolutePath('dist/worker_node.js');
@@ -127,15 +128,22 @@ export class WorkerConnection {
     this.connection.sendRequest(message.type, message);
   }
 
-  notifyListeners(_message: WorkerMessage): void {
-    // this.connection.sendNotification(message.type, message);
+  notifyListeners(message: WorkerMessage): void {
+    this.listeners.forEach(listener => listener(message));
   }
 
   on(
     event: string,
     listener: (message: WorkerMessage) => void
   ): vscode.Disposable {
-    return this.connection.onRequest(event, listener);
+    this.listeners.push(listener);
+    const disposable = this.connection.onRequest(event, listener);
+    return {
+      dispose: () => {
+        disposable.dispose();
+        this.listeners = this.listeners.filter(l => l !== listener);
+      },
+    };
   }
 
   stop(): void {
