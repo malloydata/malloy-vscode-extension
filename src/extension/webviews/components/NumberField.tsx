@@ -21,8 +21,8 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import React, { FormEvent } from "react";
-import { VSCodeTextField } from "@vscode/webview-ui-toolkit/react";
+import React, {FormEvent} from 'react';
+import {VSCodeTextField} from '@vscode/webview-ui-toolkit/react';
 
 interface NumberFieldProps {
   value: number;
@@ -43,16 +43,16 @@ export const NumberField: React.FC<NumberFieldProps> = ({
   id,
   style,
 }) => {
-  const onChange: OnChange<HTMLInputElement> = (event) => {
+  const onChange: OnChange<HTMLInputElement> = event => {
     setValue(Number(event.currentTarget.value));
   };
 
   return (
     <VSCodeTextField
-      value={value != null && String(value)}
-      type="number"
+      value={String(value ?? '')}
+      type={'number' as any}
       onChange={onChange}
-      placeholder={placeholder}
+      placeholder={String(placeholder)}
       id={id}
       style={style}
     />

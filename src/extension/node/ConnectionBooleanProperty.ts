@@ -1,10 +1,10 @@
 export interface ConnectionBooleanProperty {
-  type: "boolean";
+  type: 'boolean';
   const?: boolean;
 }
 
 export interface ConnectionStringProperty {
-  type: "string";
+  type: 'string';
   const?: boolean;
 }
 

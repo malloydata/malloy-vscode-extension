@@ -21,8 +21,8 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import React, { FormEvent } from "react";
-import { VSCodeCheckbox } from "@vscode/webview-ui-toolkit/react";
+import React, {FormEvent} from 'react';
+import {VSCodeCheckbox} from '@vscode/webview-ui-toolkit/react';
 
 interface TextFieldProps {
   value: boolean;
@@ -41,7 +41,7 @@ export const BooleanField: React.FC<TextFieldProps> = ({
   id,
   style,
 }) => {
-  const onChange: OnChange<HTMLInputElement> = (event) => {
+  const onChange: OnChange<HTMLInputElement> = event => {
     setValue(event.currentTarget.checked);
   };
 

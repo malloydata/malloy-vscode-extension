@@ -21,16 +21,16 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import startCase from "lodash/startCase";
-import React from "react";
+import startCase from 'lodash/startCase';
+import React from 'react';
 import {
   ConnectionConfigProperty,
   ExternalConnection,
   ExternalConnectionConfig,
-} from "../../../../../common/connection_manager_types";
-import { BooleanField, NumberField, TextField } from "../../../components";
-import { Label } from "../../../components/Label";
-import { LabelCell } from "../../../components/LabelCell";
+} from '../../../../../common/connection_manager_types';
+import {BooleanField, NumberField, TextField} from '../../../components';
+import {Label} from '../../../components/Label';
+import {LabelCell} from '../../../components/LabelCell';
 
 interface BooleanPropertyProps {
   name: string;
@@ -72,7 +72,7 @@ const StringProperty: React.FC<StringPropertyProps> = ({
         <Label>{name}:</Label>
       </LabelCell>
       <td>
-        <TextField value={value || ""} setValue={setValue} />
+        <TextField value={value || ''} setValue={setValue} />
       </td>
     </tr>
   );
@@ -109,23 +109,21 @@ interface ExternalConnectionEditorProps {
 
 export const ExternalConnectionEditor: React.FC<
   ExternalConnectionEditorProps
-> = ({ config, setConfig, externalConnection }) => {
+> = ({config, setConfig, externalConnection}) => {
   const mapProperties = (
     properties: Record<string, ConnectionConfigProperty>
   ) => {
     const fields = Object.entries(properties);
     return fields.map(([name, property]) => {
-      const { default: propertyDefault, type, title } = property;
+      const {default: propertyDefault, type, title} = property;
       switch (type) {
-        case "string":
+        case 'string':
           return (
             <StringProperty
               key={name}
               name={title || startCase(name)}
-              value={
-                config[name] != null ? String(config[name]) : propertyDefault
-              }
-              setValue={(value) =>
+              value={String(config[name] ?? propertyDefault)}
+              setValue={value =>
                 setConfig({
                   ...config,
                   [name]: value,
@@ -133,15 +131,13 @@ export const ExternalConnectionEditor: React.FC<
               }
             />
           );
-        case "number":
+        case 'number':
           return (
             <NumberProperty
               key={name}
               name={title || startCase(name)}
-              value={
-                config[name] != null ? Number(config[name]) : propertyDefault
-              }
-              setValue={(value) =>
+              value={Number(config[name] ?? propertyDefault)}
+              setValue={value =>
                 setConfig({
                   ...config,
                   [name]: value,
@@ -149,13 +145,13 @@ export const ExternalConnectionEditor: React.FC<
               }
             />
           );
-        case "boolean":
+        case 'boolean':
           return (
             <BooleanProperty
               key={name}
               name={title || startCase(name)}
-              value={config[name] != null ? !!config[name] : propertyDefault}
-              setValue={(value) =>
+              value={Boolean(config[name] ?? propertyDefault)}
+              setValue={value =>
                 setConfig({
                   ...config,
                   [name]: value,
@@ -177,8 +173,8 @@ export const ExternalConnectionEditor: React.FC<
           <td>
             <TextField
               value={config.name}
-              setValue={(name) => {
-                setConfig({ ...config, name });
+              setValue={name => {
+                setConfig({...config, name});
               }}
             />
           </td>
