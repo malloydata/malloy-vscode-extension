@@ -60,31 +60,51 @@ export class WorkerConnection {
         new rpc.BrowserMessageWriter(this.worker)
       );
       this.connection.listen();
+      context.subscriptions.push(this.connection);
 
-      this.connection.onRequest('log', (message: WorkerLogMessage) => {
-        workerLog.appendLine(`worker: ${message.message}`);
-      });
-
-      this.connection.onRequest('read', async (message: WorkerReadMessage) => {
-        workerLog.appendLine(`worker: reading file ${message.uri}`);
-        return await fetchFile(message.uri);
-      });
-
-      this.connection.onRequest(
-        'read_binary',
-        async (message: WorkerReadBinaryMessage) => {
-          workerLog.appendLine(`worker: reading binary file ${message.uri}`);
-          return await fetchBinaryFile(message.uri);
-        }
+      context.subscriptions.push(
+        this.connection.onRequest('log', (message: WorkerLogMessage) => {
+          workerLog.appendLine(`worker: ${message.message}`);
+        })
       );
 
-      this.connection.onRequest(
-        'read_cell_data',
-        async (message: WorkerReadCellDataMessage) => {
-          workerLog.appendLine(`worker: reading cell data for ${message.uri}`);
-          return await fetchCellData(message.uri);
-        }
+      context.subscriptions.push(
+        this.connection.onRequest(
+          'read',
+          async (message: WorkerReadMessage) => {
+            workerLog.appendLine(`worker: reading file ${message.uri}`);
+            return await fetchFile(message.uri);
+          }
+        )
       );
+
+      context.subscriptions.push(
+        this.connection.onRequest(
+          'read_binary',
+          async (message: WorkerReadBinaryMessage) => {
+            workerLog.appendLine(`worker: reading binary file ${message.uri}`);
+            return await fetchBinaryFile(message.uri);
+          }
+        )
+      );
+
+      context.subscriptions.push(
+        this.connection.onRequest(
+          'read_cell_data',
+          async (message: WorkerReadCellDataMessage) => {
+            workerLog.appendLine(
+              `worker: reading cell data for ${message.uri}`
+            );
+            return await fetchCellData(message.uri);
+          }
+        )
+      );
+
+      context.subscriptions.push({
+        dispose: () => {
+          this.worker.terminate();
+        },
+      });
     };
 
     startWorker();
