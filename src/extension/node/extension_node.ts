@@ -58,6 +58,7 @@ const cloudshellEnv = () => {
 
 export function activate(context: vscode.ExtensionContext): void {
   const urlReader = new VSCodeURLReader();
+  cloudshellEnv();
   setupWorker(context);
   setupSubscriptions(context, urlReader, connectionManager, worker);
 
@@ -76,7 +77,6 @@ export function activate(context: vscode.ExtensionContext): void {
     )
   );
 
-  cloudshellEnv();
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration(async e => {
       if (e.affectsConfiguration('malloy')) {
