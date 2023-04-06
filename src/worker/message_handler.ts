@@ -31,7 +31,7 @@ import {
   WorkerLogMessage,
   WorkerMessage,
 } from '../common/worker_message_types';
-import {FileHandler} from './file_handler';
+import {FileHandler} from '../common/types';
 import {refreshConfig} from './refresh_config';
 import {ConnectionManager} from '../common/connection_manager';
 

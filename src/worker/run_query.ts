@@ -39,7 +39,7 @@ import {
 } from '../common/message_types';
 import {createRunnable} from './create_runnable';
 import {ConnectionManager} from '../common/connection_manager';
-import {FileHandler} from './file_handler';
+import {FileHandler} from '../common/types';
 
 interface QueryEntry {
   panelId: string;

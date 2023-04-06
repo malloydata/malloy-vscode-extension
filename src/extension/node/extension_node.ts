@@ -32,18 +32,16 @@ import {
 } from 'vscode-languageclient/node';
 import {editConnectionsCommand} from './commands/edit_connections';
 import {ConnectionsProvider} from '../tree_views/connections_view';
-import {WorkerConnection} from './worker_connection';
-import {MalloyConfig} from '../../common/types';
+import {WorkerConnection} from './worker_connection_node';
+import {FileHandler, MalloyConfig} from '../../common/types';
 import {connectionManager} from './connection_manager';
-import {setupSubscriptions} from '../subscriptions';
-import {initFileMessaging, VSCodeURLReader} from '../utils';
+import {setupFileMessaging, setupSubscriptions} from '../subscriptions';
+import {fileHandler} from '../utils';
 import {MALLOY_EXTENSION_STATE} from '../state';
 import {BaseWorker} from '../../common/worker_message_types';
 
 let client: LanguageClient;
 let worker: BaseWorker;
-
-export let extensionModeProduction: boolean;
 
 const cloudshellEnv = () => {
   const cloudShellProject = vscode.workspace
@@ -57,11 +55,10 @@ const cloudshellEnv = () => {
 };
 
 export function activate(context: vscode.ExtensionContext): void {
-  const urlReader = new VSCodeURLReader();
   cloudshellEnv();
-  setupWorker(context);
+  setupWorker(context, fileHandler);
   setupLanguageServer(context);
-  setupSubscriptions(context, urlReader, connectionManager, worker, client);
+  setupSubscriptions(context, fileHandler, connectionManager, worker, client);
 
   const connectionsTree = new ConnectionsProvider(context, connectionManager);
 
@@ -141,7 +138,7 @@ async function setupLanguageServer(
   client.start();
   await client.onReady();
 
-  initFileMessaging(context, client);
+  setupFileMessaging(context, client, fileHandler);
 }
 
 function sendWorkerConfig() {
@@ -153,7 +150,10 @@ function sendWorkerConfig() {
   });
 }
 
-function setupWorker(context: vscode.ExtensionContext): void {
-  worker = new WorkerConnection(context);
+function setupWorker(
+  context: vscode.ExtensionContext,
+  fileHandler: FileHandler
+): void {
+  worker = new WorkerConnection(context, fileHandler);
   sendWorkerConfig();
 }
