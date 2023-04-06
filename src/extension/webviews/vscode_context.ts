@@ -21,7 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as _webviewAPI from 'vscode-webview';
 import React, {useContext} from 'react';
 import {WebviewApi} from './vscode_wrapper';
 
