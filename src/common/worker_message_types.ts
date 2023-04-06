@@ -112,7 +112,7 @@ export interface MessageReadCellData {
 }
 
 export interface MessageDownload {
-  type: 'download';
+  type: 'malloy/download';
   query: WorkerQuerySpec;
   panelId: string;
   name: string;

@@ -68,7 +68,7 @@ const sendDownloadMessage = (
   downloadOptions: QueryDownloadOptions
 ) => {
   const message: MessageDownload = {
-    type: 'download',
+    type: 'malloy/download',
     query,
     panelId,
     name,

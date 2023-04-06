@@ -64,6 +64,13 @@ export class WorkerConnection extends WorkerConnectionBase {
           }
         });
 
+      this.connection = rpc.createMessageConnection(
+        new rpc.IPCMessageReader(this.worker),
+        new rpc.IPCMessageWriter(this.worker)
+      );
+      this.connection.listen();
+      context.subscriptions.push(this.connection);
+
       this.subscribe();
     };
     startWorker();

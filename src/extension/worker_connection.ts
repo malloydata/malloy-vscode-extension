@@ -37,7 +37,7 @@ const workerLog = vscode.window.createOutputChannel('Malloy Worker');
 export type ListenerType = (message: WorkerMessage) => void;
 
 export abstract class WorkerConnectionBase {
-  connection!: rpc.MessageConnection;
+  connection: rpc.MessageConnection;
   listeners: ListenerType[] = [];
 
   constructor(

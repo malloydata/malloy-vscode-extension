@@ -22,15 +22,8 @@
  */
 /* eslint-disable no-console */
 
-import {BaseLanguageClient} from 'vscode-languageclient';
 import * as vscode from 'vscode';
-import {
-  FetchBinaryFileEvent,
-  FetchCellDataEvent,
-  FetchFileEvent,
-  CellData,
-  FileHandler,
-} from '../common/types';
+import {CellData, FileHandler} from '../common/types';
 
 /**
  * Transforms vscode-notebook-cell: Uris to file: or vscode-vfs: URLS
