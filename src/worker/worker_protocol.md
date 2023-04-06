@@ -27,7 +27,7 @@ A file read request from the worker to the VSCode extension:
 
 ```json
 {
-  "type": "read",
+  "type": "malloy/read",
   "id": 67,
   "uri": "file:///data/flights.malloy"
 }
@@ -39,7 +39,7 @@ A response from VSCode to the worker containing the file contents:
 
 ```json
 {
-  "type": "read",
+  "type": "malloy/read",
   "id": 67,
   "uri": "file:///data/flights.malloy",
   "data": "source: flights is table('flights.parquet') {...}"
@@ -52,7 +52,7 @@ A response from VSCode to the worker containing the file contents:
   maintains its own log, so this is just to provide better visibility for
   certain log messages.
   - Parameters:
-    - `type` - "log"
+    - `type` - "malloy/log"
     - `message` - message to log
   - Response:
     - None.
@@ -60,14 +60,42 @@ A response from VSCode to the worker containing the file contents:
   against the latest file contents, which may not be saved to disk. Returns
   the contents of the file, either from a VS Code editor buffer or from disk.
   - Parameters:
-    - `type` - "read"
+    - `type` - "malloy/read"
     - `uri` - A URL to return the contents for.
     - `id` - ID to include in response.
   - Response:
-    - `type` - "read"
+    - `type` - "malloy/read"
     - `uri` - URL from the request.
     - `id` - ID from the request.
     - `data` - File contents or
+    - `error` - Error message if an error occurred.
+- **Read Binary File** - Read a buffer or file. Used to load contents into
+  a local db from the VS Code virtual filesystem. Returns the contents of the
+  file from the filesystem .
+  - Parameters:
+    - `type` - "malloy/readBinary"
+    - `uri` - A URL to return the contents for.
+    - `id` - ID to include in response.
+  - Response:
+    - `type` - "malloy/readBinary"
+    - `uri` - URL from the request.
+    - `id` - ID from the request.
+    - `data` - File contents or
+    - `error` - Error message if an error occurred.
+- **Read Cell Data** - Read a set of cells from a notebook document. The data
+  passed to the worker consists of only the current cell, we use this command
+  to retrieve the contents and URLS of all proceeding cells so we can treat
+  the cell as building on the previous ones.
+  - Parameters:
+    - `type` - "malloy/readCellData"
+    - `uri` - A URL to return the contents for.
+    - `id` - ID to include in response.
+  - Response:
+    - `type` - "malloy/readCellData"
+    - `uri` - URL from the request.
+    - `id` - ID from the request.
+    - `data` - An array of objects containing the `text` and `uri` values
+      for every cell up to and including the current cell.
     - `error` - Error message if an error occurred.
 - **Query Panel** - Messages for updating a query panel. The contents
   are relayed directly to the appropriate query panel WebView.
@@ -82,13 +110,13 @@ A response from VSCode to the worker containing the file contents:
   a query in process, we simple stop processing after the current step completes
   and don't return results.
   - Parameters:
-    - `type` - "cancel"
+    - `type` - "malloy/cancel"
     - `panelId` - Panel generating the cancel.
   - Response:
     None.
 - **Config** - Sync the VSCode config to the worker
   - Parameters:
-    - `type` - "config"
+    - `type` - "malloy/config"
     - `config` - Corresponds to the contents of the `malloy` section of
       the VS Code configuration file.
   - Response:
@@ -97,20 +125,20 @@ A response from VSCode to the worker containing the file contents:
   format. The worker will generate a series of `query_panel` messages as the
   query progresses.
   - Parameters:
-    - `type` - "download"
+    - `type` - "malloy/download"
     - `panelId` - Panel generating the download request
     - `query` - Query Worker Spec
   - Response:
     - None.
 - **Exit** - Halts the worker process
   - Parameters:
-    - `type` - "exit"
+    - `type` - "malloy/exit"
   - Response:
     - None.
 - **Run** - Runs a query and returns the results as JSON object. The worker
   will generate a series of `query_panel` messages as the query progresses.
   - Parameters:
-    - `type` - "run"
+    - `type` - "malloy/run"
     - `panelId` - Panel generating the download request
     - `query` - Query Worker Spec
   - Response:
@@ -127,7 +155,7 @@ A message indicating that a query is now running against the database:
 
 ```json
 {
-  "type": "query_panel",
+  "type": "malloy/queryPanel",
   "panelId": "file://flights.malloy",
   "message": {
     "type": "query-status",
@@ -168,10 +196,10 @@ A message indicating that a query is now running against the database:
 
 ```json
 {
-  "type": "run",
+  "type": "malloy/run",
   "panelId": "file:///data/flights.malloy",
   "query": {
-    "type": "named",
+    "type": "malloy/named",
     "name": "flights_dashboard",
     "uri": "file:///data/flights.malloy"
   }
