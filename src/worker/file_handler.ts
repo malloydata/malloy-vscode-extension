@@ -67,7 +67,7 @@ export class RpcFileHandler implements FileHandler {
    * @returns File contents
    */
   async fetchFile(uri: string): Promise<string> {
-    return this.connection.sendRequest('read', {uri}) as Promise<string>;
+    return this.connection.sendRequest('malloy/read', {uri}) as Promise<string>;
   }
 
   /**
@@ -78,7 +78,7 @@ export class RpcFileHandler implements FileHandler {
    */
 
   async fetchBinaryFile(uri: string): Promise<Uint8Array> {
-    return this.connection.sendRequest('read_binary', {
+    return this.connection.sendRequest('malloy/readBinary', {
       uri,
     }) as Promise<Uint8Array>;
   }
@@ -90,7 +90,7 @@ export class RpcFileHandler implements FileHandler {
    * @returns File contents
    */
   async fetchCellData(uri: string): Promise<CellData[]> {
-    return this.connection.sendRequest('read_cell_data', {uri}) as Promise<
+    return this.connection.sendRequest('malloy/readCellData', {uri}) as Promise<
       CellData[]
     >;
   }

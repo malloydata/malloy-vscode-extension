@@ -47,14 +47,16 @@ export class MessageHandler {
       this.log('Heartbeat');
     }, 60 * 1000);
 
-    this.connection.onRequest('cancel', (message: MessageCancel) =>
+    this.connection.onRequest('malloy/cancel', (message: MessageCancel) =>
       cancelQuery(message)
     );
-    this.connection.onRequest('config', (message: MessageConfig) =>
+    this.connection.onRequest('malloy/config', (message: MessageConfig) =>
       refreshConfig(this, connectionManager, message)
     );
-    this.connection.onRequest('exit', () => clearInterval(this.heartBeat));
-    this.connection.onRequest('run', (message: MessageRun) =>
+    this.connection.onRequest('malloy/exit', () =>
+      clearInterval(this.heartBeat)
+    );
+    this.connection.onRequest('malloy/run', (message: MessageRun) =>
       runQuery(this, fileHandler, connectionManager, false, message)
     );
   }
@@ -65,7 +67,7 @@ export class MessageHandler {
 
   log(message: string) {
     const msg: WorkerLogMessage = {
-      type: 'log',
+      type: 'malloy/log',
       message,
     };
     this.send(msg);

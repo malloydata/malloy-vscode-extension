@@ -39,7 +39,7 @@ const sendMessage = (
   error?: string
 ) => {
   const msg: WorkerDownloadMessage = {
-    type: 'download',
+    type: 'malloy/download',
     name,
     error,
   };

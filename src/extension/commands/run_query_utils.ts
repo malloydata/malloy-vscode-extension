@@ -53,7 +53,7 @@ export function runMalloyQuery(
     (progress, token) => {
       const cancel = () => {
         worker.send({
-          type: 'cancel',
+          type: 'malloy/cancel',
           panelId,
         });
         if (current) {
@@ -147,7 +147,7 @@ export function runMalloyQuery(
       const {file, ...params} = query;
       const uri = file.uri.toString();
       worker.send({
-        type: 'run',
+        type: 'malloy/run',
         query: {
           uri,
           ...params,
@@ -162,7 +162,7 @@ export function runMalloyQuery(
       return new Promise(resolve => {
         let off: Disposable | null = null;
         const listener = (msg: WorkerMessage) => {
-          if (msg.type === 'dead') {
+          if (msg.type === 'malloy/dead') {
             current.messages.postMessage({
               type: QueryMessageType.QueryStatus,
               status: QueryRunStatus.Error,
@@ -174,7 +174,7 @@ https://github.com/malloydata/malloy/issues.`,
             off?.dispose();
             resolve(undefined);
             return;
-          } else if (msg.type !== 'query_panel') {
+          } else if (msg.type !== 'malloy/queryPanel') {
             return;
           }
           const {message, panelId: msgPanelId} = msg;
@@ -245,7 +245,7 @@ https://github.com/malloydata/malloy/issues.`,
           }
         };
 
-        off = worker.on('query_panel', listener);
+        off = worker.on('malloy/queryPanel', listener);
       });
     }
   );

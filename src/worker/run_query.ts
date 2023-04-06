@@ -54,7 +54,7 @@ const sendMessage = (
   panelId: string
 ) => {
   const msg: WorkerQueryPanelMessage = {
-    type: 'query_panel',
+    type: 'malloy/queryPanel',
     panelId,
     message,
   };

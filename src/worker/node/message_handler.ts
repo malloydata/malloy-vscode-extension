@@ -52,7 +52,7 @@ export class NodeMessageHandler {
 
     messageHandler.log('Worker started');
 
-    connection.onRequest('download', (message: MessageDownload) =>
+    connection.onRequest('message/download', (message: MessageDownload) =>
       downloadQuery(messageHandler, connectionManager, message, fileHandler)
     );
 

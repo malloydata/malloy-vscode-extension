@@ -43,11 +43,12 @@ import {
 const fixNotebookUri = (uri: vscode.Uri) => {
   if (uri.scheme === 'vscode-notebook-cell') {
     const {scheme} = vscode.workspace.workspaceFolders[0].uri;
+    const {authority, path, query} = uri;
     uri = vscode.Uri.from({
       scheme,
-      authority: uri.authority,
-      path: uri.path,
-      query: uri.query,
+      authority,
+      path,
+      query,
     });
   }
 

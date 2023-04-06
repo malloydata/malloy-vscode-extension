@@ -107,7 +107,7 @@ function sendWorkerConfig() {
   // Strip out functions
   const config: MalloyConfig = JSON.parse(JSON.stringify(rawConfig));
   worker.send({
-    type: 'config',
+    type: 'malloy/config',
     config,
   });
 }

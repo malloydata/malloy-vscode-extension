@@ -65,7 +65,7 @@ export class WorkerConnection {
             // Maybe exponential backoff? Not sure what our failure
             // modes are going to be
             setTimeout(startWorker, DEFAULT_RESTART_SECONDS * 1000);
-            this.notifyListeners({type: 'dead'});
+            this.notifyListeners({type: 'malloy/dead'});
           }
         });
 
@@ -77,16 +77,16 @@ export class WorkerConnection {
       context.subscriptions.push(this.connection);
 
       context.subscriptions.push(
-        this.connection.onRequest('log', (message: WorkerLogMessage) => {
-          workerLog.appendLine(`worker: ${message.message}`);
+        this.connection.onRequest('malloy/log', (message: WorkerLogMessage) => {
+          workerLog.appendLine(message.message);
         })
       );
 
       context.subscriptions.push(
         this.connection.onRequest(
-          'read',
+          'malloy/read',
           async (message: WorkerReadMessage) => {
-            workerLog.appendLine(`worker: reading file ${message.uri}`);
+            workerLog.appendLine(`reading file ${message.uri}`);
             return await fetchFile(message.uri);
           }
         )
@@ -94,9 +94,9 @@ export class WorkerConnection {
 
       context.subscriptions.push(
         this.connection.onRequest(
-          'read_binary',
+          'malloy/readBinary',
           async (message: WorkerReadBinaryMessage) => {
-            workerLog.appendLine(`worker: reading binary file ${message.uri}`);
+            workerLog.appendLine(`reading binary file ${message.uri}`);
             return await fetchBinaryFile(message.uri);
           }
         )
@@ -104,11 +104,9 @@ export class WorkerConnection {
 
       context.subscriptions.push(
         this.connection.onRequest(
-          'read_cell_data',
+          'malloy/readCellData',
           async (message: WorkerReadCellDataMessage) => {
-            workerLog.appendLine(
-              `worker: reading cell data for ${message.uri}`
-            );
+            workerLog.appendLine(`reading cell data for ${message.uri}`);
             return await fetchCellData(message.uri);
           }
         )
@@ -133,7 +131,7 @@ export class WorkerConnection {
   }
 
   on(
-    event: string,
+    event: WorkerMessage['type'],
     listener: (message: WorkerMessage) => void
   ): vscode.Disposable {
     this.listeners.push(listener);

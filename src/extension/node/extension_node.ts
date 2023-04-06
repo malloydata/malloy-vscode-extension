@@ -146,7 +146,7 @@ async function setupLanguageServer(
 
 function sendWorkerConfig() {
   worker.send({
-    type: 'config',
+    type: 'malloy/config',
     config: vscode.workspace.getConfiguration(
       'malloy'
     ) as unknown as MalloyConfig,

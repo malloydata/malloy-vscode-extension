@@ -66,14 +66,14 @@ export class WorkerConnection implements BaseWorker {
 
   send(message: Message): void {
     switch (message.type) {
-      case 'config':
+      case 'malloy/config':
         // Shared with extension
         // refreshConfig(connectionManager, message);
         break;
-      case 'cancel':
+      case 'malloy/cancel':
         cancelQuery(message);
         break;
-      case 'run':
+      case 'malloy/run':
         runQuery(
           {
             send: (message: WorkerMessage) => this._send(message),

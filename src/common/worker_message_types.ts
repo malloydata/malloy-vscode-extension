@@ -71,24 +71,24 @@ export interface MessageExit {
 }
 
 export interface MessageRun {
-  type: 'run';
+  type: 'malloy/run';
   query: WorkerQuerySpec;
   panelId: string;
   name: string;
 }
 
 export interface MessageCancel {
-  type: 'cancel';
+  type: 'malloy/cancel';
   panelId: string;
 }
 
 export interface MessageConfig {
-  type: 'config';
+  type: 'malloy/config';
   config: MalloyConfig;
 }
 
 export interface MessageRead {
-  type: 'read';
+  type: 'malloy/read';
   id: string;
   uri: string;
   data?: string;
@@ -96,7 +96,7 @@ export interface MessageRead {
 }
 
 export interface MessageReadBinary {
-  type: 'read_binary';
+  type: 'malloy/readBinary';
   id: string;
   uri: string;
   data?: Uint8Array;
@@ -104,7 +104,7 @@ export interface MessageReadBinary {
 }
 
 export interface MessageReadCellData {
-  type: 'read_cell_data';
+  type: 'malloy/readCellData';
   id: string;
   uri: string;
   data?: CellData[];
@@ -140,44 +140,44 @@ export type Message =
  */
 
 export interface WorkerDeadMessage {
-  type: 'dead';
+  type: 'malloy/dead';
 }
 
 export interface WorkerDownloadMessage {
-  type: 'download';
+  type: 'malloy/download';
   name: string;
   error?: string;
 }
 
 export interface WorkerLogMessage {
-  type: 'log';
+  type: 'malloy/log';
   message: string;
 }
 
 export interface WorkerQueryPanelMessage {
-  type: 'query_panel';
+  type: 'malloy/queryPanel';
   panelId: string;
   message: QueryPanelMessage;
 }
 
 export interface WorkerStartMessage {
-  type: 'start';
+  type: 'malloy/start';
 }
 
 export interface WorkerReadBinaryMessage {
-  type: 'read_binary';
+  type: 'malloy/readBinary';
   id: string;
   uri: string;
 }
 
 export interface WorkerReadCellDataMessage {
-  type: 'read_cell_data';
+  type: 'malloy/readCellData';
   id: string;
   uri: string;
 }
 
 export interface WorkerReadMessage {
-  type: 'read';
+  type: 'malloy/read';
   id: string;
   uri: string;
 }
@@ -194,7 +194,10 @@ export type WorkerMessage =
 
 export interface BaseWorker {
   send(message: Message): void;
-  on(name: string, callback: (...args: unknown[]) => void): Disposable;
+  on(
+    name: WorkerMessage['type'],
+    callback: (message: WorkerMessage) => void
+  ): Disposable;
 }
 
 export interface MessageHandler {
