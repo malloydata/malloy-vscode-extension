@@ -48,3 +48,8 @@ export interface CellData {
   uri: string;
   text: string;
 }
+
+export interface BuildModelRequest {
+  uri: string;
+  version: number;
+}

@@ -47,7 +47,8 @@ export let extensionModeProduction: boolean;
 export function activate(context: vscode.ExtensionContext): void {
   const urlReader = new VSCodeURLReader();
   setupWorker(context);
-  setupSubscriptions(context, urlReader, connectionManager, worker);
+  setupLanguageServer(context);
+  setupSubscriptions(context, urlReader, connectionManager, worker, client);
 
   const connectionsTree = new ConnectionsProvider(context, connectionManager);
   context.subscriptions.push(
@@ -68,7 +69,6 @@ export function activate(context: vscode.ExtensionContext): void {
       editConnectionsCommand
     )
   );
-  setupLanguageServer(context);
 }
 
 export async function deactivate(): Promise<void> | undefined {
