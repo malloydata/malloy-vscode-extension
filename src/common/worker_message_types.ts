@@ -87,24 +87,24 @@ export interface MessageConfig {
   config: MalloyConfig;
 }
 
-export interface MessageRead {
-  type: 'malloy/read';
+export interface MessageFetch {
+  type: 'malloy/fetch';
   id: string;
   uri: string;
   data?: string;
   error?: string;
 }
 
-export interface MessageReadBinary {
-  type: 'malloy/readBinary';
+export interface MessageFetchBinary {
+  type: 'malloy/fetchBinary';
   id: string;
   uri: string;
   data?: Uint8Array;
   error?: string;
 }
 
-export interface MessageReadCellData {
-  type: 'malloy/readCellData';
+export interface MessageFetchCellData {
+  type: 'malloy/fetchCellData';
   id: string;
   uri: string;
   data?: CellData[];
@@ -121,17 +121,17 @@ export interface MessageDownload {
 }
 
 export type FetchMessage =
-  | MessageRead
-  | MessageReadBinary
-  | MessageReadCellData;
+  | MessageFetch
+  | MessageFetchBinary
+  | MessageFetchCellData;
 
 export type Message =
   | MessageCancel
   | MessageConfig
   | MessageExit
-  | MessageRead
-  | MessageReadBinary
-  | MessageReadCellData
+  | MessageFetch
+  | MessageFetchBinary
+  | MessageFetchCellData
   | MessageRun
   | MessageDownload;
 
@@ -165,19 +165,19 @@ export interface WorkerStartMessage {
 }
 
 export interface WorkerReadBinaryMessage {
-  type: 'malloy/readBinary';
+  type: 'malloy/fetchBinary';
   id: string;
   uri: string;
 }
 
 export interface WorkerReadCellDataMessage {
-  type: 'malloy/readCellData';
+  type: 'malloy/fetchCellData';
   id: string;
   uri: string;
 }
 
 export interface WorkerReadMessage {
-  type: 'malloy/read';
+  type: 'malloy/fetch';
   id: string;
   uri: string;
 }

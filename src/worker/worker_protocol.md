@@ -27,7 +27,7 @@ A file read request from the worker to the VSCode extension:
 
 ```json
 {
-  "type": "malloy/read",
+  "type": "malloy/fetch",
   "id": 67,
   "uri": "file:///data/flights.malloy"
 }
@@ -39,7 +39,7 @@ A response from VSCode to the worker containing the file contents:
 
 ```json
 {
-  "type": "malloy/read",
+  "type": "malloy/fetch",
   "id": 67,
   "uri": "file:///data/flights.malloy",
   "data": "source: flights is table('flights.parquet') {...}"
@@ -60,11 +60,11 @@ A response from VSCode to the worker containing the file contents:
   against the latest file contents, which may not be saved to disk. Returns
   the contents of the file, either from a VS Code editor buffer or from disk.
   - Parameters:
-    - `type` - "malloy/read"
+    - `type` - "malloy/fetch"
     - `uri` - A URL to return the contents for.
     - `id` - ID to include in response.
   - Response:
-    - `type` - "malloy/read"
+    - `type` - "malloy/fetch"
     - `uri` - URL from the request.
     - `id` - ID from the request.
     - `data` - File contents or
@@ -73,11 +73,11 @@ A response from VSCode to the worker containing the file contents:
   a local db from the VS Code virtual filesystem. Returns the contents of the
   file from the filesystem .
   - Parameters:
-    - `type` - "malloy/readBinary"
+    - `type` - "malloy/fetchBinary"
     - `uri` - A URL to return the contents for.
     - `id` - ID to include in response.
   - Response:
-    - `type` - "malloy/readBinary"
+    - `type` - "malloy/fetchBinary"
     - `uri` - URL from the request.
     - `id` - ID from the request.
     - `data` - File contents or
@@ -87,11 +87,11 @@ A response from VSCode to the worker containing the file contents:
   to retrieve the contents and URLS of all proceeding cells so we can treat
   the cell as building on the previous ones.
   - Parameters:
-    - `type` - "malloy/readCellData"
+    - `type` - "malloy/fetchCellData"
     - `uri` - A URL to return the contents for.
     - `id` - ID to include in response.
   - Response:
-    - `type` - "malloy/readCellData"
+    - `type` - "malloy/fetchCellData"
     - `uri` - URL from the request.
     - `id` - ID from the request.
     - `data` - An array of objects containing the `text` and `uri` values

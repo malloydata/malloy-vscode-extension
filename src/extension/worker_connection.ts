@@ -53,7 +53,7 @@ export abstract class WorkerConnectionBase {
     );
 
     this.context.subscriptions.push(
-      this._on('malloy/read', async (message: WorkerReadMessage) => {
+      this._on('malloy/fetch', async (message: WorkerReadMessage) => {
         workerLog.appendLine(`reading file ${message.uri}`);
         return await this.fileHandler.fetchFile(message.uri);
       })
@@ -61,7 +61,7 @@ export abstract class WorkerConnectionBase {
 
     this.context.subscriptions.push(
       this._on(
-        'malloy/readBinary',
+        'malloy/fetchBinary',
         async (message: WorkerReadBinaryMessage) => {
           workerLog.appendLine(`reading binary file ${message.uri}`);
           return await this.fileHandler.fetchBinaryFile(message.uri);
@@ -71,7 +71,7 @@ export abstract class WorkerConnectionBase {
 
     this.context.subscriptions.push(
       this._on(
-        'malloy/readCellData',
+        'malloy/fetchCellData',
         async (message: WorkerReadCellDataMessage) => {
           workerLog.appendLine(`reading cell data for ${message.uri}`);
           return await this.fileHandler.fetchCellData(message.uri);
