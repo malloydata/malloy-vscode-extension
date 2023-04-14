@@ -24,11 +24,11 @@
 import ReactDOM from 'react-dom';
 import React from 'react';
 import {App} from './App';
-import {QueryPanelMessage} from '../../../common/message_types';
+import {ComposerMessage} from '../../../common/message_types';
 import {getVSCodeAPI, QueryVSCodeContext} from './composer_vscode_context';
 
 (() => {
-  const vscode = getVSCodeAPI<void, QueryPanelMessage>();
+  const vscode = getVSCodeAPI<void, ComposerMessage>();
   ReactDOM.render(
     <QueryVSCodeContext.Provider value={vscode}>
       <App />
