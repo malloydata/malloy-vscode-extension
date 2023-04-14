@@ -29,26 +29,22 @@ import {
   LanguageClientOptions,
 } from 'vscode-languageclient/browser';
 
-// import { WorkerConnection } from "../../worker/browser/worker_connection";
-import {WorkerConnection} from './workerless_worker';
-// import {WorkerConnection} from './worker_connection';
-import {setupSubscriptions} from '../subscriptions';
-import {MalloyConfig} from '../../common/types';
+// import {WorkerConnection} from './workerless_worker';
+import {WorkerConnection} from './worker_connection_browser';
+import {setupFileMessaging, setupSubscriptions} from '../subscriptions';
+import {FileHandler, MalloyConfig} from '../../common/types';
 import {connectionManager} from './connection_manager';
 import {ConnectionsProvider} from '../tree_views/connections_view';
 import {editConnectionsCommand} from './commands/edit_connections';
-import {initFileMessaging, VSCodeURLReader} from '../utils';
+import {fileHandler} from '../utils';
 
 let client: LanguageClient;
 let worker: WorkerConnection;
 
-export let extensionModeProduction: boolean;
-
 export function activate(context: vscode.ExtensionContext): void {
-  const urlReader = new VSCodeURLReader();
-  setupWorker(context);
+  setupWorker(context, fileHandler);
   setupLanguageServer(context);
-  setupSubscriptions(context, urlReader, connectionManager, worker, client);
+  setupSubscriptions(context, fileHandler, connectionManager, worker, client);
 
   const connectionsTree = new ConnectionsProvider(context, connectionManager);
   context.subscriptions.push(
@@ -99,7 +95,7 @@ async function setupLanguageServer(
   client.start();
   await client.onReady();
 
-  initFileMessaging(context, client);
+  setupFileMessaging(context, client, fileHandler);
 }
 
 function sendWorkerConfig() {
@@ -107,13 +103,16 @@ function sendWorkerConfig() {
   // Strip out functions
   const config: MalloyConfig = JSON.parse(JSON.stringify(rawConfig));
   worker.send({
-    type: 'config',
+    type: 'malloy/config',
     config,
   });
 }
 
-function setupWorker(context: vscode.ExtensionContext): void {
-  worker = new WorkerConnection(context);
+function setupWorker(
+  context: vscode.ExtensionContext,
+  fileHandler: FileHandler
+): void {
+  worker = new WorkerConnection(context, fileHandler);
   sendWorkerConfig();
 }
 

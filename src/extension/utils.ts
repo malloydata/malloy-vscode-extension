@@ -22,15 +22,8 @@
  */
 /* eslint-disable no-console */
 
-import {URLReader} from '@malloydata/malloy';
-import {BaseLanguageClient} from 'vscode-languageclient';
 import * as vscode from 'vscode';
-import {
-  FetchBinaryFileEvent,
-  FetchCellDataEvent,
-  FetchFileEvent,
-  CellData,
-} from '../common/types';
+import {CellData, FileHandler} from '../common/types';
 
 /**
  * Transforms vscode-notebook-cell: Uris to file: or vscode-vfs: URLS
@@ -43,11 +36,12 @@ import {
 const fixNotebookUri = (uri: vscode.Uri) => {
   if (uri.scheme === 'vscode-notebook-cell') {
     const {scheme} = vscode.workspace.workspaceFolders[0].uri;
+    const {authority, path, query} = uri;
     uri = vscode.Uri.from({
       scheme,
-      authority: uri.authority,
-      path: uri.path,
-      query: uri.query,
+      authority,
+      path,
+      query,
     });
   }
 
@@ -114,39 +108,44 @@ export async function fetchCellData(uriString: string): Promise<CellData[]> {
   return result;
 }
 
-export class VSCodeURLReader implements URLReader {
+export class ClientFileHandler implements FileHandler {
+  /**
+   * Requests a file from the worker's controller. Although the
+   * file path is a file system path, reading the file off
+   * disk doesn't take into account unsaved changes that only
+   * VS Code is aware of.
+   *
+   * @param uri URI to resolve
+   * @returns File contents
+   */
+  async fetchFile(uri: string): Promise<string> {
+    return fetchFile(uri);
+  }
+
+  /**
+   * Requests a binary file from the worker's controller.
+   *
+   * @param uri URI to resolve
+   * @returns File contents
+   */
+
+  async fetchBinaryFile(uri: string): Promise<Uint8Array> {
+    return fetchBinaryFile(uri);
+  }
+
+  /**
+   * Requests a set of cell data from the worker's controller.
+   *
+   * @param uri URI to resolve
+   * @returns File contents
+   */
+  async fetchCellData(uri: string): Promise<CellData[]> {
+    return fetchCellData(uri);
+  }
+
   async readURL(url: URL): Promise<string> {
-    return fetchFile(url.toString());
+    return this.fetchFile(url.toString());
   }
 }
 
-export const initFileMessaging = (
-  context: vscode.ExtensionContext,
-  client: BaseLanguageClient
-) => {
-  context.subscriptions.push(
-    client.onRequest('malloy/fetchFile', async (event: FetchFileEvent) => {
-      console.info('fetchFile returning', event.uri);
-      return await fetchFile(event.uri);
-    })
-  );
-
-  context.subscriptions.push(
-    client.onRequest(
-      'malloy/fetchBinaryFile',
-      async (event: FetchBinaryFileEvent) => {
-        console.info('fetchBinaryFile returning', event.uri);
-        return await fetchBinaryFile(event.uri);
-      }
-    )
-  );
-  context.subscriptions.push(
-    client.onRequest(
-      'malloy/fetchCellData',
-      async (event: FetchCellDataEvent) => {
-        console.info('fetchCellData returning', event.uri);
-        return await fetchCellData(event.uri);
-      }
-    )
-  );
-};
+export const fileHandler = new ClientFileHandler();

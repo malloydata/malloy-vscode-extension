@@ -68,7 +68,7 @@ const sendDownloadMessage = (
   downloadOptions: QueryDownloadOptions
 ) => {
   const message: MessageDownload = {
-    type: 'download',
+    type: 'malloy/download',
     query,
     panelId,
     name,
@@ -151,7 +151,7 @@ export async function queryDownload(
             downloadOptions
           );
           const listener = (msg: WorkerMessage) => {
-            if (msg.type === 'dead') {
+            if (msg.type === 'malloy/dead') {
               vscode.window.showErrorMessage(
                 `Malloy Download (${name}): Error
 The worker process has died, and has been restarted.
@@ -162,7 +162,7 @@ https://github.com/malloydata/malloy/issues.`
 
               off?.dispose();
               return;
-            } else if (msg.type !== 'download') {
+            } else if (msg.type !== 'malloy/download') {
               return;
             }
             const {name: msgName, error} = msg;
@@ -181,7 +181,7 @@ https://github.com/malloydata/malloy/issues.`
             off?.dispose();
           };
 
-          off = worker.on('download', listener);
+          off = worker.on('malloy/download', listener);
         }
       } catch (error) {
         vscode.window.showErrorMessage(

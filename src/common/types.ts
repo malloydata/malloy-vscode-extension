@@ -21,6 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import {URLReader} from '@malloydata/malloy';
 import {ConnectionConfig} from './connection_manager_types';
 
 export interface MalloyConfig {
@@ -52,4 +53,33 @@ export interface CellData {
 export interface BuildModelRequest {
   uri: string;
   version: number;
+}
+
+export interface FileHandler extends URLReader {
+  /**
+   * Requests a file from the worker's controller. Although the
+   * file path is a file system path, reading the file off
+   * disk doesn't take into account unsaved changes that only
+   * VS Code is aware of.
+   *
+   * @param uri URI to resolve
+   * @returns File contents
+   */
+  fetchFile(uri: string): Promise<string>;
+  /**
+   * Requests a binary file from the worker's controller.
+   *
+   * @param uri URI to resolve
+   * @returns File contents
+   */
+
+  fetchBinaryFile(uri: string): Promise<Uint8Array>;
+
+  /**
+   * Requests a set of cell data from the worker's controller.
+   *
+   * @param uri URI to resolve
+   * @returns File contents
+   */
+  fetchCellData(uri: string): Promise<CellData[]>;
 }

@@ -71,40 +71,40 @@ export interface MessageExit {
 }
 
 export interface MessageRun {
-  type: 'run';
+  type: 'malloy/run';
   query: WorkerQuerySpec;
   panelId: string;
   name: string;
 }
 
 export interface MessageCancel {
-  type: 'cancel';
+  type: 'malloy/cancel';
   panelId: string;
 }
 
 export interface MessageConfig {
-  type: 'config';
+  type: 'malloy/config';
   config: MalloyConfig;
 }
 
-export interface MessageRead {
-  type: 'read';
+export interface MessageFetch {
+  type: 'malloy/fetch';
   id: string;
   uri: string;
   data?: string;
   error?: string;
 }
 
-export interface MessageReadBinary {
-  type: 'read_binary';
+export interface MessageFetchBinary {
+  type: 'malloy/fetchBinary';
   id: string;
   uri: string;
   data?: Uint8Array;
   error?: string;
 }
 
-export interface MessageReadCellData {
-  type: 'read_cell_data';
+export interface MessageFetchCellData {
+  type: 'malloy/fetchCellData';
   id: string;
   uri: string;
   data?: CellData[];
@@ -112,7 +112,7 @@ export interface MessageReadCellData {
 }
 
 export interface MessageDownload {
-  type: 'download';
+  type: 'malloy/download';
   query: WorkerQuerySpec;
   panelId: string;
   name: string;
@@ -121,17 +121,17 @@ export interface MessageDownload {
 }
 
 export type FetchMessage =
-  | MessageRead
-  | MessageReadBinary
-  | MessageReadCellData;
+  | MessageFetch
+  | MessageFetchBinary
+  | MessageFetchCellData;
 
 export type Message =
   | MessageCancel
   | MessageConfig
   | MessageExit
-  | MessageRead
-  | MessageReadBinary
-  | MessageReadCellData
+  | MessageFetch
+  | MessageFetchBinary
+  | MessageFetchCellData
   | MessageRun
   | MessageDownload;
 
@@ -140,44 +140,44 @@ export type Message =
  */
 
 export interface WorkerDeadMessage {
-  type: 'dead';
+  type: 'malloy/dead';
 }
 
 export interface WorkerDownloadMessage {
-  type: 'download';
+  type: 'malloy/download';
   name: string;
   error?: string;
 }
 
 export interface WorkerLogMessage {
-  type: 'log';
+  type: 'malloy/log';
   message: string;
 }
 
 export interface WorkerQueryPanelMessage {
-  type: 'query_panel';
+  type: 'malloy/queryPanel';
   panelId: string;
   message: QueryPanelMessage;
 }
 
 export interface WorkerStartMessage {
-  type: 'start';
+  type: 'malloy/start';
 }
 
 export interface WorkerReadBinaryMessage {
-  type: 'read_binary';
+  type: 'malloy/fetchBinary';
   id: string;
   uri: string;
 }
 
 export interface WorkerReadCellDataMessage {
-  type: 'read_cell_data';
+  type: 'malloy/fetchCellData';
   id: string;
   uri: string;
 }
 
 export interface WorkerReadMessage {
-  type: 'read';
+  type: 'malloy/fetch';
   id: string;
   uri: string;
 }
@@ -194,7 +194,10 @@ export type WorkerMessage =
 
 export interface BaseWorker {
   send(message: Message): void;
-  on(name: string, callback: (...args: unknown[]) => void): Disposable;
+  on(
+    name: WorkerMessage['type'],
+    callback: (message: WorkerMessage) => void
+  ): Disposable;
 }
 
 export interface MessageHandler {

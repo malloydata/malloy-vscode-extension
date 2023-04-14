@@ -30,7 +30,7 @@ import {
   WorkerDownloadMessage,
 } from '../../common/worker_message_types';
 import {createRunnable} from '../create_runnable';
-import {FileHandler} from '../file_handler';
+import {FileHandler} from '../../common/types';
 import {ConnectionManager} from '../../common/connection_manager';
 
 const sendMessage = (
@@ -39,7 +39,7 @@ const sendMessage = (
   error?: string
 ) => {
   const msg: WorkerDownloadMessage = {
-    type: 'download',
+    type: 'malloy/download',
     name,
     error,
   };

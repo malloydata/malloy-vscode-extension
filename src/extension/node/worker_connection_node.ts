@@ -25,25 +25,20 @@
 import * as child_process from 'child_process';
 import * as vscode from 'vscode';
 import * as rpc from 'vscode-jsonrpc/node';
-import {fetchBinaryFile, fetchCellData, fetchFile} from '../utils';
-import {
-  Message,
-  WorkerLogMessage,
-  WorkerMessage,
-  WorkerReadBinaryMessage,
-  WorkerReadCellDataMessage,
-  WorkerReadMessage,
-} from '../../common/worker_message_types';
-const workerLog = vscode.window.createOutputChannel('Malloy Worker');
+import {FileHandler} from '../../common/types';
+import {WorkerMessage} from '../../common/worker_message_types';
+import {WorkerConnectionBase} from '../worker_connection';
 
 const DEFAULT_RESTART_SECONDS = 1;
 
-export class WorkerConnection {
-  worker!: child_process.ChildProcess;
-  connection!: rpc.MessageConnection;
-  listeners: Array<(message: WorkerMessage) => void> = [];
+export type ListenerType = (message: WorkerMessage) => void;
 
-  constructor(context: vscode.ExtensionContext) {
+export class WorkerConnection extends WorkerConnectionBase {
+  worker!: child_process.ChildProcess;
+
+  constructor(context: vscode.ExtensionContext, fileHandler: FileHandler) {
+    super(context, fileHandler);
+
     const workerModule = context.asAbsolutePath('dist/worker_node.js');
     const execArgv = ['--no-lazy'];
     if (context.extensionMode === vscode.ExtensionMode.Development) {
@@ -65,7 +60,7 @@ export class WorkerConnection {
             // Maybe exponential backoff? Not sure what our failure
             // modes are going to be
             setTimeout(startWorker, DEFAULT_RESTART_SECONDS * 1000);
-            this.notifyListeners({type: 'dead'});
+            this.notifyListeners({type: 'malloy/dead'});
           }
         });
 
@@ -76,77 +71,12 @@ export class WorkerConnection {
       this.connection.listen();
       context.subscriptions.push(this.connection);
 
-      context.subscriptions.push(
-        this.connection.onRequest('log', (message: WorkerLogMessage) => {
-          workerLog.appendLine(`worker: ${message.message}`);
-        })
-      );
-
-      context.subscriptions.push(
-        this.connection.onRequest(
-          'read',
-          async (message: WorkerReadMessage) => {
-            workerLog.appendLine(`worker: reading file ${message.uri}`);
-            return await fetchFile(message.uri);
-          }
-        )
-      );
-
-      context.subscriptions.push(
-        this.connection.onRequest(
-          'read_binary',
-          async (message: WorkerReadBinaryMessage) => {
-            workerLog.appendLine(`worker: reading binary file ${message.uri}`);
-            return await fetchBinaryFile(message.uri);
-          }
-        )
-      );
-
-      context.subscriptions.push(
-        this.connection.onRequest(
-          'read_cell_data',
-          async (message: WorkerReadCellDataMessage) => {
-            workerLog.appendLine(
-              `worker: reading cell data for ${message.uri}`
-            );
-            return await fetchCellData(message.uri);
-          }
-        )
-      );
-
-      context.subscriptions.push({
-        dispose: () => {
-          this.worker.kill();
-        },
-      });
+      this.subscribe();
     };
-
     startWorker();
   }
 
-  send(message: Message): void {
-    this.connection.sendRequest(message.type, message);
-  }
-
-  notifyListeners(message: WorkerMessage): void {
-    this.listeners.forEach(listener => listener(message));
-  }
-
-  on(
-    event: string,
-    listener: (message: WorkerMessage) => void
-  ): vscode.Disposable {
-    this.listeners.push(listener);
-    const disposable = this.connection.onRequest(event, listener);
-    return {
-      dispose: () => {
-        disposable.dispose();
-        this.listeners = this.listeners.filter(l => l !== listener);
-      },
-    };
-  }
-
-  stop(): void {
+  dispose(): void {
     this.worker.kill('SIGHUP');
   }
 }

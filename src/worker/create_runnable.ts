@@ -28,7 +28,7 @@ import {
   SQLBlockMaterializer,
 } from '@malloydata/malloy';
 import {WorkerQuerySpec} from '../common/worker_message_types';
-import {FileHandler} from './file_handler';
+import {FileHandler} from '../common/types';
 
 export const createRunnable = async (
   query: WorkerQuerySpec,

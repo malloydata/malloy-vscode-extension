@@ -38,7 +38,7 @@ import {
 import {trackModelLoad, trackModelSave} from './telemetry';
 import {HelpViewProvider} from './webviews/help_view';
 import {ConnectionManager} from '../common/connection_manager';
-import {Malloy, DocumentHighlight, URLReader} from '@malloydata/malloy';
+import {URLReader} from '@malloydata/malloy';
 import {v4 as uuid} from 'uuid';
 
 import {MALLOY_EXTENSION_STATE} from './state';
@@ -46,6 +46,12 @@ import {activateNotebookSerializer} from './notebook/malloy_serializer';
 import {activateNotebookController} from './notebook/malloy_controller';
 import {BaseWorker} from '../common/worker_message_types';
 import {CommonLanguageClient} from 'vscode-languageclient';
+import {
+  FetchBinaryFileEvent,
+  FetchCellDataEvent,
+  FetchFileEvent,
+  FileHandler,
+} from '../common/types';
 
 function getNewClientId(): string {
   return uuid();
@@ -161,25 +167,6 @@ export const setupSubscriptions = (
   // Malloy HelpView provider.
   const provider = new HelpViewProvider(context.extensionUri);
 
-  context.subscriptions.push(
-    vscode.window.onDidChangeTextEditorSelection(
-      (e: vscode.TextEditorSelectionChangeEvent) => {
-        const document = e.textEditor.document;
-        if (document.languageId === 'malloy') {
-          const parse = Malloy.parse({source: document.getText()});
-          const highlight = highlightForPosition(
-            parse.highlights,
-            e.selections[0].start
-          );
-
-          if (highlight) {
-            provider.showHelpFor(highlight.type);
-          }
-        }
-      }
-    )
-  );
-
   // Malloy help view.
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider('malloyHelp', provider)
@@ -197,17 +184,34 @@ export const setupSubscriptions = (
   MALLOY_EXTENSION_STATE.setClientId(clientId);
 };
 
-const highlightForPosition = (
-  highlights: DocumentHighlight[],
-  {character, line}: vscode.Position
+export const setupFileMessaging = (
+  context: vscode.ExtensionContext,
+  client: CommonLanguageClient,
+  fileHandler: FileHandler
 ) => {
-  return highlights.find(highlight => {
-    const {start, end} = highlight.range;
-    const afterStart =
-      line > start.line ||
-      (line === start.line && character >= start.character);
-    const beforeEnd =
-      line < end.line || (line === end.line && character <= end.character);
-    return afterStart && beforeEnd;
-  });
+  context.subscriptions.push(
+    client.onRequest('malloy/fetchFile', async (event: FetchFileEvent) => {
+      console.info('fetchFile returning', event.uri);
+      return await fileHandler.fetchFile(event.uri);
+    })
+  );
+
+  context.subscriptions.push(
+    client.onRequest(
+      'malloy/fetchBinaryFile',
+      async (event: FetchBinaryFileEvent) => {
+        console.info('fetchBinaryFile returning', event.uri);
+        return await fileHandler.fetchBinaryFile(event.uri);
+      }
+    )
+  );
+  context.subscriptions.push(
+    client.onRequest(
+      'malloy/fetchCellData',
+      async (event: FetchCellDataEvent) => {
+        console.info('fetchCellData returning', event.uri);
+        return await fileHandler.fetchCellData(event.uri);
+      }
+    )
+  );
 };
