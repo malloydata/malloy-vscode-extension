@@ -54,7 +54,7 @@ export class WorkerConnection extends WorkerConnectionBase {
         .fork(workerModule, {execArgv})
         .on('error', console.error)
         .on('exit', status => {
-          if (status !== 0) {
+          if (status) {
             console.error(`Worker exited with ${status}`);
             console.info(`Restarting in ${DEFAULT_RESTART_SECONDS} seconds`);
             // Maybe exponential backoff? Not sure what our failure

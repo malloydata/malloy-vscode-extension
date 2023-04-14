@@ -31,6 +31,7 @@ import {
   TransportKind,
 } from 'vscode-languageclient/node';
 import {editConnectionsCommand} from './commands/edit_connections';
+import {openComposer} from './commands/open_composer';
 import {ConnectionsProvider} from '../tree_views/connections_view';
 import {WorkerConnection} from './worker_connection_node';
 import {FileHandler, MalloyConfig} from '../../common/types';
@@ -73,6 +74,12 @@ export function activate(context: vscode.ExtensionContext): void {
       'malloy.editConnections',
       editConnectionsCommand
     )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('malloy.openComposer', () => {
+      openComposer();
+    })
   );
 
   context.subscriptions.push(

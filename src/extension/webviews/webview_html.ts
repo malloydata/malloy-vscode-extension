@@ -35,7 +35,7 @@ export function getWebviewHtml(
 <html lang="en">
   <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="base-uri 'none'; default-src 'none'; style-src 'unsafe-inline'; img-src ${cspSrc} https:; script-src 'nonce-${nonce}' 'unsafe-eval';">
+    <meta http-equiv="Content-Security-Policy" content="base-uri 'none'; default-src 'none'; frame-src http://localhost:*; style-src 'unsafe-inline'; img-src ${cspSrc} https:; script-src 'nonce-${nonce}' 'unsafe-eval';">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Malloy Query Results</title>
   </head>
@@ -109,7 +109,7 @@ export function getWebviewHtml(
               </g>
             </svg>
           </div>
-        </HorizontalCenter>
+        </div>
       </div>
     </div>
   </body>

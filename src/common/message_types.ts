@@ -94,6 +94,10 @@ export type QueryPanelMessage =
   | QueryMessageAppReady
   | QueryMessageStartDownload;
 
+/*
+ * Edit Connections web view messages
+ */
+
 export enum ConnectionMessageType {
   SetConnections = 'set-connections',
   AppReady = 'app-ready',
@@ -169,6 +173,10 @@ export type ConnectionPanelMessage =
   | ConnectionMessageTest
   | ConnectionMessageServiceAccountKeyRequest;
 
+/**
+ * Help panel messages
+ */
+
 export enum HelpMessageType {
   AppReady = 'app-ready',
   EditConnections = 'edit-connections',
@@ -183,3 +191,18 @@ interface HelpMessageEditConnections {
 }
 
 export type HelpPanelMessage = HelpMessageAppReady | HelpMessageEditConnections;
+
+/**
+ * Composer messages
+ */
+
+export enum ComposerMessageType {
+  ComposerReady = 'composer-ready',
+}
+
+interface ComposerMessageAppReady {
+  type: ComposerMessageType.ComposerReady;
+  port: number;
+}
+
+export type ComposerMessage = ComposerMessageAppReady;

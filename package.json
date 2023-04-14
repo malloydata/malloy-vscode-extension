@@ -92,6 +92,11 @@
         "category": "Malloy"
       },
       {
+        "command": "malloy.openComposer",
+        "title": "Composer Preview",
+        "category": "Malloy"
+      },
+      {
         "command": "malloy.runQueryFile",
         "title": "Run Query File",
         "category": "Malloy"
@@ -323,13 +328,11 @@
         {
           "id": "malloyHelp",
           "name": "Help",
-          "type": "webview",
-          "when": "malloy.extensionStatus == installed || resourceFilename =~ /\\.malloy(nb)?$/"
+          "type": "webview"
         },
         {
           "id": "malloyConnections",
-          "name": "Malloy Connections",
-          "when": "malloy.extensionStatus == installed || resourceFilename =~ /\\.malloy(nb)?$/"
+          "name": "Malloy Connections"
         }
       ],
       "explorer": [
@@ -358,6 +361,10 @@
           "type": "string",
           "description": "Path to directory to save downloaded results",
           "default": "~/Downloads"
+        },
+        "malloy.composerPath": {
+          "type": "string",
+          "description": "Path to a local Malloy Composer executable"
         },
         "malloy.telemetry": {
           "type": "boolean",
@@ -581,7 +588,6 @@
   "devDependencies": {
     "@jest/globals": "^26.6.2",
     "@types/jest": "^29.2.1",
-    "@types/jest-expect-message": "^1.1.0",
     "@types/jsdom": "^16.2.11",
     "@types/lodash": "^4.14.191",
     "@types/madge": "^5.0.0",
