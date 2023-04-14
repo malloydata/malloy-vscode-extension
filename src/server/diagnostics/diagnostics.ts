@@ -50,11 +50,7 @@ export async function getMalloyDiagnostics(
   let errors: LogMessage[] = [];
 
   try {
-    await translateCache.translateWithCache(
-      connectionManager,
-      document,
-      documents
-    );
+    await translateCache.translateWithCache(document.uri, document.version);
   } catch (error) {
     if (error instanceof MalloyError) {
       errors = error.log;

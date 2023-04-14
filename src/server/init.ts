@@ -93,7 +93,11 @@ export const initServer = (
     return result;
   });
 
-  const translateCache = new TranslateCache(connection);
+  const translateCache = new TranslateCache(
+    documents,
+    connection,
+    connectionManager
+  );
 
   async function diagnoseDocument(document: TextDocument) {
     if (haveConnectionsBeenSet) {

@@ -45,6 +45,7 @@ import {MALLOY_EXTENSION_STATE} from './state';
 import {activateNotebookSerializer} from './notebook/malloy_serializer';
 import {activateNotebookController} from './notebook/malloy_controller';
 import {BaseWorker} from '../common/worker_message_types';
+import {CommonLanguageClient} from 'vscode-languageclient';
 
 function getNewClientId(): string {
   return uuid();
@@ -54,7 +55,8 @@ export const setupSubscriptions = (
   context: vscode.ExtensionContext,
   urlReader: URLReader,
   connectionManager: ConnectionManager,
-  worker: BaseWorker
+  worker: BaseWorker,
+  client: CommonLanguageClient
 ) => {
   MALLOY_EXTENSION_STATE.setExtensionUri(context.extensionUri);
 
@@ -104,7 +106,12 @@ export const setupSubscriptions = (
     )
   );
 
-  const schemaTree = new SchemaProvider(context, connectionManager, urlReader);
+  const schemaTree = new SchemaProvider(
+    context,
+    connectionManager,
+    urlReader,
+    client
+  );
 
   context.subscriptions.push(
     vscode.window.registerTreeDataProvider('malloySchema', schemaTree)

@@ -22,16 +22,33 @@
  */
 
 import {Connection, TextDocuments} from 'vscode-languageserver';
-import {Model, ModelMaterializer, Runtime} from '@malloydata/malloy';
+import {
+  Model,
+  ModelMaterializer,
+  Runtime,
+  SerializedExplore,
+} from '@malloydata/malloy';
 import {TextDocument} from 'vscode-languageserver-textdocument';
 
 import {ConnectionManager} from '../common/connection_manager';
-import {CellData} from '../common/types';
+import {BuildModelRequest, CellData} from '../common/types';
 
 export class TranslateCache implements TranslateCache {
   cache = new Map<string, {model: Model; version: number}>();
 
-  constructor(private connection: Connection) {}
+  constructor(
+    private documents: TextDocuments<TextDocument>,
+    private connection: Connection,
+    private connectionManager: ConnectionManager
+  ) {
+    connection.onRequest(
+      'malloy/fetchModel',
+      async (event: BuildModelRequest): Promise<SerializedExplore[]> => {
+        const model = await this.translateWithCache(event.uri, event.version);
+        return model.explores.map(explore => explore.toJSON());
+      }
+    );
+  }
 
   async getDocumentText(
     documents: TextDocuments<TextDocument>,
@@ -56,29 +73,26 @@ export class TranslateCache implements TranslateCache {
   }
 
   async translateWithCache(
-    connectionManager: ConnectionManager,
-    document: TextDocument,
-    documents: TextDocuments<TextDocument>
+    uri: string,
+    currentVersion: number
   ): Promise<Model> {
-    const currentVersion = document.version;
-    const uri = document.uri;
-
     const entry = this.cache.get(uri);
     if (entry && entry.version === currentVersion) {
       return entry.model;
     }
 
     const files = {
-      readURL: (url: URL) => this.getDocumentText(documents, url),
+      readURL: (url: URL) => this.getDocumentText(this.documents, url),
     };
     const runtime = new Runtime(
       files,
-      connectionManager.getConnectionLookup(new URL(document.uri))
+      this.connectionManager.getConnectionLookup(new URL(uri))
     );
 
     let model: Model;
-    if (document.uri.startsWith('vscode-notebook-cell:')) {
-      const allCells = await this.getCellData(new URL(document.uri));
+
+    if (uri.startsWith('vscode-notebook-cell:')) {
+      const allCells = await this.getCellData(new URL(uri));
       let mm: ModelMaterializer | null = null;
       for (let idx = 0; idx < allCells.length; idx++) {
         const url = new URL(allCells[idx].uri);
