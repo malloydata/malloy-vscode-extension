@@ -95,7 +95,7 @@ query: flights -> {
 }
 \`\`\`
 
-View [the full documentation](${DOCS_ROOT}/language/basic.html#project).
+View [the full documentation](${DOCS_ROOT}/user_guides/basic.html#project).
 `;
 
 const QUERY_INDEX_DOC = `Use \`index\` to produce a search index.
