@@ -21,7 +21,8 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import madge from 'madge';
+import {default as madge} from 'madge';
+import 'jest-expect-message';
 
 describe('dependencies', () => {
   function getMessage(circles: string[][]): string {
