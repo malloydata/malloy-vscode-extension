@@ -23,6 +23,7 @@
 
 import React from 'react';
 import styled from 'styled-components';
+import * as rpc from 'vscode-jsonrpc/browser';
 import {
   ComposerMessage,
   ComposerMessageType,
@@ -37,12 +38,42 @@ export const App = () => {
         setPort(event.data.port);
       }
     };
+
     window.addEventListener('message', listener);
-    return () => window.removeEventListener('message', listener);
+    return () => {
+      window.removeEventListener('message', listener);
+    };
   });
 
+  const setIframeRef = React.useCallback(iframe => {
+    const onload = () => {
+      const channel = new MessageChannel();
+      const connection = rpc.createMessageConnection(
+        new rpc.BrowserMessageReader(channel.port1),
+        new rpc.BrowserMessageWriter(channel.port1),
+        console
+      );
+      connection.onNotification('ready', () => {
+        console.log('ready');
+      });
+      connection.listen();
+      iframe.contentWindow.postMessage({type: 'ready'}, '*', [channel.port2]);
+    };
+
+    if (iframe) {
+      iframe.addEventListener('load', onload);
+      return () => {
+        iframe.removeEventListener('load', onload);
+      };
+    }
+  }, []);
+
   if (port) {
-    return <Frame src={`http://localhost:${port}`}>Hello</Frame>;
+    return (
+      <Frame ref={setIframeRef} src={`http://localhost:${port}`}>
+        Hello
+      </Frame>
+    );
   }
 
   return null;
