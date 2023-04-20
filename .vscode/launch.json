@@ -51,7 +51,7 @@
       "skipFiles": ["<node_internals>/**"],
       "restart": true,
       "smartStep": false,
-      "outFiles": ["${workspaceRoot}/dist/server_node.js"]
+      "outFiles": ["${workspaceRoot}/dist/server_*.js"]
     },
     {
       "type": "node",
@@ -61,7 +61,7 @@
       "skipFiles": ["<node_internals>/**"],
       "restart": true,
       "smartStep": false,
-      "outFiles": ["${workspaceRoot}/dist/worker_node.js"]
+      "outFiles": ["${workspaceRoot}/dist/worker_*.js"]
     }
   ]
 }
