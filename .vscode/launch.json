@@ -13,7 +13,7 @@
       "skipFiles": ["<node_internals>/**"],
       "outFiles": ["${workspaceFolder}/dist/*.js"],
       "preLaunchTask": "build-extension-task",
-      "sourceMaps": true
+      "sourceMaps": true,
     },
     {
       "name": "Run VSCode Extension (and Debug Webviews)",
@@ -51,7 +51,7 @@
       "skipFiles": ["<node_internals>/**"],
       "restart": true,
       "smartStep": false,
-      "outFiles": ["${workspaceRoot}/dist/server.js"]
+      "outFiles": ["${workspaceRoot}/dist/server_node.js"]
     },
     {
       "type": "node",
@@ -61,7 +61,7 @@
       "skipFiles": ["<node_internals>/**"],
       "restart": true,
       "smartStep": false,
-      "outFiles": ["${workspaceRoot}/dist/worker.js"]
+      "outFiles": ["${workspaceRoot}/dist/worker_node.js"]
     }
   ]
 }
