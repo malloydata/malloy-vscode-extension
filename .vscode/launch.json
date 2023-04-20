@@ -63,5 +63,13 @@
       "smartStep": false,
       "outFiles": ["${workspaceRoot}/dist/worker.js"]
     }
+  ],
+  "compounds": [
+    {
+      "name": "Debug All (Node)",
+      "configurations": ["Run VSCode Extension (and Debug Webviews)", "Attach to VSCode Language Server", "Attach to VSCode Worker"],
+      "preLaunchTask": "build-extension-task",
+      "stopAll": true
+    }
   ]
 }
