@@ -22,7 +22,7 @@
  */
 /* eslint-disable node/no-unpublished-import */
 
-import {default as madge} from 'madge';
+import madge from 'madge';
 
 describe('dependencies', () => {
   function getMessage(circles: string[][]): string {
