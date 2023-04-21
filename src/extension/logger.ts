@@ -21,20 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import React, {useContext} from 'react';
-import {WebviewApi} from './vscode_wrapper';
+import * as vscode from 'vscode';
 
-export function makeVSCodeContext<S, M>(): React.Context<WebviewApi<S, M>> {
-  return React.createContext<WebviewApi<S, M>>(undefined);
-}
-
-export function makeUseVSCodeContext<S, M>(
-  context: React.Context<WebviewApi<S, M>>
-) {
-  return function useVSCodeContext(): WebviewApi<S, M> {
-    const vscode = useContext(context);
-    return vscode;
-  };
-}
-
-export {getVSCodeAPI} from './vscode_wrapper';
+export const malloyLog = vscode.window.createOutputChannel('Malloy');

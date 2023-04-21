@@ -35,6 +35,7 @@ import {
   runUnnamedSQLBlock,
   showLicensesCommand,
 } from './commands';
+import {malloyLog} from './logger';
 import {trackModelLoad, trackModelSave} from './telemetry';
 import {HelpViewProvider} from './webviews/help_view';
 import {ConnectionManager} from '../common/connection_manager';
@@ -191,7 +192,7 @@ export const setupFileMessaging = (
 ) => {
   context.subscriptions.push(
     client.onRequest('malloy/fetchFile', async (event: FetchFileEvent) => {
-      console.info('fetchFile returning', event.uri);
+      malloyLog.appendLine(`fetchFile returning ${event.uri}`);
       return await fileHandler.fetchFile(event.uri);
     })
   );
@@ -200,7 +201,7 @@ export const setupFileMessaging = (
     client.onRequest(
       'malloy/fetchBinaryFile',
       async (event: FetchBinaryFileEvent) => {
-        console.info('fetchBinaryFile returning', event.uri);
+        malloyLog.appendLine(`fetchBinaryFile returning ${event.uri}`);
         return await fileHandler.fetchBinaryFile(event.uri);
       }
     )
@@ -209,7 +210,7 @@ export const setupFileMessaging = (
     client.onRequest(
       'malloy/fetchCellData',
       async (event: FetchCellDataEvent) => {
-        console.info('fetchCellData returning', event.uri);
+        malloyLog.appendLine(`fetchCellData returning ${event.uri}`);
         return await fileHandler.fetchCellData(event.uri);
       }
     )

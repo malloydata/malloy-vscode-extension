@@ -21,7 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* eslint-disable no-console */
 import * as vscode from 'vscode';
 import * as rpc from 'vscode-jsonrpc/browser';
 import {WorkerMessage} from '../../common/worker_message_types';
