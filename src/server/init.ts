@@ -20,7 +20,6 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* eslint-disable no-console */
 
 import {
   TextDocuments,
@@ -56,7 +55,7 @@ export const initServer = (
 ) => {
   let haveConnectionsBeenSet = false;
   connection.onInitialize((params: InitializeParams) => {
-    console.info('Server onInitialize');
+    connection.console.info('Server onInitialize');
     const capabilities = params.capabilities;
 
     const result: InitializeResult = {
@@ -131,12 +130,12 @@ export const initServer = (
   const debouncedDiagnoseDocument = debounce(diagnoseDocument, 300);
 
   documents.onDidChangeContent(change => {
-    console.info('Server onDidChangeContent');
+    connection.console.info('Server onDidChangeContent');
     debouncedDiagnoseDocument(change.document);
   });
 
   connection.onDocumentSymbol(handler => {
-    console.info('Server onDocumentSymbol');
+    connection.console.info('Server onDocumentSymbol');
     const document = documents.get(handler.textDocument.uri);
     return document ? getMalloySymbols(document) : [];
   });
@@ -149,13 +148,13 @@ export const initServer = (
   });
 
   connection.onCodeLens(handler => {
-    console.info('Server onCodeLens');
+    connection.console.info('Server onCodeLens');
     const document = documents.get(handler.textDocument.uri);
     return document ? getMalloyLenses(document) : [];
   });
 
   connection.onDefinition(handler => {
-    console.info('Server onDefinition');
+    connection.console.info('Server onDefinition');
     const document = documents.get(handler.textDocument.uri);
     return document
       ? getMalloyDefinitionReference(
@@ -169,7 +168,7 @@ export const initServer = (
   });
 
   connection.onDidChangeConfiguration(change => {
-    console.info('Server onDidChangeConfiguration');
+    connection.console.info('Server onDidChangeConfiguration');
     connectionManager.setConnectionsConfig(change.settings.malloy.connections);
     haveConnectionsBeenSet = true;
     documents.all().forEach(diagnoseDocument);
@@ -177,7 +176,7 @@ export const initServer = (
 
   // This handler provides the initial list of the completion items.
   connection.onCompletion((params): CompletionItem[] => {
-    console.info('Server onCompletion');
+    connection.console.info('Server onCompletion');
     const document = documents.get(params.textDocument.uri);
     return document ? getCompletionItems(document, params) : [];
   });
@@ -185,12 +184,12 @@ export const initServer = (
   // This handler resolves additional information for the item selected in
   // the completion list.
   connection.onCompletionResolve((item: CompletionItem): CompletionItem => {
-    console.info('Server onCompletionResolve');
+    connection.console.info('Server onCompletionResolve');
     return resolveCompletionItem(item);
   });
 
   connection.onHover((params: HoverParams): Hover | null => {
-    console.info('Server onHover');
+    connection.console.info('Server onHover');
     const document = documents.get(params.textDocument.uri);
 
     return document ? getHover(document, params) : null;

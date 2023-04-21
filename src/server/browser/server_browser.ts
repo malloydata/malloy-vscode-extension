@@ -20,14 +20,13 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* eslint-disable no-console */
 
 import {TextDocuments} from 'vscode-languageserver/browser';
 import {TextDocument} from 'vscode-languageserver-textdocument';
 import {connection, connectionManager} from './connections_browser';
 import {initServer} from '../init';
 
-console.info('Server loaded');
+connection.console.info('Server loaded');
 
 const documents = new TextDocuments(TextDocument);
 initServer(documents, connection, connectionManager);

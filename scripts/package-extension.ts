@@ -20,14 +20,11 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* eslint-disable no-console */
-/* eslint-disable no-process-exit */
-/* eslint-disable node/no-unpublished-import */
 
 import {doBuild, outDir, Target} from './build_common';
 import * as path from 'path';
 import * as semver from 'semver';
-import {createVSIX} from 'vsce';
+import {createVSIX} from '@vscode/vsce';
 
 // importing this in normal fashion seems to import an older API?!
 // for ex, when imported, "Property 'rmSync' does not exist on type 'typeof import("fs")'"

@@ -61,8 +61,7 @@ export class WorkerConnection implements BaseWorker {
           {
             send: (message: WorkerMessage) => this._send(message),
             log(message: string) {
-              // eslint-disable-next-line no-console
-              console.log(message);
+              workerLog.appendLine(message);
             },
           },
           fileHandler,

@@ -20,13 +20,10 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* eslint-disable no-console */
-/* eslint-disable no-process-exit */
-/* eslint-disable node/no-unpublished-import */
 
 import * as semver from 'semver';
 import {readFileSync} from 'fs';
-import {publishVSIX} from 'vsce';
+import {publishVSIX} from '@vscode/vsce';
 import {Target} from './build_common';
 import {targetKeytarMap} from './utils/fetch_keytar';
 import {doPackage} from './package-extension';

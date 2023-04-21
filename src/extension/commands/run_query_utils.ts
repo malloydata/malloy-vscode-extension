@@ -32,11 +32,10 @@ import {QueryMessageType, QueryRunStatus} from '../../common/message_types';
 import {WebviewMessageManager} from '../webview_message_manager';
 import {queryDownload} from './query_download';
 import {BaseWorker, WorkerMessage} from '../../common/worker_message_types';
+import {malloyLog} from '../logger';
 import {trackQueryRun} from '../telemetry';
 import {QuerySpec} from './query_spec';
 import {Disposable} from 'vscode-jsonrpc';
-
-const malloyLog = vscode.window.createOutputChannel('Malloy');
 
 export function runMalloyQuery(
   worker: BaseWorker,
