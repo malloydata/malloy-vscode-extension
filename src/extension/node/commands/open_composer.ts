@@ -23,11 +23,11 @@
 
 import * as vscode from 'vscode';
 import {spawn} from 'child_process';
-import {Utils} from 'vscode-uri';
-import {getWebviewHtml} from '../../webviews';
-import {MALLOY_EXTENSION_STATE} from '../../state';
-import {ComposerMessageType} from '../../../common/message_types';
-import fetch from 'node-fetch';
+// import {Utils} from 'vscode-uri';
+// import {getWebviewHtml} from '../../webviews';
+// import {MALLOY_EXTENSION_STATE} from '../../state';
+// import {ComposerMessageType} from '../../../common/message_types';
+// import fetch from 'node-fetch';
 
 const composerPanels: Record<string, vscode.WebviewPanel> = {};
 
@@ -67,36 +67,37 @@ export const openComposer = () => {
         // eslint-disable-next-line no-console
         console.log(`Server on port ${port}`);
 
-        const composerPanel = vscode.window.createWebviewPanel(
-          'malloyComposer',
-          'Preview: Malloy Composer',
-          {viewColumn: vscode.ViewColumn.Beside, preserveFocus: true},
-          {enableScripts: true, retainContextWhenHidden: true}
-        );
-        const onDiskPath = Utils.joinPath(
-          MALLOY_EXTENSION_STATE.getExtensionUri(),
-          'dist',
-          'composer.js'
-        );
+        // const composerPanel = vscode.window.createWebviewPanel(
+        //   'malloyComposer',
+        //   'Preview: Malloy Composer',
+        //   {viewColumn: vscode.ViewColumn.Beside, preserveFocus: true},
+        //   {enableScripts: true, retainContextWhenHidden: true}
+        // );
+        // const onDiskPath = Utils.joinPath(
+        //   MALLOY_EXTENSION_STATE.getExtensionUri(),
+        //   'dist',
+        //   'composer.js'
+        // );
 
-        const entrySrc = composerPanel.webview.asWebviewUri(onDiskPath);
+        // const entrySrc = composerPanel.webview.asWebviewUri(onDiskPath);
 
-        composerPanel.webview.html = getWebviewHtml(
-          entrySrc.toString(),
-          composerPanel.webview
-        );
+        // composerPanel.webview.html = getWebviewHtml(
+        //   entrySrc.toString(),
+        //   composerPanel.webview
+        // );
 
-        composerPanel.onDidDispose(() => {
-          fetch(`http://localhost:${port}/shutdown`);
-          composerPanels[uri] = null;
-        });
+        // composerPanel.onDidDispose(() => {
+        //   fetch(`http://localhost:${port}/shutdown`);
+        //   composerPanels[uri] = null;
+        // });
 
-        composerPanel.webview.postMessage({
-          type: ComposerMessageType.ComposerReady,
-          port,
-        });
+        // composerPanel.webview.postMessage({
+        //   type: ComposerMessageType.ComposerReady,
+        //   port,
+        // });
 
-        composerPanels[uri] = composerPanel;
+        // composerPanels[uri] = composerPanel;
+        vscode.env.openExternal(vscode.Uri.parse(`http://localhost:${port}`));
       } else {
         // eslint-disable-next-line no-console
         console.log(data.toString());
