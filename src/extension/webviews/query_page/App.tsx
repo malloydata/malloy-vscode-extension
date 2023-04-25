@@ -266,7 +266,7 @@ export const App: React.FC = () => {
               dangerouslySetInnerHTML={{
                 __html: Prism.highlight(sql, Prism.languages['sql'], 'sql'),
               }}
-              style={{margin: '10px'}}
+              style={{margin: '10px', whiteSpace: 'break-spaces'}}
             />
           </PrismContainer>
         </Scroll>
