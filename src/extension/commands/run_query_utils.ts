@@ -40,7 +40,7 @@ export function runMalloyQuery(
   query: QuerySpec,
   panelId: string,
   name: string,
-  showSQL = false
+  showSQLOnly = false
 ): void {
   vscode.window.withProgress(
     {
@@ -76,23 +76,24 @@ export function runMalloyQuery(
         query.file
       );
 
-      const onDiskPath = Utils.joinPath(
+      const queryPageOnDiskPath = Utils.joinPath(
         MALLOY_EXTENSION_STATE.getExtensionUri(),
         'dist',
         'query_page.js'
       );
-      loadWebview(current, onDiskPath);
+      loadWebview(current, queryPageOnDiskPath);
 
       const {file, ...params} = query;
       const uri = file.uri.toString();
       worker.send({
-        type: showSQL ? 'malloy/show-sql' : 'malloy/run',
+        type: 'malloy/run',
         query: {
           uri,
           ...params,
         },
         panelId,
         name,
+        showSQLOnly,
       });
       const allBegin = Date.now();
       const compileBegin = allBegin;
@@ -132,13 +133,22 @@ https://github.com/malloydata/malloy/issues.`,
                     progress.report({increment: 20, message: 'Compiling'});
                   }
                   break;
-                case QueryRunStatus.Running:
+                case QueryRunStatus.Compiled:
                   {
                     const compileEnd = Date.now();
                     runBegin = compileEnd;
                     malloyLog.appendLine(message.sql);
                     logTime('Compile', compileBegin, compileEnd);
 
+                    if (showSQLOnly) {
+                      progress.report({increment: 100, message: 'Complete'});
+                      off?.dispose();
+                      resolve(undefined);
+                    }
+                  }
+                  break;
+                case QueryRunStatus.Running:
+                  {
                     trackQueryRun({dialect: message.dialect});
 
                     progress.report({increment: 40, message: 'Running'});

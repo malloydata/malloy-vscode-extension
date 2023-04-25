@@ -67,22 +67,6 @@ export class WorkerConnection implements BaseWorker {
           fileHandler,
           connectionManager,
           true,
-          false,
-          message
-        );
-        break;
-      case 'malloy/show-sql':
-        runQuery(
-          {
-            send: (message: WorkerMessage) => this._send(message),
-            log(message: string) {
-              workerLog.appendLine(message);
-            },
-          },
-          fileHandler,
-          connectionManager,
-          true,
-          true,
           message
         );
         break;

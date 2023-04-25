@@ -32,6 +32,7 @@ import {ConnectionBackend, ConnectionConfig} from './connection_manager_types';
 
 export enum QueryRunStatus {
   Compiling = 'compiling',
+  Compiled = 'compiled',
   Running = 'running',
   Error = 'error',
   Done = 'done',
@@ -41,12 +42,19 @@ export enum QueryMessageType {
   QueryStatus = 'query-status',
   AppReady = 'app-ready',
   StartDownload = 'start-download',
-  ShowSQL = 'show-sql',
 }
 
 interface QueryMessageStatusCompiling {
   type: QueryMessageType.QueryStatus;
   status: QueryRunStatus.Compiling;
+}
+
+interface QueryMessageStatusCompiled {
+  type: QueryMessageType.QueryStatus;
+  status: QueryRunStatus.Compiled;
+  sql: string;
+  dialect: string;
+  showSQLOnly: boolean;
 }
 
 interface QueryMessageStatusRunning {
@@ -72,6 +80,7 @@ interface QueryMessageStatusDone {
 
 type QueryMessageStatus =
   | QueryMessageStatusCompiling
+  | QueryMessageStatusCompiled
   | QueryMessageStatusError
   | QueryMessageStatusRunning
   | QueryMessageStatusDone;
@@ -90,16 +99,10 @@ interface QueryMessageStartDownload {
   downloadOptions: QueryDownloadOptions;
 }
 
-interface QueryMessageShowSQL {
-  type: QueryMessageType.ShowSQL;
-  sql: string;
-}
-
 export type QueryPanelMessage =
   | QueryMessageStatus
   | QueryMessageAppReady
-  | QueryMessageStartDownload
-  | QueryMessageShowSQL;
+  | QueryMessageStartDownload;
 
 export enum ConnectionMessageType {
   SetConnections = 'set-connections',

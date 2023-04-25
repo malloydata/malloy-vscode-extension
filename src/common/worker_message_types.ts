@@ -71,10 +71,11 @@ export interface MessageExit {
 }
 
 export interface MessageRun {
-  type: 'malloy/run' | 'malloy/show-sql';
+  type: 'malloy/run';
   query: WorkerQuerySpec;
   panelId: string;
   name: string;
+  showSQLOnly: boolean;
 }
 
 export interface MessageCancel {
