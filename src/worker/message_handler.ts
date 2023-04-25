@@ -57,7 +57,10 @@ export class MessageHandler {
       clearInterval(this.heartBeat)
     );
     this.connection.onRequest('malloy/run', (message: MessageRun) =>
-      runQuery(this, fileHandler, connectionManager, false, message)
+      runQuery(this, fileHandler, connectionManager, false, false, message)
+    );
+    this.connection.onRequest('malloy/show-sql', (message: MessageRun) =>
+      runQuery(this, fileHandler, connectionManager, false, true, message)
     );
   }
 

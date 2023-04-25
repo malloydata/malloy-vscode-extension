@@ -41,6 +41,7 @@ export enum QueryMessageType {
   QueryStatus = 'query-status',
   AppReady = 'app-ready',
   StartDownload = 'start-download',
+  ShowSQL = 'show-sql',
 }
 
 interface QueryMessageStatusCompiling {
@@ -89,10 +90,16 @@ interface QueryMessageStartDownload {
   downloadOptions: QueryDownloadOptions;
 }
 
+interface QueryMessageShowSQL {
+  type: QueryMessageType.ShowSQL;
+  sql: string;
+}
+
 export type QueryPanelMessage =
   | QueryMessageStatus
   | QueryMessageAppReady
-  | QueryMessageStartDownload;
+  | QueryMessageStartDownload
+  | QueryMessageShowSQL;
 
 export enum ConnectionMessageType {
   SetConnections = 'set-connections',

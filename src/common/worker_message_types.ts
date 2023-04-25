@@ -71,7 +71,7 @@ export interface MessageExit {
 }
 
 export interface MessageRun {
-  type: 'malloy/run';
+  type: 'malloy/run' | 'malloy/show-sql';
   query: WorkerQuerySpec;
   panelId: string;
   name: string;
