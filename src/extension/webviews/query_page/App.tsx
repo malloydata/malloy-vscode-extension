@@ -170,6 +170,7 @@ export const App: React.FC = () => {
             setHTML(document.createElement('span'));
             setJSON('');
             setSQL('');
+            setShowOnlySQL(false);
             switch (message.status) {
               case QueryRunStatus.Compiling:
                 setStatus(Status.Compiling);
@@ -229,7 +230,7 @@ export const App: React.FC = () => {
       ) : (
         ''
       )}
-      {!error && (
+      {!error && [Status.Displaying, Status.Done].includes(status) && (
         <ResultControlsBar>
           <ResultLabel>{showOnlySQL ? 'SQL' : 'QUERY RESULTS'}</ResultLabel>
           {!showOnlySQL && (
