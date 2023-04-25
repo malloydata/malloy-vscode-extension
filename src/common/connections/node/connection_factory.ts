@@ -96,9 +96,13 @@ export class DesktopConnectionFactory implements ConnectionFactory {
   }
 
   getWorkingDirectory(url: URL): string {
-    const baseUrl = new URL('.', url);
-    const fileUrl = new URL(baseUrl.pathname, 'file:');
-    return fileURLToPath(fileUrl);
+    try {
+      const baseUrl = new URL('.', url);
+      const fileUrl = new URL(baseUrl.pathname, 'file:');
+      return fileURLToPath(fileUrl);
+    } catch {
+      return '.';
+    }
   }
 
   addDefaults(configs: ConnectionConfig[]): ConnectionConfig[] {
