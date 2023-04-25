@@ -130,12 +130,10 @@ export const initServer = (
   const debouncedDiagnoseDocument = debounce(diagnoseDocument, 300);
 
   documents.onDidChangeContent(change => {
-    connection.console.info('Server onDidChangeContent');
     debouncedDiagnoseDocument(change.document);
   });
 
   connection.onDocumentSymbol(handler => {
-    connection.console.info('Server onDocumentSymbol');
     const document = documents.get(handler.textDocument.uri);
     return document ? getMalloySymbols(document) : [];
   });
@@ -148,13 +146,11 @@ export const initServer = (
   });
 
   connection.onCodeLens(handler => {
-    connection.console.info('Server onCodeLens');
     const document = documents.get(handler.textDocument.uri);
     return document ? getMalloyLenses(document) : [];
   });
 
   connection.onDefinition(handler => {
-    connection.console.info('Server onDefinition');
     const document = documents.get(handler.textDocument.uri);
     return document
       ? getMalloyDefinitionReference(
@@ -168,7 +164,6 @@ export const initServer = (
   });
 
   connection.onDidChangeConfiguration(change => {
-    connection.console.info('Server onDidChangeConfiguration');
     connectionManager.setConnectionsConfig(change.settings.malloy.connections);
     haveConnectionsBeenSet = true;
     documents.all().forEach(diagnoseDocument);
@@ -176,7 +171,6 @@ export const initServer = (
 
   // This handler provides the initial list of the completion items.
   connection.onCompletion((params): CompletionItem[] => {
-    connection.console.info('Server onCompletion');
     const document = documents.get(params.textDocument.uri);
     return document ? getCompletionItems(document, params) : [];
   });
@@ -184,12 +178,10 @@ export const initServer = (
   // This handler resolves additional information for the item selected in
   // the completion list.
   connection.onCompletionResolve((item: CompletionItem): CompletionItem => {
-    connection.console.info('Server onCompletionResolve');
     return resolveCompletionItem(item);
   });
 
   connection.onHover((params: HoverParams): Hover | null => {
-    connection.console.info('Server onHover');
     const document = documents.get(params.textDocument.uri);
 
     return document ? getHover(document, params) : null;
