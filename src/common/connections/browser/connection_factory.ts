@@ -91,8 +91,12 @@ export class WebConnectionFactory implements ConnectionFactory {
   }
 
   getWorkingDirectory(url: URL): string {
-    const baseUrl = new URL('.', url);
-    return baseUrl.toString();
+    try {
+      const baseUrl = new URL('.', url);
+      return baseUrl.toString();
+    } catch {
+      return url.toString();
+    }
   }
 
   addDefaults(configs: ConnectionConfig[]): ConnectionConfig[] {
