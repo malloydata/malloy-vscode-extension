@@ -66,6 +66,7 @@ export const App: React.FC = () => {
   const [resultKind, setResultKind] = useState<ResultKind>(ResultKind.HTML);
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [showOnlySQL, setShowOnlySQL] = useState(false);
   const [observer, setObserver] = useState<MutationObserver>();
   const [canDownload, setCanDownload] = useState(false);
   const [canDownloadStream, setCanDownloadStream] = useState(false);
@@ -115,9 +116,19 @@ export const App: React.FC = () => {
           } else {
             setError(undefined);
           }
-          if (message.status === QueryRunStatus.Done) {
+          if (
+            message.status === QueryRunStatus.Compiled &&
+            message.showSQLOnly
+          ) {
+            setShowOnlySQL(true);
+            setWarning(undefined);
+            setStatus(Status.Done);
+            setSQL(message.sql);
+            setResultKind(ResultKind.SQL);
+          } else if (message.status === QueryRunStatus.Done) {
             const {resultJson, dataStyles, canDownloadStream} = message;
             setWarning(undefined);
+            setShowOnlySQL(false);
             // TODO(web) Figure out some way to download current result set
             setCanDownload(canDownloadStream);
             setCanDownloadStream(canDownloadStream);
@@ -159,6 +170,7 @@ export const App: React.FC = () => {
             setHTML(document.createElement('span'));
             setJSON('');
             setSQL('');
+            setShowOnlySQL(false);
             switch (message.status) {
               case QueryRunStatus.Compiling:
                 setStatus(Status.Compiling);
@@ -218,23 +230,25 @@ export const App: React.FC = () => {
       ) : (
         ''
       )}
-      {!error && (
+      {!error && [Status.Displaying, Status.Done].includes(status) && (
         <ResultControlsBar>
-          <ResultLabel>QUERY RESULTS</ResultLabel>
-          <ResultControlsItems>
-            <ResultKindToggle kind={resultKind} setKind={setResultKind} />
-            {canDownload && (
-              <DownloadButton
-                canStream={canDownloadStream}
-                onDownload={async downloadOptions => {
-                  vscode.postMessage({
-                    type: QueryMessageType.StartDownload,
-                    downloadOptions,
-                  });
-                }}
-              />
-            )}
-          </ResultControlsItems>
+          <ResultLabel>{showOnlySQL ? 'SQL' : 'QUERY RESULTS'}</ResultLabel>
+          {!showOnlySQL && (
+            <ResultControlsItems>
+              <ResultKindToggle kind={resultKind} setKind={setResultKind} />
+              {canDownload && (
+                <DownloadButton
+                  canStream={canDownloadStream}
+                  onDownload={async downloadOptions => {
+                    vscode.postMessage({
+                      type: QueryMessageType.StartDownload,
+                      downloadOptions,
+                    });
+                  }}
+                />
+              )}
+            </ResultControlsItems>
+          )}
         </ResultControlsBar>
       )}
       {!error && resultKind === ResultKind.HTML && (

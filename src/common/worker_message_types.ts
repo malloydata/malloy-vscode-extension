@@ -75,6 +75,7 @@ export interface MessageRun {
   query: WorkerQuerySpec;
   panelId: string;
   name: string;
+  showSQLOnly: boolean;
 }
 
 export interface MessageCancel {

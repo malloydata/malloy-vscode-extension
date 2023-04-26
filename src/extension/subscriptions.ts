@@ -53,6 +53,9 @@ import {
   FetchFileEvent,
   FileHandler,
 } from '../common/types';
+import {showSQLCommand} from './commands/show_sql';
+import {showSQLFileCommand} from './commands/show_sql_file';
+import {showSQLNamedQueryCommand} from './commands/show_sql_named_query';
 
 function getNewClientId(): string {
   return uuid();
@@ -87,6 +90,30 @@ export const setupSubscriptions = (
   context.subscriptions.push(
     vscode.commands.registerCommand('malloy.runNamedQuery', (name: string) =>
       runNamedQuery(worker, name)
+    )
+  );
+
+  // Show SQL (whole file)
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      'malloy.showSQLFile',
+      (queryIndex?: number) => showSQLFileCommand(worker, queryIndex)
+    )
+  );
+
+  // Show SQL
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      'malloy.showSQL',
+      (query: string, name?: string) => showSQLCommand(worker, query, name)
+    )
+  );
+
+  // Show named query SQL
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      'malloy.showSQLNamedQuery',
+      (name: string) => showSQLNamedQueryCommand(worker, name)
     )
   );
 

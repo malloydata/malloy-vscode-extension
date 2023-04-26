@@ -26,22 +26,21 @@ import {Utils} from 'vscode-uri';
 
 import {MALLOY_EXTENSION_STATE, RunState} from '../state';
 import {Result} from '@malloydata/malloy';
-import turtleIcon from '../../media/turtle.svg';
-import {getWebviewHtml} from '../webviews';
 import {QueryMessageType, QueryRunStatus} from '../../common/message_types';
-import {WebviewMessageManager} from '../webview_message_manager';
 import {queryDownload} from './query_download';
 import {BaseWorker, WorkerMessage} from '../../common/worker_message_types';
 import {malloyLog} from '../logger';
 import {trackQueryRun} from '../telemetry';
 import {QuerySpec} from './query_spec';
 import {Disposable} from 'vscode-jsonrpc';
+import {createOrReuseWebviewPanel, loadWebview} from './vscode_utils';
 
 export function runMalloyQuery(
   worker: BaseWorker,
   query: QuerySpec,
   panelId: string,
-  name: string
+  name: string,
+  showSQLOnly = false
 ): void {
   vscode.window.withProgress(
     {
@@ -69,79 +68,20 @@ export function runMalloyQuery(
 
       token.onCancellationRequested(cancel);
 
-      const previous = MALLOY_EXTENSION_STATE.getRunState(panelId);
+      const current: RunState = createOrReuseWebviewPanel(
+        'malloyQuery',
+        name,
+        panelId,
+        cancel,
+        query.file
+      );
 
-      let current: RunState;
-      if (previous) {
-        current = {
-          cancel,
-          panelId,
-          panel: previous.panel,
-          messages: previous.messages,
-          document: previous.document,
-        };
-        MALLOY_EXTENSION_STATE.setRunState(panelId, current);
-        previous.cancel();
-        if (!previous.panel.visible) {
-          previous.panel.reveal(vscode.ViewColumn.Beside, true);
-        }
-      } else {
-        const panel = vscode.window.createWebviewPanel(
-          'malloyQuery',
-          name,
-          {viewColumn: vscode.ViewColumn.Beside, preserveFocus: true},
-          {enableScripts: true, retainContextWhenHidden: true}
-        );
-
-        panel.onDidChangeViewState(
-          (e: vscode.WebviewPanelOnDidChangeViewStateEvent) => {
-            vscode.commands.executeCommand(
-              'setContext',
-              'malloy.webviewPanelFocused',
-              e.webviewPanel.active
-            );
-          }
-        );
-
-        current = {
-          panel,
-          messages: new WebviewMessageManager(panel),
-          panelId,
-          cancel,
-          document: query.file,
-        };
-        current.panel.iconPath = Utils.joinPath(
-          MALLOY_EXTENSION_STATE.getExtensionUri(),
-          'dist',
-          turtleIcon
-        );
-        MALLOY_EXTENSION_STATE.setRunState(panelId, current);
-      }
-
-      const onDiskPath = Utils.joinPath(
+      const queryPageOnDiskPath = Utils.joinPath(
         MALLOY_EXTENSION_STATE.getExtensionUri(),
         'dist',
         'query_page.js'
       );
-
-      const entrySrc = current.panel.webview.asWebviewUri(onDiskPath);
-
-      current.panel.webview.html = getWebviewHtml(
-        entrySrc.toString(),
-        current.panel.webview
-      );
-
-      current.panel.onDidDispose(() => {
-        current.cancel();
-      });
-
-      MALLOY_EXTENSION_STATE.setActiveWebviewPanelId(current.panelId);
-      current.panel.onDidChangeViewState(event => {
-        if (event.webviewPanel.active) {
-          MALLOY_EXTENSION_STATE.setActiveWebviewPanelId(current.panelId);
-          vscode.commands.executeCommand('malloy.refreshSchema');
-        }
-      });
+      loadWebview(current, queryPageOnDiskPath);
 
       const {file, ...params} = query;
       const uri = file.uri.toString();
@@ -153,6 +93,7 @@ export function runMalloyQuery(
         },
         panelId,
         name,
+        showSQLOnly,
       });
       const allBegin = Date.now();
       const compileBegin = allBegin;
@@ -192,13 +133,22 @@ https://github.com/malloydata/malloy/issues.`,
                     progress.report({increment: 20, message: 'Compiling'});
                   }
                   break;
-                case QueryRunStatus.Running:
+                case QueryRunStatus.Compiled:
                   {
                     const compileEnd = Date.now();
                     runBegin = compileEnd;
                     malloyLog.appendLine(message.sql);
                     logTime('Compile', compileBegin, compileEnd);
 
+                    if (showSQLOnly) {
+                      progress.report({increment: 100, message: 'Complete'});
+                      off?.dispose();
+                      resolve(undefined);
+                    }
+                  }
+                  break;
+                case QueryRunStatus.Running:
+                  {
                     trackQueryRun({dialect: message.dialect});
 
                     progress.report({increment: 40, message: 'Running'});

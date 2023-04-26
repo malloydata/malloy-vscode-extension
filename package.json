@@ -50,6 +50,9 @@
     "onCommand:malloy.showLicenses",
     "onCommand:malloy.runQueryFile",
     "onCommand:malloy.runQuery",
+    "onCommand:malloy.showSQL",
+    "onCommand:malloy.showSQLFile",
+    "onCommand:malloy.showSQLNamedQuery",
     "onCommand:malloy.runNamedQuery",
     "onCommand:malloy.runTurtleFromSchema",
     "onCommand:malloy.runTurtleWithFilters",
@@ -105,6 +108,24 @@
       {
         "command": "malloy.runNamedQuery",
         "title": "Run Named Query",
+        "category": "Malloy",
+        "enablement": "false"
+      },
+      {
+        "command": "malloy.showSQLFile",
+        "title": "Show SQL File",
+        "category": "Malloy",
+        "enablement": "false"
+      },
+      {
+        "command": "malloy.showSQL",
+        "title": "Show SQL",
+        "category": "Malloy",
+        "enablement": "false"
+      },
+      {
+        "command": "malloy.showNamedQuerySQL",
+        "title": "Show Named Query SQL",
         "category": "Malloy",
         "enablement": "false"
       },
