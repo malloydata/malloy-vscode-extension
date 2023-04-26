@@ -11,24 +11,11 @@
       "type": "extensionHost",
       "request": "launch",
       "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
-      "skipFiles": ["<node_internals>/**"],
-      "outFiles": ["${workspaceFolder}/dist/*.js"],
-      "preLaunchTask": "build-extension-task",
-      "sourceMaps": true,
-    },
-    {
-      "name": "Run VSCode Extension (and Debug Webviews)",
-      "type": "extensionHost",
-      "request": "launch",
-      "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
       "debugWebviews": true,
       "skipFiles": ["<node_internals>/**"],
       "outFiles": ["${workspaceFolder}/dist/*.js"],
       "preLaunchTask": "build-extension-task",
-      "sourceMaps": true,
-      "env": {
-        "MALLOY_DEBUG_WORKER": "true"
-      }
+      "sourceMaps": true
     },
     {
       "name": "Run VSCode Web Extension",
@@ -39,7 +26,7 @@
         "--extensionDevelopmentKind=web"
       ],
       "debugWebWorkerHost": true,
-      "skipFiles": ["${workspaceFolder}/node_modules/**/*.js"],
+      "skipFiles": ["<node_internals>/**"],
       "outFiles": ["${workspaceFolder}/dist/*.js"],
       "preLaunchTask": "build-extension-task",
       "sourceMaps": true
@@ -68,7 +55,11 @@
   "compounds": [
     {
       "name": "Debug All (Node)",
-      "configurations": ["Run VSCode Extension (and Debug Webviews)", "Attach to VSCode Language Server", "Attach to VSCode Worker"],
+      "configurations": [
+        "Run VSCode Extension",
+        "Attach to VSCode Language Server",
+        "Attach to VSCode Worker"
+      ],
       "preLaunchTask": "build-extension-task",
       "stopAll": true
     }
