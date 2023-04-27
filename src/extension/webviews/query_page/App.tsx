@@ -88,6 +88,7 @@ export const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    themeCallback();
     const obs = new MutationObserver(themeCallback);
     setObserver(obs);
   }, [themeCallback, setObserver]);
