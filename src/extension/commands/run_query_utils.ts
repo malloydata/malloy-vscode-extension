@@ -162,7 +162,6 @@ https://github.com/malloydata/malloy/issues.`,
                     }
                     const {resultJson} = message;
                     const queryResult = Result.fromJSON(resultJson);
-                    current.result = queryResult;
                     progress.report({increment: 100, message: 'Rendering'});
                     const allEnd = Date.now();
                     logTime('Total', allBegin, allEnd);

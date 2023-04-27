@@ -35,16 +35,12 @@ import {
   QueryMessageType,
   QueryPanelMessage,
   QueryRunStatus,
+  SQLQueryPanelMessage,
 } from '../../../common/message_types';
 import {Spinner} from '../components';
-import {ResultKind, ResultKindToggle} from './ResultKindToggle';
-import Prism from 'prismjs';
 import {usePopperTooltip} from 'react-popper-tooltip';
-import {useQueryVSCodeContext} from './query_vscode_context';
-import {DownloadButton} from './DownloadButton';
-import {CopyButton} from './CopyButton';
+import {useQueryVSCodeContext} from './sql_query_vscode_context';
 import {Scroll} from '../components/Scroll';
-import {PrismContainer} from '../components/PrismContainer';
 
 enum Status {
   Ready = 'ready',
@@ -59,17 +55,11 @@ enum Status {
 export const App: React.FC = () => {
   const [status, setStatus] = useState<Status>(Status.Ready);
   const [html, setHTML] = useState<HTMLElement>(document.createElement('span'));
-  const [json, setJSON] = useState('');
-  const [sql, setSQL] = useState('');
   const [error, setError] = useState<string | undefined>(undefined);
   const [warning, setWarning] = useState<string | undefined>(undefined);
-  const [resultKind, setResultKind] = useState<ResultKind>(ResultKind.HTML);
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
-  const [showOnlySQL, setShowOnlySQL] = useState(false);
   const [observer, setObserver] = useState<MutationObserver>();
-  const [canDownload, setCanDownload] = useState(false);
-  const [canDownloadStream, setCanDownloadStream] = useState(false);
   const tooltipId = useRef(0);
   const {setTooltipRef, setTriggerRef, getTooltipProps} = usePopperTooltip({
     visible: tooltipVisible,
@@ -79,7 +69,7 @@ export const App: React.FC = () => {
   const vscode = useQueryVSCodeContext();
 
   useEffect(() => {
-    vscode.postMessage({type: 'app-ready'} as QueryPanelMessage);
+    vscode.postMessage({type: 'app-ready'} as SQLQueryPanelMessage);
   }, []);
 
   const themeCallback = useCallback(() => {
@@ -120,24 +110,15 @@ export const App: React.FC = () => {
             message.status === QueryRunStatus.Compiled &&
             message.showSQLOnly
           ) {
-            setShowOnlySQL(true);
             setWarning(undefined);
             setStatus(Status.Done);
-            setSQL(message.sql);
-            setResultKind(ResultKind.SQL);
           } else if (message.status === QueryRunStatus.Done) {
             const {resultJson, dataStyles, canDownloadStream} = message;
             setWarning(undefined);
-            setShowOnlySQL(false);
-            // TODO(web) Figure out some way to download current result set
-            setCanDownload(canDownloadStream);
-            setCanDownloadStream(canDownloadStream);
             setStatus(Status.Rendering);
             setTimeout(async () => {
               const result = Result.fromJSON(resultJson);
               const data = result.data;
-              setJSON(JSON.stringify(data.toObject(), null, 2));
-              setSQL(result.sql);
               const rendered = await new HTMLView(document).render(data, {
                 dataStyles,
                 isDrillingEnabled: false,
@@ -168,9 +149,6 @@ export const App: React.FC = () => {
             }, 0);
           } else {
             setHTML(document.createElement('span'));
-            setJSON('');
-            setSQL('');
-            setShowOnlySQL(false);
             switch (message.status) {
               case QueryRunStatus.Compiling:
                 setStatus(Status.Compiling);
@@ -185,31 +163,6 @@ export const App: React.FC = () => {
     window.addEventListener('message', listener);
     return () => window.removeEventListener('message', listener);
   });
-
-  const copyToClipboard = useCallback(
-    ({target}: MouseEvent) => {
-      switch (resultKind) {
-        case ResultKind.HTML:
-          navigator.clipboard.writeText(getStyledHTML(html));
-          break;
-        case ResultKind.JSON:
-          navigator.clipboard.writeText(json);
-          break;
-        case ResultKind.SQL:
-          navigator.clipboard.writeText(sql);
-          break;
-      }
-      setTriggerRef(target as HTMLElement);
-      setTooltipVisible(true);
-      const currentTooltipId = ++tooltipId.current;
-      setTimeout(() => {
-        if (currentTooltipId === tooltipId.current) {
-          setTooltipVisible(false);
-        }
-      }, 1000);
-    },
-    [resultKind, html, json, sql]
-  );
 
   return (
     <div
@@ -232,57 +185,14 @@ export const App: React.FC = () => {
       )}
       {!error && [Status.Displaying, Status.Done].includes(status) && (
         <ResultControlsBar>
-          <ResultLabel>{showOnlySQL ? 'SQL' : 'QUERY RESULTS'}</ResultLabel>
-          {!showOnlySQL && (
-            <ResultControlsItems>
-              <ResultKindToggle kind={resultKind} setKind={setResultKind} />
-              {canDownload && (
-                <DownloadButton
-                  canStream={canDownloadStream}
-                  onDownload={async downloadOptions => {
-                    vscode.postMessage({
-                      type: QueryMessageType.StartDownload,
-                      downloadOptions,
-                    });
-                  }}
-                />
-              )}
-            </ResultControlsItems>
-          )}
+          <ResultLabel>QUERY RESULTS</ResultLabel>
         </ResultControlsBar>
       )}
-      {!error && resultKind === ResultKind.HTML && (
+      {!error && (
         <Scroll>
           <div style={{margin: '10px'}}>
-            <CopyButton onClick={copyToClipboard} />
             <DOMElement element={html} />
           </div>
-        </Scroll>
-      )}
-      {!error && resultKind === ResultKind.JSON && (
-        <Scroll>
-          <CopyButton onClick={copyToClipboard} />
-          <PrismContainer darkMode={darkMode} style={{margin: '10px'}}>
-            <div
-              dangerouslySetInnerHTML={{
-                __html: Prism.highlight(json, Prism.languages['json'], 'json'),
-              }}
-              style={{margin: '10px'}}
-            />
-          </PrismContainer>
-        </Scroll>
-      )}
-      {!error && resultKind === ResultKind.SQL && (
-        <Scroll>
-          <CopyButton onClick={copyToClipboard} />
-          <PrismContainer darkMode={darkMode} style={{margin: '10px'}}>
-            <div
-              dangerouslySetInnerHTML={{
-                __html: Prism.highlight(sql, Prism.languages['sql'], 'sql'),
-              }}
-              style={{margin: '10px', whiteSpace: 'break-spaces'}}
-            />
-          </PrismContainer>
         </Scroll>
       )}
       {error && <Error multiline={error.includes('\n')}>{error}</Error>}

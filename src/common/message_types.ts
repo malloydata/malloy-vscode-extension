@@ -38,6 +38,12 @@ export enum QueryRunStatus {
   Done = 'done',
 }
 
+export enum SQLQueryRunStatus {
+  Running = 'running',
+  Error = 'error',
+  Done = 'done',
+}
+
 export enum QueryMessageType {
   QueryStatus = 'query-status',
   AppReady = 'app-ready',
@@ -98,6 +104,33 @@ interface QueryMessageStartDownload {
   type: QueryMessageType.StartDownload;
   downloadOptions: QueryDownloadOptions;
 }
+
+export enum SQLQueryMessageType {
+  QueryStatus = 'query-status',
+}
+
+interface SQLQueryMessageStatusDone {
+  type: SQLQueryMessageType.QueryStatus;
+  status: SQLQueryRunStatus.Done;
+}
+
+interface SQLQueryMessageStatusRunning {
+  type: SQLQueryMessageType.QueryStatus;
+  status: SQLQueryRunStatus.Running;
+}
+
+interface SQLQueryMessageStatusError {
+  type: SQLQueryMessageType.QueryStatus;
+  status: SQLQueryRunStatus.Error;
+  error: string;
+}
+
+type SQLQueryMessageStatus =
+  | SQLQueryMessageStatusError
+  | SQLQueryMessageStatusRunning
+  | SQLQueryMessageStatusDone;
+
+export type SQLQueryPanelMessage = SQLQueryMessageStatus | QueryMessageAppReady;
 
 export type QueryPanelMessage =
   | QueryMessageStatus

@@ -78,6 +78,13 @@ export interface MessageRun {
   showSQLOnly: boolean;
 }
 
+export interface MessageRunMalloySQL {
+  type: 'malloy-sql/run';
+  query: string;
+  connectionName: string;
+  panelId: string;
+}
+
 export interface MessageCancel {
   type: 'malloy/cancel';
   panelId: string;
@@ -134,7 +141,8 @@ export type Message =
   | MessageFetchBinary
   | MessageFetchCellData
   | MessageRun
-  | MessageDownload;
+  | MessageDownload
+  | MessageRunMalloySQL;
 
 /**
  * Outgoing messages

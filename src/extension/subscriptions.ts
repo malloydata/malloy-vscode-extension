@@ -56,6 +56,7 @@ import {
 import {showSQLCommand} from './commands/show_sql';
 import {showSQLFileCommand} from './commands/show_sql_file';
 import {showSQLNamedQueryCommand} from './commands/show_sql_named_query';
+import {runMalloySQLFile} from './commands/run_malloy_sql_file';
 
 function getNewClientId(): string {
   return uuid();
@@ -129,6 +130,13 @@ export const setupSubscriptions = (
     vscode.commands.registerCommand(
       'malloy.runUnnamedSQLBlock',
       (index: number) => runUnnamedSQLBlock(worker, index)
+    )
+  );
+
+  // Run Malloy SQL File
+  context.subscriptions.push(
+    vscode.commands.registerCommand('malloy.runMalloySQLFile', () =>
+      runMalloySQLFile(worker)
     )
   );
 

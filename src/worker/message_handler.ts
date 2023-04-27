@@ -28,12 +28,14 @@ import {
   MessageConfig,
   // MessageDownload,
   MessageRun,
+  MessageRunMalloySQL,
   WorkerLogMessage,
   WorkerMessage,
 } from '../common/worker_message_types';
 import {FileHandler} from '../common/types';
 import {refreshConfig} from './refresh_config';
 import {ConnectionManager} from '../common/connection_manager';
+import {runMalloySQLQuery} from './run_malloy_sql_query';
 
 export class MessageHandler {
   heartBeat: ReturnType<typeof setInterval>;
@@ -58,6 +60,11 @@ export class MessageHandler {
     );
     this.connection.onRequest('malloy/run', (message: MessageRun) =>
       runQuery(this, fileHandler, connectionManager, false, message)
+    );
+    this.connection.onRequest(
+      'malloy-sql/run',
+      (message: MessageRunMalloySQL) =>
+        runMalloySQLQuery(this, connectionManager, message)
     );
   }
 

@@ -59,6 +59,7 @@
     "onCommand:malloy.copyFieldPath",
     "onCommand:malloy.refreshSchema",
     "onCommand:malloy.editConnections",
+    "onCommand:malloy.runMalloySQLFile",
     "onLanguage:malloy",
     "workspaceContains:**/.malloy",
     "onView:malloyConnections",
@@ -144,6 +145,12 @@
         "title": "Run Query With Filters",
         "category": "Malloy",
         "enablement": "false"
+      },
+      {
+        "command": "malloy.runMalloySQLFile",
+        "title": "Run Malloy SQL File",
+        "category": "Malloy",
+        "when": "editorLangId == malloy-sql"
       },
       {
         "command": "malloy.copyFieldPath",
@@ -325,7 +332,24 @@
           "malloy"
         ],
         "filenames": [],
-        "configuration": "language.json",
+        "configuration": "malloy-language.json",
+        "icon": {
+          "dark": "./img/icon.svg",
+          "light": "./img/icon.svg"
+        }
+      },
+      {
+        "id": "malloy-sql",
+        "extensions": [
+          ".malloysql",
+          ".msql"
+        ],
+        "aliases": [
+          "Malloy SQL",
+          "malloy SQL"
+        ],
+        "filenames": [],
+        "configuration": "malloy-sql-language.json",
         "icon": {
           "dark": "./img/icon.svg",
           "light": "./img/icon.svg"
@@ -337,6 +361,11 @@
         "language": "malloy",
         "scopeName": "source.malloy",
         "path": "./malloy.tmGrammar.json"
+      },
+      {
+        "language": "malloy-sql",
+        "scopeName": "source.malloy-sql",
+        "path": "./malloy-sql.tmGrammar.json"
       }
     ],
     "views": {

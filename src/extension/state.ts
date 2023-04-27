@@ -22,17 +22,15 @@
  */
 
 import vscode, {TextDocument, WebviewPanel} from 'vscode';
-import {Result} from '@malloydata/malloy';
-import {QueryPanelMessage} from '../common/message_types';
+import {QueryPanelMessage, SQLQueryPanelMessage} from '../common/message_types';
 import {WebviewMessageManager} from './webview_message_manager';
 
 export interface RunState {
   cancel: () => void;
   panel: WebviewPanel;
-  messages: WebviewMessageManager<QueryPanelMessage>;
+  messages: WebviewMessageManager<QueryPanelMessage | SQLQueryPanelMessage>;
   panelId: string;
   document: TextDocument;
-  result?: Result;
 }
 
 class MalloyExtensionState {
