@@ -1,22 +1,31 @@
 steps:
   - id: deploy-marketplace
-    name: "nixos/nix"
+    name: 'nixos/nix'
     entrypoint: sh
     args:
       - -c
-      - "./cloudbuild/deploy/$TRIGGER_NAME.sh"
-    timeout: "1800s"
-    secretEnv: ["VSCE_PAT", "GA_API_SECRET", "GA_MEASUREMENT_ID", "GHAPI_PAT"]
+      - './cloudbuild/deploy/$TRIGGER_NAME.sh'
+    timeout: '1800s'
+    secretEnv:
+      [
+        'VSCE_PAT',
+        'OVSX_TOKEN',
+        'GA_API_SECRET',
+        'GA_MEASUREMENT_ID',
+        'GHAPI_PAT',
+      ]
 options:
   logging: CLOUD_LOGGING_ONLY
-timeout: "1800s"
+timeout: '1800s'
 availableSecrets:
   secretManager:
     - versionName: projects/malloy-303216/secrets/marketplace-prerelease-CI/versions/latest
-      env: "VSCE_PAT"
+      env: 'VSCE_PAT'
+    - versionName: projects/673673622326/secrets/ovsx-token/versions/latest
+      env: OVSX_TOKEN
     - versionName: projects/malloy-303216/secrets/vscode-extension-CI-GA-API-SECRET/versions/latest
-      env: "GA_API_SECRET"
+      env: 'GA_API_SECRET'
     - versionName: projects/malloy-303216/secrets/vscode-extension-CI-GA-MEASUREMENT-ID/versions/latest
-      env: "GA_MEASUREMENT_ID"
+      env: 'GA_MEASUREMENT_ID'
     - versionName: projects/malloy-303216/secrets/vscode-extension-gh-pat/versions/latest
-      env: "GHAPI_PAT"
+      env: 'GHAPI_PAT'
