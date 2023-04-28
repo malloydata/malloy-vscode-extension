@@ -24,16 +24,15 @@
 import {
   MessageHandler,
   MessageRunMalloySQL,
-  WorkerQueryPanelMessage,
+  WorkerSQLQueryPanelMessage,
 } from '../common/worker_message_types';
 
 import {
-  QueryMessageType,
-  QueryPanelMessage,
-  QueryRunStatus,
+  SQLQueryMessageType,
+  SQLQueryPanelMessage,
+  SQLQueryRunStatus,
 } from '../common/message_types';
 import {ConnectionManager} from '../common/connection_manager';
-import {FileHandler} from '../common/types';
 
 interface QueryEntry {
   panelId: string;
@@ -44,11 +43,11 @@ const runningQueries: Record<string, QueryEntry> = {};
 
 const sendMessage = (
   messageHandler: MessageHandler,
-  message: QueryPanelMessage,
+  message: SQLQueryPanelMessage,
   panelId: string
 ) => {
-  const msg: WorkerQueryPanelMessage = {
-    type: 'malloy/queryPanel',
+  const msg: WorkerSQLQueryPanelMessage = {
+    type: 'malloy/SQLQueryPanel',
     panelId,
     message,
   };
@@ -59,7 +58,7 @@ const sendMessage = (
 export const runMalloySQLQuery = async (
   messageHandler: MessageHandler,
   connectionManager: ConnectionManager,
-  {query, connectionName, panelId}: MessageRunMalloySQL
+  {sql, connectionName, panelId}: MessageRunMalloySQL
 ): Promise<void> => {
   runningQueries[panelId] = {panelId, canceled: false};
   try {
@@ -68,38 +67,34 @@ export const runMalloySQLQuery = async (
     );
     const connection = await lookup.lookupConnection(connectionName);
 
-    try {
-      // sendMessage(
-      //   messageHandler,
-      //   {
-      //     type: QueryMessageType.QueryStatus,
-      //     status: QueryRunStatus.Running,
-      //     sql,
-      //     dialect,
-      //   },
-      //   panelId
-      // );
-      const queryResult = await connection.runSQL(query);
+    sendMessage(
+      messageHandler,
+      {
+        type: SQLQueryMessageType.QueryStatus,
+        status: SQLQueryRunStatus.Running,
+        sql,
+      },
+      panelId
+    );
+    const queryResult = await connection.runSQL(sql);
 
-      if (runningQueries[panelId].canceled) return;
-    } catch (error) {
-      sendMessage(
-        messageHandler,
-        {
-          type: QueryMessageType.QueryStatus,
-          status: QueryRunStatus.Error,
-          error: error.message || 'Something went wrong',
-        },
-        panelId
-      );
-      return;
-    }
+    if (runningQueries[panelId].canceled) return;
+
+    sendMessage(
+      messageHandler,
+      {
+        type: SQLQueryMessageType.QueryStatus,
+        status: SQLQueryRunStatus.Done,
+        results: queryResult,
+      },
+      panelId
+    );
   } catch (error) {
     sendMessage(
       messageHandler,
       {
-        type: QueryMessageType.QueryStatus,
-        status: QueryRunStatus.Error,
+        type: SQLQueryMessageType.QueryStatus,
+        status: SQLQueryRunStatus.Error,
         error: error.message,
       },
       panelId

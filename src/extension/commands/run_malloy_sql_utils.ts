@@ -25,47 +25,129 @@ import * as vscode from 'vscode';
 
 import {BaseWorker, WorkerMessage} from '../../common/worker_message_types';
 import {malloyLog} from '../logger';
+import {createOrReuseWebviewPanel, loadWebview} from './vscode_utils';
+import {Utils} from 'vscode-uri';
+import {
+  SQLQueryMessageType,
+  SQLQueryRunStatus,
+} from '../../common/message_types';
+import {MALLOY_EXTENSION_STATE, RunState} from '../state';
 
 export function runMalloySQLQuery(
   worker: BaseWorker,
   connectionName: string,
-  query: string,
+  sql: string,
   panelId: string,
   name: string
 ): void {
-  worker.send({
-    type: 'malloy-sql/run',
-    query,
-    connectionName,
-    panelId,
-  });
+  vscode.window.withProgress(
+    {
+      location: vscode.ProgressLocation.Notification,
+      title: `Malloy SQL Query (${name})`,
+      cancellable: true,
+    },
+    (progress, token) => {
+      const cancel = () => {
+        worker.send({
+          type: 'malloy/cancel',
+          panelId,
+        });
+        if (current) {
+          const actuallyCurrent = MALLOY_EXTENSION_STATE.getRunState(
+            current.panelId
+          );
+          if (actuallyCurrent === current) {
+            current.panel.dispose();
+            MALLOY_EXTENSION_STATE.setRunState(current.panelId, undefined);
+            token.isCancellationRequested = true;
+          }
+        }
+      };
 
-  // const current: RunState = createOrReuseWebviewPanel(
-  //   'malloyQuery',
-  //   name,
-  //   panelId,
-  //   cancel,
-  //   query.file
-  // );
-  // const queryPageOnDiskPath = Utils.joinPath(
-  //   MALLOY_EXTENSION_STATE.getExtensionUri(),
-  //   'dist',
-  //   'query_page.js'
-  // );
-  // loadWebview(current, queryPageOnDiskPath);
-  // const uri = file.uri.toString();
-  // worker.send({
-  //   type: 'malloy-query/run',
-  //   query: {
-  //     uri,
-  //     ...params,
-  //   },
-  //   panelId,
-  //   name,
-  // });
-  // const allBegin = Date.now();
-  // const compileBegin = allBegin;
-  // let runBegin: number;
+      token.onCancellationRequested(cancel);
+
+      const current: RunState = createOrReuseWebviewPanel(
+        'malloySQLQuery',
+        name,
+        panelId,
+        cancel,
+        sql
+      );
+
+      const queryPageOnDiskPath = Utils.joinPath(
+        MALLOY_EXTENSION_STATE.getExtensionUri(),
+        'dist',
+        'sql_query_page.js'
+      );
+      loadWebview(current, queryPageOnDiskPath);
+
+      worker.send({
+        type: 'malloy/run-malloy-sql',
+        sql,
+        panelId,
+        connectionName,
+      });
+
+      const runBegin = Date.now();
+
+      return new Promise(resolve => {
+        let off: vscode.Disposable | null = null;
+        const listener = (msg: WorkerMessage) => {
+          if (msg.type === 'malloy/dead') {
+            current.messages.postMessage({
+              type: SQLQueryMessageType.QueryStatus,
+              status: SQLQueryRunStatus.Error,
+              error: `The worker process has died, and has been restarted.
+This is possibly the result of a database bug. \
+Please consider filing an issue with as much detail as possible at \
+https://github.com/malloydata/malloy/issues.`,
+            });
+            off?.dispose();
+            resolve(undefined);
+            return;
+          } else if (msg.type !== 'malloy/SQLQueryPanel') {
+            return;
+          }
+          const {message, panelId: msgPanelId} = msg;
+
+          if (msgPanelId !== panelId) return;
+
+          current.messages.postMessage({
+            ...message,
+          });
+
+          if (message.type === SQLQueryMessageType.QueryStatus) {
+            switch (message.status) {
+              case SQLQueryRunStatus.Running:
+                {
+                  malloyLog.appendLine(message.sql);
+
+                  progress.report({increment: 20, message: 'Running'});
+                }
+                break;
+              case SQLQueryRunStatus.Done:
+                {
+                  logTime('Run', runBegin, Date.now());
+                  progress.report({increment: 100, message: 'Rendering'});
+
+                  off?.dispose();
+                  resolve(undefined);
+                }
+                break;
+              case SQLQueryRunStatus.Error:
+                {
+                  off?.dispose();
+                  resolve(undefined);
+                }
+                break;
+            }
+          }
+        };
+
+        off = worker.on('malloy/SQLQueryPanel', listener);
+      });
+    }
+  );
 }
 
 function logTime(name: string, start: number, end: number) {

@@ -22,7 +22,11 @@
  */
 
 import {Disposable} from 'vscode-jsonrpc';
-import {QueryDownloadOptions, QueryPanelMessage} from './message_types';
+import {
+  QueryDownloadOptions,
+  QueryPanelMessage,
+  SQLQueryPanelMessage,
+} from './message_types';
 import {CellData, MalloyConfig} from './types';
 
 interface NamedQuerySpec {
@@ -79,8 +83,8 @@ export interface MessageRun {
 }
 
 export interface MessageRunMalloySQL {
-  type: 'malloy-sql/run';
-  query: string;
+  type: 'malloy/run-malloy-sql';
+  sql: string;
   connectionName: string;
   panelId: string;
 }
@@ -169,6 +173,12 @@ export interface WorkerQueryPanelMessage {
   message: QueryPanelMessage;
 }
 
+export interface WorkerSQLQueryPanelMessage {
+  type: 'malloy/SQLQueryPanel';
+  panelId: string;
+  message: SQLQueryPanelMessage;
+}
+
 export interface WorkerStartMessage {
   type: 'malloy/start';
 }
@@ -199,7 +209,8 @@ export type WorkerMessage =
   | WorkerReadBinaryMessage
   | WorkerReadMessage
   | WorkerReadCellDataMessage
-  | WorkerStartMessage;
+  | WorkerStartMessage
+  | WorkerSQLQueryPanelMessage;
 
 export interface BaseWorker {
   send(message: Message): void;

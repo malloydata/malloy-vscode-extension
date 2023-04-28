@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {ResultJSON} from '@malloydata/malloy';
+import {MalloyQueryData, ResultJSON} from '@malloydata/malloy';
 import {DataStyles} from '@malloydata/render';
 import {ConnectionBackend, ConnectionConfig} from './connection_manager_types';
 
@@ -107,16 +107,23 @@ interface QueryMessageStartDownload {
 
 export enum SQLQueryMessageType {
   QueryStatus = 'query-status',
+  AppReady = 'app-ready',
+}
+
+interface SQLQueryMessageAppReady {
+  type: QueryMessageType.AppReady;
 }
 
 interface SQLQueryMessageStatusDone {
   type: SQLQueryMessageType.QueryStatus;
   status: SQLQueryRunStatus.Done;
+  results: MalloyQueryData;
 }
 
 interface SQLQueryMessageStatusRunning {
   type: SQLQueryMessageType.QueryStatus;
   status: SQLQueryRunStatus.Running;
+  sql: string;
 }
 
 interface SQLQueryMessageStatusError {
@@ -130,7 +137,9 @@ type SQLQueryMessageStatus =
   | SQLQueryMessageStatusRunning
   | SQLQueryMessageStatusDone;
 
-export type SQLQueryPanelMessage = SQLQueryMessageStatus | QueryMessageAppReady;
+export type SQLQueryPanelMessage =
+  | SQLQueryMessageStatus
+  | SQLQueryMessageAppReady;
 
 export type QueryPanelMessage =
   | QueryMessageStatus

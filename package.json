@@ -65,6 +65,7 @@
     "onView:malloyConnections",
     "onView:malloySchema",
     "onWebviewPanel:malloyQuery",
+    "onWebviewPanel:malloySQLQuery",
     "onWebviewPanel:malloyConnections",
     "onNotebook:malloy-notebook"
   ],

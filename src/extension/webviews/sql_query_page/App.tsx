@@ -21,8 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {Result} from '@malloydata/malloy';
-import {HTMLView} from '@malloydata/render';
 import React, {
   DOMElement,
   useCallback,
@@ -32,19 +30,16 @@ import React, {
 } from 'react';
 import styled from 'styled-components';
 import {
-  QueryMessageType,
-  QueryPanelMessage,
-  QueryRunStatus,
+  SQLQueryMessageType,
   SQLQueryPanelMessage,
+  SQLQueryRunStatus,
 } from '../../../common/message_types';
 import {Spinner} from '../components';
-import {usePopperTooltip} from 'react-popper-tooltip';
 import {useQueryVSCodeContext} from './sql_query_vscode_context';
 import {Scroll} from '../components/Scroll';
 
 enum Status {
   Ready = 'ready',
-  Compiling = 'compiling',
   Running = 'running',
   Error = 'error',
   Displaying = 'displaying',
@@ -57,14 +52,8 @@ export const App: React.FC = () => {
   const [html, setHTML] = useState<HTMLElement>(document.createElement('span'));
   const [error, setError] = useState<string | undefined>(undefined);
   const [warning, setWarning] = useState<string | undefined>(undefined);
-  const [tooltipVisible, setTooltipVisible] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [observer, setObserver] = useState<MutationObserver>();
-  const tooltipId = useRef(0);
-  const {setTooltipRef, setTriggerRef, getTooltipProps} = usePopperTooltip({
-    visible: tooltipVisible,
-    placement: 'top',
-  });
 
   const vscode = useQueryVSCodeContext();
 
@@ -95,71 +84,36 @@ export const App: React.FC = () => {
   }, [observer, document.body]);
 
   useEffect(() => {
-    const listener = (event: MessageEvent<QueryPanelMessage>) => {
+    const listener = (event: MessageEvent<SQLQueryPanelMessage>) => {
       const message = event.data;
 
-      switch (message.type) {
-        case QueryMessageType.QueryStatus:
-          if (message.status === QueryRunStatus.Error) {
-            setStatus(Status.Error);
-            setError(message.error);
-          } else {
-            setError(undefined);
-          }
-          if (
-            message.status === QueryRunStatus.Compiled &&
-            message.showSQLOnly
-          ) {
-            setWarning(undefined);
+      if (message.type !== SQLQueryMessageType.QueryStatus) return;
+
+      if (message.status === SQLQueryRunStatus.Error) {
+        setStatus(Status.Error);
+        setError(message.error);
+      } else {
+        setError(undefined);
+      }
+
+      if (message.status === SQLQueryRunStatus.Done) {
+        setWarning(undefined);
+        setStatus(Status.Rendering);
+        setTimeout(async () => {
+          const results = message.results;
+          const rendered = null; //TODO
+          setStatus(Status.Displaying);
+          setTimeout(() => {
+            setHTML(rendered);
             setStatus(Status.Done);
-          } else if (message.status === QueryRunStatus.Done) {
-            const {resultJson, dataStyles, canDownloadStream} = message;
-            setWarning(undefined);
-            setStatus(Status.Rendering);
-            setTimeout(async () => {
-              const result = Result.fromJSON(resultJson);
-              const data = result.data;
-              const rendered = await new HTMLView(document).render(data, {
-                dataStyles,
-                isDrillingEnabled: false,
-                onDrill: (drillQuery, target) => {
-                  navigator.clipboard.writeText(drillQuery);
-                  setTriggerRef(target);
-                  setTooltipVisible(true);
-                  const currentTooltipId = ++tooltipId.current;
-                  setTimeout(() => {
-                    if (currentTooltipId === tooltipId.current) {
-                      setTooltipVisible(false);
-                    }
-                  }, 1000);
-                },
-              });
-              setStatus(Status.Displaying);
-              setTimeout(() => {
-                setHTML(rendered);
-                if (data.rowCount < result.totalRows) {
-                  const rowCount = data.rowCount.toLocaleString();
-                  const totalRows = result.totalRows.toLocaleString();
-                  setWarning(
-                    `Row limit hit. Viewing ${rowCount} of ${totalRows} results.`
-                  );
-                }
-                setStatus(Status.Done);
-              }, 0);
-            }, 0);
-          } else {
-            setHTML(document.createElement('span'));
-            switch (message.status) {
-              case QueryRunStatus.Compiling:
-                setStatus(Status.Compiling);
-                break;
-              case QueryRunStatus.Running:
-                setStatus(Status.Running);
-                break;
-            }
-          }
+          }, 0);
+        }, 0);
+      } else if (message.status === SQLQueryRunStatus.Running) {
+        setHTML(document.createElement('span'));
+        setStatus(Status.Running);
       }
     };
+
     window.addEventListener('message', listener);
     return () => window.removeEventListener('message', listener);
   });
@@ -173,12 +127,9 @@ export const App: React.FC = () => {
         flexDirection: 'column',
       }}
     >
-      {[
-        Status.Compiling,
-        Status.Running,
-        Status.Rendering,
-        Status.Displaying,
-      ].includes(status) ? (
+      {[Status.Running, Status.Rendering, Status.Displaying].includes(
+        status
+      ) ? (
         <Spinner text={getStatusLabel(status) || ''} />
       ) : (
         ''
@@ -197,19 +148,12 @@ export const App: React.FC = () => {
       )}
       {error && <Error multiline={error.includes('\n')}>{error}</Error>}
       {warning && <Warning>{warning}</Warning>}
-      {tooltipVisible && (
-        <Tooltip ref={setTooltipRef} {...getTooltipProps()}>
-          Copied!
-        </Tooltip>
-      )}
     </div>
   );
 };
 
 function getStatusLabel(status: Status) {
   switch (status) {
-    case Status.Compiling:
-      return 'Compiling';
     case Status.Running:
       return 'Running';
     case Status.Rendering:
@@ -267,14 +211,6 @@ const DOMElement: React.FC<{element: HTMLElement}> = ({element}) => {
   return <div style={{fontSize: 11}} ref={ref}></div>;
 };
 
-const Tooltip = styled.div`
-  background-color: #505050;
-  color: white;
-  border-radius: 5px;
-  box-shadow: rgb(144 144 144) 0px 1px 5px 0px;
-  padding: 5px;
-`;
-
 const Warning = styled.div`
   color: var(--vscode-statusBarItem-warningForeground);
   background-color: var(--vscode-statusBarItem-warningBackground);
@@ -306,9 +242,4 @@ const ResultControlsBar = styled.div`
 const ResultLabel = styled.span`
   font-weight: 500;
   font-size: 12px;
-`;
-
-const ResultControlsItems = styled.div`
-  display: flex;
-  align-items: center;
 `;

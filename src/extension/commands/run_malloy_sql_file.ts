@@ -28,9 +28,13 @@ import {runMalloySQLQuery} from './run_malloy_sql_utils';
 export function runMalloySQLFile(worker: BaseWorker): void {
   const document = vscode.window.activeTextEditor?.document;
   if (document) {
+    const lines = document.getText().split('\n');
+    const connectionComment = lines.find(line => line.startsWith('--'));
+    const [_, connectionName] = connectionComment.split('connection:');
+
     runMalloySQLQuery(
       worker,
-      'bigquery',
+      connectionName.trim(),
       document.getText(),
       document.uri.toString(),
       document.fileName.split('/').pop() || document.fileName
