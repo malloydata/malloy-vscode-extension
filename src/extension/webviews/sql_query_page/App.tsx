@@ -21,13 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import React, {
-  DOMElement,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import React, {DOMElement, useEffect, useRef, useState} from 'react';
 import styled from 'styled-components';
 import {
   SQLQueryMessageType,
@@ -52,36 +46,12 @@ export const App: React.FC = () => {
   const [html, setHTML] = useState<HTMLElement>(document.createElement('span'));
   const [error, setError] = useState<string | undefined>(undefined);
   const [warning, setWarning] = useState<string | undefined>(undefined);
-  const [darkMode, setDarkMode] = useState(false);
-  const [observer, setObserver] = useState<MutationObserver>();
 
   const vscode = useQueryVSCodeContext();
 
   useEffect(() => {
     vscode.postMessage({type: 'app-ready'} as SQLQueryPanelMessage);
   }, []);
-
-  const themeCallback = useCallback(() => {
-    const themeKind = document.body.dataset['vscodeThemeKind'];
-    setDarkMode(themeKind === 'vscode-dark');
-  }, []);
-
-  useEffect(() => {
-    const obs = new MutationObserver(themeCallback);
-    setObserver(obs);
-  }, [themeCallback, setObserver]);
-
-  useEffect(() => {
-    if (!observer) return;
-    observer.observe(document.body, {
-      attributeFilter: ['data-vscode-theme-kind'],
-    });
-    return () => {
-      if (observer) {
-        observer.disconnect();
-      }
-    };
-  }, [observer, document.body]);
 
   useEffect(() => {
     const listener = (event: MessageEvent<SQLQueryPanelMessage>) => {
