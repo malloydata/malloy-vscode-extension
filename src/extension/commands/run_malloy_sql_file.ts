@@ -28,16 +28,24 @@ import {runMalloySQLQuery} from './run_malloy_sql_utils';
 export function runMalloySQLFile(worker: BaseWorker): void {
   const document = vscode.window.activeTextEditor?.document;
   if (document) {
-    const lines = document.getText().split('\n');
-    const connectionComment = lines.find(line => line.startsWith('--'));
-    const [_, connectionName] = connectionComment.split('connection:');
+    const lineComments = document.getText().match(/^\s--.*\n/);
+    const connectionName =
+      lineComments.length > 0
+        ? lineComments[0]?.split('connection:')[1]?.trim()
+        : '';
+
+    const source =
+      lineComments.length > 1
+        ? lineComments[1]?.split('source:')[1]?.trim()
+        : '';
 
     runMalloySQLQuery(
       worker,
-      connectionName.trim(),
-      document.getText(),
       document.uri.toString(),
-      document.fileName.split('/').pop() || document.fileName
+      document.fileName.split('/').pop() || document.fileName,
+      document.getText(),
+      connectionName,
+      source
     );
   }
 }

@@ -84,9 +84,10 @@ export interface MessageRun {
 
 export interface MessageRunMalloySQL {
   type: 'malloy/run-malloy-sql';
+  panelId: string;
   sql: string;
   connectionName: string;
-  panelId: string;
+  source?: string;
 }
 
 export interface MessageCancel {

@@ -62,10 +62,17 @@ export const runMalloySQLQuery = async (
 ): Promise<void> => {
   runningQueries[panelId] = {panelId, canceled: false};
   try {
+    if (connectionName === '')
+      throw new Error(
+        'Connection name cannot be an empty string. Add a a connection comment like: -- connection: bigquery'
+      );
+
     const lookup = connectionManager.getConnectionLookup(
       new URL(connectionName + ':')
     );
     const connection = await lookup.lookupConnection(connectionName);
+
+    // TODO if source, do malloy parse
 
     sendMessage(
       messageHandler,

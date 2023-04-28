@@ -35,10 +35,11 @@ import {MALLOY_EXTENSION_STATE, RunState} from '../state';
 
 export function runMalloySQLQuery(
   worker: BaseWorker,
-  connectionName: string,
-  sql: string,
   panelId: string,
-  name: string
+  name: string,
+  sql: string,
+  connectionName: string,
+  source?: string
 ): void {
   vscode.window.withProgress(
     {
@@ -86,6 +87,7 @@ export function runMalloySQLQuery(
         sql,
         panelId,
         connectionName,
+        source,
       });
 
       const runBegin = Date.now();
