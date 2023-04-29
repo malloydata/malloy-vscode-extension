@@ -22,17 +22,20 @@
  */
 
 import * as vscode from 'vscode';
-import {BaseWorker} from '../../common/worker_message_types';
+import {CommonLanguageClient} from 'vscode-languageclient';
 import {MALLOY_EXTENSION_STATE} from '../state';
 import {runMalloyQuery} from './run_query_utils';
 
-export function runUnnamedSQLBlock(worker: BaseWorker, index: number): void {
+export function runUnnamedSQLBlock(
+  client: CommonLanguageClient,
+  index: number
+): void {
   const document =
     vscode.window.activeTextEditor?.document ||
     MALLOY_EXTENSION_STATE.getActiveWebviewPanel()?.document;
   if (document) {
     runMalloyQuery(
-      worker,
+      client,
       {type: 'unnamed_sql', index, file: document},
       document.uri.toString(),
       document.fileName.split('/').pop() || document.fileName

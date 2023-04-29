@@ -22,14 +22,17 @@
  */
 
 import * as vscode from 'vscode';
-import {BaseWorker} from '../../common/worker_message_types';
 import {runMalloyQuery} from './run_query_utils';
+import {CommonLanguageClient} from 'vscode-languageclient';
 
-export function runQueryFileCommand(worker: BaseWorker, queryIndex = -1): void {
+export function runQueryFileCommand(
+  client: CommonLanguageClient,
+  queryIndex = -1
+): void {
   const document = vscode.window.activeTextEditor?.document;
   if (document) {
     runMalloyQuery(
-      worker,
+      client,
       {type: 'file', index: queryIndex, file: document},
       document.uri.toString(),
       document.fileName.split('/').pop() || document.fileName

@@ -22,12 +22,12 @@
  */
 
 import * as vscode from 'vscode';
-import {BaseWorker} from '../../common/worker_message_types';
+import {CommonLanguageClient} from 'vscode-languageclient';
 import {MALLOY_EXTENSION_STATE} from '../state';
 import {runMalloyQuery} from './run_query_utils';
 
 export function runQueryCommand(
-  worker: BaseWorker,
+  client: CommonLanguageClient,
   query: string,
   name?: string
 ): void {
@@ -36,7 +36,7 @@ export function runQueryCommand(
     MALLOY_EXTENSION_STATE.getActiveWebviewPanel()?.document;
   if (document) {
     runMalloyQuery(
-      worker,
+      client,
       {type: 'string', text: query, file: document},
       `${document.uri.toString()} ${name}`,
       name || document.uri.toString()
