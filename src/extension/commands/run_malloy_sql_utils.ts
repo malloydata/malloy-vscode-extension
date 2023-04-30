@@ -89,6 +89,7 @@ export function runMalloySQLQuery(
         query,
         connectionName,
         source,
+        showSQLOnly,
       });
 
       const runBegin = Date.now();
@@ -127,6 +128,11 @@ https://github.com/malloydata/malloy/issues.`,
                 }
                 break;
               case SQLQueryRunStatus.Compiled:
+                if (showSQLOnly) {
+                  progress.report({increment: 100, message: 'Complete'});
+                  off?.dispose();
+                  resolve(undefined);
+                }
                 break;
               case SQLQueryRunStatus.Running:
                 {

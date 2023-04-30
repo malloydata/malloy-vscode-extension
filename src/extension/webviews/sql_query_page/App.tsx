@@ -21,7 +21,13 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import React, {DOMElement, useEffect, useRef, useState} from 'react';
+import React, {
+  DOMElement,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import styled from 'styled-components';
 import {
   SQLQueryMessageType,
@@ -33,6 +39,9 @@ import {useQueryVSCodeContext} from './sql_query_vscode_context';
 import {Scroll} from '../components/Scroll';
 import {Result} from '@malloydata/malloy';
 import {HTMLView} from '@malloydata/render';
+import {ResultKind, ResultKindToggle} from './ResultKindToggle';
+import {PrismContainer} from '../components/PrismContainer';
+import Prism from 'prismjs';
 
 enum Status {
   Ready = 'ready',
@@ -46,7 +55,12 @@ enum Status {
 
 export const App: React.FC = () => {
   const [status, setStatus] = useState<Status>(Status.Ready);
+  const [resultKind, setResultKind] = useState<ResultKind>(ResultKind.HTML);
   const [html, setHTML] = useState<HTMLElement>(document.createElement('span'));
+  const [sql, setSQL] = useState('');
+  const [showOnlySQL, setShowOnlySQL] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+  const [observer, setObserver] = useState<MutationObserver>();
   const [error, setError] = useState<string | undefined>(undefined);
   const [warning, setWarning] = useState<string | undefined>(undefined);
 
@@ -55,6 +69,29 @@ export const App: React.FC = () => {
   useEffect(() => {
     vscode.postMessage({type: 'app-ready'} as SQLQueryPanelMessage);
   }, []);
+
+  const themeCallback = useCallback(() => {
+    const themeKind = document.body.dataset['vscodeThemeKind'];
+    setDarkMode(themeKind === 'vscode-dark');
+  }, []);
+
+  useEffect(() => {
+    themeCallback();
+    const obs = new MutationObserver(themeCallback);
+    setObserver(obs);
+  }, [themeCallback, setObserver]);
+
+  useEffect(() => {
+    if (!observer) return;
+    observer.observe(document.body, {
+      attributeFilter: ['data-vscode-theme-kind'],
+    });
+    return () => {
+      if (observer) {
+        observer.disconnect();
+      }
+    };
+  }, [observer, document.body]);
 
   useEffect(() => {
     const listener = (event: MessageEvent<SQLQueryPanelMessage>) => {
@@ -74,13 +111,27 @@ export const App: React.FC = () => {
               .join('\n')}`
           );
         } else setError(message.error);
+        return;
       } else {
         setError(undefined);
       }
 
       switch (message.status) {
         case SQLQueryRunStatus.Compiling:
+          setSQL('');
+          setShowOnlySQL(false);
+          setWarning(undefined);
+          setResultKind(ResultKind.HTML);
+          setHTML(document.createElement('span'));
           setStatus(Status.Compiling);
+          break;
+        case SQLQueryRunStatus.Compiled:
+          setSQL(message.sql);
+          if (message.showSQLOnly) {
+            setShowOnlySQL(true);
+            setStatus(Status.Done);
+            setResultKind(ResultKind.SQL);
+          }
           break;
         case SQLQueryRunStatus.Done:
           setWarning(undefined);
@@ -132,14 +183,31 @@ export const App: React.FC = () => {
       )}
       {!error && [Status.Displaying, Status.Done].includes(status) && (
         <ResultControlsBar>
-          <ResultLabel>QUERY RESULTS</ResultLabel>
+          <ResultLabel>{showOnlySQL ? 'SQL' : 'QUERY RESULTS'}</ResultLabel>
+          {!showOnlySQL && (
+            <ResultControlsItems>
+              <ResultKindToggle kind={resultKind} setKind={setResultKind} />
+            </ResultControlsItems>
+          )}
         </ResultControlsBar>
       )}
-      {!error && (
+      {!error && resultKind === ResultKind.HTML && (
         <Scroll>
           <div style={{margin: '10px'}}>
             <DOMElement element={html} />
           </div>
+        </Scroll>
+      )}
+      {!error && resultKind === ResultKind.SQL && (
+        <Scroll>
+          <PrismContainer darkMode={darkMode} style={{margin: '10px'}}>
+            <div
+              dangerouslySetInnerHTML={{
+                __html: Prism.highlight(sql, Prism.languages['sql'], 'sql'),
+              }}
+              style={{margin: '10px', whiteSpace: 'break-spaces'}}
+            />
+          </PrismContainer>
         </Scroll>
       )}
       {error && <Error multiline={error.includes('\n')}>{error}</Error>}
@@ -206,4 +274,9 @@ const ResultControlsBar = styled.div`
 const ResultLabel = styled.span`
   font-weight: 500;
   font-size: 12px;
+`;
+
+const ResultControlsItems = styled.div`
+  display: flex;
+  align-items: center;
 `;

@@ -131,6 +131,7 @@ interface SQLQueryMessageStatusCompiled {
   type: SQLQueryMessageType.QueryStatus;
   status: SQLQueryRunStatus.Compiled;
   sql: string;
+  showSQLOnly: boolean;
 }
 
 interface SQLQueryMessageStatusRunning {

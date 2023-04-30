@@ -88,6 +88,7 @@ export interface MessageRunMalloySQL {
   query: string;
   connectionName: string;
   source?: string;
+  showSQLOnly?: boolean;
 }
 
 export interface MessageCancel {

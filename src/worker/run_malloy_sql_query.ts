@@ -82,7 +82,7 @@ export const runMalloySQLQuery = async (
   messageHandler: MessageHandler,
   fileHandler: FileHandler,
   connectionManager: ConnectionManager,
-  {panelId, query, connectionName, source}: MessageRunMalloySQL
+  {panelId, query, connectionName, source, showSQLOnly}: MessageRunMalloySQL
 ): Promise<void> => {
   const sendMessage = (message: SQLQueryPanelMessage) => {
     const msg: WorkerSQLQueryPanelMessage = {
@@ -188,9 +188,12 @@ The first comment in the file should define a connection like: "-- connection: b
         type: SQLQueryMessageType.QueryStatus,
         status: SQLQueryRunStatus.Compiled,
         sql,
+        showSQLOnly,
       });
 
       messageHandler.log(sql);
+
+      if (showSQLOnly) return;
     }
 
     sendMessage({

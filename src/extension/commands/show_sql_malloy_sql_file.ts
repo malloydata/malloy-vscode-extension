@@ -46,7 +46,8 @@ export function showSQLMalloySQLFile(worker: BaseWorker): void {
       document.fileName.split('/').pop() || document.fileName,
       document.getText(),
       connectionName,
-      source
+      source,
+      true
     );
   }
 }

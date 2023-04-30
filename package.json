@@ -60,6 +60,7 @@
     "onCommand:malloy.refreshSchema",
     "onCommand:malloy.editConnections",
     "onCommand:malloy.runMalloySQLFile",
+    "onCommand:malloy.showSQLMalloySQLFile",
     "onLanguage:malloy",
     "workspaceContains:**/.malloy",
     "onView:malloyConnections",
@@ -150,6 +151,12 @@
       {
         "command": "malloy.runMalloySQLFile",
         "title": "Run Malloy SQL File",
+        "category": "Malloy",
+        "when": "editorLangId == malloy-sql"
+      },
+      {
+        "command": "malloy.showSQLMalloySQLFile",
+        "title": "Show Malloy SQL File Translated SQL",
         "category": "Malloy",
         "when": "editorLangId == malloy-sql"
       },
