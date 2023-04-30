@@ -171,12 +171,20 @@ The first comment in the file should define a connection like: "-- connection: b
         });
       }
 
-      for (const sqlTranslation of embeddedTranslations) {
-        const before = sql.slice(0, sqlTranslation.index);
+      while (embeddedTranslations.length > 0) {
+        const nextMalloy = embeddedTranslations.shift();
+        const before = sql.slice(0, nextMalloy.index);
         const after = sql.slice(
-          sqlTranslation.index + sqlTranslation.malloyQueryLength + 4 // +4 for {%%}
+          nextMalloy.index + nextMalloy.malloyQueryLength + 4 // +4 for {%%}
         );
-        sql = `${before}${sqlTranslation.generatedSQL}${after}`;
+        sql = `${before}${nextMalloy.generatedSQL}${after}`;
+
+        const indexShift =
+          nextMalloy.generatedSQL.length - (nextMalloy.malloyQueryLength + 4);
+
+        embeddedTranslations.forEach(
+          translation => (translation.index += indexShift)
+        );
       }
     }
 
