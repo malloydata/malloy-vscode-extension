@@ -62,7 +62,6 @@ export const App: React.FC = () => {
 
       if (message.type !== SQLQueryMessageType.QueryStatus) return;
 
-      // TODO include SQL with error since there's no way to see constructed SQL
       if (message.status === SQLQueryRunStatus.Error) {
         setStatus(Status.Error);
         if (message.sql) {
