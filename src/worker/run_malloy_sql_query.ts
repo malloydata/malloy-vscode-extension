@@ -34,7 +34,7 @@ import {
 } from '../common/message_types';
 import {ConnectionManager} from '../common/connection_manager';
 import {FileHandler} from '../common/types';
-import {Runtime, URLReader} from '@malloydata/malloy';
+import {Result, Runtime, URLReader} from '@malloydata/malloy';
 
 interface QueryEntry {
   panelId: string;
@@ -50,10 +50,10 @@ interface EmbeddedMalloyTranslation {
 const runningQueries: Record<string, QueryEntry> = {};
 
 // Malloy needs to load model via a URI to know how to import relative model files, but we
-// don't have a real URI because we're constructing the model files on the fly,
-// and the actual URI we want to use is a .malloysql file that we don't want the compiler to load,
-// so as a hack, wrap the fileHandler to pretend the on-the-fly models have a URI
-class HackyVirtualURIFileHandler implements URLReader {
+// don't have a real URI because we're constructing the model from only parts of a real document.
+// The actual URI we want to use is a .msql file that we don't want the compiler to load,
+// so wrap the fileHandler to pretend the on-the-fly models have a URI
+class VirtualURIFileHandler implements URLReader {
   private uriReader: URLReader;
   private url: URL;
   private contents: string;
@@ -128,13 +128,18 @@ The first comment in the file should define a connection like: "-- connection: b
       The second comment in the file should define a source like: "-- source: ./airports"`
         );
 
-      const virturlURIFileHandler = new HackyVirtualURIFileHandler(fileHandler);
+      const virturlURIFileHandler = new VirtualURIFileHandler(fileHandler);
       const runtime = new Runtime(virturlURIFileHandler, connectionLookup);
+
+      sendMessage({
+        type: SQLQueryMessageType.QueryStatus,
+        status: SQLQueryRunStatus.Compiling,
+      });
 
       for (const malloyQueryMatch of malloyQueries) {
         const malloyQuery = malloyQueryMatch[1];
 
-        // pad with newlines so that error messages line numbers are reasonable
+        // pad with newlines so that error messages line numbers are correct
         const queryStartSubstring = query.substring(0, malloyQueryMatch.index);
         const newlinesCount =
           queryStartSubstring.split(/\r\n|\r|\n/).length - 2;
@@ -148,21 +153,9 @@ The first comment in the file should define a connection like: "-- connection: b
         const runnable = runtime.loadQueryByIndex(url, 0);
 
         runningQueries[panelId] = {panelId, canceled: false};
-        sendMessage({
-          type: SQLQueryMessageType.QueryStatus,
-          status: SQLQueryRunStatus.Compiling,
-        });
 
         const generatedSQL = await runnable.getSQL();
         if (runningQueries[panelId].canceled) return;
-
-        messageHandler.log(generatedSQL);
-
-        sendMessage({
-          type: SQLQueryMessageType.QueryStatus,
-          status: SQLQueryRunStatus.Compiled,
-          sql: generatedSQL,
-        });
 
         embeddedTranslations.push({
           index: malloyQueryMatch.index,
@@ -186,6 +179,14 @@ The first comment in the file should define a connection like: "-- connection: b
           translation => (translation.index += indexShift)
         );
       }
+
+      // TODO this status exists so that we can implement "Show SQL" on malloysql files
+      sendMessage({
+        type: SQLQueryMessageType.QueryStatus,
+        status: SQLQueryRunStatus.Compiled,
+        sql,
+      });
+      messageHandler.log(sql);
     }
 
     sendMessage({
@@ -194,13 +195,44 @@ The first comment in the file should define a connection like: "-- connection: b
       sql,
     });
 
+    // get structDef from schema, that way we can render with fake Results object.
+    const structDefResult = await connection.fetchSchemaForSQLBlock({
+      type: 'sqlBlock',
+      selectStr: sql,
+      name: sql, // TODO ?
+    });
+
+    if (structDefResult.error) {
+      throw new Error(structDefResult.error);
+    }
+
     const sqlResult = await connection.runSQL(sql);
     if (runningQueries[panelId].canceled) return;
+
+    // Fake a Result for rendering purposes
+    const results = new Result(
+      {
+        structs: [structDefResult.structDef],
+        sql,
+        result: sqlResult.rows,
+        totalRows: sqlResult.totalRows,
+        lastStageName: sql,
+        malloy: '',
+        connectionName,
+        sourceExplore: '',
+        sourceFilters: [],
+      },
+      {
+        name: 'empty_model',
+        exports: [],
+        contents: {},
+      }
+    );
 
     sendMessage({
       type: SQLQueryMessageType.QueryStatus,
       status: SQLQueryRunStatus.Done,
-      results: sqlResult,
+      results: results.toJSON(),
     });
   } catch (error) {
     sendMessage({

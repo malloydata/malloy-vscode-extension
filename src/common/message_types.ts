@@ -119,7 +119,7 @@ interface SQLQueryMessageAppReady {
 interface SQLQueryMessageStatusDone {
   type: SQLQueryMessageType.QueryStatus;
   status: SQLQueryRunStatus.Done;
-  results: MalloyQueryData;
+  results: ResultJSON;
 }
 
 interface SQLQueryMessageStatusCompiling {

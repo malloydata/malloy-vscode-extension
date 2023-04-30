@@ -31,11 +31,14 @@ import {
 import {Spinner} from '../components';
 import {useQueryVSCodeContext} from './sql_query_vscode_context';
 import {Scroll} from '../components/Scroll';
+import {Result} from '@malloydata/malloy';
+import {HTMLView} from '@malloydata/render';
 
 enum Status {
   Ready = 'ready',
   Running = 'running',
   Error = 'error',
+  Compiling = 'compiling',
   Displaying = 'displaying',
   Rendering = 'rendering',
   Done = 'done',
@@ -66,21 +69,32 @@ export const App: React.FC = () => {
         setError(undefined);
       }
 
-      if (message.status === SQLQueryRunStatus.Done) {
-        setWarning(undefined);
-        setStatus(Status.Rendering);
-        setTimeout(async () => {
-          const results = message.results;
-          const rendered = null; //TODO
-          setStatus(Status.Displaying);
-          setTimeout(() => {
-            setHTML(rendered);
-            setStatus(Status.Done);
+      switch (message.status) {
+        case SQLQueryRunStatus.Compiling:
+          setStatus(Status.Compiling);
+          break;
+        case SQLQueryRunStatus.Done:
+          setWarning(undefined);
+          setStatus(Status.Rendering);
+          setTimeout(async () => {
+            const results = Result.fromJSON(message.results);
+            const data = results.data;
+            const rendered = await new HTMLView(document).render(data, {
+              dataStyles: {},
+            });
+            setStatus(Status.Displaying);
+            setTimeout(async () => {
+              setHTML(rendered);
+              setStatus(Status.Done);
+            }, 0);
           }, 0);
-        }, 0);
-      } else if (message.status === SQLQueryRunStatus.Running) {
-        setHTML(document.createElement('span'));
-        setStatus(Status.Running);
+          break;
+        case SQLQueryRunStatus.Running:
+          setHTML(document.createElement('span'));
+          setStatus(Status.Running);
+          break;
+        default:
+          break;
       }
     };
 
@@ -97,9 +111,12 @@ export const App: React.FC = () => {
         flexDirection: 'column',
       }}
     >
-      {[Status.Running, Status.Rendering, Status.Displaying].includes(
-        status
-      ) ? (
+      {[
+        Status.Compiling,
+        Status.Running,
+        Status.Rendering,
+        Status.Displaying,
+      ].includes(status) ? (
         <Spinner text={getStatusLabel(status) || ''} />
       ) : (
         ''
