@@ -33,7 +33,11 @@ import {malloyLog} from '../logger';
 import {trackQueryRun} from '../telemetry';
 import {QuerySpec} from './query_spec';
 import {Disposable} from 'vscode-jsonrpc';
-import {createOrReuseWebviewPanel, loadWebview} from './vscode_utils';
+import {
+  createOrReuseWebviewPanel,
+  loadWebview,
+  showSchemaTreeViewWhenFocused,
+} from './vscode_utils';
 
 export function runMalloyQuery(
   worker: BaseWorker,
@@ -82,6 +86,7 @@ export function runMalloyQuery(
         'query_page.js'
       );
       loadWebview(current, queryPageOnDiskPath);
+      showSchemaTreeViewWhenFocused(current.panel, panelId);
 
       const {file, ...params} = query;
       const uri = file.uri.toString();

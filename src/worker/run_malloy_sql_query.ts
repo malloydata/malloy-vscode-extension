@@ -34,7 +34,7 @@ import {
 } from '../common/message_types';
 import {ConnectionManager} from '../common/connection_manager';
 import {FileHandler} from '../common/types';
-import {Result, Runtime, URLReader} from '@malloydata/malloy';
+import {MalloyQueryData, Result, Runtime, URLReader} from '@malloydata/malloy';
 
 interface QueryEntry {
   panelId: string;
@@ -137,6 +137,8 @@ The first comment in the file should define a connection like: "-- connection: b
       });
 
       for (const malloyQueryMatch of malloyQueries) {
+        if (runningQueries[panelId].canceled) return;
+
         const malloyQuery = malloyQueryMatch[1];
 
         // pad with newlines so that error messages line numbers are correct
@@ -164,6 +166,8 @@ The first comment in the file should define a connection like: "-- connection: b
         });
       }
 
+      if (runningQueries[panelId].canceled) return;
+
       while (embeddedTranslations.length > 0) {
         const nextMalloy = embeddedTranslations.shift();
         const before = sql.slice(0, nextMalloy.index);
@@ -180,12 +184,12 @@ The first comment in the file should define a connection like: "-- connection: b
         );
       }
 
-      // TODO this status exists so that we can implement "Show SQL" on malloysql files
       sendMessage({
         type: SQLQueryMessageType.QueryStatus,
         status: SQLQueryRunStatus.Compiled,
         sql,
       });
+
       messageHandler.log(sql);
     }
 
@@ -196,13 +200,16 @@ The first comment in the file should define a connection like: "-- connection: b
     });
 
     let structDefResult;
-    let sqlResult;
+    let sqlResult: MalloyQueryData;
     try {
       // get structDef from schema, that way we can render with fake Results object.
+      // it would probably be better to do this without a database round-trip since we are
+      // only faking this for the sake of fitting into the render library but I don't know how
+      // to fake an entire structdef
       structDefResult = await connection.fetchSchemaForSQLBlock({
         type: 'sqlBlock',
         selectStr: sql,
-        name: sql, // TODO ?
+        name: sql,
       });
 
       if (structDefResult.error) {
@@ -211,19 +218,18 @@ The first comment in the file should define a connection like: "-- connection: b
 
       sqlResult = await connection.runSQL(sql);
     } catch (error) {
-      // if we have an error here, send back computed SQL for debugging
       sendMessage({
         type: SQLQueryMessageType.QueryStatus,
         status: SQLQueryRunStatus.Error,
         error: error.message,
-        sql,
+        sql, // if we have an error in this try-to-run-sql block, send back computed SQL for debugging
       });
-      return; // TODO ensure we don't need to remove runningQuery (also in run_query.ts)
+      return;
     }
 
     if (runningQueries[panelId].canceled) return;
 
-    // Fake a Result for rendering purposes
+    // Fake a Result for rendering purposes using the structdef we got above
     const results = new Result(
       {
         structs: [structDefResult.structDef],
@@ -254,7 +260,5 @@ The first comment in the file should define a connection like: "-- connection: b
       status: SQLQueryRunStatus.Error,
       error: error.message,
     });
-  } finally {
-    delete runningQueries[panelId];
   }
 };
