@@ -39,6 +39,8 @@ export enum QueryRunStatus {
 }
 
 export enum SQLQueryRunStatus {
+  Compiling = 'compiling',
+  Compiled = 'compiled',
   Running = 'running',
   Error = 'error',
   Done = 'done',
@@ -120,6 +122,17 @@ interface SQLQueryMessageStatusDone {
   results: MalloyQueryData;
 }
 
+interface SQLQueryMessageStatusCompiling {
+  type: SQLQueryMessageType.QueryStatus;
+  status: SQLQueryRunStatus.Compiling;
+}
+
+interface SQLQueryMessageStatusCompiled {
+  type: SQLQueryMessageType.QueryStatus;
+  status: SQLQueryRunStatus.Compiled;
+  sql: string;
+}
+
 interface SQLQueryMessageStatusRunning {
   type: SQLQueryMessageType.QueryStatus;
   status: SQLQueryRunStatus.Running;
@@ -134,6 +147,8 @@ interface SQLQueryMessageStatusError {
 
 type SQLQueryMessageStatus =
   | SQLQueryMessageStatusError
+  | SQLQueryMessageStatusCompiling
+  | SQLQueryMessageStatusCompiled
   | SQLQueryMessageStatusRunning
   | SQLQueryMessageStatusDone;
 

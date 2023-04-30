@@ -64,7 +64,7 @@ export class MessageHandler {
     this.connection.onRequest(
       'malloy/run-malloy-sql',
       (message: MessageRunMalloySQL) =>
-        runMalloySQLQuery(this, connectionManager, message)
+        runMalloySQLQuery(this, fileHandler, connectionManager, message)
     );
   }
 

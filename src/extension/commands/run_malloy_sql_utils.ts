@@ -37,7 +37,7 @@ export function runMalloySQLQuery(
   worker: BaseWorker,
   panelId: string,
   name: string,
-  sql: string,
+  query: string,
   connectionName: string,
   source?: string
 ): void {
@@ -72,7 +72,7 @@ export function runMalloySQLQuery(
         name,
         panelId,
         cancel,
-        sql
+        query
       );
 
       const queryPageOnDiskPath = Utils.joinPath(
@@ -84,8 +84,8 @@ export function runMalloySQLQuery(
 
       worker.send({
         type: 'malloy/run-malloy-sql',
-        sql,
         panelId,
+        query,
         connectionName,
         source,
       });
