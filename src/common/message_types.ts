@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {MalloyQueryData, ResultJSON} from '@malloydata/malloy';
+import {ResultJSON} from '@malloydata/malloy';
 import {DataStyles} from '@malloydata/render';
 import {ConnectionBackend, ConnectionConfig} from './connection_manager_types';
 

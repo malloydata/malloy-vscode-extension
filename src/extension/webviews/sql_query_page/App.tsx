@@ -141,6 +141,8 @@ export const App: React.FC = () => {
 
 function getStatusLabel(status: Status) {
   switch (status) {
+    case Status.Compiling:
+      return 'Compiling';
     case Status.Running:
       return 'Running';
     case Status.Rendering:
@@ -148,40 +150,6 @@ function getStatusLabel(status: Status) {
     case Status.Displaying:
       return 'Displaying';
   }
-}
-
-function getStyledHTML(html: HTMLElement): string {
-  const resolveStyles = getComputedStyle(html);
-  const styles = `<style>
-  :root {
-    --malloy-font-family: ${resolveStyles.getPropertyValue(
-      '--malloy-font-family'
-    )};
-    --malloy-title-color: ${resolveStyles.getPropertyValue(
-      '--malloy-title-color'
-    )};
-    --malloy-label-color: ${resolveStyles.getPropertyValue(
-      '--malloy-label-color'
-    )};
-    --malloy-border-color: ${resolveStyles.getPropertyValue(
-      '--malloy-border-color'
-    )};
-    --malloy-tile-background-color: ${resolveStyles.getPropertyValue(
-      '--malloy-tile-background-color'
-    )};
-  }
-  body {
-    color: ${resolveStyles.getPropertyValue('--foreground')};
-    background: ${resolveStyles.getPropertyValue('--background')};
-    font-family: var(--malloy-font-family);
-    font-size: 11px;
-  }
-  table {
-    font-size: 11px;
-  }
-</style>
-`;
-  return styles + html.outerHTML;
 }
 
 const DOMElement: React.FC<{element: HTMLElement}> = ({element}) => {

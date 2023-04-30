@@ -120,11 +120,18 @@ https://github.com/malloydata/malloy/issues.`,
 
           if (message.type === SQLQueryMessageType.QueryStatus) {
             switch (message.status) {
+              case SQLQueryRunStatus.Compiling:
+                {
+                  progress.report({increment: 20, message: 'Compiling'});
+                }
+                break;
+              case SQLQueryRunStatus.Compiled:
+                break;
               case SQLQueryRunStatus.Running:
                 {
                   malloyLog.appendLine(message.sql);
 
-                  progress.report({increment: 20, message: 'Running'});
+                  progress.report({increment: 40, message: 'Running'});
                 }
                 break;
               case SQLQueryRunStatus.Done:
