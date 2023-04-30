@@ -39,7 +39,8 @@ export function runMalloySQLQuery(
   name: string,
   query: string,
   connectionName: string,
-  source?: string
+  source = null,
+  showSQLOnly = false
 ): void {
   vscode.window.withProgress(
     {

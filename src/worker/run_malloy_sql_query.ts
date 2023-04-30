@@ -195,18 +195,32 @@ The first comment in the file should define a connection like: "-- connection: b
       sql,
     });
 
-    // get structDef from schema, that way we can render with fake Results object.
-    const structDefResult = await connection.fetchSchemaForSQLBlock({
-      type: 'sqlBlock',
-      selectStr: sql,
-      name: sql, // TODO ?
-    });
+    let structDefResult;
+    let sqlResult;
+    try {
+      // get structDef from schema, that way we can render with fake Results object.
+      structDefResult = await connection.fetchSchemaForSQLBlock({
+        type: 'sqlBlock',
+        selectStr: sql,
+        name: sql, // TODO ?
+      });
 
-    if (structDefResult.error) {
-      throw new Error(structDefResult.error);
+      if (structDefResult.error) {
+        throw new Error(structDefResult.error);
+      }
+
+      sqlResult = await connection.runSQL(sql);
+    } catch (error) {
+      // if we have an error here, send back computed SQL for debugging
+      sendMessage({
+        type: SQLQueryMessageType.QueryStatus,
+        status: SQLQueryRunStatus.Error,
+        error: error.message,
+        sql,
+      });
+      return; // TODO ensure we don't need to remove runningQuery (also in run_query.ts)
     }
 
-    const sqlResult = await connection.runSQL(sql);
     if (runningQueries[panelId].canceled) return;
 
     // Fake a Result for rendering purposes

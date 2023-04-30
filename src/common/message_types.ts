@@ -143,6 +143,7 @@ interface SQLQueryMessageStatusError {
   type: SQLQueryMessageType.QueryStatus;
   status: SQLQueryRunStatus.Error;
   error: string;
+  sql?: string;
 }
 
 type SQLQueryMessageStatus =

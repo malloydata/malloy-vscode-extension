@@ -62,9 +62,19 @@ export const App: React.FC = () => {
 
       if (message.type !== SQLQueryMessageType.QueryStatus) return;
 
+      // TODO include SQL with error since there's no way to see constructed SQL
       if (message.status === SQLQueryRunStatus.Error) {
         setStatus(Status.Error);
-        setError(message.error);
+        if (message.sql) {
+          setError(
+            `${message.error}\n\n${'-'.repeat(10)}Generated SQL${'-'.repeat(
+              10
+            )}\n\n${message.sql
+              .split('\n')
+              .map((line, index) => `${index + 1}| ${line}`)
+              .join('\n')}`
+          );
+        } else setError(message.error);
       } else {
         setError(undefined);
       }
@@ -179,7 +189,7 @@ interface ErrorProps {
 const Error = styled.div<ErrorProps>`
   background-color: var(--vscode-inputValidation-errorBackground);
   padding: 5px;
-  white-space: ${props => (props.multiline ? 'pre' : 'normal')};
+  white-space: break-spaces;
   font-family: ${props => (props.multiline ? 'monospace' : 'inherit')};
   font-size: var(--vscode-editor-font-size);
 `;
