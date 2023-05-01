@@ -29,22 +29,25 @@ export function runMalloySQLFile(worker: BaseWorker): void {
   const document = vscode.window.activeTextEditor?.document;
 
   if (document) {
-    const lineComments = document.getText().match(/--.*?(\n|$)/g) || [];
-    const connectionName =
-      lineComments && lineComments.length > 0
-        ? lineComments[0]?.split('connection:')[1]?.trim()
-        : '';
+    const documentText = document.getText();
 
-    const source =
-      lineComments && lineComments.length > 1
-        ? lineComments[1]?.split('source:')[1]?.trim()
-        : '';
+    const connectionName = (
+      documentText.match(/--.*connection:( |\t)+s?(\n|$)/g) || ['']
+    )
+      .shift()
+      .split('connection:')[1]
+      ?.trim();
+
+    const source = (documentText.match(/--( |\t)+source:.*?(\n|$)/g) || [''])
+      .shift()
+      .split('source:')[1]
+      ?.trim();
 
     runMalloySQLQuery(
       worker,
       document.uri.toString(),
       document.fileName.split('/').pop() || document.fileName,
-      document.getText(),
+      documentText,
       connectionName,
       source
     );

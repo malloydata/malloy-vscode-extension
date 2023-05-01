@@ -101,8 +101,7 @@ export const runMalloySQLQuery = async (
   try {
     if (connectionName === '')
       throw new Error(
-        `Connection name cannot be empty.
-The first comment in the file should define a connection like: "-- connection: bigquery"`
+        'Connection name cannot be empty. Add a comment to specify the connection like: "-- connection: bigquery"'
       );
 
     const connectionLookup = connectionManager.getConnectionLookup(
@@ -124,8 +123,7 @@ The first comment in the file should define a connection like: "-- connection: b
     if (malloyQueries) {
       if (!source)
         throw new Error(
-          `Found Malloy in query but no source was specified.
-      The second comment in the file should define a source like: "-- source: ./airports"`
+          'Found Malloy in query but no source was specified. Add a comment to specify a source like: "-- source: airports"'
         );
 
       const virturlURIFileHandler = new VirtualURIFileHandler(fileHandler);
