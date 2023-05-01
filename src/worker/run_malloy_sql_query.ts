@@ -196,8 +196,6 @@ export const runMalloySQLQuery = async (
         showSQLOnly,
       });
 
-      messageHandler.log(sql);
-
       if (showSQLOnly) return;
     }
 
@@ -207,30 +205,43 @@ export const runMalloySQLQuery = async (
       sql,
     });
 
+    // run sql statements individually, because we need
+    // to also get schema of final statement
+    const statements = sql.split(';');
+    statements.pop();
+
     let structDefResult;
     let sqlResult: MalloyQueryData;
+    let statement;
+
     try {
-      // get structDef from schema, that way we can render with fake Results object.
-      // TODO it would be better to do this without a database round-trip since we are
-      // only faking this for the sake of fitting into the render library, but creating
-      // structdef, getting types right etc seems hard. we should make this easier
-      structDefResult = await connection.fetchSchemaForSQLBlock({
-        type: 'sqlBlock',
-        selectStr: sql,
-        name: sql,
-      });
+      for (let i = 0; i < statements.length; i++) {
+        statement = statements[i];
+        // we're rendering the results of the final statement, so we need structdef
+        if (i === statements.length - 1) {
+          // get structDef from schema, that way we can render with fake Results object.
+          // TODO it would be better to do this without a database round-trip since we are
+          // only faking this for the sake of fitting into the render library, but creating
+          // structdef, getting types right etc seems hard. we should make this easier
+          structDefResult = await connection.fetchSchemaForSQLBlock({
+            type: 'sqlBlock',
+            selectStr: statement,
+            name: statement,
+          });
 
-      if (structDefResult.error) {
-        throw new Error(structDefResult.error);
+          if (structDefResult.error) {
+            throw new Error(structDefResult.error);
+          }
+        }
+        messageHandler.log(statement);
+        sqlResult = await connection.runSQL(statement);
       }
-
-      sqlResult = await connection.runSQL(sql);
     } catch (error) {
       sendMessage({
         type: SQLQueryMessageType.QueryStatus,
         status: SQLQueryRunStatus.Error,
         error: error.message,
-        sql, // if we have an error in this try-to-run-sql block, send back computed SQL for debugging
+        sql: statement, // if we have an error in this try-to-run-sql block, send back computed SQL for debugging
       });
       return;
     }
