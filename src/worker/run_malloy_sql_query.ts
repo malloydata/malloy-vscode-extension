@@ -211,9 +211,9 @@ export const runMalloySQLQuery = async (
     let sqlResult: MalloyQueryData;
     try {
       // get structDef from schema, that way we can render with fake Results object.
-      // it would probably be better to do this without a database round-trip since we are
-      // only faking this for the sake of fitting into the render library but I don't know how
-      // to fake an entire structdef
+      // TODO it would be better to do this without a database round-trip since we are
+      // only faking this for the sake of fitting into the render library, but creating
+      // structdef, getting types right etc seems hard. we should make this easier
       structDefResult = await connection.fetchSchemaForSQLBlock({
         type: 'sqlBlock',
         selectStr: sql,
