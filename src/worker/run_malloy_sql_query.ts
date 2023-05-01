@@ -82,7 +82,13 @@ export const runMalloySQLQuery = async (
   messageHandler: MessageHandler,
   fileHandler: FileHandler,
   connectionManager: ConnectionManager,
-  {panelId, query, connectionName, source, showSQLOnly}: MessageRunMalloySQL
+  {
+    panelId,
+    malloySQLQuery,
+    connectionName,
+    source,
+    showSQLOnly,
+  }: MessageRunMalloySQL
 ): Promise<void> => {
   const sendMessage = (message: SQLQueryPanelMessage) => {
     const msg: WorkerSQLQueryPanelMessage = {
@@ -109,14 +115,14 @@ export const runMalloySQLQuery = async (
 
     const malloyInSQLRegex = /\{%([\s\S]*?)%\}/g;
     const malloyQueries = [];
-    let match = malloyInSQLRegex.exec(query);
+    let match = malloyInSQLRegex.exec(malloySQLQuery);
     while (match) {
       malloyQueries.push(match);
-      match = malloyInSQLRegex.exec(query);
+      match = malloyInSQLRegex.exec(malloySQLQuery);
     }
     const embeddedTranslations: EmbeddedMalloyTranslation[] = [];
 
-    let sql = query;
+    let sql = malloySQLQuery;
 
     if (malloyQueries) {
       if (!source)
@@ -138,14 +144,17 @@ export const runMalloySQLQuery = async (
         const malloyQuery = malloyQueryMatch[1];
 
         // pad with newlines so that error messages line numbers are correct
-        const queryStartSubstring = query.substring(0, malloyQueryMatch.index);
+        const queryStartSubstring = malloySQLQuery.substring(
+          0,
+          malloyQueryMatch.index
+        );
         const newlinesCount =
           queryStartSubstring.split(/\r\n|\r|\n/).length - 2;
 
         // TODO should table source be possible? seems useful. maybe shouldn't always be import
         const model = `import "${source}.malloy"\n${'\n'.repeat(
           newlinesCount
-        )}query: ${malloyQuery}`;
+        )}${malloyQuery}`;
 
         virturlURIFileHandler.setVirtualFile(url, model);
         const runnable = runtime.loadQueryByIndex(url, 0);
@@ -228,7 +237,7 @@ export const runMalloySQLQuery = async (
 
     if (runningQueries[panelId].canceled) return;
 
-    // Fake a Result for rendering purposes using the structdef we got above
+    // Fake a Malloy Result for rendering purposes using the structdef we got above
     const results = new Result(
       {
         structs: [structDefResult.structDef],

@@ -85,7 +85,7 @@ export interface MessageRun {
 export interface MessageRunMalloySQL {
   type: 'malloy/run-malloy-sql';
   panelId: string;
-  query: string;
+  malloySQLQuery: string;
   connectionName: string;
   source?: string;
   showSQLOnly?: boolean;

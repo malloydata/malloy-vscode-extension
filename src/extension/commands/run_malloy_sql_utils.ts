@@ -37,7 +37,7 @@ export function runMalloySQLQuery(
   worker: BaseWorker,
   panelId: string,
   name: string,
-  query: string,
+  document: vscode.TextDocument,
   connectionName: string,
   source = null,
   showSQLOnly = false
@@ -73,7 +73,7 @@ export function runMalloySQLQuery(
         name,
         panelId,
         cancel,
-        query
+        document
       );
 
       const queryPageOnDiskPath = Utils.joinPath(
@@ -83,10 +83,11 @@ export function runMalloySQLQuery(
       );
       loadWebview(current, queryPageOnDiskPath);
 
+      const malloySQLQuery = document.getText();
       worker.send({
         type: 'malloy/run-malloy-sql',
         panelId,
-        query,
+        malloySQLQuery,
         connectionName,
         source,
         showSQLOnly,

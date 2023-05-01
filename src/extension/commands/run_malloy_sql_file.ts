@@ -47,7 +47,7 @@ export function runMalloySQLFile(worker: BaseWorker): void {
       worker,
       document.uri.toString(),
       document.fileName.split('/').pop() || document.fileName,
-      documentText,
+      document,
       connectionName,
       source
     );
