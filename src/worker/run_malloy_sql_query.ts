@@ -127,7 +127,7 @@ export const runMalloySQLQuery = async (
     if (malloyQueries) {
       if (!source)
         throw new Error(
-          'Found Malloy in query but no source was specified. Add a comment to specify a source like: "-- source: airports"'
+          'Found Malloy in query but no source was specified. Add a comment to specify a source like: "-- source: mysource"'
         );
 
       const virturlURIFileHandler = new VirtualURIFileHandler(fileHandler);
