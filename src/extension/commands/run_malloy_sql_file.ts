@@ -38,9 +38,9 @@ export function runMalloySQLFile(worker: BaseWorker): void {
       .split('connection:')[1]
       ?.trim();
 
-    const source = (documentText.match(/--( |\t)+source:.*?(\n|$)/g) || [''])
+    const importURL = (documentText.match(/--( |\t)+import:.*?(\n|$)/g) || [''])
       .shift()
-      .split('source:')[1]
+      .split('import:')[1]
       ?.trim();
 
     runMalloySQLQuery(
@@ -49,7 +49,7 @@ export function runMalloySQLFile(worker: BaseWorker): void {
       document.fileName.split('/').pop() || document.fileName,
       document,
       connectionName,
-      source
+      importURL
     );
   }
 }

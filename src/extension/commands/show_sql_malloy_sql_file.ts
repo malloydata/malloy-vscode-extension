@@ -29,16 +29,18 @@ export function showSQLMalloySQLFile(worker: BaseWorker): void {
   const document = vscode.window.activeTextEditor?.document;
 
   if (document) {
-    const lineComments = document.getText().match(/--.*?(\n|$)/g) || [];
-    const connectionName =
-      lineComments && lineComments.length > 0
-        ? lineComments[0]?.split('connection:')[1]?.trim()
-        : '';
+    const documentText = document.getText();
+    const connectionName = (
+      documentText.match(/--( |\t)+connection:.*?(\n|$)/g) || ['']
+    )
+      .shift()
+      .split('connection:')[1]
+      ?.trim();
 
-    const source =
-      lineComments && lineComments.length > 1
-        ? lineComments[1]?.split('source:')[1]?.trim()
-        : '';
+    const importURL = (documentText.match(/--( |\t)+import:.*?(\n|$)/g) || [''])
+      .shift()
+      .split('import:')[1]
+      ?.trim();
 
     runMalloySQLQuery(
       worker,
@@ -46,7 +48,7 @@ export function showSQLMalloySQLFile(worker: BaseWorker): void {
       document.fileName.split('/').pop() || document.fileName,
       document,
       connectionName,
-      source,
+      importURL,
       true
     );
   }

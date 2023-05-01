@@ -39,7 +39,7 @@ export function runMalloySQLQuery(
   name: string,
   document: vscode.TextDocument,
   connectionName: string,
-  source = null,
+  importURL = null,
   showSQLOnly = false
 ): void {
   vscode.window.withProgress(
@@ -89,7 +89,7 @@ export function runMalloySQLQuery(
         panelId,
         malloySQLQuery,
         connectionName,
-        source,
+        importURL,
         showSQLOnly,
       });
 

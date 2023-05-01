@@ -87,7 +87,7 @@ export interface MessageRunMalloySQL {
   panelId: string;
   malloySQLQuery: string;
   connectionName: string;
-  source?: string;
+  importURL?: string;
   showSQLOnly?: boolean;
 }
 

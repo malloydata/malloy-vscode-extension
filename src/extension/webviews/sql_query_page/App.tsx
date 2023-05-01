@@ -137,16 +137,23 @@ export const App: React.FC = () => {
           setWarning(undefined);
           setStatus(Status.Rendering);
           setTimeout(async () => {
-            const results = Result.fromJSON(message.results);
-            const data = results.data;
-            const rendered = await new HTMLView(document).render(data, {
-              dataStyles: {},
-            });
-            setStatus(Status.Displaying);
-            setTimeout(async () => {
-              setHTML(rendered);
-              setStatus(Status.Done);
-            }, 0);
+            if (message.results) {
+              const results = Result.fromJSON(message.results);
+              const data = results.data;
+              const rendered = await new HTMLView(document).render(data, {
+                dataStyles: {},
+              });
+              setStatus(Status.Displaying);
+              setTimeout(async () => {
+                setHTML(rendered);
+                setStatus(Status.Done);
+              }, 0);
+            } else {
+              // no message means nothing to render'
+              const span = document.createElement('span');
+              span.innerText = 'Query complete';
+              setHTML(span);
+            }
           }, 0);
           break;
         case SQLQueryRunStatus.Running:

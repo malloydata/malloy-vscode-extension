@@ -86,7 +86,7 @@ export const runMalloySQLQuery = async (
     panelId,
     malloySQLQuery,
     connectionName,
-    source,
+    importURL,
     showSQLOnly,
   }: MessageRunMalloySQL
 ): Promise<void> => {
@@ -107,7 +107,7 @@ export const runMalloySQLQuery = async (
   try {
     if (connectionName === '')
       throw new Error(
-        'Connection name cannot be empty. Add a comment to specify the connection like: "-- connection: bigquery"'
+        'Connection name cannot be empty. Add a comment to specify the connection like: -- connection: bigquery'
       );
 
     const connectionLookup = connectionManager.getConnectionLookup(url);
@@ -125,9 +125,9 @@ export const runMalloySQLQuery = async (
     let sql = malloySQLQuery;
 
     if (malloyQueries) {
-      if (!source)
+      if (!importURL)
         throw new Error(
-          'Found Malloy in query but no source was specified. Add a comment to specify a source like: "-- source: mysource"'
+          'Found Malloy in query but no import was specified. Add a comment to specify a source like: -- import: "mysource.malloy"'
         );
 
       const virturlURIFileHandler = new VirtualURIFileHandler(fileHandler);
@@ -151,8 +151,7 @@ export const runMalloySQLQuery = async (
         const newlinesCount =
           queryStartSubstring.split(/\r\n|\r|\n/).length - 2;
 
-        // TODO should table source be possible? seems useful. maybe shouldn't always be import
-        const model = `import "${source}.malloy"\n${'\n'.repeat(
+        const model = `import ${importURL}\n${'\n'.repeat(
           newlinesCount
         )}${malloyQuery}`;
 
@@ -207,18 +206,21 @@ export const runMalloySQLQuery = async (
 
     // run sql statements individually, because we need
     // to also get schema of final statement
-    const statements = sql.split(';');
+    const statements = sql.split(';;;');
     if (statements[statements.length - 1].trim() === '') statements.pop();
 
     let structDefResult;
     let sqlResult: MalloyQueryData;
-    let statement;
+    let statement: string;
 
     try {
       for (let i = 0; i < statements.length; i++) {
         statement = statements[i];
-        // we're rendering the results of the final statement, so we need structdef
-        if (i === statements.length - 1) {
+        // we might be rendering the results of the final statement, if so we need structdef
+        if (
+          i === statements.length - 1 &&
+          statement.toLowerCase().trim().startsWith('select')
+        ) {
           // get structDef from schema, that way we can render with fake Results object.
           // TODO it would be better to do this without a database round-trip since we are
           // only faking this for the sake of fitting into the render library, but creating
@@ -248,30 +250,32 @@ export const runMalloySQLQuery = async (
 
     if (runningQueries[panelId].canceled) return;
 
-    // Fake a Malloy Result for rendering purposes using the structdef we got above
-    const results = new Result(
-      {
-        structs: [structDefResult.structDef],
-        sql,
-        result: sqlResult.rows,
-        totalRows: sqlResult.totalRows,
-        lastStageName: sql,
-        malloy: '',
-        connectionName,
-        sourceExplore: '',
-        sourceFilters: [],
-      },
-      {
-        name: 'empty_model',
-        exports: [],
-        contents: {},
-      }
-    );
+    // possibly fake a Malloy Result for rendering purposes using the structdef we got above
+    const results = structDefResult
+      ? new Result(
+          {
+            structs: [structDefResult.structDef],
+            sql,
+            result: sqlResult.rows,
+            totalRows: sqlResult.totalRows,
+            lastStageName: sql,
+            malloy: '',
+            connectionName,
+            sourceExplore: '',
+            sourceFilters: [],
+          },
+          {
+            name: 'empty_model',
+            exports: [],
+            contents: {},
+          }
+        )
+      : null;
 
     sendMessage({
       type: SQLQueryMessageType.QueryStatus,
       status: SQLQueryRunStatus.Done,
-      results: results.toJSON(),
+      results: results ? results.toJSON() : null,
     });
   } catch (error) {
     sendMessage({
