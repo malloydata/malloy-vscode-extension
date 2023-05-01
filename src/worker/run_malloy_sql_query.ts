@@ -208,7 +208,7 @@ export const runMalloySQLQuery = async (
     // run sql statements individually, because we need
     // to also get schema of final statement
     const statements = sql.split(';');
-    statements.pop();
+    if (statements[statements.length - 1].trim() === '') statements.pop();
 
     let structDefResult;
     let sqlResult: MalloyQueryData;
