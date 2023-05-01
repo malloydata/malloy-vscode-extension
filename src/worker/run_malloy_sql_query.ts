@@ -104,9 +104,7 @@ export const runMalloySQLQuery = async (
         'Connection name cannot be empty. Add a comment to specify the connection like: "-- connection: bigquery"'
       );
 
-    const connectionLookup = connectionManager.getConnectionLookup(
-      new URL(connectionName + ':')
-    );
+    const connectionLookup = connectionManager.getConnectionLookup(url);
     const connection = await connectionLookup.lookupConnection(connectionName);
 
     const malloyInSQLRegex = /\{%([\s\S]*?)%\}/g;

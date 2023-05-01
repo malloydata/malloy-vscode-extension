@@ -88,8 +88,9 @@ export class ConnectionManager {
     });
   }
 
-  public getConnectionLookup(url: URL): LookupConnection<Connection> {
-    const workingDirectory = this.connectionFactory.getWorkingDirectory(url);
+  public getConnectionLookup(fileURL: URL): LookupConnection<Connection> {
+    const workingDirectory =
+      this.connectionFactory.getWorkingDirectory(fileURL);
 
     if (!this.connectionLookups[workingDirectory]) {
       this.connectionLookups[workingDirectory] = new DynamicConnectionLookup(
