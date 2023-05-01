@@ -153,6 +153,7 @@ export const App: React.FC = () => {
               const span = document.createElement('span');
               span.innerText = 'Query complete';
               setHTML(span);
+              setStatus(Status.Done);
             }
           }, 0);
           break;
