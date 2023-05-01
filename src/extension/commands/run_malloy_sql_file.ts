@@ -32,7 +32,7 @@ export function runMalloySQLFile(worker: BaseWorker): void {
     const documentText = document.getText();
 
     const connectionName = (
-      documentText.match(/--.*connection:( |\t)+s?(\n|$)/g) || ['']
+      documentText.match(/--( |\t)+connection:.*?(\n|$)/g) || ['']
     )
       .shift()
       .split('connection:')[1]
