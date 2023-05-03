@@ -21,6 +21,29 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {BrowserMessageHandler} from './message_handler';
+import {Connection} from 'vscode-languageserver';
+import {downloadQuery} from './download_query';
+import {MessageDownload} from '../../common/worker_message_types';
+import {ConnectionManager} from '../../common/connection_manager';
+import {MessageHandler} from '../message_handler';
+import {RpcFileHandler} from '../file_handler';
 
-export const messageHandler = new BrowserMessageHandler();
+export class NodeMessageHandler {
+  constructor(
+    private connection: Connection,
+    private connectionManager: ConnectionManager
+  ) {
+    const fileHandler = new RpcFileHandler(this.connection);
+
+    const messageHandler = new MessageHandler(
+      this.connection,
+      this.connectionManager,
+      fileHandler
+    );
+
+    connection.onRequest('malloy/download', (message: MessageDownload) =>
+      downloadQuery(messageHandler, connectionManager, message, fileHandler)
+    );
+    messageHandler.log('NodeMessageHandler initialized.');
+  }
+}

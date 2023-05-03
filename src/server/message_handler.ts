@@ -21,33 +21,37 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as rpc from 'vscode-jsonrpc/browser';
-import {ConnectionManager} from '../../common/connection_manager';
-import {WebConnectionFactory} from '../../common/connections/browser/connection_factory';
-import {MessageHandler} from '../message_handler';
-import {RpcFileHandler} from '../file_handler';
+import {Connection} from 'vscode-languageserver';
+import {cancelQuery, runQuery} from './run_query';
+import {
+  MessageCancel,
+  // MessageDownload,
+  MessageRun,
+  WorkerMessage,
+} from '../common/worker_message_types';
+import {FileHandler} from '../common/types';
+import {ConnectionManager} from '../common/connection_manager';
 
-export class BrowserMessageHandler {
-  constructor() {
-    const connection = rpc.createMessageConnection(
-      new rpc.BrowserMessageReader(self),
-      new rpc.BrowserMessageWriter(self)
-    );
-    connection.listen();
-
-    const connectionManager = new ConnectionManager(
-      new WebConnectionFactory(uri => fileHandler.fetchBinaryFile(uri)),
-      []
-    );
-
-    const fileHandler = new RpcFileHandler(connection);
-
-    const messageHandler = new MessageHandler(
-      connection,
-      connectionManager,
-      fileHandler
+export class MessageHandler {
+  constructor(
+    private connection: Connection,
+    connectionManager: ConnectionManager,
+    fileHandler: FileHandler
+  ) {
+    this.connection.onRequest('malloy/cancel', (message: MessageCancel) =>
+      cancelQuery(message)
     );
 
-    messageHandler.log('Worker started');
+    this.connection.onRequest('malloy/run', (message: MessageRun) =>
+      runQuery(this, fileHandler, connectionManager, false, message)
+    );
+  }
+
+  send(message: WorkerMessage) {
+    this.connection.sendRequest(message.type, message);
+  }
+
+  log(message: string) {
+    this.connection.console.log(message);
   }
 }
