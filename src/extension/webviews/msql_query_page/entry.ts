@@ -21,42 +21,22 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {Connection} from 'vscode-languageserver';
-import {cancelQuery, runQuery} from './run_query';
+import ReactDOM from 'react-dom';
+import React from 'react';
+import {App} from './App';
+import {MSQLQueryPanelMessage} from '../../../common/message_types';
 import {
-  MessageCancel,
-  // MessageDownload,
-  MessageRun,
-  MessageRunMSQL,
-  WorkerMessage,
-} from '../common/worker_message_types';
-import {FileHandler} from '../common/types';
-import {ConnectionManager} from '../common/connection_manager';
-import {runMSQLQuery} from './run_msql_query';
+  getVSCodeAPI,
+  MSQLQueryVSCodeContext,
+} from './msql_query_vscode_context';
 
-export class MessageHandler {
-  constructor(
-    private connection: Connection,
-    connectionManager: ConnectionManager,
-    fileHandler: FileHandler
-  ) {
-    this.connection.onRequest('malloy/cancel', (message: MessageCancel) =>
-      cancelQuery(message)
-    );
+(() => {
+  const vscode = getVSCodeAPI<void, MSQLQueryPanelMessage>();
+  const el = React.createElement(
+    MSQLQueryVSCodeContext.Provider,
+    {value: vscode},
+    [React.createElement(App, {key: 'app'}, null)]
+  );
 
-    this.connection.onRequest('malloy/run', (message: MessageRun) =>
-      runQuery(this, fileHandler, connectionManager, false, message)
-    );
-    this.connection.onRequest('malloy/run-msql', (message: MessageRunMSQL) =>
-      runMSQLQuery(this, fileHandler, connectionManager, message)
-    );
-  }
-
-  send(message: WorkerMessage) {
-    this.connection.sendRequest(message.type, message);
-  }
-
-  log(message: string) {
-    this.connection.console.log(message);
-  }
-}
+  ReactDOM.render(el, document.getElementById('app'));
+})();

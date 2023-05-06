@@ -43,7 +43,7 @@ import {usePopperTooltip} from 'react-popper-tooltip';
 import {useQueryVSCodeContext} from './query_vscode_context';
 import {DownloadButton} from './DownloadButton';
 import {CopyButton} from './CopyButton';
-import {Scroll} from './Scroll';
+import {Scroll} from '../components/Scroll';
 import {PrismContainer} from '../components/PrismContainer';
 
 enum Status {

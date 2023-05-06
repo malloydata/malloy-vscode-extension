@@ -59,16 +59,6 @@ export function createOrReuseWebviewPanel(
       {enableScripts: true, retainContextWhenHidden: true}
     );
 
-    panel.onDidChangeViewState(
-      (e: vscode.WebviewPanelOnDidChangeViewStateEvent) => {
-        vscode.commands.executeCommand(
-          'setContext',
-          'malloy.webviewPanelFocused',
-          e.webviewPanel.active
-        );
-      }
-    );
-
     current = {
       panel,
       messages: new WebviewMessageManager(panel),
@@ -100,10 +90,26 @@ export function loadWebview(current: RunState, onDiskPath: URI): void {
   });
 
   MALLOY_EXTENSION_STATE.setActiveWebviewPanelId(current.panelId);
-  current.panel.onDidChangeViewState(event => {
+}
+
+export function showSchemaTreeViewWhenFocused(
+  panel: vscode.WebviewPanel,
+  panelId: string
+): void {
+  panel.onDidChangeViewState(event => {
     if (event.webviewPanel.active) {
-      MALLOY_EXTENSION_STATE.setActiveWebviewPanelId(current.panelId);
+      MALLOY_EXTENSION_STATE.setActiveWebviewPanelId(panelId);
       vscode.commands.executeCommand('malloy.refreshSchema');
     }
   });
+
+  panel.onDidChangeViewState(
+    (e: vscode.WebviewPanelOnDidChangeViewStateEvent) => {
+      vscode.commands.executeCommand(
+        'setContext',
+        'malloy.webviewPanelFocused',
+        e.webviewPanel.active
+      );
+    }
+  );
 }
