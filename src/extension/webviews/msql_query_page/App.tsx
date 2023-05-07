@@ -164,6 +164,12 @@ export const App: React.FC = () => {
                   const html = document.createElement('span');
                   html.innerText = 'Statement completed';
                   evaluatedStatement.renderedHTML = html;
+                } else {
+                  const html = document.createElement('span');
+                  html.innerText = evaluatedStatement.results.rows
+                    .map(row => JSON.stringify(row))
+                    .join('\n');
+                  evaluatedStatement.renderedHTML = html;
                 }
               } else if (
                 evaluatedStatement.type ===
