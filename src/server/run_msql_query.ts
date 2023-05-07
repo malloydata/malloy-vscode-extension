@@ -249,7 +249,7 @@ export const runMSQLQuery = async (
         } catch (error) {
           evaluatedStatements.push({
             type: EvaluatedMSQLStatementType.ExecutionError,
-            error,
+            error: error.message,
             compiledStatement,
             statementIndex: i,
           });

@@ -171,7 +171,7 @@ export const App: React.FC = () => {
               ) {
                 errorCount += 1;
                 evaluatedStatement.prettyError = `${
-                  evaluatedStatement.error.message
+                  evaluatedStatement.error
                 }\n\n${'-'.repeat(10)}Generated SQL${'-'.repeat(
                   10
                 )}\n\n${evaluatedStatement.compiledStatement
