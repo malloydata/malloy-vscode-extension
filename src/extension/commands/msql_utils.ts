@@ -44,7 +44,7 @@ export function runMSQLQuery(
   vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
-      title: `Malloy SQL Query (${name})`,
+      title: `MalloySQL Query (${name})`,
       cancellable: true,
     },
     (progress, token) => {

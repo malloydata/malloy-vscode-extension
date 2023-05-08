@@ -103,6 +103,7 @@ export const runMSQLQuery = async (
   const url = new URL(panelId);
   runningQueries[panelId] = {panelId, canceled: false};
   const evaluatedStatements: EvaluatedMSQLStatement[] = [];
+  const abortOnExecutionError = true;
 
   try {
     if (connectionName === '')
@@ -253,6 +254,8 @@ export const runMSQLQuery = async (
             compiledStatement,
             statementIndex: i,
           });
+
+          if (abortOnExecutionError) break;
         }
       }
 

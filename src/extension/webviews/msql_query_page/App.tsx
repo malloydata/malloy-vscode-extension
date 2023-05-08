@@ -175,7 +175,6 @@ export const App: React.FC = () => {
                 evaluatedStatement.type ===
                 EvaluatedMSQLStatementType.ExecutionError
               ) {
-                errorCount += 1;
                 evaluatedStatement.prettyError = `${
                   evaluatedStatement.error
                 }\n\n${'-'.repeat(10)}Generated SQL${'-'.repeat(
@@ -196,7 +195,7 @@ export const App: React.FC = () => {
               setWarning(
                 `${errorCount} statement${
                   errorCount > 1 ? 's' : ''
-                } did not execute successfully`
+                } did not compile successfully`
               );
 
             setStatus(Status.Displaying);
