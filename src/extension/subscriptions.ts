@@ -45,6 +45,7 @@ import {v4 as uuid} from 'uuid';
 import {MALLOY_EXTENSION_STATE} from './state';
 import {activateNotebookSerializer} from './notebook/malloy_serializer';
 import {activateNotebookController} from './notebook/malloy_controller';
+import {BaseWorker} from '../common/worker_message_types';
 import {CommonLanguageClient} from 'vscode-languageclient';
 import {
   FetchBinaryFileEvent,
@@ -55,7 +56,6 @@ import {
 import {showSQLCommand} from './commands/show_sql';
 import {showSQLFileCommand} from './commands/show_sql_file';
 import {showSQLNamedQueryCommand} from './commands/show_sql_named_query';
-import {WorkerReadMessage} from '../common/worker_message_types';
 import {runMalloySQLFile} from './commands/run_msql_file';
 import {showSQLMalloySQLFile} from './commands/show_sql_msql_file';
 import {MSQLLensProvider} from './lenses/msql_lenses';
@@ -68,6 +68,7 @@ export const setupSubscriptions = (
   context: vscode.ExtensionContext,
   urlReader: URLReader,
   connectionManager: ConnectionManager,
+  worker: BaseWorker,
   client: CommonLanguageClient
 ) => {
   MALLOY_EXTENSION_STATE.setExtensionUri(context.extensionUri);
@@ -76,7 +77,7 @@ export const setupSubscriptions = (
   context.subscriptions.push(
     vscode.commands.registerCommand(
       'malloy.runQueryFile',
-      (queryIndex?: number) => runQueryFileCommand(client, queryIndex)
+      (queryIndex?: number) => runQueryFileCommand(worker, queryIndex)
     )
   );
 
@@ -84,14 +85,14 @@ export const setupSubscriptions = (
   context.subscriptions.push(
     vscode.commands.registerCommand(
       'malloy.runQuery',
-      (query: string, name?: string) => runQueryCommand(client, query, name)
+      (query: string, name?: string) => runQueryCommand(worker, query, name)
     )
   );
 
   // Run named query
   context.subscriptions.push(
     vscode.commands.registerCommand('malloy.runNamedQuery', (name: string) =>
-      runNamedQuery(client, name)
+      runNamedQuery(worker, name)
     )
   );
 
@@ -99,7 +100,7 @@ export const setupSubscriptions = (
   context.subscriptions.push(
     vscode.commands.registerCommand(
       'malloy.showSQLFile',
-      (queryIndex?: number) => showSQLFileCommand(client, queryIndex)
+      (queryIndex?: number) => showSQLFileCommand(worker, queryIndex)
     )
   );
 
@@ -107,7 +108,7 @@ export const setupSubscriptions = (
   context.subscriptions.push(
     vscode.commands.registerCommand(
       'malloy.showSQL',
-      (query: string, name?: string) => showSQLCommand(client, query, name)
+      (query: string, name?: string) => showSQLCommand(worker, query, name)
     )
   );
 
@@ -115,14 +116,14 @@ export const setupSubscriptions = (
   context.subscriptions.push(
     vscode.commands.registerCommand(
       'malloy.showSQLNamedQuery',
-      (name: string) => showSQLNamedQueryCommand(client, name)
+      (name: string) => showSQLNamedQueryCommand(worker, name)
     )
   );
 
   // Run named SQL block
   context.subscriptions.push(
     vscode.commands.registerCommand('malloy.runNamedSQLBlock', (name: string) =>
-      runNamedSQLBlock(client, name)
+      runNamedSQLBlock(worker, name)
     )
   );
 
@@ -130,7 +131,7 @@ export const setupSubscriptions = (
   context.subscriptions.push(
     vscode.commands.registerCommand(
       'malloy.runUnnamedSQLBlock',
-      (index: number) => runUnnamedSQLBlock(client, index)
+      (index: number) => runUnnamedSQLBlock(worker, index)
     )
   );
 
@@ -266,12 +267,5 @@ export const setupFileMessaging = (
         return await fileHandler.fetchCellData(event.uri);
       }
     )
-  );
-
-  context.subscriptions.push(
-    client.onRequest('malloy/fetch', async (message: WorkerReadMessage) => {
-      malloyLog.appendLine(`reading file ${message.uri}`);
-      return await fileHandler.fetchFile(message.uri);
-    })
   );
 };

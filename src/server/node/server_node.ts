@@ -25,11 +25,8 @@ import {TextDocuments} from 'vscode-languageserver/node';
 import {TextDocument} from 'vscode-languageserver-textdocument';
 import {connection, connectionManager} from './connections_node';
 import {initServer} from '../init';
-import {NodeMessageHandler} from './message_handler';
+
+connection.console.info('Server loaded');
 
 const documents = new TextDocuments(TextDocument);
 initServer(documents, connection, connectionManager);
-const messageHandler = new NodeMessageHandler(connection, connectionManager);
-if (messageHandler) {
-  connection.console.info('Server loaded');
-}

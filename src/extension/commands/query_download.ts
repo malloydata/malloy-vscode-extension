@@ -29,13 +29,13 @@ import * as vscode from 'vscode';
 import {Utils} from 'vscode-uri';
 import {QuerySpec} from './query_spec';
 import {
+  BaseWorker,
   MessageDownload,
   WorkerMessage,
   WorkerQuerySpec,
 } from '../../common/worker_message_types';
 import {MALLOY_EXTENSION_STATE} from '../state';
 import {Disposable} from 'vscode-jsonrpc';
-import {CommonLanguageClient} from 'vscode-languageclient';
 
 /**
  * VSCode doesn't support streaming writes, so fake it.
@@ -60,7 +60,7 @@ class VSCodeWriteStream implements WriteStream {
 }
 
 const sendDownloadMessage = (
-  client: CommonLanguageClient,
+  worker: BaseWorker,
   query: WorkerQuerySpec,
   panelId: string,
   name: string,
@@ -75,11 +75,11 @@ const sendDownloadMessage = (
     uri,
     downloadOptions,
   };
-  client.sendRequest('malloy/download', message);
+  worker.send?.(message);
 };
 
 export async function queryDownload(
-  client: CommonLanguageClient,
+  worker: BaseWorker,
   query: QuerySpec,
   downloadOptions: QueryDownloadOptions,
   currentResults: Result,
@@ -140,7 +140,7 @@ export async function queryDownload(
         } else {
           const {file, ...params} = query;
           sendDownloadMessage(
-            client,
+            worker,
             {
               uri: file.uri.toString(),
               ...params,
@@ -151,7 +151,18 @@ export async function queryDownload(
             downloadOptions
           );
           const listener = (msg: WorkerMessage) => {
-            if (msg.type !== 'malloy/download') {
+            if (msg.type === 'malloy/dead') {
+              vscode.window.showErrorMessage(
+                `Malloy Download (${name}): Error
+The worker process has died, and has been restarted.
+This is possibly the result of a database bug. \
+Please consider filing an issue with as much detail as possible at \
+https://github.com/malloydata/malloy/issues.`
+              );
+
+              off?.dispose();
+              return;
+            } else if (msg.type !== 'malloy/download') {
               return;
             }
             const {name: msgName, error} = msg;
@@ -170,7 +181,7 @@ export async function queryDownload(
             off?.dispose();
           };
 
-          off = client.onRequest('malloy/download', listener);
+          off = worker.on('malloy/download', listener);
         }
       } catch (error) {
         vscode.window.showErrorMessage(

@@ -22,17 +22,14 @@
  */
 
 import * as vscode from 'vscode';
-import {CommonLanguageClient} from 'vscode-languageclient';
+import {BaseWorker} from '../../common/worker_message_types';
 import {runMalloyQuery} from './run_query_utils';
 
-export function showSQLFileCommand(
-  client: CommonLanguageClient,
-  queryIndex = -1
-): void {
+export function showSQLFileCommand(worker: BaseWorker, queryIndex = -1): void {
   const document = vscode.window.activeTextEditor?.document;
   if (document) {
     runMalloyQuery(
-      client,
+      worker,
       {type: 'file', index: queryIndex, file: document},
       document.uri.toString(),
       document.fileName.split('/').pop() || document.fileName,
