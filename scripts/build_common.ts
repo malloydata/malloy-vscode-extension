@@ -297,6 +297,7 @@ export async function doBuild(
     ...baseOptions,
     entryPoints: [
       './src/extension/webviews/query_page/entry.ts',
+      './src/extension/webviews/msql_query_page/entry.ts',
       './src/extension/webviews/connections_page/entry.ts',
       './src/extension/webviews/help_page/entry.ts',
     ],

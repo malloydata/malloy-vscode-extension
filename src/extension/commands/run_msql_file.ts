@@ -21,42 +21,24 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {Connection} from 'vscode-languageserver';
-import {cancelQuery, runQuery} from './run_query';
-import {
-  MessageCancel,
-  // MessageDownload,
-  MessageRun,
-  MessageRunMSQL,
-  WorkerMessage,
-} from '../common/worker_message_types';
-import {FileHandler} from '../common/types';
-import {ConnectionManager} from '../common/connection_manager';
-import {runMSQLQuery} from './run_msql_query';
+import * as vscode from 'vscode';
+import {CommonLanguageClient} from 'vscode-languageclient';
+import {getConnectionName, getImportURL, runMSQLQuery} from './msql_utils';
 
-export class MessageHandler {
-  constructor(
-    private connection: Connection,
-    connectionManager: ConnectionManager,
-    fileHandler: FileHandler
-  ) {
-    this.connection.onRequest('malloy/cancel', (message: MessageCancel) =>
-      cancelQuery(message)
+export function runMalloySQLFile(client: CommonLanguageClient): void {
+  const document = vscode.window.activeTextEditor?.document;
+
+  if (document) {
+    const documentText = document.getText();
+
+    runMSQLQuery(
+      client,
+      document.uri.toString(),
+      document.fileName.split('/').pop() || document.fileName,
+      document,
+      getConnectionName(documentText),
+      null,
+      getImportURL(documentText)
     );
-
-    this.connection.onRequest('malloy/run', (message: MessageRun) =>
-      runQuery(this, fileHandler, connectionManager, false, message)
-    );
-    this.connection.onRequest('malloy/run-msql', (message: MessageRunMSQL) =>
-      runMSQLQuery(this, fileHandler, connectionManager, message)
-    );
-  }
-
-  send(message: WorkerMessage) {
-    this.connection.sendRequest(message.type, message);
-  }
-
-  log(message: string) {
-    this.connection.console.log(message);
   }
 }

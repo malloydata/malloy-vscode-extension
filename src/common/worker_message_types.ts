@@ -22,7 +22,11 @@
  */
 
 import {Disposable} from 'vscode-jsonrpc';
-import {QueryDownloadOptions, QueryPanelMessage} from './message_types';
+import {
+  QueryDownloadOptions,
+  QueryPanelMessage,
+  MSQLQueryPanelMessage,
+} from './message_types';
 import {CellData, MalloyConfig} from './types';
 
 interface NamedQuerySpec {
@@ -76,6 +80,16 @@ export interface MessageRun {
   panelId: string;
   name: string;
   showSQLOnly: boolean;
+}
+
+export interface MessageRunMSQL {
+  type: 'malloy/run-msql';
+  panelId: string;
+  malloySQLQuery: string;
+  connectionName: string;
+  statementIndex: number | null;
+  importURL?: string;
+  showSQLOnly?: boolean;
 }
 
 export interface MessageCancel {
@@ -134,7 +148,8 @@ export type Message =
   | MessageFetchBinary
   | MessageFetchCellData
   | MessageRun
-  | MessageDownload;
+  | MessageDownload
+  | MessageRunMSQL;
 
 /**
  * Outgoing messages
@@ -155,6 +170,12 @@ export interface WorkerQueryPanelMessage {
   type: 'malloy/queryPanel';
   panelId: string;
   message: QueryPanelMessage;
+}
+
+export interface WorkerSQLQueryPanelMessage {
+  type: 'malloy/MSQLQueryPanel';
+  panelId: string;
+  message: MSQLQueryPanelMessage;
 }
 
 export interface WorkerStartMessage {
@@ -186,7 +207,8 @@ export type WorkerMessage =
   | WorkerReadBinaryMessage
   | WorkerReadMessage
   | WorkerReadCellDataMessage
-  | WorkerStartMessage;
+  | WorkerStartMessage
+  | WorkerSQLQueryPanelMessage;
 
 export interface BaseWorker {
   send(message: Message): void;

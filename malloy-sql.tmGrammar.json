@@ -1,0 +1,21 @@
+{
+  "name": "Malloy SQL",
+  "scopeName": "source.malloy-sql",
+  "patterns": [
+    {
+      "begin": "%{",
+      "end": "}%",
+      "beginCaptures": {
+        "0": {"name": "punctuation.definition.malloy-sql"}
+      },
+      "endCaptures": {
+        "0": {"name": "punctuation.definition.malloy-sql"}
+      },
+      "name": "meta.embedded.block.malloy",
+      "patterns": [{"include": "source.malloy"}]
+    },
+    {
+      "include": "source.sql"
+    }
+  ]
+}

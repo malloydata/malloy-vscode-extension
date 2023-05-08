@@ -59,11 +59,15 @@
     "onCommand:malloy.copyFieldPath",
     "onCommand:malloy.refreshSchema",
     "onCommand:malloy.editConnections",
+    "onCommand:malloy.runMalloySQLFile",
+    "onCommand:malloy.showSQLMalloySQLFile",
     "onLanguage:malloy",
+    "onLanguage:malloy-sql",
     "workspaceContains:**/.malloy",
     "onView:malloyConnections",
     "onView:malloySchema",
     "onWebviewPanel:malloyQuery",
+    "onWebviewPanel:malloySQLQuery",
     "onWebviewPanel:malloyConnections",
     "onNotebook:malloy-notebook"
   ],
@@ -144,6 +148,18 @@
         "title": "Run Query With Filters",
         "category": "Malloy",
         "enablement": "false"
+      },
+      {
+        "command": "malloy.runMalloySQLFile",
+        "title": "Run MalloySQL File",
+        "category": "Malloy",
+        "enablement": "editorLangId == malloy-sql"
+      },
+      {
+        "command": "malloy.showSQLMalloySQLFile",
+        "title": "Show MalloySQL Compiled SQL",
+        "category": "Malloy",
+        "enablement": "editorLangId == malloy-sql"
       },
       {
         "command": "malloy.copyFieldPath",
@@ -325,7 +341,24 @@
           "malloy"
         ],
         "filenames": [],
-        "configuration": "language.json",
+        "configuration": "malloy-language.json",
+        "icon": {
+          "dark": "./img/icon.svg",
+          "light": "./img/icon.svg"
+        }
+      },
+      {
+        "id": "malloy-sql",
+        "extensions": [
+          ".malloysql",
+          ".msql"
+        ],
+        "aliases": [
+          "Malloy SQL",
+          "malloy SQL"
+        ],
+        "filenames": [],
+        "configuration": "malloy-sql-language.json",
         "icon": {
           "dark": "./img/icon.svg",
           "light": "./img/icon.svg"
@@ -337,6 +370,11 @@
         "language": "malloy",
         "scopeName": "source.malloy",
         "path": "./malloy.tmGrammar.json"
+      },
+      {
+        "language": "malloy-sql",
+        "scopeName": "source.malloy-sql",
+        "path": "./malloy-sql.tmGrammar.json"
       }
     ],
     "views": {

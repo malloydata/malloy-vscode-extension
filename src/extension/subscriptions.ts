@@ -56,6 +56,9 @@ import {showSQLCommand} from './commands/show_sql';
 import {showSQLFileCommand} from './commands/show_sql_file';
 import {showSQLNamedQueryCommand} from './commands/show_sql_named_query';
 import {WorkerReadMessage} from '../common/worker_message_types';
+import {runMalloySQLFile} from './commands/run_msql_file';
+import {showSQLMalloySQLFile} from './commands/show_sql_msql_file';
+import {MSQLLensProvider} from './lenses/msql_lenses';
 
 function getNewClientId(): string {
   return uuid();
@@ -131,6 +134,20 @@ export const setupSubscriptions = (
     )
   );
 
+  // Run Malloy SQL File
+  context.subscriptions.push(
+    vscode.commands.registerCommand('malloy.runMalloySQLFile', () =>
+      runMalloySQLFile(client)
+    )
+  );
+
+  // Show SQL Malloy SQL File
+  context.subscriptions.push(
+    vscode.commands.registerCommand('malloy.showSQLMalloySQLFile', () =>
+      showSQLMalloySQLFile(client)
+    )
+  );
+
   // Copy Field Path
   context.subscriptions.push(
     vscode.commands.registerCommand(
@@ -197,6 +214,15 @@ export const setupSubscriptions = (
   // Malloy help view.
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider('malloyHelp', provider)
+  );
+
+  context.subscriptions.push(
+    vscode.languages.registerCodeLensProvider(
+      {
+        language: 'malloy-sql',
+      },
+      new MSQLLensProvider()
+    )
   );
 
   activateNotebookSerializer(context);

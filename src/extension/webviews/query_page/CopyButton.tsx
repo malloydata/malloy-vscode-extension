@@ -47,7 +47,7 @@ import React from 'react';
 
 import DownloadIcon from '../assets/copy.svg';
 import styled from 'styled-components';
-import {Scroll} from './Scroll';
+import {Scroll} from '../components/Scroll';
 
 interface CopyHTMLButtonProps {
   onClick: (event: MouseEvent) => void;

@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {ResultJSON} from '@malloydata/malloy';
+import {MalloyError, MalloyQueryData, ResultJSON} from '@malloydata/malloy';
 import {DataStyles} from '@malloydata/render';
 import {ConnectionBackend, ConnectionConfig} from './connection_manager_types';
 
@@ -31,6 +31,14 @@ import {ConnectionBackend, ConnectionConfig} from './connection_manager_types';
  */
 
 export enum QueryRunStatus {
+  Compiling = 'compiling',
+  Compiled = 'compiled',
+  Running = 'running',
+  Error = 'error',
+  Done = 'done',
+}
+
+export enum MSQLQueryRunStatus {
   Compiling = 'compiling',
   Compiled = 'compiled',
   Running = 'running',
@@ -98,6 +106,110 @@ interface QueryMessageStartDownload {
   type: QueryMessageType.StartDownload;
   downloadOptions: QueryDownloadOptions;
 }
+
+export enum MSQLMessageType {
+  QueryStatus = 'query-status',
+  AppReady = 'app-ready',
+}
+
+interface MSQLMessageAppReady {
+  type: QueryMessageType.AppReady;
+}
+
+export enum EvaluatedMSQLStatementType {
+  CompileError = 'compile-error',
+  ExecutionError = 'execution-error',
+  Executed = 'executed',
+  Compiled = 'compiled',
+}
+
+export interface MSQLStatementCompileError {
+  type: EvaluatedMSQLStatementType.CompileError;
+  errors: MalloyError[];
+  statementIndex: number;
+}
+
+export interface MSQLStatmentWasCompiled {
+  compiledStatement: string;
+  statementIndex: number;
+}
+
+export interface MSQLStatementExecutionError extends MSQLStatmentWasCompiled {
+  type: EvaluatedMSQLStatementType.ExecutionError;
+  error: string;
+  prettyError?: string;
+}
+
+export enum ExecutedMSQLStatementResultType {
+  WithStructdef = 'with-structdef',
+  WithoutStructdef = 'without-structdef',
+}
+
+export interface ExecutedMSQLStatementWithStructdef
+  extends MSQLStatmentWasCompiled {
+  type: EvaluatedMSQLStatementType.Executed;
+  resultType: ExecutedMSQLStatementResultType.WithStructdef;
+  results: ResultJSON;
+  renderedHTML?: HTMLElement;
+}
+
+export interface ExecutedMSQLStatementWithoutStructdef
+  extends MSQLStatmentWasCompiled {
+  type: EvaluatedMSQLStatementType.Executed;
+  resultType: ExecutedMSQLStatementResultType.WithoutStructdef;
+  results: MalloyQueryData;
+  renderedHTML?: HTMLElement;
+}
+
+export interface CompiledMSQLStatement extends MSQLStatmentWasCompiled {
+  type: EvaluatedMSQLStatementType.Compiled;
+}
+
+export type ExecutedMSQLStatement =
+  | ExecutedMSQLStatementWithStructdef
+  | ExecutedMSQLStatementWithoutStructdef;
+
+export type EvaluatedMSQLStatement =
+  | ExecutedMSQLStatement
+  | MSQLStatementCompileError
+  | MSQLStatementExecutionError
+  | CompiledMSQLStatement;
+
+interface MSQLMessageStatusDone {
+  type: MSQLMessageType.QueryStatus;
+  status: MSQLQueryRunStatus.Done;
+  results: EvaluatedMSQLStatement[];
+  showSQLOnly?: boolean;
+}
+
+interface MSQLMessageStatusCompiling {
+  type: MSQLMessageType.QueryStatus;
+  status: MSQLQueryRunStatus.Compiling;
+  totalStatements: number;
+  statementIndex: number;
+}
+
+interface MSQLMessageStatusRunning {
+  type: MSQLMessageType.QueryStatus;
+  status: MSQLQueryRunStatus.Running;
+  totalStatements: number;
+  statementIndex: number;
+}
+
+interface MSQLMessageStatusError {
+  type: MSQLMessageType.QueryStatus;
+  status: MSQLQueryRunStatus.Error;
+  error: string;
+  sql?: string;
+}
+
+type MSQLMessageStatus =
+  | MSQLMessageStatusError
+  | MSQLMessageStatusCompiling
+  | MSQLMessageStatusRunning
+  | MSQLMessageStatusDone;
+
+export type MSQLQueryPanelMessage = MSQLMessageStatus | MSQLMessageAppReady;
 
 export type QueryPanelMessage =
   | QueryMessageStatus
