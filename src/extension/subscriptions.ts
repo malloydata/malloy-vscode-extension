@@ -220,7 +220,6 @@ export const setupSubscriptions = (
     vscode.languages.registerCodeLensProvider(
       {
         language: 'malloy-sql',
-        scheme: 'file',
       },
       new MSQLLensProvider()
     )
