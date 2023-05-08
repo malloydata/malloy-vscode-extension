@@ -22,11 +22,11 @@
  */
 
 import * as vscode from 'vscode';
-import {CommonLanguageClient} from 'vscode-languageclient';
+import {BaseWorker} from '../../common/worker_message_types';
 import {getConnectionName, getImportURL, runMSQLQuery} from './msql_utils';
 
 export function runMalloySQLStatement(
-  client: CommonLanguageClient,
+  worker: BaseWorker,
   statementIndex: number
 ): void {
   const document = vscode.window.activeTextEditor?.document;
@@ -35,7 +35,7 @@ export function runMalloySQLStatement(
     const documentText = document.getText();
 
     runMSQLQuery(
-      client,
+      worker,
       document.uri.toString(),
       document.fileName.split('/').pop() || document.fileName,
       document,

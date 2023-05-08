@@ -138,14 +138,14 @@ export const setupSubscriptions = (
   // Run Malloy SQL File
   context.subscriptions.push(
     vscode.commands.registerCommand('malloy.runMalloySQLFile', () =>
-      runMalloySQLFile(client)
+      runMalloySQLFile(worker)
     )
   );
 
   // Show SQL Malloy SQL File
   context.subscriptions.push(
     vscode.commands.registerCommand('malloy.showSQLMalloySQLFile', () =>
-      showSQLMalloySQLFile(client)
+      showSQLMalloySQLFile(worker)
     )
   );
 

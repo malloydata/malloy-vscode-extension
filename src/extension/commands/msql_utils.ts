@@ -23,16 +23,15 @@
 
 import * as vscode from 'vscode';
 
-import {CommonLanguageClient} from 'vscode-languageclient';
 import {malloyLog} from '../logger';
 import {createOrReuseWebviewPanel, loadWebview} from './vscode_utils';
 import {Utils} from 'vscode-uri';
 import {MSQLMessageType, MSQLQueryRunStatus} from '../../common/message_types';
 import {MALLOY_EXTENSION_STATE, RunState} from '../state';
-import {WorkerMessage} from '../../common/worker_message_types';
+import {BaseWorker, WorkerMessage} from '../../common/worker_message_types';
 
 export function runMSQLQuery(
-  client: CommonLanguageClient,
+  worker: BaseWorker,
   panelId: string,
   name: string,
   document: vscode.TextDocument,
@@ -49,9 +48,7 @@ export function runMSQLQuery(
     },
     (progress, token) => {
       const cancel = () => {
-        client.sendRequest('malloy/cancel', {
-          panelId,
-        });
+        worker.send({type: 'malloy/cancel', panelId});
         if (current) {
           const actuallyCurrent = MALLOY_EXTENSION_STATE.getRunState(
             current.panelId
@@ -82,7 +79,8 @@ export function runMSQLQuery(
       loadWebview(current, queryPageOnDiskPath);
 
       const malloySQLQuery = document.getText();
-      client.sendRequest('malloy/run-msql', {
+      worker.send({
+        type: 'malloy/run-msql',
         panelId,
         malloySQLQuery,
         connectionName,
@@ -146,7 +144,7 @@ export function runMSQLQuery(
           }
         };
 
-        off = client.onRequest('malloy/MSQLQueryPanel', listener);
+        off = worker.on('malloy/MSQLQueryPanel', listener);
       });
     }
   );
