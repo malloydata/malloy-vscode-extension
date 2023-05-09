@@ -21,47 +21,24 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as rpc from 'vscode-jsonrpc/node';
-import {downloadQuery} from './download_query';
-import {MessageDownload} from '../../common/worker_message_types';
+import {Connection} from 'vscode-languageserver';
 import {ConnectionManager} from '../../common/connection_manager';
-import {DesktopConnectionFactory} from '../../common/connections/node/connection_factory';
 import {MessageHandler} from '../message_handler';
 import {RpcFileHandler} from '../file_handler';
 
-export class NodeMessageHandler {
-  constructor() {
-    const connection = rpc.createMessageConnection(
-      new rpc.IPCMessageReader(process),
-      new rpc.IPCMessageWriter(process)
-    );
-    connection.listen();
-
-    const connectionManager = new ConnectionManager(
-      new DesktopConnectionFactory(),
-      []
-    );
-
-    const fileHandler = new RpcFileHandler(connection);
+export class BrowserMessageHandler {
+  constructor(
+    private connection: Connection,
+    private connectionManager: ConnectionManager
+  ) {
+    const fileHandler = new RpcFileHandler(this.connection);
 
     const messageHandler = new MessageHandler(
-      connection,
-      connectionManager,
+      this.connection,
+      this.connectionManager,
       fileHandler
     );
 
-    messageHandler.log('Worker started');
-
-    connection.onRequest('malloy/download', (message: MessageDownload) =>
-      downloadQuery(messageHandler, connectionManager, message, fileHandler)
-    );
-
-    process.on('exit', () => {
-      messageHandler.log('Worker exited');
-    });
-
-    process.on('SIGHUP', () => {
-      messageHandler.dispose();
-    });
+    messageHandler.log('BrowserMessageHandler initialized.');
   }
 }
