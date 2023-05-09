@@ -25,11 +25,8 @@ import {TextDocuments} from 'vscode-languageserver/browser';
 import {TextDocument} from 'vscode-languageserver-textdocument';
 import {connection, connectionManager} from './connections_browser';
 import {initServer} from '../init';
-import {BrowserMessageHandler} from './message_handler';
+
+connection.console.info('Server loaded');
 
 const documents = new TextDocuments(TextDocument);
 initServer(documents, connection, connectionManager);
-const messageHandler = new BrowserMessageHandler(connection, connectionManager);
-if (messageHandler) {
-  connection.console.info('Server loaded');
-}

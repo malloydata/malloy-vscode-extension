@@ -21,21 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as vscode from 'vscode';
-import {BaseWorker} from '../../common/worker_message_types';
-import {MALLOY_EXTENSION_STATE} from '../state';
-import {runMalloyQuery} from './run_query_utils';
+import {NodeMessageHandler} from './message_handler';
 
-export function runUnnamedSQLBlock(worker: BaseWorker, index: number): void {
-  const document =
-    vscode.window.activeTextEditor?.document ||
-    MALLOY_EXTENSION_STATE.getActiveWebviewPanel()?.document;
-  if (document) {
-    runMalloyQuery(
-      worker,
-      {type: 'unnamed_sql', index, file: document},
-      document.uri.toString(),
-      document.fileName.split('/').pop() || document.fileName
-    );
-  }
-}
+export const messageHandler = new NodeMessageHandler();

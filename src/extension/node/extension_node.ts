@@ -32,12 +32,16 @@ import {
 } from 'vscode-languageclient/node';
 import {editConnectionsCommand} from './commands/edit_connections';
 import {ConnectionsProvider} from '../tree_views/connections_view';
+import {WorkerConnection} from './worker_connection_node';
+import {FileHandler, MalloyConfig} from '../../common/types';
 import {connectionManager} from './connection_manager';
 import {setupFileMessaging, setupSubscriptions} from '../subscriptions';
 import {fileHandler} from '../utils';
 import {MALLOY_EXTENSION_STATE} from '../state';
+import {BaseWorker} from '../../common/worker_message_types';
 
 let client: LanguageClient;
+let worker: BaseWorker;
 
 const cloudshellEnv = () => {
   const cloudShellProject = vscode.workspace
@@ -52,8 +56,9 @@ const cloudshellEnv = () => {
 
 export function activate(context: vscode.ExtensionContext): void {
   cloudshellEnv();
+  setupWorker(context, fileHandler);
   setupLanguageServer(context);
-  setupSubscriptions(context, fileHandler, connectionManager, client);
+  setupSubscriptions(context, fileHandler, connectionManager, worker, client);
 
   const connectionsTree = new ConnectionsProvider(context, connectionManager);
 
@@ -75,6 +80,7 @@ export function activate(context: vscode.ExtensionContext): void {
       if (e.affectsConfiguration('malloy')) {
         await connectionManager.onConfigurationUpdated();
         connectionsTree.refresh();
+        sendWorkerConfig();
       }
       if (e.affectsConfiguration('cloudshell')) {
         cloudshellEnv();
@@ -86,6 +92,9 @@ export function activate(context: vscode.ExtensionContext): void {
 export async function deactivate(): Promise<void> | undefined {
   if (client) {
     await client.stop();
+  }
+  if (worker) {
+    worker.send({type: 'exit'});
   }
 }
 
@@ -130,4 +139,21 @@ async function setupLanguageServer(
   await client.onReady();
 
   setupFileMessaging(context, client, fileHandler);
+}
+
+function sendWorkerConfig() {
+  worker.send({
+    type: 'malloy/config',
+    config: vscode.workspace.getConfiguration(
+      'malloy'
+    ) as unknown as MalloyConfig,
+  });
+}
+
+function setupWorker(
+  context: vscode.ExtensionContext,
+  fileHandler: FileHandler
+): void {
+  worker = new WorkerConnection(context, fileHandler);
+  sendWorkerConfig();
 }

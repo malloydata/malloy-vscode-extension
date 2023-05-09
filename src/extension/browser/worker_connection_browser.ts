@@ -22,20 +22,45 @@
  */
 
 import * as vscode from 'vscode';
-import {BaseWorker} from '../../common/worker_message_types';
-import {MALLOY_EXTENSION_STATE} from '../state';
-import {runMalloyQuery} from './run_query_utils';
+import * as rpc from 'vscode-jsonrpc/browser';
+import {WorkerMessage} from '../../common/worker_message_types';
+import {WorkerConnectionBase} from '../worker_connection';
+import {FileHandler} from '../../common/types';
 
-export function runUnnamedSQLBlock(worker: BaseWorker, index: number): void {
-  const document =
-    vscode.window.activeTextEditor?.document ||
-    MALLOY_EXTENSION_STATE.getActiveWebviewPanel()?.document;
-  if (document) {
-    runMalloyQuery(
-      worker,
-      {type: 'unnamed_sql', index, file: document},
-      document.uri.toString(),
-      document.fileName.split('/').pop() || document.fileName
+// const DEFAULT_RESTART_SECONDS = 1;
+
+export type ListenerType = (message: WorkerMessage) => void;
+
+export class WorkerConnection extends WorkerConnectionBase {
+  worker: Worker;
+
+  constructor(context: vscode.ExtensionContext, fileHandler: FileHandler) {
+    super(context, fileHandler);
+    const workerModule = vscode.Uri.joinPath(
+      context.extensionUri,
+      'dist/worker_browser.js'
     );
+
+    const startWorker = () => {
+      this.worker = new Worker(workerModule.toString());
+
+      // TODO - Detect if worker is not responding and
+      // restart
+
+      this.connection = rpc.createMessageConnection(
+        new rpc.BrowserMessageReader(this.worker),
+        new rpc.BrowserMessageWriter(this.worker)
+      );
+      this.connection.listen();
+      context.subscriptions.push(this.connection);
+
+      this.subscribe();
+    };
+
+    startWorker();
+  }
+
+  dispose(): void {
+    this.worker.terminate();
   }
 }

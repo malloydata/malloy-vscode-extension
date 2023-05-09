@@ -28,7 +28,7 @@ import {MALLOY_EXTENSION_STATE, RunState} from '../state';
 import {Result} from '@malloydata/malloy';
 import {QueryMessageType, QueryRunStatus} from '../../common/message_types';
 import {queryDownload} from './query_download';
-import {WorkerMessage} from '../../common/worker_message_types';
+import {BaseWorker, WorkerMessage} from '../../common/worker_message_types';
 import {malloyLog} from '../logger';
 import {trackQueryRun} from '../telemetry';
 import {QuerySpec} from './query_spec';
@@ -38,10 +38,9 @@ import {
   loadWebview,
   showSchemaTreeViewWhenFocused,
 } from './vscode_utils';
-import {CommonLanguageClient} from 'vscode-languageclient';
 
 export function runMalloyQuery(
-  client: CommonLanguageClient,
+  worker: BaseWorker,
   query: QuerySpec,
   panelId: string,
   name: string,
@@ -55,7 +54,10 @@ export function runMalloyQuery(
     },
     (progress, token) => {
       const cancel = () => {
-        client.sendRequest('malloy/cancel', panelId);
+        worker.send({
+          type: 'malloy/cancel',
+          panelId,
+        });
         if (current) {
           const actuallyCurrent = MALLOY_EXTENSION_STATE.getRunState(
             current.panelId
@@ -88,7 +90,8 @@ export function runMalloyQuery(
 
       const {file, ...params} = query;
       const uri = file.uri.toString();
-      client.sendRequest('malloy/run', {
+      worker.send({
+        type: 'malloy/run',
         query: {
           uri,
           ...params,
@@ -104,7 +107,19 @@ export function runMalloyQuery(
       return new Promise(resolve => {
         let off: Disposable | null = null;
         const listener = (msg: WorkerMessage) => {
-          if (msg.type !== 'malloy/queryPanel') {
+          if (msg.type === 'malloy/dead') {
+            current.messages.postMessage({
+              type: QueryMessageType.QueryStatus,
+              status: QueryRunStatus.Error,
+              error: `The worker process has died, and has been restarted.
+This is possibly the result of a database bug. \
+Please consider filing an issue with as much detail as possible at \
+https://github.com/malloydata/malloy/issues.`,
+            });
+            off?.dispose();
+            resolve(undefined);
+            return;
+          } else if (msg.type !== 'malloy/queryPanel') {
             return;
           }
           const {message, panelId: msgPanelId} = msg;
@@ -159,7 +174,7 @@ export function runMalloyQuery(
                     current.messages.onReceiveMessage(message => {
                       if (message.type === QueryMessageType.StartDownload) {
                         queryDownload(
-                          client,
+                          worker,
                           query,
                           message.downloadOptions,
                           queryResult,
@@ -183,7 +198,7 @@ export function runMalloyQuery(
           }
         };
 
-        off = client.onRequest('malloy/queryPanel', listener);
+        off = worker.on('malloy/queryPanel', listener);
       });
     }
   );

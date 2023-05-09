@@ -155,6 +155,10 @@ export type Message =
  * Outgoing messages
  */
 
+export interface WorkerDeadMessage {
+  type: 'malloy/dead';
+}
+
 export interface WorkerDownloadMessage {
   type: 'malloy/download';
   name: string;
@@ -201,6 +205,7 @@ export interface WorkerReadMessage {
 }
 
 export type WorkerMessage =
+  | WorkerDeadMessage
   | WorkerDownloadMessage
   | WorkerLogMessage
   | WorkerQueryPanelMessage
