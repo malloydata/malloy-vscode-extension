@@ -90,7 +90,7 @@ async function setupLanguageServer(
     initializationOptions: {},
   };
 
-  const client = createWorkerLanguageClient(context, clientOptions);
+  client = createWorkerLanguageClient(context, clientOptions);
 
   client.start();
   await client.onReady();
