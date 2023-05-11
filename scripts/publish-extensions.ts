@@ -90,7 +90,7 @@ async function doPublish(version: string) {
       pat: process.env['VSCE_PAT'],
     });
 
-    await publishOvsx(packagePath, preRelease);
+    await publishOvsx(packagePath, target, preRelease);
   }
 
   if (!preRelease) {

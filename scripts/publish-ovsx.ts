@@ -25,6 +25,7 @@ import {spawn} from 'child_process';
 
 export async function publishOvsx(
   path: string,
+  target: string,
   preRelease: boolean
 ): Promise<number | null> {
   const token = process.env['OVSX_TOKEN'];
@@ -33,7 +34,7 @@ export async function publishOvsx(
     return null;
   }
 
-  const args = ['publish', path, '-p', token];
+  const args = ['publish', path, '-p', token, '-t', target];
 
   if (preRelease) {
     args.push('--pre-release');
