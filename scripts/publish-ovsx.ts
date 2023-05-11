@@ -23,7 +23,10 @@
 
 import {spawn} from 'child_process';
 
-export async function publishOvsx(path: string): Promise<number | null> {
+export async function publishOvsx(
+  path: string,
+  preRelease: boolean
+): Promise<number | null> {
   const token = process.env['OVSX_TOKEN'];
   if (!token) {
     console.log(`Skipping ovsx for ${path}`);
@@ -31,6 +34,10 @@ export async function publishOvsx(path: string): Promise<number | null> {
   }
 
   const args = ['publish', path, '-p', token];
+
+  if (preRelease) {
+    args.push('--pre-release');
+  }
 
   return new Promise<number | null>((resolve, reject) => {
     const child = spawn('./node_modules/.bin/ovsx', args)
