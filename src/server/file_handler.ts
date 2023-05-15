@@ -21,11 +21,11 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as rpc from 'vscode-jsonrpc';
+import {Connection} from 'vscode-languageserver';
 import {CellData, FileHandler} from '../common/types';
 
 export class RpcFileHandler implements FileHandler {
-  constructor(private connection: rpc.MessageConnection) {}
+  constructor(private connection: Connection) {}
 
   /**
    * Requests a file from the worker's controller. Although the

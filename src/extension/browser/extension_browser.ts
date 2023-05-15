@@ -29,22 +29,16 @@ import {
   LanguageClientOptions,
 } from 'vscode-languageclient/browser';
 
-// import {WorkerConnection} from './workerless_worker';
-import {WorkerConnection} from './worker_connection_browser';
 import {setupFileMessaging, setupSubscriptions} from '../subscriptions';
-import {FileHandler, MalloyConfig} from '../../common/types';
 import {connectionManager} from './connection_manager';
 import {ConnectionsProvider} from '../tree_views/connections_view';
 import {editConnectionsCommand} from './commands/edit_connections';
 import {fileHandler} from '../utils';
-
 let client: LanguageClient;
-let worker: WorkerConnection;
 
 export function activate(context: vscode.ExtensionContext): void {
-  setupWorker(context, fileHandler);
   setupLanguageServer(context);
-  setupSubscriptions(context, fileHandler, connectionManager, worker, client);
+  setupSubscriptions(context, fileHandler, connectionManager, client);
 
   const connectionsTree = new ConnectionsProvider(context, connectionManager);
   context.subscriptions.push(
@@ -55,7 +49,6 @@ export function activate(context: vscode.ExtensionContext): void {
       if (e.affectsConfiguration('malloy')) {
         await connectionManager.onConfigurationUpdated();
         connectionsTree.refresh();
-        sendWorkerConfig();
       }
     })
   );
@@ -71,9 +64,6 @@ export async function deactivate(): Promise<void> | undefined {
   if (client) {
     await client.stop();
   }
-  if (worker) {
-    worker.send({type: 'exit'});
-  }
 }
 
 async function setupLanguageServer(
@@ -88,32 +78,19 @@ async function setupLanguageServer(
       configurationSection: 'malloy',
     },
     initializationOptions: {},
+    connectionOptions: {
+      // If the server crashes X times in Y mins(e.g., 3 min), it won't get
+      // restarted again(https://github.com/microsoft/vscode-languageserver-node/blob/1320922f95ef182df2cf76b7c96b1a2d3ba14c2a/client/src/common/client.ts#L438).
+      // We can be overly confident and set it to a large number. For now, set the max restart count to Number.MAX_SAFE_INTEGER.
+      maxRestartCount: Number.MAX_SAFE_INTEGER,
+    },
   };
 
   client = createWorkerLanguageClient(context, clientOptions);
 
-  client.start();
-  await client.onReady();
+  await client.start();
 
   setupFileMessaging(context, client, fileHandler);
-}
-
-function sendWorkerConfig() {
-  const rawConfig = vscode.workspace.getConfiguration('malloy');
-  // Strip out functions
-  const config: MalloyConfig = JSON.parse(JSON.stringify(rawConfig));
-  worker.send({
-    type: 'malloy/config',
-    config,
-  });
-}
-
-function setupWorker(
-  context: vscode.ExtensionContext,
-  fileHandler: FileHandler
-): void {
-  worker = new WorkerConnection(context, fileHandler);
-  sendWorkerConfig();
 }
 
 function createWorkerLanguageClient(

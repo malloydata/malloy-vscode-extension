@@ -1,7 +1,7 @@
 import {CodeLensProvider, TextDocument, CodeLens, Command, Range} from 'vscode';
 
 export class MSQLLensProvider implements CodeLensProvider {
-  async provideCodeLenses(document: TextDocument): Promise<CodeLens[]> {
+  async provideCodeLenses(_document: TextDocument): Promise<CodeLens[]> {
     const start = new Range(0, 0, 0, 0);
 
     const runAll: Command = {

@@ -45,7 +45,7 @@ import manyToOneIcon from '../../media/many_to_one.svg';
 import oneToOneIcon from '../../media/one_to_one.svg';
 import {MALLOY_EXTENSION_STATE} from '../state';
 import {ConnectionManager} from '../../common/connection_manager';
-import {CommonLanguageClient} from 'vscode-languageclient/node';
+import {BaseLanguageClient} from 'vscode-languageclient/node';
 import {BuildModelRequest} from '../../common/types';
 
 export class SchemaProvider
@@ -58,7 +58,7 @@ export class SchemaProvider
     private context: vscode.ExtensionContext,
     private connectionManager: ConnectionManager,
     private urlReader: URLReader,
-    private client: CommonLanguageClient
+    private client: BaseLanguageClient
   ) {
     this.resultCache = new Map();
   }
@@ -149,7 +149,7 @@ async function getStructs(
   connectionManager: ConnectionManager,
   reader: URLReader,
   document: vscode.TextDocument,
-  client: CommonLanguageClient
+  client: BaseLanguageClient
 ): Promise<Explore[] | undefined> {
   try {
     const request: BuildModelRequest = {

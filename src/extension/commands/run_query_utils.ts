@@ -28,7 +28,7 @@ import {MALLOY_EXTENSION_STATE, RunState} from '../state';
 import {Result} from '@malloydata/malloy';
 import {QueryMessageType, QueryRunStatus} from '../../common/message_types';
 import {queryDownload} from './query_download';
-import {BaseWorker, WorkerMessage} from '../../common/worker_message_types';
+import {WorkerMessage} from '../../common/worker_message_types';
 import {malloyLog} from '../logger';
 import {trackQueryRun} from '../telemetry';
 import {QuerySpec} from './query_spec';
@@ -38,9 +38,10 @@ import {
   loadWebview,
   showSchemaTreeViewWhenFocused,
 } from './vscode_utils';
+import {BaseLanguageClient} from 'vscode-languageclient';
 
 export function runMalloyQuery(
-  worker: BaseWorker,
+  client: BaseLanguageClient,
   query: QuerySpec,
   panelId: string,
   name: string,
@@ -54,9 +55,9 @@ export function runMalloyQuery(
     },
     (progress, token) => {
       const cancel = () => {
-        worker.send({
+        client.sendRequest('malloy/cancel', {
           type: 'malloy/cancel',
-          panelId,
+          panelId: panelId,
         });
         if (current) {
           const actuallyCurrent = MALLOY_EXTENSION_STATE.getRunState(
@@ -90,8 +91,7 @@ export function runMalloyQuery(
 
       const {file, ...params} = query;
       const uri = file.uri.toString();
-      worker.send({
-        type: 'malloy/run',
+      client.sendRequest('malloy/run', {
         query: {
           uri,
           ...params,
@@ -107,19 +107,7 @@ export function runMalloyQuery(
       return new Promise(resolve => {
         let off: Disposable | null = null;
         const listener = (msg: WorkerMessage) => {
-          if (msg.type === 'malloy/dead') {
-            current.messages.postMessage({
-              type: QueryMessageType.QueryStatus,
-              status: QueryRunStatus.Error,
-              error: `The worker process has died, and has been restarted.
-This is possibly the result of a database bug. \
-Please consider filing an issue with as much detail as possible at \
-https://github.com/malloydata/malloy/issues.`,
-            });
-            off?.dispose();
-            resolve(undefined);
-            return;
-          } else if (msg.type !== 'malloy/queryPanel') {
+          if (msg.type !== 'malloy/queryPanel') {
             return;
           }
           const {message, panelId: msgPanelId} = msg;
@@ -174,7 +162,7 @@ https://github.com/malloydata/malloy/issues.`,
                     current.messages.onReceiveMessage(message => {
                       if (message.type === QueryMessageType.StartDownload) {
                         queryDownload(
-                          worker,
+                          client,
                           query,
                           message.downloadOptions,
                           queryResult,
@@ -198,7 +186,7 @@ https://github.com/malloydata/malloy/issues.`,
           }
         };
 
-        off = worker.on('malloy/queryPanel', listener);
+        off = client.onRequest('malloy/queryPanel', listener);
       });
     }
   );
