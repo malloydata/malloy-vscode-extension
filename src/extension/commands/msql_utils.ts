@@ -36,9 +36,7 @@ export function runMSQLQuery(
   panelId: string,
   name: string,
   document: vscode.TextDocument,
-  connectionName: string,
   statementIndex: number | null,
-  importURL = null,
   showSQLOnly = false
 ): void {
   vscode.window.withProgress(
@@ -87,9 +85,7 @@ export function runMSQLQuery(
         type: 'malloy/run-msql',
         panelId,
         malloySQLQuery,
-        connectionName,
         statementIndex,
-        importURL,
         showSQLOnly,
       });
 
@@ -158,18 +154,4 @@ function logTime(name: string, start: number, end: number) {
   malloyLog.appendLine(
     `${name} time: ${((end - start) / 1000).toLocaleString()}s`
   );
-}
-
-export function getConnectionName(documentText: string): string {
-  return (documentText.match(/--!( |\t)+connection:.*?(\n|$)/g) || [''])
-    .shift()
-    .split('connection:')[1]
-    ?.trim();
-}
-
-export function getImportURL(documentText: string): string {
-  return (documentText.match(/--!( |\t)+import:.*?(\n|$)/g) || [''])
-    .shift()
-    .split('import:')[1]
-    ?.trim();
 }

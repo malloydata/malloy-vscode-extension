@@ -11,7 +11,8 @@
       "@malloydata/db-bigquery",
       "@malloydata/db-duckdb",
       "@malloydata/db-postgres",
-      "@malloydata/render"
+      "@malloydata/render",
+      "@malloydata/malloy-sql"
     ]
   },
   "engines": {
@@ -616,6 +617,7 @@
     "@malloydata/db-postgres": "0.0.32",
     "@malloydata/malloy": "0.0.32",
     "@malloydata/render": "0.0.32",
+    "@malloydata/malloy-sql": "file:../malloy/packages/malloy-malloy-sql",
     "@popperjs/core": "^2.11.6",
     "@vscode/webview-ui-toolkit": "^1.2.1",
     "duckdb": "0.7.1",

@@ -38,6 +38,7 @@ import {
 import {ConnectionManager} from '../common/connection_manager';
 import {FileHandler} from '../common/types';
 import {MalloyQueryData, Result, Runtime, URLReader} from '@malloydata/malloy';
+import {MalloySQLStatementType, MalloySQLParser} from '@malloydata/malloy-sql';
 
 interface QueryEntry {
   panelId: string;
@@ -45,7 +46,6 @@ interface QueryEntry {
 }
 
 const runningQueries: Record<string, QueryEntry> = {};
-const malloyInSQLRegex = /%\{([\s\S]*?)\}%/g;
 
 // Malloy needs to load model via a URI to know how to import relative model files, but we
 // don't have a real URI because we're constructing the model from only parts of a real document.
@@ -80,14 +80,7 @@ export const runMSQLQuery = async (
   messageHandler: MessageHandler,
   fileHandler: FileHandler,
   connectionManager: ConnectionManager,
-  {
-    panelId,
-    malloySQLQuery,
-    connectionName,
-    statementIndex,
-    importURL,
-    showSQLOnly,
-  }: MessageRunMSQL
+  {panelId, malloySQLQuery, statementIndex, showSQLOnly}: MessageRunMSQL
 ): Promise<void> => {
   const sendMessage = (message: MSQLQueryPanelMessage) => {
     const msg: WorkerMSQLQueryPanelMessage = {
@@ -101,57 +94,33 @@ export const runMSQLQuery = async (
 
   // conveniently, what we call panelId is also the document URI
   const url = new URL(panelId);
-  runningQueries[panelId] = {panelId, canceled: false};
+  const connectionLookup = connectionManager.getConnectionLookup(url);
   const evaluatedStatements: EvaluatedMSQLStatement[] = [];
   const abortOnExecutionError = true;
 
+  // TODO
+  runningQueries[panelId] = {panelId, canceled: false};
+
   try {
-    if (connectionName === '')
-      throw new Error(
-        'Connection name cannot be empty. Add a comment to specify the connection like: --! connection: bigquery'
-      );
-
-    const connectionLookup = connectionManager.getConnectionLookup(url);
-    const connection = await connectionLookup.lookupConnection(connectionName);
-    const virturlURIFileHandler = new VirtualURIFileHandler(fileHandler);
-    const runtime = new Runtime(virturlURIFileHandler, connectionLookup);
-
-    let statements = malloySQLQuery.split(';;;');
-    if (statementIndex) statements = [statements[statementIndex]];
-
-    // TODO remove when actually parsing
-    if (
-      statements.length > 0 &&
-      statements[statements.length - 1].trim() === ''
-    )
-      statements.pop();
+    const parser = new MalloySQLParser();
+    const statements = parser.parse(malloySQLQuery);
+    let malloyDocument = '';
 
     for (let i = 0; i < statements.length; i++) {
       const statement = statements[i];
-
-      const malloyQueries = [];
-      let match = malloyInSQLRegex.exec(statement);
-      while (match) {
-        malloyQueries.push(match);
-        match = malloyInSQLRegex.exec(statement);
-      }
-
-      let compiledStatement = statement;
-      compiledStatement = compiledStatement.trim();
-
+      let compiledStatement = statement.statementText;
       const compileErrors = [];
 
-      // if user ended stmt with semicolon, as many might in a single-query file,
-      // strip it
-      if (compiledStatement.charAt(compiledStatement.length - 1) === ';')
-        compiledStatement = compiledStatement.slice(0, -1);
+      const connection = await connectionLookup.lookupConnection(
+        statement.config.connection
+      );
+      const virturlURIFileHandler = new VirtualURIFileHandler(fileHandler);
+      const runtime = new Runtime(virturlURIFileHandler, connectionLookup);
 
-      if (malloyQueries.length > 0) {
-        if (!importURL)
-          throw new Error(
-            'Found Malloy in query but no import was specified. Add a comment to specify an import like: --! import: "mysource.malloy"'
-          );
-
+      if (statement.type === MalloySQLStatementType.MALLOY) {
+        // TODO attempt to get line numbers correct
+        malloyDocument += statement.statementText;
+      } else if (statement.type === MalloySQLStatementType.SQL) {
         sendMessage({
           type: MSQLMessageType.QueryStatus,
           status: MSQLQueryRunStatus.Compiling,
@@ -159,38 +128,33 @@ export const runMSQLQuery = async (
           statementIndex: i,
         });
 
-        for (const malloyQueryMatch of malloyQueries) {
+        for (const malloyQuery of statement.embeddedMalloyQueries) {
           if (runningQueries[panelId].canceled) return;
 
-          const malloyQuery = malloyQueryMatch[1];
-
-          // pad with newlines so that error messages line numbers are correct
+          // TODO pad with newlines so that error messages line numbers are correct
           // TODO also pad with prior queries length
-          let newlinesCount =
-            malloySQLQuery.slice(0, malloyQueryMatch.index).split(/\r\n|\r|\n/)
-              .length - 2;
-          if (newlinesCount < 0) newlinesCount = 1;
+          const newlinesCount = 1;
+          malloyDocument += `\nquery: ${malloyQuery.query}`;
 
-          const model = `import ${importURL}\n${'\n'.repeat(
-            newlinesCount
-          )}query: ${malloyQuery}`;
-
-          virturlURIFileHandler.setVirtualFile(url, model);
+          virturlURIFileHandler.setVirtualFile(url, malloyDocument);
           runningQueries[panelId] = {panelId, canceled: false};
 
           try {
-            const runnable = runtime.loadQueryByIndex(url, 0);
+            const runnable = runtime.loadQueryByIndex(url, i);
             const generatedSQL = await runnable.getSQL();
 
+            const replaceString = malloyQuery.parenthized
+              ? `%{${malloyQuery}}%`
+              : `(%{${malloyQuery}}%)`;
+
             compiledStatement = compiledStatement.replace(
-              `%{${malloyQuery}}%`,
-              generatedSQL
+              replaceString,
+              malloyQuery.parenthized ? generatedSQL : `(${generatedSQL})`
             );
           } catch (e) {
+            // TODO handle specific errors
             compileErrors.push(e);
           }
-
-          if (runningQueries[panelId].canceled) return;
         }
       }
 
@@ -242,7 +206,7 @@ export const runMSQLQuery = async (
                   structDefAttempt,
                   compiledStatement,
                   sqlResults,
-                  connectionName
+                  statement.config.connection
                 ).toJSON(),
                 compiledStatement,
                 statementIndex: i,
