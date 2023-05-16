@@ -117,17 +117,17 @@ export const runMSQLQuery = async (
       const virturlURIFileHandler = new VirtualURIFileHandler(fileHandler);
       const runtime = new Runtime(virturlURIFileHandler, connectionLookup);
 
+      sendMessage({
+        type: MSQLMessageType.QueryStatus,
+        status: MSQLQueryRunStatus.Compiling,
+        totalStatements: statements.length,
+        statementIndex: i,
+      });
+
       if (statement.type === MalloySQLStatementType.MALLOY) {
         // TODO attempt to get line numbers correct
         malloyDocument += statement.statementText;
       } else if (statement.type === MalloySQLStatementType.SQL) {
-        sendMessage({
-          type: MSQLMessageType.QueryStatus,
-          status: MSQLQueryRunStatus.Compiling,
-          totalStatements: statements.length,
-          statementIndex: i,
-        });
-
         for (const malloyQuery of statement.embeddedMalloyQueries) {
           if (runningQueries[panelId].canceled) return;
 
@@ -144,12 +144,12 @@ export const runMSQLQuery = async (
             const generatedSQL = await runnable.getSQL();
 
             const replaceString = malloyQuery.parenthized
-              ? `%{${malloyQuery}}%`
-              : `(%{${malloyQuery}}%)`;
+              ? `(%{${malloyQuery.query}}%)`
+              : `%{${malloyQuery.query}}%`;
 
             compiledStatement = compiledStatement.replace(
               replaceString,
-              malloyQuery.parenthized ? generatedSQL : `(${generatedSQL})`
+              `(${generatedSQL})`
             );
           } catch (e) {
             // TODO handle specific errors
@@ -164,7 +164,10 @@ export const runMSQLQuery = async (
           errors: compileErrors,
           statementIndex: i,
         });
-      } else if (showSQLOnly) {
+      } else if (
+        showSQLOnly ||
+        statement.type === MalloySQLStatementType.MALLOY
+      ) {
         evaluatedStatements.push({
           type: EvaluatedMSQLStatementType.Compiled,
           compiledStatement,

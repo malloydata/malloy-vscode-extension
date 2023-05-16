@@ -249,30 +249,35 @@ export const App: React.FC = () => {
       )}
       {!error && resultKind === ResultKind.RESULTS && (
         <Scroll>
-          {evaluatedStatements.map(result => {
-            return (
-              <ResultsContainer key={result.statementIndex}>
-                {result.type === EvaluatedMSQLStatementType.Executed && (
-                  <div style={{margin: '10px'}}>
-                    <DOMElement element={result.renderedHTML} />
-                  </div>
-                )}
-                {result.type === EvaluatedMSQLStatementType.ExecutionError && (
-                  <Error multiline={true}>{result.prettyError}</Error>
-                )}
-                {result.type === EvaluatedMSQLStatementType.CompileError &&
-                  result.errors.map((compileError, index) => {
-                    return (
-                      <Error multiline={true} key={index}>
-                        {compileError.log
-                          .map(error => error.message)
-                          .join('\n')}
-                      </Error>
-                    );
-                  })}
-              </ResultsContainer>
-            );
-          })}
+          {evaluatedStatements
+            .filter(
+              result => result.type !== EvaluatedMSQLStatementType.Compiled
+            )
+            .map(result => {
+              return (
+                <ResultsContainer key={result.statementIndex}>
+                  {result.type === EvaluatedMSQLStatementType.Executed && (
+                    <div style={{margin: '10px'}}>
+                      <DOMElement element={result.renderedHTML} />
+                    </div>
+                  )}
+                  {result.type ===
+                    EvaluatedMSQLStatementType.ExecutionError && (
+                    <Error multiline={true}>{result.prettyError}</Error>
+                  )}
+                  {result.type === EvaluatedMSQLStatementType.CompileError &&
+                    result.errors.map((compileError, index) => {
+                      return (
+                        <Error multiline={true} key={index}>
+                          {compileError.log
+                            .map(error => error.message)
+                            .join('\n')}
+                        </Error>
+                      );
+                    })}
+                </ResultsContainer>
+              );
+            })}
         </Scroll>
       )}
 
