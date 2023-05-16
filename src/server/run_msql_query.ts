@@ -134,13 +134,13 @@ export const runMSQLQuery = async (
           // TODO pad with newlines so that error messages line numbers are correct
           // TODO also pad with prior queries length
           const newlinesCount = 1;
-          malloyDocument += `\nquery: ${malloyQuery.query}`;
 
           virturlURIFileHandler.setVirtualFile(url, malloyDocument);
           runningQueries[panelId] = {panelId, canceled: false};
 
           try {
-            const runnable = runtime.loadQueryByIndex(url, i);
+            const model = runtime.loadModel(url);
+            const runnable = model.loadQuery(`\nquery: ${malloyQuery.query}`);
             const generatedSQL = await runnable.getSQL();
 
             const replaceString = malloyQuery.parenthized
