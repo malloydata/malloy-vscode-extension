@@ -224,6 +224,7 @@ export const runMSQLQuery = async (
 
           if (abortOnExecutionError) break;
         }
+        if (i === statementIndex) break;
       }
 
       if (runningQueries[panelId].canceled) return;

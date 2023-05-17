@@ -157,6 +157,12 @@
         "enablement": "editorLangId == malloy-sql"
       },
       {
+        "command": "malloy.runMalloySQLStatement",
+        "title": "Run MalloySQL Statement",
+        "category": "Malloy",
+        "enablement": "editorLangId == malloy-sql"
+      },
+      {
         "command": "malloy.showSQLMalloySQLFile",
         "title": "Show MalloySQL Compiled SQL",
         "category": "Malloy",

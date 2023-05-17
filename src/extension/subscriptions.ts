@@ -59,6 +59,7 @@ import {runMalloySQLFile} from './commands/run_msql_file';
 import {showSQLMalloySQLFile} from './commands/show_sql_msql_file';
 import {MSQLLensProvider} from './lenses/msql_lenses';
 import {WorkerReadMessage} from '../common/worker_message_types';
+import {runMalloySQLStatement} from './commands/run_msql_statement';
 
 function getNewClientId(): string {
   return uuid();
@@ -138,6 +139,14 @@ export const setupSubscriptions = (
   context.subscriptions.push(
     vscode.commands.registerCommand('malloy.runMalloySQLFile', () =>
       runMalloySQLFile(client)
+    )
+  );
+
+  // Run Malloy SQL Statement
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      'malloy.runMalloySQLStatement',
+      (statementIndex: number) => runMalloySQLStatement(client, statementIndex)
     )
   );
 
