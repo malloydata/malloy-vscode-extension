@@ -152,7 +152,6 @@ export const runMSQLQuery = async (
               `(${generatedSQL})`
             );
           } catch (e) {
-            // TODO handle specific errors
             compileErrors.push(e);
           }
         }
@@ -220,6 +219,7 @@ export const runMSQLQuery = async (
             error: error.message,
             compiledStatement,
             statementIndex: i,
+            statementFirstLine: statement.location.start.line,
           });
 
           if (abortOnExecutionError) break;

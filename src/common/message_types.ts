@@ -137,6 +137,7 @@ export interface MSQLStatmentWasCompiled {
 export interface MSQLStatementExecutionError extends MSQLStatmentWasCompiled {
   type: EvaluatedMSQLStatementType.ExecutionError;
   error: string;
+  statementFirstLine: number;
   prettyError?: string;
 }
 

@@ -30,6 +30,7 @@
       },
       "name": "meta.embedded.block.malloysql.sql",
       "patterns": [
+        {"include": "#comments"},
         {
           "begin": "%{",
           "end": "}%",

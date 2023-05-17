@@ -175,9 +175,11 @@ export const App: React.FC = () => {
                 evaluatedStatement.type ===
                 EvaluatedMSQLStatementType.ExecutionError
               ) {
-                evaluatedStatement.prettyError = `${
-                  evaluatedStatement.error
-                }\n\n${'-'.repeat(10)}Generated SQL${'-'.repeat(
+                evaluatedStatement.prettyError = `Execution error in statement ${statementIndex} (line ${
+                  evaluatedStatement.statementFirstLine
+                }):\n${evaluatedStatement.error}\n\n${'-'.repeat(
+                  10
+                )}Generated SQL${'-'.repeat(
                   10
                 )}\n\n${evaluatedStatement.compiledStatement
                   .split('\n')
@@ -249,35 +251,30 @@ export const App: React.FC = () => {
       )}
       {!error && resultKind === ResultKind.RESULTS && (
         <Scroll>
-          {evaluatedStatements
-            .filter(
-              result => result.type !== EvaluatedMSQLStatementType.Compiled
-            )
-            .map(result => {
-              return (
-                <ResultsContainer key={result.statementIndex}>
-                  {result.type === EvaluatedMSQLStatementType.Executed && (
-                    <div style={{margin: '10px'}}>
-                      <DOMElement element={result.renderedHTML} />
-                    </div>
-                  )}
-                  {result.type ===
-                    EvaluatedMSQLStatementType.ExecutionError && (
-                    <Error multiline={true}>{result.prettyError}</Error>
-                  )}
-                  {result.type === EvaluatedMSQLStatementType.CompileError &&
-                    result.errors.map((compileError, index) => {
-                      return (
-                        <Error multiline={true} key={index}>
-                          {compileError.log
-                            .map(error => error.message)
-                            .join('\n')}
-                        </Error>
-                      );
-                    })}
-                </ResultsContainer>
-              );
-            })}
+          {evaluatedStatements.map(result => {
+            return (
+              <ResultsContainer key={result.statementIndex}>
+                {result.type === EvaluatedMSQLStatementType.Executed && (
+                  <div style={{margin: '10px'}}>
+                    <DOMElement element={result.renderedHTML} />
+                  </div>
+                )}
+                {result.type === EvaluatedMSQLStatementType.ExecutionError && (
+                  <Error multiline={true}>{result.prettyError}</Error>
+                )}
+                {result.type === EvaluatedMSQLStatementType.CompileError &&
+                  result.errors.map((compileError, index) => {
+                    return (
+                      <Error multiline={true} key={index}>
+                        {compileError.log
+                          .map(error => error.message)
+                          .join('\n')}
+                      </Error>
+                    );
+                  })}
+              </ResultsContainer>
+            );
+          })}
         </Scroll>
       )}
 
