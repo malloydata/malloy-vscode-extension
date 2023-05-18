@@ -70,6 +70,9 @@ export const App: React.FC = () => {
   const [observer, setObserver] = useState<MutationObserver>();
   const [canDownload, setCanDownload] = useState(false);
   const [canDownloadStream, setCanDownloadStream] = useState(false);
+  const [statsHtml, setStatsHtml] = useState<HTMLElement>(
+    document.createElement('span')
+  );
   const tooltipId = useRef(0);
   const {setTooltipRef, setTriggerRef, getTooltipProps} = usePopperTooltip({
     visible: tooltipVisible,
@@ -139,6 +142,19 @@ export const App: React.FC = () => {
               const data = result.data;
               setJSON(JSON.stringify(data.toObject(), null, 2));
               setSQL(result.sql);
+
+              const statsDiv = document.createElement('div');
+              const compileTimeSpan = document.createElement('p');
+              const runTimeSpan = document.createElement('p');
+              const totalTimeSpan = document.createElement('p');
+              compileTimeSpan.textContent = `Compile Time: ${message.stats.compileTime.toLocaleString()}s`;
+              runTimeSpan.textContent = `Run Time: ${message.stats.runTime.toLocaleString()}s`;
+              totalTimeSpan.textContent = `Run Time: ${message.stats.totalTime.toLocaleString()}s`;
+              statsDiv.appendChild(compileTimeSpan);
+              statsDiv.appendChild(runTimeSpan);
+              statsDiv.appendChild(totalTimeSpan);
+              setStatsHtml(statsDiv);
+
               const rendered = await new HTMLView(document).render(data, {
                 dataStyles,
                 isDrillingEnabled: false,
@@ -198,6 +214,9 @@ export const App: React.FC = () => {
           break;
         case ResultKind.SQL:
           navigator.clipboard.writeText(sql);
+          break;
+        case ResultKind.STATS:
+          navigator.clipboard.writeText(getStyledHTML(statsHtml));
           break;
       }
       setTriggerRef(target as HTMLElement);
@@ -284,6 +303,14 @@ export const App: React.FC = () => {
               style={{margin: '10px', whiteSpace: 'break-spaces'}}
             />
           </PrismContainer>
+        </Scroll>
+      )}
+      {!error && resultKind === ResultKind.STATS && (
+        <Scroll>
+          <div style={{margin: '10px'}}>
+            <CopyButton onClick={copyToClipboard} />
+            <DOMElement element={statsHtml} />
+          </div>
         </Scroll>
       )}
       {error && <Error multiline={error.includes('\n')}>{error}</Error>}

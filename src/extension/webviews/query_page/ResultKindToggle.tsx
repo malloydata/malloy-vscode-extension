@@ -28,6 +28,7 @@ export enum ResultKind {
   HTML = 'html',
   JSON = 'json',
   SQL = 'sql',
+  STATS = 'stats',
 }
 
 interface ResultKindToggleProps {
@@ -59,6 +60,12 @@ export const ResultKindToggle: React.FC<ResultKindToggleProps> = ({
           onClick={() => setKind(ResultKind.SQL)}
         >
           SQL
+        </ResultControl>
+        <ResultControl
+          data-selected={kind === ResultKind.STATS}
+          onClick={() => setKind(ResultKind.STATS)}
+        >
+          STATS
         </ResultControl>
       </ResultControls>
     </div>
