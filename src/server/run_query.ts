@@ -40,6 +40,7 @@ import {
 import {createRunnable} from './create_runnable';
 import {ConnectionManager} from '../common/connection_manager';
 import {FileHandler} from '../common/types';
+// eslint-disable-next-line no-restricted-imports
 
 interface QueryEntry {
   panelId: string;
