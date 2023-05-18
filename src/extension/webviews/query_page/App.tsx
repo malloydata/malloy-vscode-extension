@@ -125,6 +125,7 @@ export const App: React.FC = () => {
           ) {
             setShowOnlySQL(true);
             setWarning(undefined);
+            setStats(undefined);
             setStatus(Status.Done);
             setSQL(message.sql);
             setResultKind(ResultKind.SQL);
@@ -132,6 +133,7 @@ export const App: React.FC = () => {
             const {resultJson, dataStyles, canDownloadStream} = message;
             setWarning(undefined);
             setShowOnlySQL(false);
+            setStats(undefined);
             // TODO(web) Figure out some way to download current result set
             setCanDownload(canDownloadStream);
             setCanDownloadStream(canDownloadStream);
