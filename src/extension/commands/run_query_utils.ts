@@ -100,9 +100,6 @@ export function runMalloyQuery(
         name,
         showSQLOnly,
       });
-      const allBegin = Date.now();
-      const compileBegin = allBegin;
-      let runBegin: number;
 
       return new Promise(resolve => {
         let off: Disposable | null = null;
@@ -128,10 +125,7 @@ export function runMalloyQuery(
                   break;
                 case QueryRunStatus.Compiled:
                   {
-                    const compileEnd = Date.now();
-                    runBegin = compileEnd;
                     malloyLog.appendLine(message.sql);
-                    logTime('Compile', compileBegin, compileEnd);
 
                     if (showSQLOnly) {
                       progress.report({increment: 100, message: 'Complete'});
@@ -149,15 +143,14 @@ export function runMalloyQuery(
                   break;
                 case QueryRunStatus.Done:
                   {
-                    const runEnd = Date.now();
-                    if (runBegin !== null) {
-                      logTime('Run', runBegin, runEnd);
+                    if (message.stats !== undefined) {
+                      logTime('Compile', message.stats.compileTime);
+                      logTime('Run', message.stats.runTime);
+                      logTime('Total', message.stats.totalTime);
                     }
                     const {resultJson} = message;
                     const queryResult = Result.fromJSON(resultJson);
                     progress.report({increment: 100, message: 'Rendering'});
-                    const allEnd = Date.now();
-                    logTime('Total', allBegin, allEnd);
 
                     current.messages.onReceiveMessage(message => {
                       if (message.type === QueryMessageType.StartDownload) {
@@ -192,8 +185,6 @@ export function runMalloyQuery(
   );
 }
 
-function logTime(name: string, start: number, end: number) {
-  malloyLog.appendLine(
-    `${name} time: ${((end - start) / 1000).toLocaleString()}s`
-  );
+function logTime(name: string, time: number) {
+  malloyLog.appendLine(`${name} time: ${time}s`);
 }
