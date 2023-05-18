@@ -40,7 +40,6 @@ import {
 import {createRunnable} from './create_runnable';
 import {ConnectionManager} from '../common/connection_manager';
 import {FileHandler} from '../common/types';
-// eslint-disable-next-line no-restricted-imports
 
 interface QueryEntry {
   panelId: string;
@@ -80,9 +79,6 @@ export const runQuery = async (
     );
 
     runningQueries[panelId] = {panelId, canceled: false};
-
-    const allBegin = Date.now();
-    const compileBegin = allBegin;
     sendMessage(
       messageHandler,
       {
@@ -144,7 +140,6 @@ export const runQuery = async (
       return;
     }
 
-    const runBegin = Date.now();
     sendMessage(
       messageHandler,
       {
@@ -158,12 +153,6 @@ export const runQuery = async (
     const queryResult = await runnable.run({rowLimit});
     if (runningQueries[panelId].canceled) return;
 
-    // Calculate execution times.
-    const runFinish = Date.now();
-    const compileTime = ellapsedTime(compileBegin, runBegin);
-    const runTime = ellapsedTime(runBegin, runFinish);
-    const totalTime = ellapsedTime(allBegin, runFinish);
-
     sendMessage(
       messageHandler,
       {
@@ -172,11 +161,6 @@ export const runQuery = async (
         resultJson: queryResult.toJSON(),
         dataStyles,
         canDownloadStream: !isBrowser,
-        stats: {
-          compileTime: compileTime,
-          runTime: runTime,
-          totalTime: totalTime,
-        },
       },
       panelId
     );
@@ -200,7 +184,3 @@ export const cancelQuery = ({panelId}: MessageCancel): void => {
     runningQueries[panelId].canceled = true;
   }
 };
-
-function ellapsedTime(start: number, end: number): number {
-  return (end - start) / 1000;
-}
