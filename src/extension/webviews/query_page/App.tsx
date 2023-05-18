@@ -71,7 +71,7 @@ export const App: React.FC = () => {
   const [observer, setObserver] = useState<MutationObserver>();
   const [canDownload, setCanDownload] = useState(false);
   const [canDownloadStream, setCanDownloadStream] = useState(false);
-  const [stats, setStats] = useState<string>('');
+  const [stats, setStats] = useState<string | undefined>(undefined);
   const tooltipId = useRef(0);
   const {setTooltipRef, setTriggerRef, getTooltipProps} = usePopperTooltip({
     visible: tooltipVisible,
@@ -141,9 +141,9 @@ export const App: React.FC = () => {
               const data = result.data;
               setJSON(JSON.stringify(data.toObject(), null, 2));
               setSQL(result.sql);
-
-              setStats(getStats(message.stats));
-
+              if (message.stats) {
+                setStats(getStats(message.stats));
+              }
               const rendered = await new HTMLView(document).render(data, {
                 dataStyles,
                 isDrillingEnabled: false,
@@ -293,7 +293,7 @@ export const App: React.FC = () => {
       )}
       {error && <Error multiline={error.includes('\n')}>{error}</Error>}
       {warning && <Warning>{warning}</Warning>}
-      <Tooltip>{stats}</Tooltip>
+      {stats && <StatsBar>{stats}</StatsBar>}
       {tooltipVisible && (
         <Tooltip ref={setTooltipRef} {...getTooltipProps()}>
           Copied!
@@ -379,6 +379,13 @@ const Tooltip = styled.div`
 const Warning = styled.div`
   color: var(--vscode-statusBarItem-warningForeground);
   background-color: var(--vscode-statusBarItem-warningBackground);
+  padding: 5px;
+`;
+
+const StatsBar = styled.div`
+  background-color: #505050;
+  color: white;
+  box-shadow: rgb(144 144 144) 0px 1px 5px 0px;
   padding: 5px;
 `;
 
