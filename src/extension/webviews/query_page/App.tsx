@@ -35,6 +35,7 @@ import {
   QueryMessageType,
   QueryPanelMessage,
   QueryRunStatus,
+  QueryRunStats,
 } from '../../../common/message_types';
 import {Spinner} from '../components';
 import {ResultKind, ResultKindToggle} from './ResultKindToggle';
@@ -70,6 +71,7 @@ export const App: React.FC = () => {
   const [observer, setObserver] = useState<MutationObserver>();
   const [canDownload, setCanDownload] = useState(false);
   const [canDownloadStream, setCanDownloadStream] = useState(false);
+  const [stats, setStats] = useState<string>('');
   const tooltipId = useRef(0);
   const {setTooltipRef, setTriggerRef, getTooltipProps} = usePopperTooltip({
     visible: tooltipVisible,
@@ -139,6 +141,9 @@ export const App: React.FC = () => {
               const data = result.data;
               setJSON(JSON.stringify(data.toObject(), null, 2));
               setSQL(result.sql);
+
+              setStats(getStats(message.stats));
+
               const rendered = await new HTMLView(document).render(data, {
                 dataStyles,
                 isDrillingEnabled: false,
@@ -288,6 +293,7 @@ export const App: React.FC = () => {
       )}
       {error && <Error multiline={error.includes('\n')}>{error}</Error>}
       {warning && <Warning>{warning}</Warning>}
+      <Tooltip>{stats}</Tooltip>
       {tooltipVisible && (
         <Tooltip ref={setTooltipRef} {...getTooltipProps()}>
           Copied!
@@ -342,6 +348,10 @@ function getStyledHTML(html: HTMLElement): string {
 </style>
 `;
   return styles + html.outerHTML;
+}
+
+function getStats(stats: QueryRunStats): string {
+  return `Compile Time: ${stats.compileTime.toLocaleString()}s, Run Time: ${stats.runTime.toLocaleString()}s, Total Time: ${stats.totalTime.toLocaleString()}s`;
 }
 
 const DOMElement: React.FC<{element: HTMLElement}> = ({element}) => {
