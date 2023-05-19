@@ -144,7 +144,9 @@ export const App: React.FC = () => {
               setJSON(JSON.stringify(data.toObject(), null, 2));
               setSQL(result.sql);
               if (message.stats) {
-                setStats(getStats(message.stats));
+                setStats(
+                  getStats(message.stats, result.runStats?.queryCostBytes)
+                );
               }
               const rendered = await new HTMLView(document).render(data, {
                 dataStyles,
@@ -352,8 +354,11 @@ function getStyledHTML(html: HTMLElement): string {
   return styles + html.outerHTML;
 }
 
-function getStats(stats: QueryRunStats): string {
-  return `Compile Time: ${stats.compileTime.toLocaleString()}s, Run Time: ${stats.runTime.toLocaleString()}s, Total Time: ${stats.totalTime.toLocaleString()}s`;
+function getStats(stats: QueryRunStats, queryCostBytes?: number): string {
+  const queryCostBytesFormatted = queryCostBytes
+    ? ` Processed ${(queryCostBytes / 1024 / 1024).toLocaleString()} MB.`
+    : '';
+  return `Compile Time: ${stats.compileTime.toLocaleString()}s, Run Time: ${stats.runTime.toLocaleString()}s, Total Time: ${stats.totalTime.toLocaleString()}s.${queryCostBytesFormatted}`;
 }
 
 const DOMElement: React.FC<{element: HTMLElement}> = ({element}) => {
