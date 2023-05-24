@@ -57,7 +57,6 @@ import {showSQLFileCommand} from './commands/show_sql_file';
 import {showSQLNamedQueryCommand} from './commands/show_sql_named_query';
 import {runMalloySQLFile} from './commands/run_msql_file';
 import {showSQLMalloySQLFile} from './commands/show_sql_msql_file';
-import {MSQLLensProvider} from './lenses/msql_lenses';
 import {WorkerReadMessage} from '../common/worker_message_types';
 import {runMalloySQLStatement} from './commands/run_msql_statement';
 
@@ -223,15 +222,6 @@ export const setupSubscriptions = (
   // Malloy help view.
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider('malloyHelp', provider)
-  );
-
-  context.subscriptions.push(
-    vscode.languages.registerCodeLensProvider(
-      {
-        language: 'malloy-sql',
-      },
-      new MSQLLensProvider()
-    )
   );
 
   activateNotebookSerializer(context);

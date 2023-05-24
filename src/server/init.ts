@@ -35,10 +35,10 @@ import {
 import debounce from 'lodash/debounce';
 
 import {TextDocument} from 'vscode-languageserver-textdocument';
-import {getMalloyDiagnostics} from './diagnostics';
+import {getMalloyDiagnostics, getMalloySQLDiagnostics} from './diagnostics';
 import {getMalloySymbols} from './symbols';
 import {TOKEN_TYPES, TOKEN_MODIFIERS, stubMalloyHighlights} from './highlights';
-import {getMalloyLenses} from './lenses';
+import {getMalloyLenses, getMalloySQLLenses} from './lenses';
 import {
   getCompletionItems,
   resolveCompletionItem,
@@ -104,12 +104,16 @@ export const initServer = (
       const versionsAtRequestTime = new Map(
         documents.all().map(document => [document.uri, document.version])
       );
-      const diagnostics = await getMalloyDiagnostics(
-        translateCache,
-        connectionManager,
-        documents,
-        document
-      );
+      const diagnostics =
+        document.languageId === 'malloy'
+          ? await getMalloyDiagnostics(
+              translateCache,
+              connectionManager,
+              documents,
+              document
+            )
+          : await getMalloySQLDiagnostics(document);
+
       // Only send diagnostics if the document hasn't changed since this request started
       for (const uri in diagnostics) {
         const versionAtRequest = versionsAtRequestTime.get(uri);
@@ -135,24 +139,30 @@ export const initServer = (
 
   connection.onDocumentSymbol(handler => {
     const document = documents.get(handler.textDocument.uri);
-    return document ? getMalloySymbols(document) : [];
+    return document && document.languageId === 'malloy'
+      ? getMalloySymbols(document)
+      : [];
   });
 
   connection.languages.semanticTokens.on(handler => {
     const document = documents.get(handler.textDocument.uri);
-    return document
+    return document && document.languageId === 'malloy'
       ? stubMalloyHighlights(document)
       : new SemanticTokensBuilder().build();
   });
 
   connection.onCodeLens(handler => {
     const document = documents.get(handler.textDocument.uri);
-    return document ? getMalloyLenses(document) : [];
+    if (document) {
+      if (document.languageId === 'malloy') return getMalloyLenses(document);
+      if (document.languageId === 'malloy-sql')
+        return getMalloySQLLenses(document);
+    }
   });
 
   connection.onDefinition(handler => {
     const document = documents.get(handler.textDocument.uri);
-    return document
+    return document && document.languageId === 'malloy'
       ? getMalloyDefinitionReference(
           translateCache,
           connectionManager,
@@ -172,7 +182,9 @@ export const initServer = (
   // This handler provides the initial list of the completion items.
   connection.onCompletion((params): CompletionItem[] => {
     const document = documents.get(params.textDocument.uri);
-    return document ? getCompletionItems(document, params) : [];
+    return document && document.languageId === 'malloy'
+      ? getCompletionItems(document, params)
+      : [];
   });
 
   // This handler resolves additional information for the item selected in
@@ -184,7 +196,9 @@ export const initServer = (
   connection.onHover((params: HoverParams): Hover | null => {
     const document = documents.get(params.textDocument.uri);
 
-    return document ? getHover(document, params) : null;
+    return document && document.languageId === 'malloy'
+      ? getHover(document, params)
+      : null;
   });
 
   documents.listen(connection);

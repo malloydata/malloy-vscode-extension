@@ -22,3 +22,4 @@
  */
 
 export {getMalloyLenses} from './lenses';
+export {getMalloySQLLenses} from './malloysql-lenses';

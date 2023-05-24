@@ -61,6 +61,7 @@
     "onCommand:malloy.refreshSchema",
     "onCommand:malloy.editConnections",
     "onCommand:malloy.runMalloySQLFile",
+    "onCommand:malloy.runMalloySQLStatement",
     "onCommand:malloy.showSQLMalloySQLFile",
     "onLanguage:malloy",
     "onLanguage:malloy-sql",

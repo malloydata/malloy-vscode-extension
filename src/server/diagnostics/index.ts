@@ -22,3 +22,4 @@
  */
 
 export {getMalloyDiagnostics} from './diagnostics';
+export {getMalloySQLDiagnostics} from './malloysql-diagnostics';

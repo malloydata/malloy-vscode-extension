@@ -37,7 +37,13 @@ import {
 } from '../common/message_types';
 import {ConnectionManager} from '../common/connection_manager';
 import {FileHandler} from '../common/types';
-import {MalloyQueryData, Result, Runtime, URLReader} from '@malloydata/malloy';
+import {
+  MalloyQueryData,
+  ModelMaterializer,
+  Result,
+  Runtime,
+  URLReader,
+} from '@malloydata/malloy';
 import {MalloySQLStatementType, MalloySQLParser} from '@malloydata/malloy-sql';
 
 interface QueryEntry {
@@ -94,28 +100,30 @@ export const runMSQLQuery = async (
 
   // conveniently, what we call panelId is also the document URI
   const url = new URL(panelId);
-  const connectionLookup = connectionManager.getConnectionLookup(url);
   const evaluatedStatements: EvaluatedMSQLStatement[] = [];
   const abortOnExecutionError = true;
 
   // TODO
   runningQueries[panelId] = {panelId, canceled: false};
+  const virturlURIFileHandler = new VirtualURIFileHandler(fileHandler);
+  let modelMaterializer: ModelMaterializer;
 
   try {
-    const parser = new MalloySQLParser();
-    const statements = parser.parse(malloySQLQuery);
-    let malloyDocument = '';
+    const parse = MalloySQLParser.parse(malloySQLQuery);
+    if (parse.error) {
+      sendMessage({
+        type: MSQLMessageType.QueryStatus,
+        status: MSQLQueryRunStatus.Error,
+        error: parse.error.message,
+      });
+    }
+    const statements = parse.statements;
+    let malloyRuntime: Runtime;
 
     for (let i = 0; i < statements.length; i++) {
       const statement = statements[i];
       let compiledStatement = statement.statementText;
       const compileErrors = [];
-
-      const connection = await connectionLookup.lookupConnection(
-        statement.config.connection
-      );
-      const virturlURIFileHandler = new VirtualURIFileHandler(fileHandler);
-      const runtime = new Runtime(virturlURIFileHandler, connectionLookup);
 
       sendMessage({
         type: MSQLMessageType.QueryStatus,
@@ -124,23 +132,87 @@ export const runMSQLQuery = async (
         statementIndex: i,
       });
 
+      const connectionLookup = connectionManager.getConnectionLookup(url);
+
       if (statement.type === MalloySQLStatementType.MALLOY) {
-        // TODO attempt to get line numbers correct
-        malloyDocument += statement.statementText;
+        virturlURIFileHandler.setVirtualFile(url, statement.statementText);
+
+        if (!malloyRuntime)
+          malloyRuntime = new Runtime(
+            virturlURIFileHandler,
+            connectionManager.getConnectionLookup(url)
+          );
+
+        try {
+          if (!modelMaterializer) {
+            modelMaterializer = malloyRuntime.loadModel(url);
+          } else {
+            modelMaterializer.extendModel(url);
+          }
+
+          try {
+            const model = modelMaterializer.getModel();
+
+            /*
+            const finalQuery = modelMaterializer.loadQuery(url);
+            // TODO test this, what if there is no final query
+            sendMessage({
+              type: MSQLMessageType.QueryStatus,
+              status: MSQLQueryRunStatus.Running,
+              totalStatements: statements.length,
+              statementIndex: i,
+            });
+
+            TODO this doesn't seem right but is the way Lloyd said to do it, need to discuss
+            const results = await finalQuery.run();
+
+            evaluatedStatements.push({
+              type: EvaluatedMSQLStatementType.Executed,
+              resultType: ExecutedMSQLStatementResultType.WithStructdef,
+              results: results.toJSON(),
+              compiledStatement,
+              statementIndex: i,
+            }); */
+          } catch (error) {
+            evaluatedStatements.push({
+              type: EvaluatedMSQLStatementType.ExecutionError,
+              error: error.message,
+              compiledStatement,
+              statementIndex: i,
+              statementFirstLine: statement.range.start.line,
+            });
+
+            if (abortOnExecutionError) break;
+          }
+        } catch (error) {
+          evaluatedStatements.push({
+            type: EvaluatedMSQLStatementType.CompileError,
+            errors: error,
+            statementIndex: i,
+          });
+        }
       } else if (statement.type === MalloySQLStatementType.SQL) {
+        sendMessage({
+          type: MSQLMessageType.QueryStatus,
+          status: MSQLQueryRunStatus.Compiling,
+          totalStatements: statements.length,
+          statementIndex: i,
+        });
+
         for (const malloyQuery of statement.embeddedMalloyQueries) {
           if (runningQueries[panelId].canceled) return;
 
           // TODO pad with newlines so that error messages line numbers are correct
-          // TODO also pad with prior queries length
-          const newlinesCount = 1;
+          // TODO also pad with prior queries length?
 
-          virturlURIFileHandler.setVirtualFile(url, malloyDocument);
-          runningQueries[panelId] = {panelId, canceled: false};
+          // TODO
+          //runningQueries[panelId] = {panelId, canceled: false};
 
           try {
-            const model = runtime.loadModel(url);
-            const runnable = model.loadQuery(`\nquery: ${malloyQuery.query}`);
+            // TODO assumes modelMaterializer exists, because >>>malloy always happens before >>>sql with embedded malloy
+            const runnable = modelMaterializer.loadQuery(
+              `\nquery: ${malloyQuery.query}`
+            );
             const generatedSQL = await runnable.getSQL();
 
             const replaceString = malloyQuery.parenthized
@@ -155,79 +227,74 @@ export const runMSQLQuery = async (
             compileErrors.push(e);
           }
         }
-      }
 
-      if (compileErrors.length > 0) {
-        evaluatedStatements.push({
-          type: EvaluatedMSQLStatementType.CompileError,
-          errors: compileErrors,
-          statementIndex: i,
-        });
-      } else if (
-        showSQLOnly ||
-        statement.type === MalloySQLStatementType.MALLOY
-      ) {
-        evaluatedStatements.push({
-          type: EvaluatedMSQLStatementType.Compiled,
-          compiledStatement,
-          statementIndex: i,
-        });
-      } else {
-        sendMessage({
-          type: MSQLMessageType.QueryStatus,
-          status: MSQLQueryRunStatus.Running,
-          totalStatements: statements.length,
-          statementIndex: i,
-        });
-
-        messageHandler.log(compiledStatement);
-
-        try {
-          const sqlResults = await connection.runSQL(compiledStatement);
-
-          // rendering is nice if we can do it. try to get a structdef for the last query,
-          // and if we get one, return Result object for rendering
-          const structDefAttempt = await connection.fetchSchemaForSQLBlock({
-            type: 'sqlBlock',
-            selectStr: compiledStatement,
-            name: compiledStatement,
-          });
-
-          structDefAttempt.error
-            ? evaluatedStatements.push({
-                type: EvaluatedMSQLStatementType.Executed,
-                resultType: ExecutedMSQLStatementResultType.WithoutStructdef,
-                results: sqlResults,
-                compiledStatement,
-                statementIndex: i,
-              })
-            : evaluatedStatements.push({
-                type: EvaluatedMSQLStatementType.Executed,
-                resultType: ExecutedMSQLStatementResultType.WithStructdef,
-                results: fakeMalloyResult(
-                  structDefAttempt,
-                  compiledStatement,
-                  sqlResults,
-                  statement.config.connection
-                ).toJSON(),
-                compiledStatement,
-                statementIndex: i,
-              });
-        } catch (error) {
+        if (compileErrors.length > 0) {
           evaluatedStatements.push({
-            type: EvaluatedMSQLStatementType.ExecutionError,
-            error: error.message,
-            compiledStatement,
+            type: EvaluatedMSQLStatementType.CompileError,
+            errors: compileErrors,
             statementIndex: i,
-            statementFirstLine: statement.location.start.line,
+          });
+        } else {
+          sendMessage({
+            type: MSQLMessageType.QueryStatus,
+            status: MSQLQueryRunStatus.Running,
+            totalStatements: statements.length,
+            statementIndex: i,
           });
 
-          if (abortOnExecutionError) break;
-        }
-        if (i === statementIndex) break;
-      }
+          messageHandler.log(compiledStatement);
 
-      if (runningQueries[panelId].canceled) return;
+          try {
+            const connection = await connectionLookup.lookupConnection(
+              statement.config.connection
+            );
+            const sqlResults = await connection.runSQL(compiledStatement);
+
+            // rendering is nice if we can do it. try to get a structdef for the last query,
+            // and if we get one, return Result object for rendering
+            const structDefAttempt = await connection.fetchSchemaForSQLBlock({
+              type: 'sqlBlock',
+              selectStr: compiledStatement,
+              name: compiledStatement,
+            });
+
+            structDefAttempt.error
+              ? evaluatedStatements.push({
+                  type: EvaluatedMSQLStatementType.Executed,
+                  resultType: ExecutedMSQLStatementResultType.WithoutStructdef,
+                  results: sqlResults,
+                  compiledStatement,
+                  statementIndex: i,
+                })
+              : evaluatedStatements.push({
+                  type: EvaluatedMSQLStatementType.Executed,
+                  resultType: ExecutedMSQLStatementResultType.WithStructdef,
+                  results: fakeMalloyResult(
+                    structDefAttempt,
+                    compiledStatement,
+                    sqlResults,
+                    statement.config.connection
+                  ).toJSON(),
+                  compiledStatement,
+                  statementIndex: i,
+                });
+          } catch (error) {
+            evaluatedStatements.push({
+              type: EvaluatedMSQLStatementType.ExecutionError,
+              error: error.message,
+              compiledStatement,
+              statementIndex: i,
+              statementFirstLine: statement.range.start.line,
+            });
+
+            if (abortOnExecutionError) break;
+          }
+          if (i === statementIndex) break;
+        }
+
+        // TODO
+        if (runningQueries[panelId].canceled) return;
+      }
     }
 
     sendMessage({
