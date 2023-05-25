@@ -46,6 +46,7 @@ export async function getMalloySQLDiagnostics(
 
   const parse = await MalloySQLParser.parse(document.getText());
   if (parse.errors) errors.push(...parse.errors);
+
   try {
     await translateCache.translateWithCache(document.uri, document.version);
   } catch (error) {
@@ -76,6 +77,7 @@ export async function getMalloySQLDiagnostics(
       byURI[uri] = [];
     }
 
+    // TODO malloySQL parser and malloy parser return errors differently and perhaps should be consistent,
     const range = err.at
       ? err.at.range
       : {

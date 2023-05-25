@@ -23,6 +23,7 @@
 
 import {Connection, TextDocuments} from 'vscode-languageserver';
 import {
+  MalloyError,
   Model,
   ModelMaterializer,
   Runtime,
@@ -32,7 +33,11 @@ import {TextDocument} from 'vscode-languageserver-textdocument';
 
 import {ConnectionManager} from '../common/connection_manager';
 import {BuildModelRequest, CellData} from '../common/types';
-import {MalloySQLParser, MalloySQLStatementType} from '@malloydata/malloy-sql';
+import {
+  MalloySQLParser,
+  MalloySQLSQLStatement,
+  MalloySQLStatementType,
+} from '@malloydata/malloy-sql';
 
 export class TranslateCache implements TranslateCache {
   cache = new Map<string, {model: Model; version: number}>();
@@ -85,9 +90,8 @@ export class TranslateCache implements TranslateCache {
     if (uri.toLowerCase().endsWith('.malloysql')) {
       const parse = await MalloySQLParser.parse(
         await this.getDocumentText(this.documents, new URL(uri))
-      ); // TODO errors?
-      // TODO this is hack. Have to make special runtime because we need relative imports
-      // TODO is there some way I can just say "here's some text, use this URI for relative imports"?
+      );
+
       let malloyStatements = '\n'.repeat(parse.initialCommentsLineCount);
       for (const statement of parse.statements) {
         malloyStatements += '\n';
@@ -99,11 +103,12 @@ export class TranslateCache implements TranslateCache {
           )}`;
       }
 
+      // TODO is there some way I can just say "here's some text, use this URI for relative imports"?
       const files = {
         readURL: (url: URL) => {
-          if (url.toString() === uri) {
-            return Promise.resolve(malloyStatements);
-          } else return this.getDocumentText(this.documents, url);
+          return url.toString() === uri
+            ? Promise.resolve(malloyStatements)
+            : this.getDocumentText(this.documents, url);
         },
       };
       const runtime = new Runtime(
@@ -113,6 +118,28 @@ export class TranslateCache implements TranslateCache {
 
       const mm = runtime.loadModel(new URL(uri));
       const model = await mm.getModel();
+
+      for (const statement of parse.statements.filter(
+        (s): s is MalloySQLSQLStatement => s.type === MalloySQLStatementType.SQL
+      )) {
+        for (const malloyQuery of statement.embeddedMalloyQueries) {
+          try {
+            const _query = await mm.getQuery(`query: ${malloyQuery.query}`);
+          } catch (e) {
+            (e as MalloyError).log.forEach(log => {
+              log.at.url = uri;
+              log.at.range.start.line = malloyQuery.range.start.line;
+              log.at.range.start.character +=
+                malloyQuery.range.start.column - 'query: '.length;
+              log.at.range.end.line = malloyQuery.range.end.line;
+              log.at.range.end.character +=
+                malloyQuery.range.end.column - 'query: '.length;
+            });
+            throw e;
+          }
+        }
+      }
+
       return model;
     } else {
       const files = {

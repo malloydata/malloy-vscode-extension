@@ -149,10 +149,13 @@ export const runMSQLQuery = async (
           }
 
           try {
-            const model = modelMaterializer.getModel();
+            const _model = modelMaterializer.getModel();
 
             /*
+              TODO this doesn't seem right but is the way Lloyd said to do it, need to discuss
+            const results = await finalQuery.run();
             const finalQuery = modelMaterializer.loadQuery(url);
+
             // TODO test this, what if there is no final query
             sendMessage({
               type: MSQLMessageType.QueryStatus,
@@ -160,10 +163,6 @@ export const runMSQLQuery = async (
               totalStatements: statements.length,
               statementIndex: i,
             });
-
-            TODO this doesn't seem right but is the way Lloyd said to do it, need to discuss
-            const results = await finalQuery.run();
-
             evaluatedStatements.push({
               type: EvaluatedMSQLStatementType.Executed,
               resultType: ExecutedMSQLStatementResultType.WithStructdef,
