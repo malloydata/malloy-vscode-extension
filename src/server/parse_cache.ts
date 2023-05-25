@@ -57,7 +57,7 @@ export const parseMalloySQLWithCache = (
     return entry.parsed;
   }
 
-  const parsed: MalloySQLParse = MalloySQLParser.parse(document.getText());
+  const parsed: MalloySQLParse = MalloySQLParser.parse(document.getText(), uri);
   MALLOYSQL_PARSE_CACHE.set(uri, {parsed, version});
   return parsed;
 };

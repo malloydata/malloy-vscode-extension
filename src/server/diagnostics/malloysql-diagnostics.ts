@@ -44,7 +44,7 @@ export async function getMalloySQLDiagnostics(
 
   let errors = [];
 
-  const parse = await MalloySQLParser.parse(document.getText());
+  const parse = await MalloySQLParser.parse(document.getText(), document.uri);
   if (parse.errors) errors.push(...parse.errors);
 
   try {
@@ -77,19 +77,7 @@ export async function getMalloySQLDiagnostics(
       byURI[uri] = [];
     }
 
-    // TODO malloySQL parser and malloy parser return errors differently and perhaps should be consistent,
-    const range = err.at
-      ? err.at.range
-      : {
-          start: {
-            line: err.range.start.line,
-            character: err.range.start.column,
-          },
-          end: {
-            line: err.range.end.line,
-            character: err.range.end.column,
-          },
-        };
+    const range = err.at.range;
 
     if (range.start.line >= 0) {
       byURI[uri].push({

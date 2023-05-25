@@ -89,7 +89,8 @@ export class TranslateCache implements TranslateCache {
 
     if (uri.toLowerCase().endsWith('.malloysql')) {
       const parse = await MalloySQLParser.parse(
-        await this.getDocumentText(this.documents, new URL(uri))
+        await this.getDocumentText(this.documents, new URL(uri)),
+        uri
       );
 
       let malloyStatements = '\n'.repeat(parse.initialCommentsLineCount);
@@ -130,10 +131,10 @@ export class TranslateCache implements TranslateCache {
               log.at.url = uri;
               log.at.range.start.line = malloyQuery.range.start.line;
               log.at.range.start.character +=
-                malloyQuery.range.start.column - 'query: '.length;
+                malloyQuery.range.start.character - 'query: '.length;
               log.at.range.end.line = malloyQuery.range.end.line;
               log.at.range.end.character +=
-                malloyQuery.range.end.column - 'query: '.length;
+                malloyQuery.range.end.character - 'query: '.length;
             });
             throw e;
           }

@@ -46,12 +46,12 @@ export function getMalloySQLLenses(document: TextDocument): CodeLens[] {
     lenses.push({
       range: Range.create(
         Position.create(
-          statement.delimiterLocation.start.line + 1,
-          statement.delimiterLocation.start.column
+          statement.delimiterRange.start.line + 1,
+          statement.delimiterRange.start.character
         ),
         Position.create(
-          statement.delimiterLocation.end.line + 1,
-          statement.delimiterLocation.end.column
+          statement.delimiterRange.end.line + 1,
+          statement.delimiterRange.end.character
         )
       ),
       command: {
