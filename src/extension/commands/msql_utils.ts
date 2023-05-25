@@ -24,7 +24,11 @@
 import * as vscode from 'vscode';
 
 import {malloyLog} from '../logger';
-import {createOrReuseWebviewPanel, loadWebview} from './vscode_utils';
+import {
+  createOrReuseWebviewPanel,
+  loadWebview,
+  showSchemaTreeViewWhenFocused,
+} from './vscode_utils';
 import {Utils} from 'vscode-uri';
 import {MSQLMessageType, MSQLQueryRunStatus} from '../../common/message_types';
 import {MALLOY_EXTENSION_STATE, RunState} from '../state';
@@ -79,6 +83,7 @@ export function runMSQLQuery(
         'msql_query_page.js'
       );
       loadWebview(current, queryPageOnDiskPath);
+      showSchemaTreeViewWhenFocused(current.panel, panelId);
 
       const malloySQLQuery = document.getText();
       client.sendRequest('malloy/run-msql', {

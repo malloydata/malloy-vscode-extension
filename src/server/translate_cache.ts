@@ -32,6 +32,7 @@ import {TextDocument} from 'vscode-languageserver-textdocument';
 
 import {ConnectionManager} from '../common/connection_manager';
 import {BuildModelRequest, CellData} from '../common/types';
+import {MalloySQLParser, MalloySQLStatementType} from '@malloydata/malloy-sql';
 
 export class TranslateCache implements TranslateCache {
   cache = new Map<string, {model: Model; version: number}>();
@@ -81,32 +82,66 @@ export class TranslateCache implements TranslateCache {
       return entry.model;
     }
 
-    const files = {
-      readURL: (url: URL) => this.getDocumentText(this.documents, url),
-    };
-    const runtime = new Runtime(
-      files,
-      this.connectionManager.getConnectionLookup(new URL(uri))
-    );
-
-    let model: Model;
-
-    if (uri.startsWith('vscode-notebook-cell:')) {
-      const allCells = await this.getCellData(new URL(uri));
-      let mm: ModelMaterializer | null = null;
-      for (let idx = 0; idx < allCells.length; idx++) {
-        const url = new URL(allCells[idx].uri);
-        if (mm) {
-          mm = mm.extendModel(url);
-        } else {
-          mm = runtime.loadModel(url);
-        }
+    if (uri.toLowerCase().endsWith('.malloysql')) {
+      const parse = await MalloySQLParser.parse(
+        await this.getDocumentText(this.documents, new URL(uri))
+      ); // TODO errors?
+      // TODO this is hack. Have to make special runtime because we need relative imports
+      // TODO is there some way I can just say "here's some text, use this URI for relative imports"?
+      let malloyStatements = '\n'.repeat(parse.initialCommentsLineCount);
+      for (const statement of parse.statements) {
+        malloyStatements += '\n';
+        if (statement.type === MalloySQLStatementType.MALLOY) {
+          malloyStatements += statement.statementText;
+        } else
+          malloyStatements += `${'\n'.repeat(
+            statement.statementText.split(/\r\n|\r|\n/).length - 1
+          )}`;
       }
-      model = await mm.getModel();
+
+      const files = {
+        readURL: (url: URL) => {
+          if (url.toString() === uri) {
+            return Promise.resolve(malloyStatements);
+          } else return this.getDocumentText(this.documents, url);
+        },
+      };
+      const runtime = new Runtime(
+        files,
+        this.connectionManager.getConnectionLookup(new URL(uri))
+      );
+
+      const mm = runtime.loadModel(new URL(uri));
+      const model = await mm.getModel();
+      return model;
     } else {
-      model = await runtime.getModel(new URL(uri));
-      this.cache.set(uri, {version: currentVersion, model});
+      const files = {
+        readURL: (url: URL) => this.getDocumentText(this.documents, url),
+      };
+      const runtime = new Runtime(
+        files,
+        this.connectionManager.getConnectionLookup(new URL(uri))
+      );
+
+      let model: Model;
+
+      if (uri.startsWith('vscode-notebook-cell:')) {
+        const allCells = await this.getCellData(new URL(uri));
+        let mm: ModelMaterializer | null = null;
+        for (let idx = 0; idx < allCells.length; idx++) {
+          const url = new URL(allCells[idx].uri);
+          if (mm) {
+            mm = mm.extendModel(url);
+          } else {
+            mm = runtime.loadModel(url);
+          }
+        }
+        model = await mm.getModel();
+      } else {
+        model = await runtime.getModel(new URL(uri));
+        this.cache.set(uri, {version: currentVersion, model});
+      }
+      return model;
     }
-    return model;
   }
 }

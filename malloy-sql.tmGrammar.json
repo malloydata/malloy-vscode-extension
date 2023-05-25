@@ -11,22 +11,18 @@
       "begin": ">>>malloy",
       "end": "(?=>>>)",
       "beginCaptures": {
-        "0": {"name": "punctuation.definition.malloy-sql.malloy"}
-      },
-      "endCaptures": {
-        "0": {"name": "punctuation.definition.malloy-sql.malloy"}
+        "0": {"name": "entity.other.attribute.malloy-sql"}
       },
       "name": "meta.embedded.block.malloysql.malloy",
       "patterns": [{"include": "source.malloy"}]
     },
     "malloysql-sql": {
-      "begin": ">>>sql",
+      "begin": "(>>>sql)(\\sconnection:.*?(?<!\n)(?<!//))?",
       "end": "(?=>>>)",
       "beginCaptures": {
-        "0": {"name": "punctuation.definition.malloy-sql"}
-      },
-      "endCaptures": {
-        "0": {"name": "punctuation.definition.malloy-sql"}
+        "0": {"name": "entity.other.attribute.malloy-sql"},
+        "1": {"name": "entity.other.attribute.malloy-sql"},
+        "3": {"name": "comment.line.double-slash"}
       },
       "name": "meta.embedded.block.malloysql.sql",
       "patterns": [

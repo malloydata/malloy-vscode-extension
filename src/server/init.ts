@@ -112,7 +112,7 @@ export const initServer = (
               documents,
               document
             )
-          : await getMalloySQLDiagnostics(document);
+          : await getMalloySQLDiagnostics(translateCache, document);
 
       // Only send diagnostics if the document hasn't changed since this request started
       for (const uri in diagnostics) {

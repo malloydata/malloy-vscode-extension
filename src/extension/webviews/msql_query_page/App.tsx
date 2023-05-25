@@ -175,11 +175,11 @@ export const App: React.FC = () => {
                 evaluatedStatement.type ===
                 EvaluatedMSQLStatementType.ExecutionError
               ) {
-                evaluatedStatement.prettyError = `Execution error in statement ${statementIndex} (line ${
-                  evaluatedStatement.statementFirstLine
-                }):\n${evaluatedStatement.error}\n\n${'-'.repeat(
-                  10
-                )}Generated SQL${'-'.repeat(
+                evaluatedStatement.prettyError = `Execution error in statement ${
+                  statementIndex + 1
+                } (line ${evaluatedStatement.statementFirstLine}):\n${
+                  evaluatedStatement.error
+                }\n\n${'-'.repeat(10)}Generated SQL${'-'.repeat(
                   10
                 )}\n\n${evaluatedStatement.compiledStatement
                   .split('\n')

@@ -358,8 +358,7 @@
       {
         "id": "malloy-sql",
         "extensions": [
-          ".malloysql",
-          ".msql"
+          ".malloysql"
         ],
         "aliases": [
           "Malloy SQL",
@@ -391,19 +390,19 @@
           "id": "malloyHelp",
           "name": "Help",
           "type": "webview",
-          "when": "malloy.extensionStatus == installed || resourceFilename =~ /\\.malloy(nb)?$/"
+          "when": "malloy.extensionStatus == installed || resourceFilename =~ /\\.malloy(nb|sql)?$/"
         },
         {
           "id": "malloyConnections",
           "name": "Malloy Connections",
-          "when": "malloy.extensionStatus == installed || resourceFilename =~ /\\.malloy(nb)?$/"
+          "when": "malloy.extensionStatus == installed || resourceFilename =~ /\\.malloy(nb|sql)?$/"
         }
       ],
       "explorer": [
         {
           "id": "malloySchema",
           "name": "Malloy Schema",
-          "when": "malloy.webviewPanelFocused == true || resourceFilename =~ /\\.malloy(nb)?$/"
+          "when": "malloy.webviewPanelFocused == true || resourceFilename =~ /\\.malloy(nb|sql)?$/"
         }
       ]
     },

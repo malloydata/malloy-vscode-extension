@@ -55,7 +55,7 @@ const runningQueries: Record<string, QueryEntry> = {};
 
 // Malloy needs to load model via a URI to know how to import relative model files, but we
 // don't have a real URI because we're constructing the model from only parts of a real document.
-// The actual URI we want to use is a .msql file that we don't want the compiler to load,
+// The actual URI we want to use is a .malloysql file that we don't want the compiler to load,
 // so wrap the fileHandler to pretend the on-the-fly models have a URI
 class VirtualURIFileHandler implements URLReader {
   private uriReader: URLReader;
@@ -110,15 +110,19 @@ export const runMSQLQuery = async (
 
   try {
     const parse = MalloySQLParser.parse(malloySQLQuery);
-    if (parse.error) {
+    if (parse.errors.length > 0) {
       sendMessage({
         type: MSQLMessageType.QueryStatus,
         status: MSQLQueryRunStatus.Error,
-        error: parse.error.message,
+        error: parse.errors.map(e => e.message).join('\n'),
       });
+      return;
     }
     const statements = parse.statements;
-    let malloyRuntime: Runtime;
+    const malloyRuntime = new Runtime(
+      virturlURIFileHandler,
+      connectionManager.getConnectionLookup(url)
+    );
 
     for (let i = 0; i < statements.length; i++) {
       const statement = statements[i];
@@ -136,12 +140,6 @@ export const runMSQLQuery = async (
 
       if (statement.type === MalloySQLStatementType.MALLOY) {
         virturlURIFileHandler.setVirtualFile(url, statement.statementText);
-
-        if (!malloyRuntime)
-          malloyRuntime = new Runtime(
-            virturlURIFileHandler,
-            connectionManager.getConnectionLookup(url)
-          );
 
         try {
           if (!modelMaterializer) {

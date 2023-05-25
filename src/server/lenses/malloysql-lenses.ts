@@ -27,12 +27,7 @@ import {MalloySQLParser} from '@malloydata/malloy-sql';
 
 export function getMalloySQLLenses(document: TextDocument): CodeLens[] {
   // TODO cache doc
-  let statements;
-  try {
-    statements = new MalloySQLParser().parse(document.getText());
-  } catch (e) {
-    return [];
-  }
+  const parse = MalloySQLParser.parse(document.getText());
 
   const start = Range.create(0, 0, 0, 0);
 
@@ -47,16 +42,16 @@ export function getMalloySQLLenses(document: TextDocument): CodeLens[] {
   };
 
   const lenses: CodeLens[] = [];
-  for (const statement of statements) {
+  for (const statement of parse.statements) {
     lenses.push({
       range: Range.create(
         Position.create(
-          statement.controlLineLocation.start.line,
-          statement.controlLineLocation.start.column
+          statement.delimiterLocation.start.line + 1,
+          statement.delimiterLocation.start.column
         ),
         Position.create(
-          statement.controlLineLocation.end.line,
-          statement.controlLineLocation.end.column
+          statement.delimiterLocation.end.line + 1,
+          statement.delimiterLocation.end.column
         )
       ),
       command: {
