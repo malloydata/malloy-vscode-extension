@@ -35,7 +35,7 @@ import {
 import debounce from 'lodash/debounce';
 
 import {TextDocument} from 'vscode-languageserver-textdocument';
-import {getMalloyDiagnostics, getMalloySQLDiagnostics} from './diagnostics';
+import {getMalloyDiagnostics} from './diagnostics';
 import {getMalloySymbols} from './symbols';
 import {TOKEN_TYPES, TOKEN_MODIFIERS, stubMalloyHighlights} from './highlights';
 import {getMalloyLenses, getMalloySQLLenses} from './lenses';
@@ -104,15 +104,7 @@ export const initServer = (
       const versionsAtRequestTime = new Map(
         documents.all().map(document => [document.uri, document.version])
       );
-      const diagnostics =
-        document.languageId === 'malloy'
-          ? await getMalloyDiagnostics(
-              translateCache,
-              connectionManager,
-              documents,
-              document
-            )
-          : await getMalloySQLDiagnostics(translateCache, document);
+      const diagnostics = await getMalloyDiagnostics(translateCache, document);
 
       // Only send diagnostics if the document hasn't changed since this request started
       for (const uri in diagnostics) {

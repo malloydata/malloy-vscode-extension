@@ -109,7 +109,7 @@ export const runMSQLQuery = async (
   let modelMaterializer: ModelMaterializer;
 
   try {
-    const parse = MalloySQLParser.parse(malloySQLQuery);
+    const parse = MalloySQLParser.parse(malloySQLQuery, panelId);
     if (parse.errors.length > 0) {
       sendMessage({
         type: MSQLMessageType.QueryStatus,
