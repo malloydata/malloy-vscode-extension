@@ -23,9 +23,9 @@
 
 import {Diagnostic, DiagnosticSeverity} from 'vscode-languageserver';
 import {TextDocument} from 'vscode-languageserver-textdocument';
-import {MalloySQLParser} from '@malloydata/malloy-sql';
 import {TranslateCache} from '../translate_cache';
 import {MalloyError} from '@malloydata/malloy';
+import {parseMalloySQLWithCache} from '../parse_cache';
 
 const DEFAULT_RANGE = {
   start: {line: 0, character: 0},
@@ -44,7 +44,7 @@ export async function getMalloySQLDiagnostics(
 
   let errors = [];
 
-  const parse = await MalloySQLParser.parse(document.getText(), document.uri);
+  const parse = parseMalloySQLWithCache(document);
   if (parse.errors) errors.push(...parse.errors);
 
   try {
@@ -77,7 +77,7 @@ export async function getMalloySQLDiagnostics(
       byURI[uri] = [];
     }
 
-    const range = err.at.range;
+    const range = err.at?.range || DEFAULT_RANGE;
 
     if (range.start.line >= 0) {
       byURI[uri].push({

@@ -51,7 +51,7 @@ export function runMSQLQuery(
     },
     (progress, token) => {
       const cancel = () => {
-        client.sendRequest('malloy/cancel', {
+        client.sendRequest('malloy/cancelMSQL', {
           type: 'malloy/cancel',
           panelId: panelId,
         });

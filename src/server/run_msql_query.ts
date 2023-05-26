@@ -22,6 +22,7 @@
  */
 
 import {
+  MessageCancel,
   MessageHandler,
   MessageRunMSQL,
   WorkerSQLQueryPanelMessage as WorkerMSQLQueryPanelMessage,
@@ -81,7 +82,7 @@ class VirtualURIFileHandler implements URLReader {
   }
 }
 
-// TODO panelId == document.uri.toString(), but it's not obvious from the name.
+// panelId == document.uri.toString(), but it's not obvious from the name.
 export const runMSQLQuery = async (
   messageHandler: MessageHandler,
   fileHandler: FileHandler,
@@ -103,7 +104,6 @@ export const runMSQLQuery = async (
   const evaluatedStatements: EvaluatedMSQLStatement[] = [];
   const abortOnExecutionError = true;
 
-  // TODO
   runningQueries[panelId] = {panelId, canceled: false};
   const virturlURIFileHandler = new VirtualURIFileHandler(fileHandler);
   let modelMaterializer: ModelMaterializer;
@@ -150,7 +150,7 @@ export const runMSQLQuery = async (
 
           try {
             const _model = modelMaterializer.getModel();
-
+            if (runningQueries[panelId].canceled) return;
             /*
               TODO this doesn't seem right but is the way Lloyd said to do it, need to discuss
             const results = await finalQuery.run();
@@ -197,14 +197,6 @@ export const runMSQLQuery = async (
         });
 
         for (const malloyQuery of statement.embeddedMalloyQueries) {
-          if (runningQueries[panelId].canceled) return;
-
-          // TODO pad with newlines so that error messages line numbers are correct
-          // TODO also pad with prior queries length?
-
-          // TODO
-          //runningQueries[panelId] = {panelId, canceled: false};
-
           try {
             // TODO assumes modelMaterializer exists, because >>>malloy always happens before >>>sql with embedded malloy
             const runnable = modelMaterializer.loadQuery(
@@ -224,6 +216,8 @@ export const runMSQLQuery = async (
             compileErrors.push(e);
           }
         }
+
+        if (runningQueries[panelId].canceled) return;
 
         if (compileErrors.length > 0) {
           evaluatedStatements.push({
@@ -247,6 +241,8 @@ export const runMSQLQuery = async (
             );
             const sqlResults = await connection.runSQL(compiledStatement);
 
+            if (runningQueries[panelId].canceled) return;
+
             // rendering is nice if we can do it. try to get a structdef for the last query,
             // and if we get one, return Result object for rendering
             const structDefAttempt = await connection.fetchSchemaForSQLBlock({
@@ -254,6 +250,8 @@ export const runMSQLQuery = async (
               selectStr: compiledStatement,
               name: compiledStatement,
             });
+
+            if (runningQueries[panelId].canceled) return;
 
             structDefAttempt.error
               ? evaluatedStatements.push({
@@ -289,7 +287,6 @@ export const runMSQLQuery = async (
           if (i === statementIndex) break;
         }
 
-        // TODO
         if (runningQueries[panelId].canceled) return;
       }
     }
@@ -306,6 +303,12 @@ export const runMSQLQuery = async (
       status: MSQLQueryRunStatus.Error,
       error: error.message,
     });
+  }
+};
+
+export const cancelMSQLQuery = ({panelId}: MessageCancel): void => {
+  if (runningQueries[panelId]) {
+    runningQueries[panelId].canceled = true;
   }
 };
 

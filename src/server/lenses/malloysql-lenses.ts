@@ -23,13 +23,10 @@
 
 import {CodeLens, Command, Range, Position} from 'vscode-languageserver/node';
 import {TextDocument} from 'vscode-languageserver-textdocument';
-import {MalloySQLParser} from '@malloydata/malloy-sql';
+import {parseMalloySQLWithCache} from '../parse_cache';
 
 export function getMalloySQLLenses(document: TextDocument): CodeLens[] {
-  // TODO cache doc
-  const parse = MalloySQLParser.parse(document.getText());
-
-  const start = Range.create(0, 0, 0, 0);
+  const parse = parseMalloySQLWithCache(document);
 
   const runAll: Command = {
     command: 'malloy.runMalloySQLFile',
@@ -63,8 +60,8 @@ export function getMalloySQLLenses(document: TextDocument): CodeLens[] {
   }
 
   return [
-    {range: start, command: runAll},
-    {range: start, command: compileSQLAll},
+    {range: Range.create(0, 0, 0, 0), command: runAll},
+    {range: Range.create(0, 0, 0, 0), command: compileSQLAll},
     ...lenses,
   ];
 }
