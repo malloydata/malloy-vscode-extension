@@ -84,6 +84,13 @@ interface QueryMessageStatusDone {
   resultJson: ResultJSON;
   dataStyles: DataStyles;
   canDownloadStream: boolean;
+  stats: QueryRunStats;
+}
+
+export interface QueryRunStats {
+  compileTime: number;
+  runTime: number;
+  totalTime: number;
 }
 
 type QueryMessageStatus =

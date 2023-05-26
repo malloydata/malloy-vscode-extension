@@ -35,6 +35,7 @@ import {
   QueryMessageType,
   QueryPanelMessage,
   QueryRunStatus,
+  QueryRunStats,
 } from '../../../common/message_types';
 import {Spinner} from '../components';
 import {ResultKind, ResultKindToggle} from './ResultKindToggle';
@@ -70,6 +71,7 @@ export const App: React.FC = () => {
   const [observer, setObserver] = useState<MutationObserver>();
   const [canDownload, setCanDownload] = useState(false);
   const [canDownloadStream, setCanDownloadStream] = useState(false);
+  const [stats, setStats] = useState<string | undefined>(undefined);
   const tooltipId = useRef(0);
   const {setTooltipRef, setTriggerRef, getTooltipProps} = usePopperTooltip({
     visible: tooltipVisible,
@@ -123,6 +125,7 @@ export const App: React.FC = () => {
           ) {
             setShowOnlySQL(true);
             setWarning(undefined);
+            setStats(undefined);
             setStatus(Status.Done);
             setSQL(message.sql);
             setResultKind(ResultKind.SQL);
@@ -130,6 +133,7 @@ export const App: React.FC = () => {
             const {resultJson, dataStyles, canDownloadStream} = message;
             setWarning(undefined);
             setShowOnlySQL(false);
+            setStats(undefined);
             // TODO(web) Figure out some way to download current result set
             setCanDownload(canDownloadStream);
             setCanDownloadStream(canDownloadStream);
@@ -139,6 +143,11 @@ export const App: React.FC = () => {
               const data = result.data;
               setJSON(JSON.stringify(data.toObject(), null, 2));
               setSQL(result.sql);
+              if (message.stats) {
+                setStats(
+                  getStats(message.stats, result.runStats?.queryCostBytes)
+                );
+              }
               const rendered = await new HTMLView(document).render(data, {
                 dataStyles,
                 isDrillingEnabled: false,
@@ -288,6 +297,7 @@ export const App: React.FC = () => {
       )}
       {error && <Error multiline={error.includes('\n')}>{error}</Error>}
       {warning && <Warning>{warning}</Warning>}
+      {stats && <StatsBar>{stats}</StatsBar>}
       {tooltipVisible && (
         <Tooltip ref={setTooltipRef} {...getTooltipProps()}>
           Copied!
@@ -344,6 +354,13 @@ function getStyledHTML(html: HTMLElement): string {
   return styles + html.outerHTML;
 }
 
+function getStats(stats: QueryRunStats, queryCostBytes?: number): string {
+  const queryCostBytesFormatted = queryCostBytes
+    ? ` Processed ${(queryCostBytes / 1024 / 1024).toLocaleString()} MB.`
+    : '';
+  return `Compile Time: ${stats.compileTime.toLocaleString()}s, Run Time: ${stats.runTime.toLocaleString()}s, Total Time: ${stats.totalTime.toLocaleString()}s.${queryCostBytesFormatted}`;
+}
+
 const DOMElement: React.FC<{element: HTMLElement}> = ({element}) => {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -369,6 +386,13 @@ const Tooltip = styled.div`
 const Warning = styled.div`
   color: var(--vscode-statusBarItem-warningForeground);
   background-color: var(--vscode-statusBarItem-warningBackground);
+  padding: 5px;
+`;
+
+const StatsBar = styled.div`
+  background-color: #505050;
+  color: white;
+  box-shadow: rgb(144 144 144) 0px 1px 5px 0px;
   padding: 5px;
 `;
 
