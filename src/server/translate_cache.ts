@@ -88,7 +88,7 @@ export class TranslateCache implements TranslateCache {
     }
 
     if (uri.toLowerCase().endsWith('.malloysql')) {
-      const parse = await MalloySQLParser.parse(
+      const parse = MalloySQLParser.parse(
         await this.getDocumentText(this.documents, new URL(uri)),
         uri
       );
@@ -106,7 +106,7 @@ export class TranslateCache implements TranslateCache {
 
       // TODO is there some way I can just say "here's some text, use this URI for relative imports"?
       const files = {
-        readURL: (url: URL) => {
+        readURL: async (url: URL) => {
           return url.toString() === uri
             ? Promise.resolve(malloyStatements)
             : this.getDocumentText(this.documents, url);
@@ -125,16 +125,21 @@ export class TranslateCache implements TranslateCache {
       )) {
         for (const malloyQuery of statement.embeddedMalloyQueries) {
           try {
-            const _query = await mm.getQuery(`query: ${malloyQuery.query}`);
+            await mm.getQuery(`query:\n${malloyQuery.query}`);
           } catch (e) {
             (e as MalloyError).log.forEach(log => {
               log.at.url = uri;
-              log.at.range.start.line = malloyQuery.range.start.line;
-              log.at.range.start.character +=
-                malloyQuery.range.start.character - 'query: '.length;
-              log.at.range.end.line = malloyQuery.range.end.line;
-              log.at.range.end.character +=
-                malloyQuery.range.end.character - 'query: '.length;
+              const lineDifference =
+                log.at.range.end.line - log.at.range.start.line;
+              const embeddedStart: number = log.at.range.start.line - 1;
+
+              // TODO if there's no newlines before the first character, add the malloyQuery.range.character
+              // to the log.at.range.start.character
+
+              log.at.range.start.line =
+                malloyQuery.range.start.line + embeddedStart;
+              log.at.range.end.line =
+                malloyQuery.range.start.line + embeddedStart + lineDifference;
             });
             throw e;
           }
