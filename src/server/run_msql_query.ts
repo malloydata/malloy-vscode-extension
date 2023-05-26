@@ -126,6 +126,16 @@ export const runMSQLQuery = async (
 
     for (let i = 0; i < statements.length; i++) {
       const statement = statements[i];
+
+      // don't evaluate SQL statements if statmentIndex passed unless we're on
+      // the exact index
+      if (
+        statement.type === MalloySQLStatementType.SQL &&
+        statementIndex !== null &&
+        statementIndex !== i
+      )
+        continue;
+
       let compiledStatement = statement.statementText;
       const compileErrors = [];
 
