@@ -23,6 +23,7 @@
 
 import {Connection, TextDocuments} from 'vscode-languageserver';
 import {
+  DocumentRange,
   MalloyError,
   Model,
   ModelMaterializer,
@@ -129,18 +130,26 @@ export class TranslateCache implements TranslateCache {
           } catch (e) {
             (e as MalloyError).log.forEach(log => {
               log.at.url = uri;
+
+              // if the embedded malloy is on the same line as SQL, pad character start (and maybe end)
+              // "query:\n" adds a line, so we subtract the line here
+              const embeddedStart: number = log.at.range.start.line - 1;
+              if (embeddedStart === 0) {
+                log.at.range.start.character +=
+                  malloyQuery.malloyRange.start.character;
+                if (log.at.range.start.line === log.at.range.end.line)
+                  log.at.range.end.character +=
+                    malloyQuery.malloyRange.start.character;
+              }
+
               const lineDifference =
                 log.at.range.end.line - log.at.range.start.line;
-              const embeddedStart: number = log.at.range.start.line - 1;
-
-              // TODO if there's no newlines before the first character, add the malloyQuery.range.character
-              // to the log.at.range.start.character
-
               log.at.range.start.line =
                 malloyQuery.range.start.line + embeddedStart;
               log.at.range.end.line =
                 malloyQuery.range.start.line + embeddedStart + lineDifference;
             });
+
             throw e;
           }
         }
