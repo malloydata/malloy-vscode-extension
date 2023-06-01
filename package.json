@@ -622,7 +622,7 @@
     "@malloydata/db-duckdb": "0.0.37",
     "@malloydata/db-postgres": "0.0.37",
     "@malloydata/malloy": "0.0.37",
-    "@malloydata/malloy-sql": "0.0.37",
+    "@malloydata/malloy-sql": "next",
     "@malloydata/render": "0.0.37",
     "@popperjs/core": "^2.11.6",
     "@vscode/webview-ui-toolkit": "^1.2.1",
