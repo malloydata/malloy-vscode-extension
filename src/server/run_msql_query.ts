@@ -161,25 +161,38 @@ export const runMSQLQuery = async (
           try {
             const _model = modelMaterializer.getModel();
             if (runningQueries[panelId].canceled) return;
-            /*
-              TODO this doesn't seem right but is the way Lloyd said to do it, need to discuss
-            const results = await finalQuery.run();
-            const finalQuery = modelMaterializer.loadQuery(url);
 
-            // TODO test this, what if there is no final query
-            sendMessage({
-              type: MSQLMessageType.QueryStatus,
-              status: MSQLQueryRunStatus.Running,
-              totalStatements: statements.length,
-              statementIndex: i,
-            });
-            evaluatedStatements.push({
-              type: EvaluatedMSQLStatementType.Executed,
-              resultType: ExecutedMSQLStatementResultType.WithStructdef,
-              results: results.toJSON(),
-              compiledStatement,
-              statementIndex: i,
-            }); */
+            // the only way to know if there's a query in this statement is to try
+            // to run query by index and catch if it fails. If it fails, we have compiled but nothing
+            // was executed.
+            try {
+              const finalQuery = modelMaterializer.loadQuery(url);
+              const results = await finalQuery.run();
+
+              sendMessage({
+                type: MSQLMessageType.QueryStatus,
+                status: MSQLQueryRunStatus.Running,
+                totalStatements: statements.length,
+                statementIndex: i,
+              });
+              evaluatedStatements.push({
+                type: EvaluatedMSQLStatementType.Executed,
+                resultType: ExecutedMSQLStatementResultType.WithStructdef,
+                results: results.toJSON(),
+                compiledStatement,
+                statementIndex: i,
+              });
+            } catch (e) {
+              // TODO this error is thrown from Model and could be improved such that we can ensure we're catching
+              // what we expect here
+              // if error is ThereIsNoQueryHere:
+              evaluatedStatements.push({
+                type: EvaluatedMSQLStatementType.Compiled,
+                compiledStatement,
+                statementIndex: i,
+              });
+              // else if (abortOnExecutionError) break;
+            }
           } catch (error) {
             evaluatedStatements.push({
               type: EvaluatedMSQLStatementType.ExecutionError,
@@ -294,11 +307,11 @@ export const runMSQLQuery = async (
 
             if (abortOnExecutionError) break;
           }
-          if (i === statementIndex) break;
         }
 
         if (runningQueries[panelId].canceled) return;
       }
+      if (i === statementIndex) break;
     }
 
     sendMessage({

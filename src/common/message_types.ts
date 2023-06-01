@@ -170,6 +170,7 @@ export interface ExecutedMSQLStatementWithoutStructdef
 }
 
 export interface CompiledMSQLStatement extends MSQLStatmentWasCompiled {
+  renderedHTML?: HTMLSpanElement;
   type: EvaluatedMSQLStatementType.Compiled;
 }
 
