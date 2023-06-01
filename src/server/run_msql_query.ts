@@ -166,15 +166,16 @@ export const runMSQLQuery = async (
             // to run query by index and catch if it fails. If it fails, we have compiled but nothing
             // was executed.
             try {
-              const finalQuery = modelMaterializer.loadQuery(url);
-              const results = await finalQuery.run();
-
               sendMessage({
                 type: MSQLMessageType.QueryStatus,
                 status: MSQLQueryRunStatus.Running,
                 totalStatements: statements.length,
                 statementIndex: i,
               });
+
+              const finalQuery = modelMaterializer.loadQuery(url);
+              const results = await finalQuery.run();
+
               evaluatedStatements.push({
                 type: EvaluatedMSQLStatementType.Executed,
                 resultType: ExecutedMSQLStatementResultType.WithStructdef,
@@ -246,6 +247,12 @@ export const runMSQLQuery = async (
           evaluatedStatements.push({
             type: EvaluatedMSQLStatementType.CompileError,
             errors: compileErrors,
+            statementIndex: i,
+          });
+        } else if (showSQLOnly) {
+          evaluatedStatements.push({
+            type: EvaluatedMSQLStatementType.Compiled,
+            compiledStatement,
             statementIndex: i,
           });
         } else {
