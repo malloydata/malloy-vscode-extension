@@ -158,14 +158,22 @@ export const runMSQLQuery = async (
             modelMaterializer.extendModel(url);
           }
 
-          try {
-            const _model = modelMaterializer.getModel();
-            if (runningQueries[panelId].canceled) return;
+          const _model = modelMaterializer.getModel();
+          if (runningQueries[panelId].canceled) return;
 
-            // the only way to know if there's a query in this statement is to try
-            // to run query by index and catch if it fails. If it fails, we have compiled but nothing
-            // was executed.
-            try {
+          // the only way to know if there's a query in this statement is to try
+          // to run query by index and catch if it fails.
+          try {
+            const finalQuery = modelMaterializer.loadQuery(url);
+            const finalQuerySQL = await finalQuery.getSQL();
+
+            if (showSQLOnly) {
+              evaluatedStatements.push({
+                type: EvaluatedMSQLStatementType.Compiled,
+                compiledStatement: finalQuerySQL,
+                statementIndex: i,
+              });
+            } else {
               sendMessage({
                 type: MSQLMessageType.QueryStatus,
                 status: MSQLQueryRunStatus.Running,
@@ -173,37 +181,38 @@ export const runMSQLQuery = async (
                 statementIndex: i,
               });
 
-              const finalQuery = modelMaterializer.loadQuery(url);
-              const results = await finalQuery.run();
+              try {
+                const results = await finalQuery.run();
 
-              evaluatedStatements.push({
-                type: EvaluatedMSQLStatementType.Executed,
-                resultType: ExecutedMSQLStatementResultType.WithStructdef,
-                results: results.toJSON(),
-                compiledStatement,
-                statementIndex: i,
-              });
-            } catch (e) {
-              // TODO this error is thrown from Model and could be improved such that we can ensure we're catching
-              // what we expect here
-              // if error is ThereIsNoQueryHere:
-              evaluatedStatements.push({
-                type: EvaluatedMSQLStatementType.Compiled,
-                compiledStatement,
-                statementIndex: i,
-              });
-              // else if (abortOnExecutionError) break;
+                evaluatedStatements.push({
+                  type: EvaluatedMSQLStatementType.Executed,
+                  resultType: ExecutedMSQLStatementResultType.WithStructdef,
+                  results: results.toJSON(),
+                  compiledStatement: finalQuerySQL,
+                  statementIndex: i,
+                });
+              } catch (error) {
+                evaluatedStatements.push({
+                  type: EvaluatedMSQLStatementType.ExecutionError,
+                  error: error.message,
+                  compiledStatement,
+                  statementIndex: i,
+                  statementFirstLine: statement.range.start.line,
+                });
+
+                if (abortOnExecutionError) break;
+              }
             }
           } catch (error) {
+            // TODO this error is thrown from Model and could be improved such that we can ensure we're catching
+            // what we expect here
+            // if error is ThereIsNoQueryHere:
             evaluatedStatements.push({
-              type: EvaluatedMSQLStatementType.ExecutionError,
-              error: error.message,
-              compiledStatement,
+              type: EvaluatedMSQLStatementType.Compiled,
+              compiledStatement: 'Nothing to execute',
               statementIndex: i,
-              statementFirstLine: statement.range.start.line,
             });
-
-            if (abortOnExecutionError) break;
+            // else if (abortOnExecutionError) break;
           }
         } catch (error) {
           evaluatedStatements.push({
