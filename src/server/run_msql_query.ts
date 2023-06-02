@@ -136,7 +136,7 @@ export const runMSQLQuery = async (
       )
         continue;
 
-      let compiledStatement = statement.statementText;
+      let compiledStatement = statement.text;
       const compileErrors = [];
 
       sendMessage({
@@ -149,7 +149,7 @@ export const runMSQLQuery = async (
       const connectionLookup = connectionManager.getConnectionLookup(url);
 
       if (statement.type === MalloySQLStatementType.MALLOY) {
-        virturlURIFileHandler.setVirtualFile(url, statement.statementText);
+        virturlURIFileHandler.setVirtualFile(url, statement.text);
 
         try {
           if (!modelMaterializer) {
@@ -228,12 +228,8 @@ export const runMSQLQuery = async (
             );
             const generatedSQL = await runnable.getSQL();
 
-            const replaceString = malloyQuery.parenthized
-              ? `(%{${malloyQuery.query}}%)`
-              : `%{${malloyQuery.query}}%`;
-
             compiledStatement = compiledStatement.replace(
-              replaceString,
+              malloyQuery.text,
               `(${generatedSQL})`
             );
           } catch (e) {

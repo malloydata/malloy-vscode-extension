@@ -97,10 +97,10 @@ export class TranslateCache implements TranslateCache {
       for (const statement of parse.statements) {
         malloyStatements += '\n';
         if (statement.type === MalloySQLStatementType.MALLOY) {
-          malloyStatements += statement.statementText;
+          malloyStatements += statement.text;
         } else
           malloyStatements += `${'\n'.repeat(
-            statement.statementText.split(/\r\n|\r|\n/).length - 1
+            statement.text.split(/\r\n|\r|\n/).length - 1
           )}`;
       }
 

@@ -54,7 +54,7 @@ export function getMalloySQLLenses(document: TextDocument): CodeLens[] {
       command: {
         command: 'malloy.runMalloySQLStatement',
         title: 'Run',
-        arguments: [statement.statementIndex],
+        arguments: [statement.index],
       },
     });
   }
