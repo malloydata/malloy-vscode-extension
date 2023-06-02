@@ -11,7 +11,8 @@
       "@malloydata/db-bigquery",
       "@malloydata/db-duckdb",
       "@malloydata/db-postgres",
-      "@malloydata/render"
+      "@malloydata/render",
+      "@malloydata/malloy-sql"
     ]
   },
   "engines": {
@@ -60,6 +61,7 @@
     "onCommand:malloy.refreshSchema",
     "onCommand:malloy.editConnections",
     "onCommand:malloy.runMalloySQLFile",
+    "onCommand:malloy.runMalloySQLStatement",
     "onCommand:malloy.showSQLMalloySQLFile",
     "onLanguage:malloy",
     "onLanguage:malloy-sql",
@@ -152,6 +154,12 @@
       {
         "command": "malloy.runMalloySQLFile",
         "title": "Run MalloySQL File",
+        "category": "Malloy",
+        "enablement": "editorLangId == malloy-sql"
+      },
+      {
+        "command": "malloy.runMalloySQLStatement",
+        "title": "Run MalloySQL Statement",
         "category": "Malloy",
         "enablement": "editorLangId == malloy-sql"
       },
@@ -350,8 +358,7 @@
       {
         "id": "malloy-sql",
         "extensions": [
-          ".malloysql",
-          ".msql"
+          ".malloysql"
         ],
         "aliases": [
           "Malloy SQL",
@@ -383,19 +390,19 @@
           "id": "malloyHelp",
           "name": "Help",
           "type": "webview",
-          "when": "malloy.extensionStatus == installed || resourceFilename =~ /\\.malloy(nb)?$/"
+          "when": "malloy.extensionStatus == installed || resourceFilename =~ /\\.malloy(nb|sql)?$/"
         },
         {
           "id": "malloyConnections",
           "name": "Malloy Connections",
-          "when": "malloy.extensionStatus == installed || resourceFilename =~ /\\.malloy(nb)?$/"
+          "when": "malloy.extensionStatus == installed || resourceFilename =~ /\\.malloy(nb|sql)?$/"
         }
       ],
       "explorer": [
         {
           "id": "malloySchema",
           "name": "Malloy Schema",
-          "when": "malloy.webviewPanelFocused == true || resourceFilename =~ /\\.malloy(nb)?$/"
+          "when": "malloy.webviewPanelFocused == true || resourceFilename =~ /\\.malloy(nb|sql)?$/"
         }
       ]
     },
@@ -615,6 +622,7 @@
     "@malloydata/db-duckdb": "0.0.37",
     "@malloydata/db-postgres": "0.0.37",
     "@malloydata/malloy": "0.0.37",
+    "@malloydata/malloy-sql": "next",
     "@malloydata/render": "0.0.37",
     "@popperjs/core": "^2.11.6",
     "@vscode/webview-ui-toolkit": "^1.2.1",

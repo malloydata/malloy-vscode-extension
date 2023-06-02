@@ -32,7 +32,7 @@ import {
 } from '../common/worker_message_types';
 import {FileHandler} from '../common/types';
 import {ConnectionManager} from '../common/connection_manager';
-import {runMSQLQuery} from './run_msql_query';
+import {cancelMSQLQuery, runMSQLQuery} from './run_msql_query';
 
 export class MessageHandler {
   constructor(
@@ -42,6 +42,10 @@ export class MessageHandler {
   ) {
     this.connection.onRequest('malloy/cancel', (message: MessageCancel) =>
       cancelQuery(message)
+    );
+
+    this.connection.onRequest('malloy/cancelMSQL', (message: MessageCancel) =>
+      cancelMSQLQuery(message)
     );
 
     this.connection.onRequest('malloy/run', (message: MessageRun) =>

@@ -24,7 +24,11 @@
 import * as vscode from 'vscode';
 
 import {malloyLog} from '../logger';
-import {createOrReuseWebviewPanel, loadWebview} from './vscode_utils';
+import {
+  createOrReuseWebviewPanel,
+  loadWebview,
+  showSchemaTreeViewWhenFocused,
+} from './vscode_utils';
 import {Utils} from 'vscode-uri';
 import {MSQLMessageType, MSQLQueryRunStatus} from '../../common/message_types';
 import {MALLOY_EXTENSION_STATE, RunState} from '../state';
@@ -36,9 +40,7 @@ export function runMSQLQuery(
   panelId: string,
   name: string,
   document: vscode.TextDocument,
-  connectionName: string,
   statementIndex: number | null,
-  importURL = null,
   showSQLOnly = false
 ): void {
   vscode.window.withProgress(
@@ -49,7 +51,7 @@ export function runMSQLQuery(
     },
     (progress, token) => {
       const cancel = () => {
-        client.sendRequest('malloy/cancel', {
+        client.sendRequest('malloy/cancelMSQL', {
           type: 'malloy/cancel',
           panelId: panelId,
         });
@@ -81,15 +83,14 @@ export function runMSQLQuery(
         'msql_query_page.js'
       );
       loadWebview(current, queryPageOnDiskPath);
+      showSchemaTreeViewWhenFocused(current.panel, panelId);
 
       const malloySQLQuery = document.getText();
       client.sendRequest('malloy/run-msql', {
         type: 'malloy/run-msql',
         panelId,
         malloySQLQuery,
-        connectionName,
         statementIndex,
-        importURL,
         showSQLOnly,
       });
 
@@ -158,18 +159,4 @@ function logTime(name: string, start: number, end: number) {
   malloyLog.appendLine(
     `${name} time: ${((end - start) / 1000).toLocaleString()}s`
   );
-}
-
-export function getConnectionName(documentText: string): string {
-  return (documentText.match(/--!( |\t)+connection:.*?(\n|$)/g) || [''])
-    .shift()
-    .split('connection:')[1]
-    ?.trim();
-}
-
-export function getImportURL(documentText: string): string {
-  return (documentText.match(/--!( |\t)+import:.*?(\n|$)/g) || [''])
-    .shift()
-    .split('import:')[1]
-    ?.trim();
 }

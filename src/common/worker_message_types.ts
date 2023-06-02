@@ -86,9 +86,7 @@ export interface MessageRunMSQL {
   type: 'malloy/run-msql';
   panelId: string;
   malloySQLQuery: string;
-  connectionName: string;
   statementIndex: number | null;
-  importURL?: string;
   showSQLOnly?: boolean;
 }
 

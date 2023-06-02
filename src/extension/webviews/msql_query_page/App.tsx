@@ -175,7 +175,9 @@ export const App: React.FC = () => {
                 evaluatedStatement.type ===
                 EvaluatedMSQLStatementType.ExecutionError
               ) {
-                evaluatedStatement.prettyError = `${
+                evaluatedStatement.prettyError = `Execution error in statement ${
+                  statementIndex + 1
+                } (line ${evaluatedStatement.statementFirstLine}):\n${
                   evaluatedStatement.error
                 }\n\n${'-'.repeat(10)}Generated SQL${'-'.repeat(
                   10
@@ -188,6 +190,12 @@ export const App: React.FC = () => {
                 EvaluatedMSQLStatementType.CompileError
               ) {
                 errorCount += 1;
+              } else if (
+                evaluatedStatement.type === EvaluatedMSQLStatementType.Compiled
+              ) {
+                const html = document.createElement('span');
+                html.innerText = 'Compiled successfully';
+                evaluatedStatement.renderedHTML = html;
               }
             }
 
@@ -252,7 +260,8 @@ export const App: React.FC = () => {
           {evaluatedStatements.map(result => {
             return (
               <ResultsContainer key={result.statementIndex}>
-                {result.type === EvaluatedMSQLStatementType.Executed && (
+                {(result.type === EvaluatedMSQLStatementType.Executed ||
+                  result.type === EvaluatedMSQLStatementType.Compiled) && (
                   <div style={{margin: '10px'}}>
                     <DOMElement element={result.renderedHTML} />
                   </div>

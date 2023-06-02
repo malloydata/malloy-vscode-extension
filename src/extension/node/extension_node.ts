@@ -112,7 +112,7 @@ async function setupLanguageServer(
   };
 
   const clientOptions: LanguageClientOptions = {
-    documentSelector: [{language: 'malloy'}],
+    documentSelector: [{language: 'malloy'}, {language: 'malloy-sql'}],
     synchronize: {
       configurationSection: 'malloy',
       fileEvents: vscode.workspace.createFileSystemWatcher('**/.clientrc'),

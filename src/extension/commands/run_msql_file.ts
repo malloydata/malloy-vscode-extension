@@ -23,22 +23,18 @@
 
 import * as vscode from 'vscode';
 import {BaseLanguageClient} from 'vscode-languageclient';
-import {getConnectionName, getImportURL, runMSQLQuery} from './msql_utils';
+import {runMSQLQuery} from './msql_utils';
 
 export function runMalloySQLFile(client: BaseLanguageClient): void {
   const document = vscode.window.activeTextEditor?.document;
 
   if (document) {
-    const documentText = document.getText();
-
     runMSQLQuery(
       client,
       document.uri.toString(),
       document.fileName.split('/').pop() || document.fileName,
       document,
-      getConnectionName(documentText),
-      null,
-      getImportURL(documentText)
+      null
     );
   }
 }
