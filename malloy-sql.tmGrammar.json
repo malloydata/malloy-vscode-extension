@@ -17,7 +17,7 @@
       "patterns": [{"include": "source.malloy"}]
     },
     "malloysql-sql": {
-      "begin": "(>>>sql)(\\sconnection:.*?(?<!\n)(?<!//))?",
+      "begin": "(>>>sql)(\\s*connection:.*?(?<!\n)(?<!//))?",
       "end": "(?=>>>)",
       "beginCaptures": {
         "0": {"name": "entity.other.attribute.malloy-sql"},
