@@ -21,21 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as vscode from 'vscode';
-import {GenericConnection} from '../../common/worker_message_types';
-import {runMSQLQuery} from './msql_utils';
+import {NodeMessageHandler} from './message_handler';
 
-export function showSQLMalloySQLFile(client: GenericConnection): void {
-  const document = vscode.window.activeTextEditor?.document;
-
-  if (document) {
-    runMSQLQuery(
-      client,
-      document.uri.toString(),
-      document.fileName.split('/').pop() || document.fileName,
-      document,
-      null,
-      true
-    );
-  }
-}
+export const messageHandler = new NodeMessageHandler();

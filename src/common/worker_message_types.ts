@@ -21,7 +21,11 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {Disposable} from 'vscode-jsonrpc';
+import {
+  CancellationToken,
+  Disposable,
+  GenericRequestHandler,
+} from 'vscode-jsonrpc';
 import {
   QueryDownloadOptions,
   QueryPanelMessage,
@@ -220,3 +224,22 @@ export interface MessageHandler {
   send(message: WorkerMessage): void;
   log(message: string): void;
 }
+
+export interface GenericMessageSender {
+  sendRequest<R>(
+    method: string,
+    param: any,
+    token?: CancellationToken
+  ): Promise<R>;
+}
+
+export interface GenericMessageReceiver {
+  onRequest<R, E>(
+    method: string,
+    handler: GenericRequestHandler<R, E>
+  ): Disposable;
+}
+
+export interface GenericConnection
+  extends GenericMessageReceiver,
+    GenericMessageSender {}

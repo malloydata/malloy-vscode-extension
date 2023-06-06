@@ -28,7 +28,10 @@ import {MALLOY_EXTENSION_STATE, RunState} from '../state';
 import {Result} from '@malloydata/malloy';
 import {QueryMessageType, QueryRunStatus} from '../../common/message_types';
 import {queryDownload} from './query_download';
-import {WorkerMessage} from '../../common/worker_message_types';
+import {
+  GenericConnection,
+  WorkerMessage,
+} from '../../common/worker_message_types';
 import {malloyLog} from '../logger';
 import {trackQueryRun} from '../telemetry';
 import {QuerySpec} from './query_spec';
@@ -38,10 +41,10 @@ import {
   loadWebview,
   showSchemaTreeViewWhenFocused,
 } from './vscode_utils';
-import {BaseLanguageClient, State} from 'vscode-languageclient';
+import {State} from 'vscode-languageclient';
 
 export function runMalloyQuery(
-  client: BaseLanguageClient,
+  client: GenericConnection,
   query: QuerySpec,
   panelId: string,
   name: string,
@@ -182,22 +185,22 @@ export function runMalloyQuery(
         };
 
         subscriptions.push(client.onRequest('malloy/queryPanel', listener));
-        subscriptions.push(
-          client.onDidChangeState(({oldState, newState}) => {
-            if (oldState === State.Running && newState === State.Stopped) {
-              current.messages.postMessage({
-                type: QueryMessageType.QueryStatus,
-                status: QueryRunStatus.Error,
-                error: `The worker process has died, and has been restarted.
-This is possibly the result of a database bug. \
-Please consider filing an issue with as much detail as possible at \
-https://github.com/malloydata/malloy-vscode-extension/issues.`,
-              });
-              unsubscribe();
-              resolve(undefined);
-            }
-          })
-        );
+        //         subscriptions.push(
+        //           client.onDidChangeState(({oldState, newState}) => {
+        //             if (oldState === State.Running && newState === State.Stopped) {
+        //               current.messages.postMessage({
+        //                 type: QueryMessageType.QueryStatus,
+        //                 status: QueryRunStatus.Error,
+        //                 error: `The worker process has died, and has been restarted.
+        // This is possibly the result of a database bug. \
+        // Please consider filing an issue with as much detail as possible at \
+        // https://github.com/malloydata/malloy-vscode-extension/issues.`,
+        //               });
+        //               unsubscribe();
+        //               resolve(undefined);
+        //             }
+        //           })
+        //         );
       });
     }
   );

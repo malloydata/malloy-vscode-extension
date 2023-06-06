@@ -22,11 +22,11 @@
  */
 
 import * as vscode from 'vscode';
-import {BaseLanguageClient} from 'vscode-languageclient';
+import {GenericConnection} from '../../common/worker_message_types';
 import {runMSQLQuery} from './msql_utils';
 
 export function runMalloySQLStatement(
-  client: BaseLanguageClient,
+  client: GenericConnection,
   statementIndex: number
 ): void {
   const document = vscode.window.activeTextEditor?.document;

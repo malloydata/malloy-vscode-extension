@@ -21,21 +21,21 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as vscode from 'vscode';
-import {GenericConnection} from '../../common/worker_message_types';
-import {runMSQLQuery} from './msql_utils';
+import {MessageConfig, MessageHandler} from '../../common/worker_message_types';
+import {ConnectionManager} from '../../common/connection_manager';
 
-export function showSQLMalloySQLFile(client: GenericConnection): void {
-  const document = vscode.window.activeTextEditor?.document;
+const DEFAULT_ROW_LIMIT = 50;
 
-  if (document) {
-    runMSQLQuery(
-      client,
-      document.uri.toString(),
-      document.fileName.split('/').pop() || document.fileName,
-      document,
-      null,
-      true
-    );
-  }
-}
+export const refreshConfig = (
+  messageHandler: MessageHandler,
+  connectionManager: ConnectionManager,
+  {config}: MessageConfig
+): void => {
+  const {rowLimit: rowLimitRaw, connections} = config;
+
+  messageHandler.log('Config updated');
+
+  connectionManager.setConnectionsConfig(connections);
+  const rowLimit = rowLimitRaw || DEFAULT_ROW_LIMIT;
+  connectionManager.setCurrentRowLimit(+rowLimit);
+};

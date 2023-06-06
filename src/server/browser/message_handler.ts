@@ -23,7 +23,7 @@
 
 import {Connection} from 'vscode-languageserver';
 import {ConnectionManager} from '../../common/connection_manager';
-import {MessageHandler} from '../message_handler';
+import {MessageHandler} from '../../worker/message_handler';
 import {RpcFileHandler} from '../file_handler';
 
 export class BrowserMessageHandler {

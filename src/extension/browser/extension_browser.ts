@@ -38,7 +38,7 @@ let client: LanguageClient;
 
 export function activate(context: vscode.ExtensionContext): void {
   setupLanguageServer(context);
-  setupSubscriptions(context, fileHandler, connectionManager, client);
+  setupSubscriptions(context, fileHandler, connectionManager, client, client);
 
   const connectionsTree = new ConnectionsProvider(context, connectionManager);
   context.subscriptions.push(

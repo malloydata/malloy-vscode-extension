@@ -22,11 +22,11 @@
  */
 
 import * as vscode from 'vscode';
-import {BaseLanguageClient} from 'vscode-languageclient';
+import {GenericConnection} from '../../common/worker_message_types';
 import {MALLOY_EXTENSION_STATE} from '../state';
 import {runMalloyQuery} from './run_query_utils';
 
-export function runNamedQuery(client: BaseLanguageClient, name: string): void {
+export function runNamedQuery(client: GenericConnection, name: string): void {
   const document =
     vscode.window.activeTextEditor?.document ||
     MALLOY_EXTENSION_STATE.getActiveWebviewPanel()?.document;

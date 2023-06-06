@@ -33,15 +33,18 @@ import {Utils} from 'vscode-uri';
 import {
   MSQLMessageType,
   MSQLQueryRunStatus,
-  QueryMessageType,
-  QueryRunStatus,
+  // QueryMessageType,
+  // QueryRunStatus,
 } from '../../common/message_types';
 import {MALLOY_EXTENSION_STATE, RunState} from '../state';
-import {WorkerMessage} from '../../common/worker_message_types';
-import {BaseLanguageClient, Disposable, State} from 'vscode-languageclient';
+import {
+  WorkerMessage,
+  GenericConnection,
+} from '../../common/worker_message_types';
+import {Disposable /* , State */} from 'vscode-languageclient';
 
 export function runMSQLQuery(
-  client: BaseLanguageClient,
+  client: GenericConnection,
   panelId: string,
   name: string,
   document: vscode.TextDocument,
@@ -157,22 +160,22 @@ export function runMSQLQuery(
         };
 
         subscriptions.push(client.onRequest('malloy/MSQLQueryPanel', listener));
-        subscriptions.push(
-          client.onDidChangeState(({oldState, newState}) => {
-            if (oldState === State.Running && newState === State.Stopped) {
-              current.messages.postMessage({
-                type: QueryMessageType.QueryStatus,
-                status: QueryRunStatus.Error,
-                error: `The worker process has died, and has been restarted.
-This is possibly the result of a database bug. \
-Please consider filing an issue with as much detail as possible at \
-https://github.com/malloydata/malloy-vscode-extension/issues.`,
-              });
-              unsubscribe();
-              resolve(undefined);
-            }
-          })
-        );
+        //         subscriptions.push(
+        //           client.onDidChangeState(({oldState, newState}) => {
+        //             if (oldState === State.Running && newState === State.Stopped) {
+        //               current.messages.postMessage({
+        //                 type: QueryMessageType.QueryStatus,
+        //                 status: QueryRunStatus.Error,
+        //                 error: `The worker process has died, and has been restarted.
+        // This is possibly the result of a database bug. \
+        // Please consider filing an issue with as much detail as possible at \
+        // https://github.com/malloydata/malloy-vscode-extension/issues.`,
+        //               });
+        //               unsubscribe();
+        //               resolve(undefined);
+        //             }
+        //           })
+        //         );
       });
     }
   );

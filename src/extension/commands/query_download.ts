@@ -29,13 +29,13 @@ import * as vscode from 'vscode';
 import {Utils} from 'vscode-uri';
 import {QuerySpec} from './query_spec';
 import {
+  GenericConnection,
   MessageDownload,
   WorkerMessage,
   WorkerQuerySpec,
 } from '../../common/worker_message_types';
 import {MALLOY_EXTENSION_STATE} from '../state';
 import {Disposable} from 'vscode-jsonrpc';
-import {BaseLanguageClient} from 'vscode-languageclient';
 
 /**
  * VSCode doesn't support streaming writes, so fake it.
@@ -60,7 +60,7 @@ class VSCodeWriteStream implements WriteStream {
 }
 
 const sendDownloadMessage = (
-  client: BaseLanguageClient,
+  client: GenericConnection,
   query: WorkerQuerySpec,
   panelId: string,
   name: string,
@@ -79,7 +79,7 @@ const sendDownloadMessage = (
 };
 
 export async function queryDownload(
-  client: BaseLanguageClient,
+  client: GenericConnection,
   query: QuerySpec,
   downloadOptions: QueryDownloadOptions,
   currentResults: Result,

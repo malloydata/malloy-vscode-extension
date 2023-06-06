@@ -23,10 +23,10 @@
 
 import * as vscode from 'vscode';
 import {runMalloyQuery} from './run_query_utils';
-import {BaseLanguageClient} from 'vscode-languageclient';
+import {GenericConnection} from '../../common/worker_message_types';
 
 export function runQueryFileCommand(
-  client: BaseLanguageClient,
+  client: GenericConnection,
   queryIndex = -1
 ): void {
   const document = vscode.window.activeTextEditor?.document;

@@ -21,7 +21,11 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {Connection} from 'vscode-languageserver';
+import {
+  CancellationToken,
+  Disposable,
+  GenericRequestHandler,
+} from 'vscode-languageserver';
 import {cancelQuery, runQuery} from './run_query';
 import {
   MessageCancel,
@@ -34,9 +38,21 @@ import {FileHandler} from '../common/types';
 import {ConnectionManager} from '../common/connection_manager';
 import {cancelMSQLQuery, runMSQLQuery} from './run_msql_query';
 
+export interface CommonConnection {
+  sendRequest<R>(
+    method: string,
+    params: any,
+    token?: CancellationToken
+  ): Promise<R>;
+  onRequest<R, E>(
+    method: string,
+    handler: GenericRequestHandler<R, E>
+  ): Disposable;
+}
+
 export class MessageHandler {
   constructor(
-    private connection: Connection,
+    private connection: CommonConnection,
     connectionManager: ConnectionManager,
     fileHandler: FileHandler
   ) {
@@ -61,6 +77,6 @@ export class MessageHandler {
   }
 
   log(message: string) {
-    this.connection.console.log(message);
+    // this.connection.console.log(message);
   }
 }

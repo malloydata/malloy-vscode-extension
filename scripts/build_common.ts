@@ -275,7 +275,10 @@ export async function doBuild(
 
   buildOptions['nodeServer'] = {
     ...commonNodeOptions,
-    entryPoints: ['./src/server/node/server_node.ts'],
+    entryPoints: [
+      './src/server/node/server_node.ts',
+      './src/worker/node/worker_node.ts',
+    ],
     external: ['pg-native', './keytar-native.node', './duckdb-native.node'],
   };
 

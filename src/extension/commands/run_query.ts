@@ -22,12 +22,12 @@
  */
 
 import * as vscode from 'vscode';
-import {BaseLanguageClient} from 'vscode-languageclient';
+import {GenericConnection} from '../../common/worker_message_types';
 import {MALLOY_EXTENSION_STATE} from '../state';
 import {runMalloyQuery} from './run_query_utils';
 
 export function runQueryCommand(
-  client: BaseLanguageClient,
+  client: GenericConnection,
   query: string,
   name?: string
 ): void {
