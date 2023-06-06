@@ -30,10 +30,15 @@ import {
   showSchemaTreeViewWhenFocused,
 } from './vscode_utils';
 import {Utils} from 'vscode-uri';
-import {MSQLMessageType, MSQLQueryRunStatus} from '../../common/message_types';
+import {
+  MSQLMessageType,
+  MSQLQueryRunStatus,
+  QueryMessageType,
+  QueryRunStatus,
+} from '../../common/message_types';
 import {MALLOY_EXTENSION_STATE, RunState} from '../state';
 import {WorkerMessage} from '../../common/worker_message_types';
-import {BaseLanguageClient} from 'vscode-languageclient';
+import {BaseLanguageClient, Disposable, State} from 'vscode-languageclient';
 
 export function runMSQLQuery(
   client: BaseLanguageClient,
@@ -97,7 +102,9 @@ export function runMSQLQuery(
       const runBegin = Date.now();
 
       return new Promise(resolve => {
-        let off: vscode.Disposable | null = null;
+        const subscriptions: Disposable[] = [];
+        const unsubscribe = () =>
+          subscriptions.forEach(subscription => subscription.dispose());
         const listener = (msg: WorkerMessage) => {
           if (msg.type !== 'malloy/MSQLQueryPanel') {
             return;
@@ -135,13 +142,13 @@ export function runMSQLQuery(
                   logTime('Run', runBegin, Date.now());
                   progress.report({increment: 100, message: 'Rendering'});
 
-                  off?.dispose();
+                  unsubscribe();
                   resolve(undefined);
                 }
                 break;
               case MSQLQueryRunStatus.Error:
                 {
-                  off?.dispose();
+                  unsubscribe();
                   resolve(undefined);
                 }
                 break;
@@ -149,7 +156,23 @@ export function runMSQLQuery(
           }
         };
 
-        off = client.onRequest('malloy/MSQLQueryPanel', listener);
+        subscriptions.push(client.onRequest('malloy/MSQLQueryPanel', listener));
+        subscriptions.push(
+          client.onDidChangeState(({oldState, newState}) => {
+            if (oldState === State.Running && newState === State.Stopped) {
+              current.messages.postMessage({
+                type: QueryMessageType.QueryStatus,
+                status: QueryRunStatus.Error,
+                error: `The worker process has died, and has been restarted.
+This is possibly the result of a database bug. \
+Please consider filing an issue with as much detail as possible at \
+https://github.com/malloydata/malloy-vscode-extension/issues.`,
+              });
+              unsubscribe();
+              resolve(undefined);
+            }
+          })
+        );
       });
     }
   );
