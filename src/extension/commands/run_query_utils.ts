@@ -131,9 +131,6 @@ export function runMalloyQuery(
 
                     if (showSQLOnly) {
                       progress.report({increment: 100, message: 'Complete'});
-                      subscriptions.forEach(subscription =>
-                        subscription.dispose()
-                      );
                       unsubscribe();
                       resolve(undefined);
                     }
