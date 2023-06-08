@@ -40,6 +40,16 @@
       "restart": true,
       "smartStep": false,
       "outFiles": ["${workspaceRoot}/dist/server_*.js"]
+    },
+    {
+      "type": "node",
+      "request": "attach",
+      "name": "Attach to Worker",
+      "port": 6010,
+      "skipFiles": ["<node_internals>/**"],
+      "restart": true,
+      "smartStep": false,
+      "outFiles": ["${workspaceRoot}/dist/worker_*.js"]
     }
   ],
   "compounds": [
@@ -48,6 +58,7 @@
       "configurations": [
         "Run VSCode Extension",
         "Attach to VSCode Language Server",
+        "Attach to Worker"
       ],
       "preLaunchTask": "build-extension-task",
       "stopAll": true
