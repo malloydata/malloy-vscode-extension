@@ -24,19 +24,15 @@
 import {Connection} from 'vscode-languageserver';
 import {ConnectionManager} from '../../common/connection_manager';
 import {MessageHandler} from '../../worker/message_handler';
-import {RpcFileHandler} from '../file_handler';
 
 export class BrowserMessageHandler {
   constructor(
     private connection: Connection,
     private connectionManager: ConnectionManager
   ) {
-    const fileHandler = new RpcFileHandler(this.connection);
-
     const messageHandler = new MessageHandler(
       this.connection,
-      this.connectionManager,
-      fileHandler
+      this.connectionManager
     );
 
     messageHandler.log('BrowserMessageHandler initialized.');

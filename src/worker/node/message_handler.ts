@@ -23,14 +23,9 @@
 
 import * as rpc from 'vscode-jsonrpc/node';
 import {downloadQuery} from './download_query';
-import {
-  MessageConfig,
-  MessageDownload,
-} from '../../common/worker_message_types';
 import {ConnectionManager} from '../../common/connection_manager';
 import {DesktopConnectionFactory} from '../../common/connections/node/connection_factory';
 import {MessageHandler} from '../message_handler';
-import {RpcFileHandler} from '../file_handler';
 import {refreshConfig} from './refresh_config';
 
 export class NodeMessageHandler {
@@ -46,18 +41,17 @@ export class NodeMessageHandler {
       []
     );
 
-    const fileHandler = new RpcFileHandler(connection);
+    const messageHandler = new MessageHandler(connection, connectionManager);
 
-    const messageHandler = new MessageHandler(
-      connection,
-      connectionManager,
-      fileHandler
+    messageHandler.onRequest('malloy/download', message =>
+      downloadQuery(
+        messageHandler,
+        connectionManager,
+        message,
+        messageHandler.fileHandler
+      )
     );
-
-    connection.onRequest('malloy/download', (message: MessageDownload) =>
-      downloadQuery(messageHandler, connectionManager, message, fileHandler)
-    );
-    connection.onRequest('malloy/config', (message: MessageConfig) =>
+    messageHandler.onRequest('malloy/config', message =>
       refreshConfig(messageHandler, connectionManager, message)
     );
     messageHandler.log('NodeMessageHandler initialized.');

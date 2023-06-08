@@ -174,17 +174,14 @@ export interface WorkerSQLQueryPanelMessage {
 }
 
 export interface WorkerReadBinaryMessage {
-  id: string;
   uri: string;
 }
 
 export interface WorkerReadCellDataMessage {
-  id: string;
   uri: string;
 }
 
 export interface WorkerReadMessage {
-  id: string;
   uri: string;
 }
 

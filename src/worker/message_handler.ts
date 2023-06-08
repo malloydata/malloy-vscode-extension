@@ -32,16 +32,19 @@ import {
   MessageRunMSQL,
   WorkerMessageMap,
 } from '../common/worker_message_types';
-import {FileHandler} from '../common/types';
 import {ConnectionManager} from '../common/connection_manager';
 import {cancelMSQLQuery, runMSQLQuery} from './run_msql_query';
+import {RpcFileHandler} from './file_handler';
+import {FileHandler} from '../common/types';
 
 export class MessageHandler implements WorkerMessageHandler {
+  public fileHandler: FileHandler;
   constructor(
     private connection: GenericConnection,
-    connectionManager: ConnectionManager,
-    fileHandler: FileHandler
+    connectionManager: ConnectionManager
   ) {
+    this.fileHandler = new RpcFileHandler(this);
+
     this.onRequest('malloy/cancel', (message: MessageCancel) =>
       cancelQuery(message)
     );
@@ -51,11 +54,11 @@ export class MessageHandler implements WorkerMessageHandler {
     );
 
     this.onRequest('malloy/run', (message: MessageRun) =>
-      runQuery(this, fileHandler, connectionManager, false, message)
+      runQuery(this, this.fileHandler, connectionManager, false, message)
     );
 
     this.onRequest('malloy/run-msql', (message: MessageRunMSQL) =>
-      runMSQLQuery(this, fileHandler, connectionManager, message)
+      runMSQLQuery(this, this.fileHandler, connectionManager, message)
     );
   }
 
