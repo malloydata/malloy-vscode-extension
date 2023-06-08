@@ -27,7 +27,7 @@ import {DataStyles} from '@malloydata/render';
 import {HackyDataStylesAccumulator} from './data_styles';
 import {
   MessageCancel,
-  MessageHandler,
+  WorkerMessageHandler,
   MessageRun,
   WorkerQueryPanelMessage,
 } from '../common/worker_message_types';
@@ -49,21 +49,20 @@ interface QueryEntry {
 const runningQueries: Record<string, QueryEntry> = {};
 
 const sendMessage = (
-  messageHandler: MessageHandler,
+  messageHandler: WorkerMessageHandler,
   message: QueryPanelMessage,
   panelId: string
 ) => {
   const msg: WorkerQueryPanelMessage = {
-    type: 'malloy/queryPanel',
     panelId,
     message,
   };
 
-  messageHandler.send(msg);
+  messageHandler.sendRequest('malloy/queryPanel', msg);
 };
 
 export const runQuery = async (
-  messageHandler: MessageHandler,
+  messageHandler: WorkerMessageHandler,
   fileHandler: FileHandler,
   connectionManager: ConnectionManager,
   isBrowser: boolean,

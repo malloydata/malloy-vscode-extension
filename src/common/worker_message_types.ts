@@ -74,12 +74,10 @@ export type WorkerQuerySpec =
  * Incoming messages
  */
 
-export interface MessageExit {
-  type: 'exit';
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface MessageExit {}
 
 export interface MessageRun {
-  type: 'malloy/run';
   query: WorkerQuerySpec;
   panelId: string;
   name: string;
@@ -87,7 +85,6 @@ export interface MessageRun {
 }
 
 export interface MessageRunMSQL {
-  type: 'malloy/run-msql';
   panelId: string;
   malloySQLQuery: string;
   statementIndex: number | null;
@@ -95,17 +92,18 @@ export interface MessageRunMSQL {
 }
 
 export interface MessageCancel {
-  type: 'malloy/cancel';
+  panelId: string;
+}
+
+export interface MessageCancelMSQL {
   panelId: string;
 }
 
 export interface MessageConfig {
-  type: 'malloy/config';
   config: MalloyConfig;
 }
 
 export interface MessageFetch {
-  type: 'malloy/fetch';
   id: string;
   uri: string;
   data?: string;
@@ -113,7 +111,6 @@ export interface MessageFetch {
 }
 
 export interface MessageFetchBinary {
-  type: 'malloy/fetchBinary';
   id: string;
   uri: string;
   data?: Uint8Array;
@@ -121,7 +118,6 @@ export interface MessageFetchBinary {
 }
 
 export interface MessageFetchCellData {
-  type: 'malloy/fetchCellData';
   id: string;
   uri: string;
   data?: CellData[];
@@ -129,7 +125,6 @@ export interface MessageFetchCellData {
 }
 
 export interface MessageDownload {
-  type: 'malloy/download';
   query: WorkerQuerySpec;
   panelId: string;
   name: string;
@@ -142,104 +137,107 @@ export type FetchMessage =
   | MessageFetchBinary
   | MessageFetchCellData;
 
-export type Message =
-  | MessageCancel
-  | MessageConfig
-  | MessageExit
-  | MessageFetch
-  | MessageFetchBinary
-  | MessageFetchCellData
-  | MessageRun
-  | MessageDownload
-  | MessageRunMSQL;
+export interface MessageMap {
+  'malloy/cancel': MessageCancel;
+  'malloy/config': MessageConfig;
+  'malloy/exit': void;
+  'malloy/fetch': MessageFetch;
+  'malloy/fetchBinary': MessageFetchBinary;
+  'malloy/fetchCellData': MessageFetchCellData;
+  'malloy/cancelMSQL': MessageCancelMSQL;
+  'malloy/run': MessageRun;
+  'malloy/download': MessageDownload;
+  'malloy/run-msql': MessageRunMSQL;
+}
 
 /**
  * Outgoing messages
  */
 
 export interface WorkerDownloadMessage {
-  type: 'malloy/download';
   name: string;
   error?: string;
 }
 
 export interface WorkerLogMessage {
-  type: 'malloy/log';
   message: string;
 }
 
 export interface WorkerQueryPanelMessage {
-  type: 'malloy/queryPanel';
   panelId: string;
   message: QueryPanelMessage;
 }
 
 export interface WorkerSQLQueryPanelMessage {
-  type: 'malloy/MSQLQueryPanel';
   panelId: string;
   message: MSQLQueryPanelMessage;
 }
 
-export interface WorkerStartMessage {
-  type: 'malloy/start';
-}
-
 export interface WorkerReadBinaryMessage {
-  type: 'malloy/fetchBinary';
   id: string;
   uri: string;
 }
 
 export interface WorkerReadCellDataMessage {
-  type: 'malloy/fetchCellData';
   id: string;
   uri: string;
 }
 
 export interface WorkerReadMessage {
-  type: 'malloy/fetch';
   id: string;
   uri: string;
 }
 
-export type WorkerMessage =
-  | WorkerDownloadMessage
-  | WorkerLogMessage
-  | WorkerQueryPanelMessage
-  | WorkerReadBinaryMessage
-  | WorkerReadMessage
-  | WorkerReadCellDataMessage
-  | WorkerStartMessage
-  | WorkerSQLQueryPanelMessage;
-
-export interface BaseWorker {
-  send(message: Message): void;
-  on(
-    name: WorkerMessage['type'],
-    callback: (message: WorkerMessage) => void
-  ): Disposable;
+export interface WorkerMessageMap {
+  'malloy/download': WorkerDownloadMessage;
+  'malloy/log': WorkerLogMessage;
+  'malloy/queryPanel': WorkerQueryPanelMessage;
+  'malloy/fetchBinary': WorkerReadBinaryMessage;
+  'malloy/fetch': WorkerReadMessage;
+  'malloy/fetchCellData': WorkerReadCellDataMessage;
+  'malloy/MSQLQueryPanel': WorkerSQLQueryPanelMessage;
 }
 
-export interface MessageHandler {
-  send(message: WorkerMessage): void;
+export interface WorkerMessageHandler {
+  onRequest<K extends keyof MessageMap>(
+    type: K,
+    message: ListenerType<MessageMap[K]>
+  ): Disposable;
+
+  sendRequest<R, K extends keyof WorkerMessageMap>(
+    type: K,
+    message: WorkerMessageMap[K]
+  ): Promise<R>;
+
   log(message: string): void;
 }
 
-export interface GenericMessageSender {
+export interface ExtensionMessageHandler {
+  onRequest<K extends keyof WorkerMessageMap>(
+    type: K,
+    message: ListenerType<WorkerMessageMap[K]>
+  ): Disposable;
+
+  sendRequest<R, K extends keyof MessageMap>(
+    type: K,
+    message: MessageMap[K]
+  ): Promise<R>;
+
+  log(message: string): void;
+}
+
+export interface GenericConnection {
+  onRequest<R, E>(
+    method: string,
+    handler: GenericRequestHandler<R, E>
+  ): Disposable;
+
   sendRequest<R>(
     method: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     param: any,
     token?: CancellationToken
   ): Promise<R>;
 }
 
-export interface GenericMessageReceiver {
-  onRequest<R, E>(
-    method: string,
-    handler: GenericRequestHandler<R, E>
-  ): Disposable;
-}
-
-export interface GenericConnection
-  extends GenericMessageReceiver,
-    GenericMessageSender {}
+export type ListenerType<K> = (message: K) => void;

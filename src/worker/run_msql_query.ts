@@ -23,7 +23,7 @@
 
 import {
   MessageCancel,
-  MessageHandler,
+  WorkerMessageHandler,
   MessageRunMSQL,
   WorkerSQLQueryPanelMessage as WorkerMSQLQueryPanelMessage,
 } from '../common/worker_message_types';
@@ -84,19 +84,18 @@ class VirtualURIFileHandler implements URLReader {
 
 // panelId == document.uri.toString(), but it's not obvious from the name.
 export const runMSQLQuery = async (
-  messageHandler: MessageHandler,
+  messageHandler: WorkerMessageHandler,
   fileHandler: FileHandler,
   connectionManager: ConnectionManager,
   {panelId, malloySQLQuery, statementIndex, showSQLOnly}: MessageRunMSQL
 ): Promise<void> => {
   const sendMessage = (message: MSQLQueryPanelMessage) => {
     const msg: WorkerMSQLQueryPanelMessage = {
-      type: 'malloy/MSQLQueryPanel',
       panelId,
       message,
     };
 
-    messageHandler.send(msg);
+    messageHandler.sendRequest('malloy/MSQLQueryPanel', msg);
   };
 
   // conveniently, what we call panelId is also the document URI

@@ -22,18 +22,18 @@
  */
 
 import * as vscode from 'vscode';
-import {GenericConnection} from '../../common/worker_message_types';
+import {WorkerConnection} from '../worker_connection';
 import {runMSQLQuery} from './msql_utils';
 
 export function runMalloySQLStatement(
-  client: GenericConnection,
+  worker: WorkerConnection,
   statementIndex: number
 ): void {
   const document = vscode.window.activeTextEditor?.document;
 
   if (document) {
     runMSQLQuery(
-      client,
+      worker,
       document.uri.toString(),
       document.fileName.split('/').pop() || document.fileName,
       document,

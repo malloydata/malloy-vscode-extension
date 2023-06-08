@@ -36,11 +36,11 @@ import {connectionManager} from './connection_manager';
 import {setupFileMessaging, setupSubscriptions} from '../subscriptions';
 import {fileHandler} from '../utils';
 import {MALLOY_EXTENSION_STATE} from '../state';
-import {WorkerConnection} from './worker_connection_node';
+import {WorkerConnectionNode} from './worker_connection_node';
 import {FileHandler, MalloyConfig} from '../../common/types';
 
 let client: LanguageClient;
-let worker: WorkerConnection | null = null;
+let worker: WorkerConnectionNode | null = null;
 
 const cloudshellEnv = () => {
   const cloudShellProject = vscode.workspace
@@ -57,13 +57,7 @@ export function activate(context: vscode.ExtensionContext): void {
   cloudshellEnv();
   setupLanguageServer(context);
   setupWorker(context, fileHandler);
-  setupSubscriptions(
-    context,
-    fileHandler,
-    connectionManager,
-    worker.connection,
-    client
-  );
+  setupSubscriptions(context, fileHandler, connectionManager, worker, client);
   const connectionsTree = new ConnectionsProvider(context, connectionManager);
 
   MALLOY_EXTENSION_STATE.setHomeUri(vscode.Uri.file(os.homedir()));
@@ -147,8 +141,7 @@ async function setupLanguageServer(
 }
 
 function sendWorkerConfig() {
-  worker.send({
-    type: 'malloy/config',
+  worker.sendRequest('malloy/config', {
     config: vscode.workspace.getConfiguration(
       'malloy'
     ) as unknown as MalloyConfig,
@@ -159,6 +152,6 @@ function setupWorker(
   context: vscode.ExtensionContext,
   fileHandler: FileHandler
 ): void {
-  worker = new WorkerConnection(context, fileHandler);
+  worker = new WorkerConnectionNode(context, fileHandler);
   sendWorkerConfig();
 }

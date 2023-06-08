@@ -21,62 +21,59 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {
-  CancellationToken,
-  Disposable,
-  GenericRequestHandler,
-} from 'vscode-languageserver';
 import {cancelQuery, runQuery} from './run_query';
 import {
+  GenericConnection,
+  ListenerType,
   MessageCancel,
-  // MessageDownload,
+  WorkerMessageHandler,
+  MessageMap,
   MessageRun,
   MessageRunMSQL,
-  WorkerMessage,
+  WorkerMessageMap,
 } from '../common/worker_message_types';
 import {FileHandler} from '../common/types';
 import {ConnectionManager} from '../common/connection_manager';
 import {cancelMSQLQuery, runMSQLQuery} from './run_msql_query';
 
-export interface CommonConnection {
-  sendRequest<R>(
-    method: string,
-    params: any,
-    token?: CancellationToken
-  ): Promise<R>;
-  onRequest<R, E>(
-    method: string,
-    handler: GenericRequestHandler<R, E>
-  ): Disposable;
-}
-
-export class MessageHandler {
+export class MessageHandler implements WorkerMessageHandler {
   constructor(
-    private connection: CommonConnection,
+    private connection: GenericConnection,
     connectionManager: ConnectionManager,
     fileHandler: FileHandler
   ) {
-    this.connection.onRequest('malloy/cancel', (message: MessageCancel) =>
+    this.onRequest('malloy/cancel', (message: MessageCancel) =>
       cancelQuery(message)
     );
 
-    this.connection.onRequest('malloy/cancelMSQL', (message: MessageCancel) =>
+    this.onRequest('malloy/cancelMSQL', (message: MessageCancel) =>
       cancelMSQLQuery(message)
     );
 
-    this.connection.onRequest('malloy/run', (message: MessageRun) =>
+    this.onRequest('malloy/run', (message: MessageRun) =>
       runQuery(this, fileHandler, connectionManager, false, message)
     );
-    this.connection.onRequest('malloy/run-msql', (message: MessageRunMSQL) =>
+
+    this.onRequest('malloy/run-msql', (message: MessageRunMSQL) =>
       runMSQLQuery(this, fileHandler, connectionManager, message)
     );
   }
 
-  send(message: WorkerMessage) {
-    this.connection.sendRequest(message.type, message);
+  onRequest<K extends keyof MessageMap>(
+    type: K,
+    message: ListenerType<MessageMap[K]>
+  ) {
+    return this.connection.onRequest(type, message);
+  }
+
+  sendRequest<R, K extends keyof WorkerMessageMap>(
+    type: K,
+    message: WorkerMessageMap[K]
+  ): Promise<R> {
+    return this.connection.sendRequest(type, message);
   }
 
   log(message: string) {
-    // this.connection.console.log(message);
+    this.sendRequest('malloy/log', {message});
   }
 }

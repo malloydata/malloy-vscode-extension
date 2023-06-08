@@ -25,94 +25,12 @@
 import * as child_process from 'child_process';
 import * as vscode from 'vscode';
 import * as rpc from 'vscode-jsonrpc/node';
-import {
-  Message,
-  WorkerLogMessage,
-  WorkerMessage,
-  WorkerReadBinaryMessage,
-  WorkerReadCellDataMessage,
-  WorkerReadMessage,
-} from '../../common/worker_message_types';
 import {FileHandler} from '../../common/types';
+import {WorkerConnection} from '../worker_connection';
 
 const DEFAULT_RESTART_SECONDS = 1;
 
-export type ListenerType = (message: WorkerMessage) => void;
-
-const workerLog = vscode.window.createOutputChannel('Malloy Worker');
-
-export abstract class WorkerConnectionBase {
-  connection: rpc.MessageConnection;
-  listeners: ListenerType[] = [];
-
-  constructor(
-    private context: vscode.ExtensionContext,
-    private fileHandler: FileHandler
-  ) {}
-
-  subscribe() {
-    this.context.subscriptions.push(
-      this._on('malloy/log', (message: WorkerLogMessage) => {
-        workerLog.appendLine(message.message);
-      })
-    );
-
-    this.context.subscriptions.push(
-      this._on('malloy/fetch', async (message: WorkerReadMessage) => {
-        workerLog.appendLine(`reading file ${message.uri}`);
-        return await this.fileHandler.fetchFile(message.uri);
-      })
-    );
-
-    this.context.subscriptions.push(
-      this._on(
-        'malloy/fetchBinary',
-        async (message: WorkerReadBinaryMessage) => {
-          workerLog.appendLine(`reading binary file ${message.uri}`);
-          return await this.fileHandler.fetchBinaryFile(message.uri);
-        }
-      )
-    );
-
-    this.context.subscriptions.push(
-      this._on(
-        'malloy/fetchCellData',
-        async (message: WorkerReadCellDataMessage) => {
-          workerLog.appendLine(`reading cell data for ${message.uri}`);
-          return await this.fileHandler.fetchCellData(message.uri);
-        }
-      )
-    );
-
-    this.context.subscriptions.push(this);
-  }
-
-  send(message: Message): void {
-    this.connection.sendRequest(message.type, message);
-  }
-
-  private _on(
-    event: WorkerMessage['type'],
-    listener: ListenerType
-  ): vscode.Disposable {
-    return this.connection.onRequest(event, listener);
-  }
-
-  on(event: WorkerMessage['type'], listener: ListenerType): vscode.Disposable {
-    this.listeners.push(listener);
-    const disposable = this._on(event, listener);
-    return {
-      dispose: () => {
-        disposable.dispose();
-        this.listeners = this.listeners.filter(l => l !== listener);
-      },
-    };
-  }
-
-  abstract dispose(): void;
-}
-
-export class WorkerConnection extends WorkerConnectionBase {
+export class WorkerConnectionNode extends WorkerConnection {
   worker!: child_process.ChildProcess;
 
   constructor(context: vscode.ExtensionContext, fileHandler: FileHandler) {
@@ -128,27 +46,33 @@ export class WorkerConnection extends WorkerConnectionBase {
       );
     }
 
+    const cwd = vscode.workspace.workspaceFolders[0].uri.fsPath;
+
     const startWorker = () => {
+      let connection: rpc.MessageConnection | null = null;
+
       this.worker = child_process
-        .fork(workerModule, {execArgv})
+        // .spawn('node', [workerModule, ...execArgv], {stdio: ['ipc'], cwd})
+        .fork(workerModule, {execArgv, cwd})
         .on('error', console.error)
         .on('exit', status => {
+          connection.dispose();
+          console.error(`Worker exited with ${status}`);
           if (status !== 0) {
-            console.error(`Worker exited with ${status}`);
             console.info(`Restarting in ${DEFAULT_RESTART_SECONDS} seconds`);
             // Maybe exponential backoff? Not sure what our failure
             // modes are going to be
             setTimeout(startWorker, DEFAULT_RESTART_SECONDS * 1000);
-            // this.notifyListeners({type: 'malloy/dead'});
           }
         });
 
-      this.connection = rpc.createMessageConnection(
+      connection = rpc.createMessageConnection(
         new rpc.IPCMessageReader(this.worker),
         new rpc.IPCMessageWriter(this.worker)
       );
-      this.connection.listen();
-      context.subscriptions.push(this.connection);
+      connection.listen();
+      context.subscriptions.push(connection);
+      this.connection = connection;
 
       this.subscribe();
     };

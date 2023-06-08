@@ -21,13 +21,16 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {MessageConfig, MessageHandler} from '../../common/worker_message_types';
+import {
+  MessageConfig,
+  WorkerMessageHandler,
+} from '../../common/worker_message_types';
 import {ConnectionManager} from '../../common/connection_manager';
 
 const DEFAULT_ROW_LIMIT = 50;
 
 export const refreshConfig = (
-  messageHandler: MessageHandler,
+  messageHandler: WorkerMessageHandler,
   connectionManager: ConnectionManager,
   {config}: MessageConfig
 ): void => {

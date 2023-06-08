@@ -21,22 +21,21 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+/* eslint-disable no-console */
 import * as vscode from 'vscode';
+import {GenericConnection} from '../../common/worker_message_types';
+import {FileHandler} from '../../common/types';
 import {WorkerConnection} from '../worker_connection';
-import {runMalloyQuery} from './run_query_utils';
 
-export function showSQLFileCommand(
-  worker: WorkerConnection,
-  queryIndex = -1
-): void {
-  const document = vscode.window.activeTextEditor?.document;
-  if (document) {
-    runMalloyQuery(
-      worker,
-      {type: 'file', index: queryIndex, file: document},
-      document.uri.toString(),
-      document.fileName.split('/').pop() || document.fileName,
-      true
-    );
+export class WorkerConnectionBrowser extends WorkerConnection {
+  constructor(
+    context: vscode.ExtensionContext,
+    connection: GenericConnection,
+    fileHandler: FileHandler
+  ) {
+    super(context, fileHandler);
+    this.connection = connection;
   }
+
+  dispose(): void {}
 }

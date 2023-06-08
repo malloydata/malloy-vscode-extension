@@ -29,13 +29,13 @@ import * as vscode from 'vscode';
 import {Utils} from 'vscode-uri';
 import {QuerySpec} from './query_spec';
 import {
-  GenericConnection,
   MessageDownload,
-  WorkerMessage,
+  WorkerDownloadMessage,
   WorkerQuerySpec,
 } from '../../common/worker_message_types';
 import {MALLOY_EXTENSION_STATE} from '../state';
 import {Disposable} from 'vscode-jsonrpc';
+import {WorkerConnection} from '../worker_connection';
 
 /**
  * VSCode doesn't support streaming writes, so fake it.
@@ -60,7 +60,7 @@ class VSCodeWriteStream implements WriteStream {
 }
 
 const sendDownloadMessage = (
-  client: GenericConnection,
+  worker: WorkerConnection,
   query: WorkerQuerySpec,
   panelId: string,
   name: string,
@@ -68,18 +68,17 @@ const sendDownloadMessage = (
   downloadOptions: QueryDownloadOptions
 ) => {
   const message: MessageDownload = {
-    type: 'malloy/download',
     query,
     panelId,
     name,
     uri,
     downloadOptions,
   };
-  client.sendRequest('malloy/download', message);
+  worker.sendRequest('malloy/download', message);
 };
 
 export async function queryDownload(
-  client: GenericConnection,
+  worker: WorkerConnection,
   query: QuerySpec,
   downloadOptions: QueryDownloadOptions,
   currentResults: Result,
@@ -140,7 +139,7 @@ export async function queryDownload(
         } else {
           const {file, ...params} = query;
           sendDownloadMessage(
-            client,
+            worker,
             {
               uri: file.uri.toString(),
               ...params,
@@ -150,10 +149,7 @@ export async function queryDownload(
             fileUri.toString(),
             downloadOptions
           );
-          const listener = (msg: WorkerMessage) => {
-            if (msg.type !== 'malloy/download') {
-              return;
-            }
+          const listener = (msg: WorkerDownloadMessage) => {
             const {name: msgName, error} = msg;
             if (msgName !== name) {
               return;
@@ -170,7 +166,7 @@ export async function queryDownload(
             off?.dispose();
           };
 
-          off = client.onRequest('malloy/download', listener);
+          off = worker.onRequest('malloy/download', listener);
         }
       } catch (error) {
         vscode.window.showErrorMessage(

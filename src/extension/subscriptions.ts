@@ -62,6 +62,7 @@ import {
 } from '../common/worker_message_types';
 import {runMalloySQLStatement} from './commands/run_msql_statement';
 import {BaseLanguageClient} from 'vscode-languageclient';
+import {WorkerConnection} from './worker_connection';
 
 function getNewClientId(): string {
   return uuid();
@@ -71,7 +72,7 @@ export const setupSubscriptions = (
   context: vscode.ExtensionContext,
   urlReader: URLReader,
   connectionManager: ConnectionManager,
-  worker: GenericConnection,
+  worker: WorkerConnection,
   client: BaseLanguageClient
 ) => {
   MALLOY_EXTENSION_STATE.setExtensionUri(context.extensionUri);
@@ -95,7 +96,7 @@ export const setupSubscriptions = (
   // Run named query
   context.subscriptions.push(
     vscode.commands.registerCommand('malloy.runNamedQuery', (name: string) =>
-      runNamedQuery(client, name)
+      runNamedQuery(worker, name)
     )
   );
 

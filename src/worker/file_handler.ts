@@ -21,19 +21,11 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {CancellationToken} from 'vscode-languageserver';
 import {CellData, FileHandler} from '../common/types';
-
-export interface CommonConnection {
-  sendRequest<R>(
-    method: string,
-    params: any,
-    token?: CancellationToken
-  ): Promise<R>;
-}
+import {GenericConnection} from '../common/worker_message_types';
 
 export class RpcFileHandler implements FileHandler {
-  constructor(private connection: CommonConnection) {}
+  constructor(private connection: GenericConnection) {}
 
   /**
    * Requests a file from the worker's controller. Although the

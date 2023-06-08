@@ -22,12 +22,12 @@
  */
 
 import * as vscode from 'vscode';
-import {GenericConnection} from '../../common/worker_message_types';
 import {MALLOY_EXTENSION_STATE} from '../state';
+import {WorkerConnection} from '../worker_connection';
 import {runMalloyQuery} from './run_query_utils';
 
 export function runUnnamedSQLBlock(
-  client: GenericConnection,
+  worker: WorkerConnection,
   index: number
 ): void {
   const document =
@@ -35,7 +35,7 @@ export function runUnnamedSQLBlock(
     MALLOY_EXTENSION_STATE.getActiveWebviewPanel()?.document;
   if (document) {
     runMalloyQuery(
-      client,
+      worker,
       {type: 'unnamed_sql', index, file: document},
       document.uri.toString(),
       document.fileName.split('/').pop() || document.fileName
