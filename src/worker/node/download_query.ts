@@ -26,7 +26,7 @@ import {fileURLToPath} from 'url';
 import {CSVWriter, JSONWriter, Runtime} from '@malloydata/malloy';
 import {
   MessageDownload,
-  MessageHandler,
+  WorkerMessageHandler,
   WorkerDownloadMessage,
 } from '../../common/worker_message_types';
 import {createRunnable} from '../create_runnable';
@@ -34,20 +34,19 @@ import {FileHandler} from '../../common/types';
 import {ConnectionManager} from '../../common/connection_manager';
 
 const sendMessage = (
-  messageHandler: MessageHandler,
+  messageHandler: WorkerMessageHandler,
   name: string,
   error?: string
 ) => {
   const msg: WorkerDownloadMessage = {
-    type: 'malloy/download',
     name,
     error,
   };
-  messageHandler.send(msg);
+  messageHandler.sendRequest('malloy/download', msg);
 };
 
 export async function downloadQuery(
-  messageHandler: MessageHandler,
+  messageHandler: WorkerMessageHandler,
   connectionManager: ConnectionManager,
   {query, panelId, downloadOptions, name, uri}: MessageDownload,
   fileHandler: FileHandler

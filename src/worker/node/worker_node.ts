@@ -21,22 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as vscode from 'vscode';
-import {WorkerConnection} from '../worker_connection';
-import {runMalloyQuery} from './run_query_utils';
+import {NodeMessageHandler} from './message_handler';
 
-export function showSQLFileCommand(
-  worker: WorkerConnection,
-  queryIndex = -1
-): void {
-  const document = vscode.window.activeTextEditor?.document;
-  if (document) {
-    runMalloyQuery(
-      worker,
-      {type: 'file', index: queryIndex, file: document},
-      document.uri.toString(),
-      document.fileName.split('/').pop() || document.fileName,
-      true
-    );
-  }
-}
+export const messageHandler = new NodeMessageHandler();

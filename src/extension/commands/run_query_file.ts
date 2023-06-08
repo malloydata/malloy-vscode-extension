@@ -23,16 +23,16 @@
 
 import * as vscode from 'vscode';
 import {runMalloyQuery} from './run_query_utils';
-import {BaseLanguageClient} from 'vscode-languageclient';
+import {WorkerConnection} from '../worker_connection';
 
 export function runQueryFileCommand(
-  client: BaseLanguageClient,
+  worker: WorkerConnection,
   queryIndex = -1
 ): void {
   const document = vscode.window.activeTextEditor?.document;
   if (document) {
     runMalloyQuery(
-      client,
+      worker,
       {type: 'file', index: queryIndex, file: document},
       document.uri.toString(),
       document.fileName.split('/').pop() || document.fileName

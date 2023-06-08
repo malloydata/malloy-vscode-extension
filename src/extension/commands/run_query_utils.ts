@@ -28,7 +28,6 @@ import {MALLOY_EXTENSION_STATE, RunState} from '../state';
 import {Result} from '@malloydata/malloy';
 import {QueryMessageType, QueryRunStatus} from '../../common/message_types';
 import {queryDownload} from './query_download';
-import {WorkerMessage} from '../../common/worker_message_types';
 import {malloyLog} from '../logger';
 import {trackQueryRun} from '../telemetry';
 import {QuerySpec} from './query_spec';
@@ -38,10 +37,11 @@ import {
   loadWebview,
   showSchemaTreeViewWhenFocused,
 } from './vscode_utils';
-import {BaseLanguageClient, State} from 'vscode-languageclient';
+import {WorkerConnection} from '../worker_connection';
+import {WorkerQueryPanelMessage} from '../../common/worker_message_types';
 
 export function runMalloyQuery(
-  client: BaseLanguageClient,
+  worker: WorkerConnection,
   query: QuerySpec,
   panelId: string,
   name: string,
@@ -55,8 +55,7 @@ export function runMalloyQuery(
     },
     (progress, token) => {
       const cancel = () => {
-        client.sendRequest('malloy/cancel', {
-          type: 'malloy/cancel',
+        worker.sendRequest('malloy/cancel', {
           panelId: panelId,
         });
         if (current) {
@@ -91,24 +90,35 @@ export function runMalloyQuery(
 
       const {file, ...params} = query;
       const uri = file.uri.toString();
-      client.sendRequest('malloy/run', {
-        query: {
-          uri,
-          ...params,
-        },
-        panelId,
-        name,
-        showSQLOnly,
-      });
 
       return new Promise(resolve => {
+        worker
+          .sendRequest('malloy/run', {
+            query: {
+              uri,
+              ...params,
+            },
+            panelId,
+            name,
+            showSQLOnly,
+          })
+          .catch(() => {
+            current.messages.postMessage({
+              type: QueryMessageType.QueryStatus,
+              status: QueryRunStatus.Error,
+              error: `The worker process has died, and has been restarted.
+This is possibly the result of a database bug. \
+Please consider filing an issue with as much detail as possible at \
+https://github.com/malloydata/malloy-vscode-extension/issues.`,
+            });
+            unsubscribe();
+            resolve(undefined);
+          });
+
         const subscriptions: Disposable[] = [];
         const unsubscribe = () =>
           subscriptions.forEach(subscription => subscription.dispose());
-        const listener = (msg: WorkerMessage) => {
-          if (msg.type !== 'malloy/queryPanel') {
-            return;
-          }
+        const listener = (msg: WorkerQueryPanelMessage) => {
           const {message, panelId: msgPanelId} = msg;
           if (msgPanelId !== panelId) {
             return;
@@ -157,7 +167,7 @@ export function runMalloyQuery(
                     current.messages.onReceiveMessage(message => {
                       if (message.type === QueryMessageType.StartDownload) {
                         queryDownload(
-                          client,
+                          worker,
                           query,
                           message.downloadOptions,
                           queryResult,
@@ -181,23 +191,7 @@ export function runMalloyQuery(
           }
         };
 
-        subscriptions.push(client.onRequest('malloy/queryPanel', listener));
-        subscriptions.push(
-          client.onDidChangeState(({oldState, newState}) => {
-            if (oldState === State.Running && newState === State.Stopped) {
-              current.messages.postMessage({
-                type: QueryMessageType.QueryStatus,
-                status: QueryRunStatus.Error,
-                error: `The worker process has died, and has been restarted.
-This is possibly the result of a database bug. \
-Please consider filing an issue with as much detail as possible at \
-https://github.com/malloydata/malloy-vscode-extension/issues.`,
-              });
-              unsubscribe();
-              resolve(undefined);
-            }
-          })
-        );
+        subscriptions.push(worker.onRequest('malloy/queryPanel', listener));
       });
     }
   );

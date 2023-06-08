@@ -34,11 +34,13 @@ import {connectionManager} from './connection_manager';
 import {ConnectionsProvider} from '../tree_views/connections_view';
 import {editConnectionsCommand} from './commands/edit_connections';
 import {fileHandler} from '../utils';
+import {WorkerConnectionBrowser} from './worker_connection_browser';
 let client: LanguageClient;
 
 export function activate(context: vscode.ExtensionContext): void {
   setupLanguageServer(context);
-  setupSubscriptions(context, fileHandler, connectionManager, client);
+  const worker = new WorkerConnectionBrowser(context, client, fileHandler);
+  setupSubscriptions(context, fileHandler, connectionManager, worker, client);
 
   const connectionsTree = new ConnectionsProvider(context, connectionManager);
   context.subscriptions.push(

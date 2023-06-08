@@ -22,17 +22,17 @@
  */
 
 import * as vscode from 'vscode';
-import {BaseLanguageClient} from 'vscode-languageclient';
 import {MALLOY_EXTENSION_STATE} from '../state';
+import {WorkerConnection} from '../worker_connection';
 import {runMalloyQuery} from './run_query_utils';
 
-export function runNamedQuery(client: BaseLanguageClient, name: string): void {
+export function runNamedQuery(worker: WorkerConnection, name: string): void {
   const document =
     vscode.window.activeTextEditor?.document ||
     MALLOY_EXTENSION_STATE.getActiveWebviewPanel()?.document;
   if (document) {
     runMalloyQuery(
-      client,
+      worker,
       {type: 'named', name, file: document},
       `${document.uri.toString()} ${name}`,
       name

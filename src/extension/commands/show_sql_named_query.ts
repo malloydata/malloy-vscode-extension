@@ -22,12 +22,12 @@
  */
 
 import * as vscode from 'vscode';
-import {BaseLanguageClient} from 'vscode-languageclient';
 import {MALLOY_EXTENSION_STATE} from '../state';
+import {WorkerConnection} from '../worker_connection';
 import {runMalloyQuery} from './run_query_utils';
 
 export function showSQLNamedQueryCommand(
-  client: BaseLanguageClient,
+  worker: WorkerConnection,
   name: string
 ): void {
   const document =
@@ -35,7 +35,7 @@ export function showSQLNamedQueryCommand(
     MALLOY_EXTENSION_STATE.getActiveWebviewPanel()?.document;
   if (document) {
     runMalloyQuery(
-      client,
+      worker,
       {type: 'named', name, file: document},
       `${document.uri.toString()} ${name}`,
       name,

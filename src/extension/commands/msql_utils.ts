@@ -37,11 +37,12 @@ import {
   QueryRunStatus,
 } from '../../common/message_types';
 import {MALLOY_EXTENSION_STATE, RunState} from '../state';
-import {WorkerMessage} from '../../common/worker_message_types';
-import {BaseLanguageClient, Disposable, State} from 'vscode-languageclient';
+import {Disposable /* , State */} from 'vscode-languageclient';
+import {WorkerConnection} from '../worker_connection';
+import {WorkerSQLQueryPanelMessage} from '../../common/worker_message_types';
 
 export function runMSQLQuery(
-  client: BaseLanguageClient,
+  worker: WorkerConnection,
   panelId: string,
   name: string,
   document: vscode.TextDocument,
@@ -56,8 +57,7 @@ export function runMSQLQuery(
     },
     (progress, token) => {
       const cancel = () => {
-        client.sendRequest('malloy/cancelMSQL', {
-          type: 'malloy/cancel',
+        worker.sendRequest('malloy/cancelMSQL', {
           panelId: panelId,
         });
         if (current) {
@@ -91,24 +91,34 @@ export function runMSQLQuery(
       showSchemaTreeViewWhenFocused(current.panel, panelId);
 
       const malloySQLQuery = document.getText();
-      client.sendRequest('malloy/run-msql', {
-        type: 'malloy/run-msql',
-        panelId,
-        malloySQLQuery,
-        statementIndex,
-        showSQLOnly,
-      });
 
       const runBegin = Date.now();
 
       return new Promise(resolve => {
+        worker
+          .sendRequest('malloy/run-msql', {
+            panelId,
+            malloySQLQuery,
+            statementIndex,
+            showSQLOnly,
+          })
+          .catch(() => {
+            current.messages.postMessage({
+              type: QueryMessageType.QueryStatus,
+              status: QueryRunStatus.Error,
+              error: `The worker process has died, and has been restarted.
+This is possibly the result of a database bug. \
+Please consider filing an issue with as much detail as possible at \
+https://github.com/malloydata/malloy-vscode-extension/issues.`,
+            });
+            unsubscribe();
+            resolve(undefined);
+          });
+
         const subscriptions: Disposable[] = [];
         const unsubscribe = () =>
           subscriptions.forEach(subscription => subscription.dispose());
-        const listener = (msg: WorkerMessage) => {
-          if (msg.type !== 'malloy/MSQLQueryPanel') {
-            return;
-          }
+        const listener = (msg: WorkerSQLQueryPanelMessage) => {
           const {message, panelId: msgPanelId} = msg;
 
           if (msgPanelId !== panelId) return;
@@ -156,23 +166,7 @@ export function runMSQLQuery(
           }
         };
 
-        subscriptions.push(client.onRequest('malloy/MSQLQueryPanel', listener));
-        subscriptions.push(
-          client.onDidChangeState(({oldState, newState}) => {
-            if (oldState === State.Running && newState === State.Stopped) {
-              current.messages.postMessage({
-                type: QueryMessageType.QueryStatus,
-                status: QueryRunStatus.Error,
-                error: `The worker process has died, and has been restarted.
-This is possibly the result of a database bug. \
-Please consider filing an issue with as much detail as possible at \
-https://github.com/malloydata/malloy-vscode-extension/issues.`,
-              });
-              unsubscribe();
-              resolve(undefined);
-            }
-          })
-        );
+        subscriptions.push(worker.onRequest('malloy/MSQLQueryPanel', listener));
       });
     }
   );

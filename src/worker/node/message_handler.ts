@@ -21,20 +21,39 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {Connection} from 'vscode-languageserver';
+import * as rpc from 'vscode-jsonrpc/node';
+import {downloadQuery} from './download_query';
 import {ConnectionManager} from '../../common/connection_manager';
-import {MessageHandler} from '../../worker/message_handler';
+import {DesktopConnectionFactory} from '../../common/connections/node/connection_factory';
+import {MessageHandler} from '../message_handler';
+import {refreshConfig} from './refresh_config';
 
-export class BrowserMessageHandler {
-  constructor(
-    private connection: Connection,
-    private connectionManager: ConnectionManager
-  ) {
-    const messageHandler = new MessageHandler(
-      this.connection,
-      this.connectionManager
+export class NodeMessageHandler {
+  constructor() {
+    const connection = rpc.createMessageConnection(
+      new rpc.IPCMessageReader(process),
+      new rpc.IPCMessageWriter(process)
+    );
+    connection.listen();
+
+    const connectionManager = new ConnectionManager(
+      new DesktopConnectionFactory(),
+      []
     );
 
-    messageHandler.log('BrowserMessageHandler initialized.');
+    const messageHandler = new MessageHandler(connection, connectionManager);
+
+    messageHandler.onRequest('malloy/download', message =>
+      downloadQuery(
+        messageHandler,
+        connectionManager,
+        message,
+        messageHandler.fileHandler
+      )
+    );
+    messageHandler.onRequest('malloy/config', message =>
+      refreshConfig(messageHandler, connectionManager, message)
+    );
+    messageHandler.log('NodeMessageHandler initialized.');
   }
 }

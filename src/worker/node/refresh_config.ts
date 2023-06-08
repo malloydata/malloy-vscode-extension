@@ -21,29 +21,24 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {Connection} from 'vscode-languageserver';
-import {downloadQuery} from './download_query';
-import {MessageDownload} from '../../common/worker_message_types';
+import {
+  MessageConfig,
+  WorkerMessageHandler,
+} from '../../common/worker_message_types';
 import {ConnectionManager} from '../../common/connection_manager';
-import {MessageHandler} from '../message_handler';
-import {RpcFileHandler} from '../file_handler';
 
-export class NodeMessageHandler {
-  constructor(
-    private connection: Connection,
-    private connectionManager: ConnectionManager
-  ) {
-    const fileHandler = new RpcFileHandler(this.connection);
+const DEFAULT_ROW_LIMIT = 50;
 
-    const messageHandler = new MessageHandler(
-      this.connection,
-      this.connectionManager,
-      fileHandler
-    );
+export const refreshConfig = (
+  messageHandler: WorkerMessageHandler,
+  connectionManager: ConnectionManager,
+  {config}: MessageConfig
+): void => {
+  const {rowLimit: rowLimitRaw, connections} = config;
 
-    connection.onRequest('malloy/download', (message: MessageDownload) =>
-      downloadQuery(messageHandler, connectionManager, message, fileHandler)
-    );
-    messageHandler.log('NodeMessageHandler initialized.');
-  }
-}
+  messageHandler.log('Config updated');
+
+  connectionManager.setConnectionsConfig(connections);
+  const rowLimit = rowLimitRaw || DEFAULT_ROW_LIMIT;
+  connectionManager.setCurrentRowLimit(+rowLimit);
+};

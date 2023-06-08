@@ -21,7 +21,11 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {Disposable} from 'vscode-jsonrpc';
+import {
+  CancellationToken,
+  Disposable,
+  GenericRequestHandler,
+} from 'vscode-jsonrpc';
 import {
   QueryDownloadOptions,
   QueryPanelMessage,
@@ -70,12 +74,10 @@ export type WorkerQuerySpec =
  * Incoming messages
  */
 
-export interface MessageExit {
-  type: 'exit';
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface MessageExit {}
 
 export interface MessageRun {
-  type: 'malloy/run';
   query: WorkerQuerySpec;
   panelId: string;
   name: string;
@@ -83,7 +85,6 @@ export interface MessageRun {
 }
 
 export interface MessageRunMSQL {
-  type: 'malloy/run-msql';
   panelId: string;
   malloySQLQuery: string;
   statementIndex: number | null;
@@ -91,17 +92,18 @@ export interface MessageRunMSQL {
 }
 
 export interface MessageCancel {
-  type: 'malloy/cancel';
+  panelId: string;
+}
+
+export interface MessageCancelMSQL {
   panelId: string;
 }
 
 export interface MessageConfig {
-  type: 'malloy/config';
   config: MalloyConfig;
 }
 
 export interface MessageFetch {
-  type: 'malloy/fetch';
   id: string;
   uri: string;
   data?: string;
@@ -109,7 +111,6 @@ export interface MessageFetch {
 }
 
 export interface MessageFetchBinary {
-  type: 'malloy/fetchBinary';
   id: string;
   uri: string;
   data?: Uint8Array;
@@ -117,7 +118,6 @@ export interface MessageFetchBinary {
 }
 
 export interface MessageFetchCellData {
-  type: 'malloy/fetchCellData';
   id: string;
   uri: string;
   data?: CellData[];
@@ -125,7 +125,6 @@ export interface MessageFetchCellData {
 }
 
 export interface MessageDownload {
-  type: 'malloy/download';
   query: WorkerQuerySpec;
   panelId: string;
   name: string;
@@ -138,85 +137,119 @@ export type FetchMessage =
   | MessageFetchBinary
   | MessageFetchCellData;
 
-export type Message =
-  | MessageCancel
-  | MessageConfig
-  | MessageExit
-  | MessageFetch
-  | MessageFetchBinary
-  | MessageFetchCellData
-  | MessageRun
-  | MessageDownload
-  | MessageRunMSQL;
+/**
+ * Type map of extension message types to message interfaces.
+ */
+export interface MessageMap {
+  'malloy/cancel': MessageCancel;
+  'malloy/config': MessageConfig;
+  'malloy/exit': void;
+  'malloy/fetch': MessageFetch;
+  'malloy/fetchBinary': MessageFetchBinary;
+  'malloy/fetchCellData': MessageFetchCellData;
+  'malloy/cancelMSQL': MessageCancelMSQL;
+  'malloy/run': MessageRun;
+  'malloy/download': MessageDownload;
+  'malloy/run-msql': MessageRunMSQL;
+}
 
 /**
  * Outgoing messages
  */
 
 export interface WorkerDownloadMessage {
-  type: 'malloy/download';
   name: string;
   error?: string;
 }
 
 export interface WorkerLogMessage {
-  type: 'malloy/log';
   message: string;
 }
 
 export interface WorkerQueryPanelMessage {
-  type: 'malloy/queryPanel';
   panelId: string;
   message: QueryPanelMessage;
 }
 
 export interface WorkerSQLQueryPanelMessage {
-  type: 'malloy/MSQLQueryPanel';
   panelId: string;
   message: MSQLQueryPanelMessage;
 }
 
-export interface WorkerStartMessage {
-  type: 'malloy/start';
-}
-
-export interface WorkerReadBinaryMessage {
-  type: 'malloy/fetchBinary';
-  id: string;
+export interface WorkerFetchBinaryMessage {
   uri: string;
 }
 
-export interface WorkerReadCellDataMessage {
-  type: 'malloy/fetchCellData';
-  id: string;
+export interface WorkerFetchCellDataMessage {
   uri: string;
 }
 
-export interface WorkerReadMessage {
-  type: 'malloy/fetch';
-  id: string;
+export interface WorkerFetchMessage {
   uri: string;
 }
 
-export type WorkerMessage =
-  | WorkerDownloadMessage
-  | WorkerLogMessage
-  | WorkerQueryPanelMessage
-  | WorkerReadBinaryMessage
-  | WorkerReadMessage
-  | WorkerReadCellDataMessage
-  | WorkerStartMessage
-  | WorkerSQLQueryPanelMessage;
+/**
+ * Map of worker message types to worker message interfaces.
+ */
+export interface WorkerMessageMap {
+  'malloy/download': WorkerDownloadMessage;
+  'malloy/log': WorkerLogMessage;
+  'malloy/queryPanel': WorkerQueryPanelMessage;
+  'malloy/fetchBinary': WorkerFetchBinaryMessage;
+  'malloy/fetch': WorkerFetchMessage;
+  'malloy/fetchCellData': WorkerFetchCellDataMessage;
+  'malloy/MSQLQueryPanel': WorkerSQLQueryPanelMessage;
+}
 
-export interface BaseWorker {
-  send(message: Message): void;
-  on(
-    name: WorkerMessage['type'],
-    callback: (message: WorkerMessage) => void
+/**
+ * Worker side message handler interface. Enforces message directionality.
+ */
+export interface WorkerMessageHandler {
+  onRequest<K extends keyof MessageMap>(
+    type: K,
+    message: ListenerType<MessageMap[K]>
   ): Disposable;
-}
 
-export interface MessageHandler {
-  send(message: WorkerMessage): void;
+  sendRequest<R, K extends keyof WorkerMessageMap>(
+    type: K,
+    message: WorkerMessageMap[K]
+  ): Promise<R>;
+
   log(message: string): void;
 }
+
+/**
+ * Extension side message handler interface. Enforces message directionality.
+ */
+export interface ExtensionMessageHandler {
+  onRequest<K extends keyof WorkerMessageMap>(
+    type: K,
+    message: ListenerType<WorkerMessageMap[K]>
+  ): Disposable;
+
+  sendRequest<R, K extends keyof MessageMap>(
+    type: K,
+    message: MessageMap[K]
+  ): Promise<R>;
+}
+
+/**
+ * Abstraction for the two different types of connections we
+ * deal with, the vscode-language-server ClientConnection, and the the
+ * vscode-json-rpc Message connection.
+ */
+export interface GenericConnection {
+  onRequest<R, E>(
+    method: string,
+    handler: GenericRequestHandler<R, E>
+  ): Disposable;
+
+  sendRequest<R>(
+    method: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    param: any,
+    token?: CancellationToken
+  ): Promise<R>;
+}
+
+export type ListenerType<K> = (message: K) => void;

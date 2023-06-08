@@ -22,15 +22,15 @@
  */
 
 import * as vscode from 'vscode';
-import {BaseLanguageClient} from 'vscode-languageclient';
+import {WorkerConnection} from '../worker_connection';
 import {runMSQLQuery} from './msql_utils';
 
-export function showSQLMalloySQLFile(client: BaseLanguageClient): void {
+export function showSQLMalloySQLFile(worker: WorkerConnection): void {
   const document = vscode.window.activeTextEditor?.document;
 
   if (document) {
     runMSQLQuery(
-      client,
+      worker,
       document.uri.toString(),
       document.fileName.split('/').pop() || document.fileName,
       document,
