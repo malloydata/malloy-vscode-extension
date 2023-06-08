@@ -322,7 +322,7 @@ function getStatusLabel(status: Status) {
 
 function getStyledHTML(html: HTMLElement): string {
   const resolveStyles = getComputedStyle(html);
-  const styles = `<style>
+  const styles = /* html */ `<style>
   :root {
     --malloy-font-family: ${resolveStyles.getPropertyValue(
       '--malloy-font-family'
