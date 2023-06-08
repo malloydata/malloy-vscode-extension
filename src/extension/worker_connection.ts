@@ -32,11 +32,12 @@ import {
   WorkerFetchBinaryMessage,
   WorkerFetchCellDataMessage,
   WorkerFetchMessage,
+  ExtensionMessageHandler,
 } from '../common/worker_message_types';
 import {FileHandler} from '../common/types';
 
 const workerLog = vscode.window.createOutputChannel('Malloy Worker');
-export abstract class WorkerConnection {
+export abstract class WorkerConnection implements ExtensionMessageHandler {
   connection: GenericConnection;
 
   constructor(
@@ -81,7 +82,10 @@ export abstract class WorkerConnection {
     this.context.subscriptions.push(this);
   }
 
-  sendRequest<K extends keyof MessageMap>(type: K, message: MessageMap[K]) {
+  sendRequest<R, K extends keyof MessageMap>(
+    type: K,
+    message: MessageMap[K]
+  ): Promise<R> {
     return this.connection.sendRequest(type, message);
   }
 

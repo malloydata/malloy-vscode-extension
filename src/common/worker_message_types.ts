@@ -231,8 +231,6 @@ export interface ExtensionMessageHandler {
     type: K,
     message: MessageMap[K]
   ): Promise<R>;
-
-  log(message: string): void;
 }
 
 /**

@@ -58,7 +58,7 @@ import {runMalloySQLFile} from './commands/run_msql_file';
 import {showSQLMalloySQLFile} from './commands/show_sql_msql_file';
 import {
   GenericConnection,
-  WorkerReadMessage,
+  WorkerFetchMessage,
 } from '../common/worker_message_types';
 import {runMalloySQLStatement} from './commands/run_msql_statement';
 import {BaseLanguageClient} from 'vscode-languageclient';
@@ -273,7 +273,7 @@ export const setupFileMessaging = (
   );
 
   context.subscriptions.push(
-    client.onRequest('malloy/fetch', async (message: WorkerReadMessage) => {
+    client.onRequest('malloy/fetch', async (message: WorkerFetchMessage) => {
       malloyLog.appendLine(`reading file ${message.uri}`);
       return await fileHandler.fetchFile(message.uri);
     })
