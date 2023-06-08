@@ -137,6 +137,9 @@ export type FetchMessage =
   | MessageFetchBinary
   | MessageFetchCellData;
 
+/**
+ * Type map of extension message types to message interfaces.
+ */
 export interface MessageMap {
   'malloy/cancel': MessageCancel;
   'malloy/config': MessageConfig;
@@ -173,28 +176,34 @@ export interface WorkerSQLQueryPanelMessage {
   message: MSQLQueryPanelMessage;
 }
 
-export interface WorkerReadBinaryMessage {
+export interface WorkerFetchBinaryMessage {
   uri: string;
 }
 
-export interface WorkerReadCellDataMessage {
+export interface WorkerFetchCellDataMessage {
   uri: string;
 }
 
-export interface WorkerReadMessage {
+export interface WorkerFetchMessage {
   uri: string;
 }
 
+/**
+ * Map of worker message types to worker message interfaces.
+ */
 export interface WorkerMessageMap {
   'malloy/download': WorkerDownloadMessage;
   'malloy/log': WorkerLogMessage;
   'malloy/queryPanel': WorkerQueryPanelMessage;
-  'malloy/fetchBinary': WorkerReadBinaryMessage;
-  'malloy/fetch': WorkerReadMessage;
-  'malloy/fetchCellData': WorkerReadCellDataMessage;
+  'malloy/fetchBinary': WorkerFetchBinaryMessage;
+  'malloy/fetch': WorkerFetchMessage;
+  'malloy/fetchCellData': WorkerFetchCellDataMessage;
   'malloy/MSQLQueryPanel': WorkerSQLQueryPanelMessage;
 }
 
+/**
+ * Worker side message handler interface. Enforces message directionality.
+ */
 export interface WorkerMessageHandler {
   onRequest<K extends keyof MessageMap>(
     type: K,
@@ -209,6 +218,9 @@ export interface WorkerMessageHandler {
   log(message: string): void;
 }
 
+/**
+ * Extension side message handler interface. Enforces message directionality.
+ */
 export interface ExtensionMessageHandler {
   onRequest<K extends keyof WorkerMessageMap>(
     type: K,
@@ -223,6 +235,11 @@ export interface ExtensionMessageHandler {
   log(message: string): void;
 }
 
+/**
+ * Abstraction for the two different types of connections we
+ * deal with, the vscode-language-server ClientConnection, and the the
+ * vscode-json-rpc Message connection.
+ */
 export interface GenericConnection {
   onRequest<R, E>(
     method: string,

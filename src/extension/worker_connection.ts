@@ -29,9 +29,9 @@ import {
   MessageMap,
   WorkerLogMessage,
   WorkerMessageMap,
-  WorkerReadBinaryMessage,
-  WorkerReadCellDataMessage,
-  WorkerReadMessage,
+  WorkerFetchBinaryMessage,
+  WorkerFetchCellDataMessage,
+  WorkerFetchMessage,
 } from '../common/worker_message_types';
 import {FileHandler} from '../common/types';
 
@@ -52,7 +52,7 @@ export abstract class WorkerConnection {
     );
 
     this.context.subscriptions.push(
-      this.onRequest('malloy/fetch', async (message: WorkerReadMessage) => {
+      this.onRequest('malloy/fetch', async (message: WorkerFetchMessage) => {
         workerLog.appendLine(`reading file ${message.uri}`);
         return await this.fileHandler.fetchFile(message.uri);
       })
@@ -61,7 +61,7 @@ export abstract class WorkerConnection {
     this.context.subscriptions.push(
       this.onRequest(
         'malloy/fetchBinary',
-        async (message: WorkerReadBinaryMessage) => {
+        async (message: WorkerFetchBinaryMessage) => {
           workerLog.appendLine(`reading binary file ${message.uri}`);
           return await this.fileHandler.fetchBinaryFile(message.uri);
         }
@@ -71,7 +71,7 @@ export abstract class WorkerConnection {
     this.context.subscriptions.push(
       this.onRequest(
         'malloy/fetchCellData',
-        async (message: WorkerReadCellDataMessage) => {
+        async (message: WorkerFetchCellDataMessage) => {
           workerLog.appendLine(`reading cell data for ${message.uri}`);
           return await this.fileHandler.fetchCellData(message.uri);
         }
