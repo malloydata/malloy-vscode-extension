@@ -21,13 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import React, {
-  DOMElement,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import styled from 'styled-components';
 import {
   EvaluatedMSQLStatement,
@@ -159,7 +153,10 @@ export const App: React.FC = () => {
                       dataStyles: {},
                     }
                   );
-                  evaluatedStatement.renderedHTML = renderedTable;
+                  const html = document.createElement('div');
+                  html.style.fontSize = '11px';
+                  html.appendChild(renderedTable);
+                  evaluatedStatement.renderedHTML = html;
                 } else if (evaluatedStatement.results.rows.length === 0) {
                   const html = document.createElement('span');
                   html.innerText = 'Statement completed';
@@ -353,7 +350,7 @@ const DOMElement: React.FC<{element: HTMLElement}> = ({element}) => {
     }
   }, [element]);
 
-  return <div style={{fontSize: 11}} ref={ref}></div>;
+  return <div ref={ref} />;
 };
 
 const Warning = styled.div`
@@ -376,10 +373,9 @@ const Error = styled.div<ErrorProps>`
 
 const ResultControlsBar = styled.div`
   display: flex;
-  border-bottom: 1px solid #efefef;
+  border-bottom: 1px solid var(--vscode-notifications-border);
   justify-content: space-between;
   align-items: center;
-  color: #b1b1b1;
   padding: 0 10px;
   user-select: none;
 `;
@@ -395,7 +391,8 @@ const ResultControlsItems = styled.div`
 `;
 
 const ResultsContainer = styled.div`
-  border-bottom: 1px solid #d8d5d5;
-  color: #b1b1b1;
+  border-bottom: 1px solid var(--vscode-notifications-border);
+  font-family: var(--vscode-editor-font-family);
+  font-size: var(--vscode-editor-font-size);
   padding: 12px 12px;
 `;
