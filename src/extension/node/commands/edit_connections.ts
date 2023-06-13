@@ -30,7 +30,7 @@ import {
   ConnectionPanelMessage,
   ConnectionServiceAccountKeyRequestStatus,
   ConnectionTestStatus,
-} from '../../message_types';
+} from '../../../common/message_types';
 import {WebviewMessageManager} from '../../webview_message_manager';
 import {connectionManager} from '../connection_manager';
 import {
@@ -182,7 +182,7 @@ async function handleConnectionsPreSave(
         `connections.${connection.id}.password`,
         connection.password
       );
-    } else {
+    } else if (!connection.isGenerated) {
       modifiedConnections.push(connection);
     }
   }

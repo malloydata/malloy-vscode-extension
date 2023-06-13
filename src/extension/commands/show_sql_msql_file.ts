@@ -21,10 +21,21 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {ConnectionManager} from '../../common/connection_manager';
-import {DesktopConnectionFactory} from '../../extension/node/connection_factory';
+import * as vscode from 'vscode';
+import {WorkerConnection} from '../worker_connection';
+import {runMSQLQuery} from './msql_utils';
 
-export const connectionManager = new ConnectionManager(
-  new DesktopConnectionFactory(),
-  []
-);
+export function showSQLMalloySQLFile(worker: WorkerConnection): void {
+  const document = vscode.window.activeTextEditor?.document;
+
+  if (document) {
+    runMSQLQuery(
+      worker,
+      document.uri.toString(),
+      document.fileName.split('/').pop() || document.fileName,
+      document,
+      null,
+      true
+    );
+  }
+}

@@ -22,16 +22,39 @@
  */
 
 import {Connection, TextDocuments} from 'vscode-languageserver';
-import {Model, ModelMaterializer, Runtime} from '@malloydata/malloy';
+import {
+  MalloyError,
+  Model,
+  ModelMaterializer,
+  Runtime,
+  SerializedExplore,
+} from '@malloydata/malloy';
 import {TextDocument} from 'vscode-languageserver-textdocument';
 
 import {ConnectionManager} from '../common/connection_manager';
-import {CellData} from '../extension/types';
+import {BuildModelRequest, CellData} from '../common/types';
+import {
+  MalloySQLParser,
+  MalloySQLSQLStatement,
+  MalloySQLStatementType,
+} from '@malloydata/malloy-sql';
 
 export class TranslateCache implements TranslateCache {
   cache = new Map<string, {model: Model; version: number}>();
 
-  constructor(private connection: Connection) {}
+  constructor(
+    private documents: TextDocuments<TextDocument>,
+    private connection: Connection,
+    private connectionManager: ConnectionManager
+  ) {
+    connection.onRequest(
+      'malloy/fetchModel',
+      async (event: BuildModelRequest): Promise<SerializedExplore[]> => {
+        const model = await this.translateWithCache(event.uri, event.version);
+        return model.explores.map(explore => explore.toJSON());
+      }
+    );
+  }
 
   async getDocumentText(
     documents: TextDocuments<TextDocument>,
@@ -56,43 +79,110 @@ export class TranslateCache implements TranslateCache {
   }
 
   async translateWithCache(
-    connectionManager: ConnectionManager,
-    document: TextDocument,
-    documents: TextDocuments<TextDocument>
+    uri: string,
+    currentVersion: number
   ): Promise<Model> {
-    const currentVersion = document.version;
-    const uri = document.uri;
-
     const entry = this.cache.get(uri);
     if (entry && entry.version === currentVersion) {
       return entry.model;
     }
 
-    const files = {
-      readURL: (url: URL) => this.getDocumentText(documents, url),
-    };
-    const runtime = new Runtime(
-      files,
-      connectionManager.getConnectionLookup(new URL(document.uri))
-    );
+    if (uri.toLowerCase().endsWith('.malloysql')) {
+      const parse = MalloySQLParser.parse(
+        await this.getDocumentText(this.documents, new URL(uri)),
+        uri
+      );
 
-    let model: Model;
-    if (document.uri.startsWith('vscode-notebook-cell:')) {
-      const allCells = await this.getCellData(new URL(document.uri));
-      let mm: ModelMaterializer | null = null;
-      for (let idx = 0; idx < allCells.length; idx++) {
-        const url = new URL(allCells[idx].uri);
-        if (mm) {
-          mm = mm.extendModel(url);
-        } else {
-          mm = runtime.loadModel(url);
+      let malloyStatements = '\n'.repeat(parse.initialCommentsLineCount);
+      for (const statement of parse.statements) {
+        malloyStatements += '\n';
+        if (statement.type === MalloySQLStatementType.MALLOY) {
+          malloyStatements += statement.text;
+        } else
+          malloyStatements += `${'\n'.repeat(
+            statement.text.split(/\r\n|\r|\n/).length - 1
+          )}`;
+      }
+
+      // TODO is there some way I can just say "here's some text, use this URI for relative imports"?
+      const files = {
+        readURL: async (url: URL) => {
+          return url.toString() === uri
+            ? Promise.resolve(malloyStatements)
+            : this.getDocumentText(this.documents, url);
+        },
+      };
+      const runtime = new Runtime(
+        files,
+        this.connectionManager.getConnectionLookup(new URL(uri))
+      );
+
+      const mm = runtime.loadModel(new URL(uri));
+      const model = await mm.getModel();
+
+      for (const statement of parse.statements.filter(
+        (s): s is MalloySQLSQLStatement => s.type === MalloySQLStatementType.SQL
+      )) {
+        for (const malloyQuery of statement.embeddedMalloyQueries) {
+          try {
+            await mm.getQuery(`query:\n${malloyQuery.query}`);
+          } catch (e) {
+            (e as MalloyError).log.forEach(log => {
+              log.at.url = uri;
+
+              // if the embedded malloy is on the same line as SQL, pad character start (and maybe end)
+              // "query:\n" adds a line, so we subtract the line here
+              const embeddedStart: number = log.at.range.start.line - 1;
+              if (embeddedStart === 0) {
+                log.at.range.start.character +=
+                  malloyQuery.malloyRange.start.character;
+                if (log.at.range.start.line === log.at.range.end.line)
+                  log.at.range.end.character +=
+                    malloyQuery.malloyRange.start.character;
+              }
+
+              const lineDifference =
+                log.at.range.end.line - log.at.range.start.line;
+              log.at.range.start.line =
+                malloyQuery.range.start.line + embeddedStart;
+              log.at.range.end.line =
+                malloyQuery.range.start.line + embeddedStart + lineDifference;
+            });
+
+            throw e;
+          }
         }
       }
-      model = await mm.getModel();
+
+      return model;
     } else {
-      model = await runtime.getModel(new URL(uri));
-      this.cache.set(uri, {version: currentVersion, model});
+      const files = {
+        readURL: (url: URL) => this.getDocumentText(this.documents, url),
+      };
+      const runtime = new Runtime(
+        files,
+        this.connectionManager.getConnectionLookup(new URL(uri))
+      );
+
+      let model: Model;
+
+      if (uri.startsWith('vscode-notebook-cell:')) {
+        const allCells = await this.getCellData(new URL(uri));
+        let mm: ModelMaterializer | null = null;
+        for (let idx = 0; idx < allCells.length; idx++) {
+          const url = new URL(allCells[idx].uri);
+          if (mm) {
+            mm = mm.extendModel(url);
+          } else {
+            mm = runtime.loadModel(url);
+          }
+        }
+        model = await mm.getModel();
+      } else {
+        model = await runtime.getModel(new URL(uri));
+        this.cache.set(uri, {version: currentVersion, model});
+      }
+      return model;
     }
-    return model;
   }
 }

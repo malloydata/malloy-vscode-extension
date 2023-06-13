@@ -21,17 +21,23 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {BaseWorker} from './types';
+import * as vscode from 'vscode';
+import {WorkerConnection} from '../worker_connection';
+import {runMSQLQuery} from './msql_utils';
 
-let _worker: BaseWorker | null = null;
+export function runMalloySQLStatement(
+  worker: WorkerConnection,
+  statementIndex: number
+): void {
+  const document = vscode.window.activeTextEditor?.document;
 
-export const setWorker = (worker: BaseWorker): void => {
-  _worker = worker;
-};
-
-export const getWorker = (): BaseWorker => {
-  if (!_worker) {
-    throw new Error('Worker not initialized');
+  if (document) {
+    runMSQLQuery(
+      worker,
+      document.uri.toString(),
+      document.fileName.split('/').pop() || document.fileName,
+      document,
+      statementIndex
+    );
   }
-  return _worker;
-};
+}

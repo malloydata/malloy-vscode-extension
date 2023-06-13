@@ -23,18 +23,19 @@
 /* eslint-disable no-console */
 
 import {CSVWriter, JSONWriter, Result, WriteStream} from '@malloydata/malloy';
-import {QueryDownloadOptions} from '../message_types';
-import {getWorker} from '../../worker/worker';
+import {QueryDownloadOptions} from '../../common/message_types';
 
 import * as vscode from 'vscode';
 import {Utils} from 'vscode-uri';
 import {QuerySpec} from './query_spec';
 import {
   MessageDownload,
-  WorkerMessage,
+  WorkerDownloadMessage,
   WorkerQuerySpec,
-} from '../../worker/types';
+} from '../../common/worker_message_types';
 import {MALLOY_EXTENSION_STATE} from '../state';
+import {Disposable} from 'vscode-jsonrpc';
+import {WorkerConnection} from '../worker_connection';
 
 /**
  * VSCode doesn't support streaming writes, so fake it.
@@ -59,25 +60,25 @@ class VSCodeWriteStream implements WriteStream {
 }
 
 const sendDownloadMessage = (
+  worker: WorkerConnection,
   query: WorkerQuerySpec,
   panelId: string,
   name: string,
   uri: string,
   downloadOptions: QueryDownloadOptions
 ) => {
-  const worker = getWorker();
   const message: MessageDownload = {
-    type: 'download',
     query,
     panelId,
     name,
     uri,
     downloadOptions,
   };
-  worker.send?.(message);
+  worker.sendRequest('malloy/download', message);
 };
 
 export async function queryDownload(
+  worker: WorkerConnection,
   query: QuerySpec,
   downloadOptions: QueryDownloadOptions,
   currentResults: Result,
@@ -123,6 +124,7 @@ export async function queryDownload(
     },
     async () => {
       try {
+        let off: Disposable;
         if (downloadOptions.amount === 'current') {
           const writeStream = new VSCodeWriteStream(fileUri);
           const writer =
@@ -135,9 +137,9 @@ export async function queryDownload(
             `Malloy Download (${name}): Complete`
           );
         } else {
-          const worker = getWorker();
           const {file, ...params} = query;
           sendDownloadMessage(
+            worker,
             {
               uri: file.uri.toString(),
               ...params,
@@ -147,21 +149,7 @@ export async function queryDownload(
             fileUri.toString(),
             downloadOptions
           );
-          const listener = (msg: WorkerMessage) => {
-            if (msg.type === 'dead') {
-              vscode.window.showErrorMessage(
-                `Malloy Download (${name}): Error
-The worker process has died, and has been restarted.
-This is possibly the result of a database bug. \
-Please consider filing an issue with as much detail as possible at \
-https://github.com/malloydata/malloy/issues.`
-              );
-
-              worker.off('message', listener);
-              return;
-            } else if (msg.type !== 'download') {
-              return;
-            }
+          const listener = (msg: WorkerDownloadMessage) => {
             const {name: msgName, error} = msg;
             if (msgName !== name) {
               return;
@@ -175,10 +163,10 @@ https://github.com/malloydata/malloy/issues.`
                 `Malloy Download (${name}): Complete`
               );
             }
-            worker.off('message', listener);
+            off?.dispose();
           };
 
-          worker.on('message', listener);
+          off = worker.onRequest('malloy/download', listener);
         }
       } catch (error) {
         vscode.window.showErrorMessage(

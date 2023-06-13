@@ -28,7 +28,7 @@ import fs from 'fs';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-console */
 let filePath: string;
-const seen: {[id: string]: boolean} = {};
+let seen: {[id: string]: boolean} = {};
 
 /*
  * Required components:
@@ -49,7 +49,10 @@ export function generateDisclaimer(
     throw new Error(`${filePath} already exists`);
   }
 
+  seen = {};
+  console.log('Generating third party licenses');
   doDependencies(nodeModulesPath, rootPackageJson);
+  console.log(`Wrote ${filePath}`);
 }
 
 function doDependencies(nodeModulesPath: string, packageJson: any): void {

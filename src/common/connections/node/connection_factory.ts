@@ -22,31 +22,35 @@
  */
 
 import {TestableConnection} from '@malloydata/malloy';
-import {ConnectionFactory} from '../../common/connections/types';
+import {ConnectionFactory} from '../types';
 import {
   ConfigOptions,
   ConnectionBackend,
   ConnectionConfig,
-} from '../../common/connection_manager_types';
-import {createDuckDbWasmConnection} from '../../common/connections/duckdb_wasm_connection';
-import {DuckDBWASMConnection} from '@malloydata/db-duckdb/wasm';
+} from '../../connection_manager_types';
+import {createBigQueryConnection} from '../bigquery_connection';
+import {createDuckDbConnection} from '../duckdb_connection';
+import {createPostgresConnection} from '../postgres_connection';
+import {isDuckDBAvailable} from '../../duckdb_availability';
 
-export type FetchCallback = (uri: string) => Promise<Uint8Array>;
+import {fileURLToPath} from 'url';
 
-export class WebConnectionFactory implements ConnectionFactory {
+export class DesktopConnectionFactory implements ConnectionFactory {
   connectionCache: Record<string, TestableConnection> = {};
 
-  constructor(private fetchBinaryFile?: FetchCallback) {}
-
-  async reset() {
-    await Promise.all(
-      Object.values(this.connectionCache).map(connection => connection.close())
+  reset() {
+    Object.values(this.connectionCache).forEach(connection =>
+      connection.close()
     );
     this.connectionCache = {};
   }
 
   getAvailableBackends(): ConnectionBackend[] {
-    return [ConnectionBackend.DuckDB];
+    const available = [ConnectionBackend.BigQuery, ConnectionBackend.Postgres];
+    if (isDuckDBAvailable) {
+      available.push(ConnectionBackend.DuckDB);
+    }
+    return available;
   }
 
   async getConnectionForConfig(
@@ -57,45 +61,64 @@ export class WebConnectionFactory implements ConnectionFactory {
   ): Promise<TestableConnection> {
     const {useCache, workingDirectory} = configOptions;
     const cacheKey = `${connectionConfig.name}::${workingDirectory}`;
+
     let connection: TestableConnection;
     if (useCache && this.connectionCache[cacheKey]) {
       return this.connectionCache[cacheKey];
     }
     switch (connectionConfig.backend) {
-      case ConnectionBackend.DuckDB:
-        {
-          const remoteTableCallback = async (tableName: string) => {
-            if (this.fetchBinaryFile) {
-              const url = new URL(tableName, workingDirectory);
-              return this.fetchBinaryFile(url.toString());
-            }
-            return undefined;
-          };
-          const duckDBConnection: DuckDBWASMConnection =
-            await createDuckDbWasmConnection(connectionConfig, configOptions);
-          duckDBConnection.registerRemoteTableCallback(remoteTableCallback);
-          connection = duckDBConnection;
-        }
+      case ConnectionBackend.BigQuery:
+        connection = await createBigQueryConnection(
+          connectionConfig,
+          configOptions
+        );
         break;
+      case ConnectionBackend.Postgres: {
+        connection = await createPostgresConnection(
+          connectionConfig,
+          configOptions
+        );
+        break;
+      }
+      case ConnectionBackend.DuckDB: {
+        connection = await createDuckDbConnection(
+          connectionConfig,
+          configOptions
+        );
+        break;
+      }
     }
     if (useCache) {
       this.connectionCache[cacheKey] = connection;
-    }
-    if (!connection) {
-      throw new Error(
-        `Unsupported connection back end "${connectionConfig.backend}"`
-      );
     }
 
     return connection;
   }
 
   getWorkingDirectory(url: URL): string {
-    const baseUrl = new URL('.', url);
-    return baseUrl.toString();
+    try {
+      const baseUrl = new URL('.', url);
+      const fileUrl = new URL(baseUrl.pathname, 'file:');
+      return fileURLToPath(fileUrl);
+    } catch {
+      return '.';
+    }
   }
 
   addDefaults(configs: ConnectionConfig[]): ConnectionConfig[] {
+    // Create a default bigquery connection if one isn't configured
+    if (
+      !configs.find(config => config.backend === ConnectionBackend.BigQuery)
+    ) {
+      configs.push({
+        name: 'bigquery',
+        backend: ConnectionBackend.BigQuery,
+        id: 'bigquery-default',
+        isDefault: !configs.find(config => config.isDefault),
+        isGenerated: true,
+      });
+    }
+
     // Create a default duckdb connection if one isn't configured
     if (!configs.find(config => config.name === 'duckdb')) {
       configs.push({

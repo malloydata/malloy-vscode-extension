@@ -35,7 +35,8 @@ import {
   QueryMessageType,
   QueryPanelMessage,
   QueryRunStatus,
-} from '../../message_types';
+  QueryRunStats,
+} from '../../../common/message_types';
 import {Spinner} from '../components';
 import {ResultKind, ResultKindToggle} from './ResultKindToggle';
 import Prism from 'prismjs';
@@ -43,7 +44,7 @@ import {usePopperTooltip} from 'react-popper-tooltip';
 import {useQueryVSCodeContext} from './query_vscode_context';
 import {DownloadButton} from './DownloadButton';
 import {CopyButton} from './CopyButton';
-import {Scroll} from './Scroll';
+import {Scroll} from '../components/Scroll';
 import {PrismContainer} from '../components/PrismContainer';
 
 enum Status {
@@ -66,9 +67,11 @@ export const App: React.FC = () => {
   const [resultKind, setResultKind] = useState<ResultKind>(ResultKind.HTML);
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [showOnlySQL, setShowOnlySQL] = useState(false);
   const [observer, setObserver] = useState<MutationObserver>();
   const [canDownload, setCanDownload] = useState(false);
   const [canDownloadStream, setCanDownloadStream] = useState(false);
+  const [stats, setStats] = useState<string | undefined>(undefined);
   const tooltipId = useRef(0);
   const {setTooltipRef, setTriggerRef, getTooltipProps} = usePopperTooltip({
     visible: tooltipVisible,
@@ -87,6 +90,7 @@ export const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    themeCallback();
     const obs = new MutationObserver(themeCallback);
     setObserver(obs);
   }, [themeCallback, setObserver]);
@@ -115,9 +119,21 @@ export const App: React.FC = () => {
           } else {
             setError(undefined);
           }
-          if (message.status === QueryRunStatus.Done) {
+          if (
+            message.status === QueryRunStatus.Compiled &&
+            message.showSQLOnly
+          ) {
+            setShowOnlySQL(true);
+            setWarning(undefined);
+            setStats(undefined);
+            setStatus(Status.Done);
+            setSQL(message.sql);
+            setResultKind(ResultKind.SQL);
+          } else if (message.status === QueryRunStatus.Done) {
             const {resultJson, dataStyles, canDownloadStream} = message;
             setWarning(undefined);
+            setShowOnlySQL(false);
+            setStats(undefined);
             // TODO(web) Figure out some way to download current result set
             setCanDownload(canDownloadStream);
             setCanDownloadStream(canDownloadStream);
@@ -127,6 +143,11 @@ export const App: React.FC = () => {
               const data = result.data;
               setJSON(JSON.stringify(data.toObject(), null, 2));
               setSQL(result.sql);
+              if (message.stats) {
+                setStats(
+                  getStats(message.stats, result.runStats?.queryCostBytes)
+                );
+              }
               const rendered = await new HTMLView(document).render(data, {
                 dataStyles,
                 isDrillingEnabled: false,
@@ -159,6 +180,7 @@ export const App: React.FC = () => {
             setHTML(document.createElement('span'));
             setJSON('');
             setSQL('');
+            setShowOnlySQL(false);
             switch (message.status) {
               case QueryRunStatus.Compiling:
                 setStatus(Status.Compiling);
@@ -218,23 +240,25 @@ export const App: React.FC = () => {
       ) : (
         ''
       )}
-      {!error && (
+      {!error && [Status.Displaying, Status.Done].includes(status) && (
         <ResultControlsBar>
-          <ResultLabel>QUERY RESULTS</ResultLabel>
-          <ResultControlsItems>
-            <ResultKindToggle kind={resultKind} setKind={setResultKind} />
-            {canDownload && (
-              <DownloadButton
-                canStream={canDownloadStream}
-                onDownload={async downloadOptions => {
-                  vscode.postMessage({
-                    type: QueryMessageType.StartDownload,
-                    downloadOptions,
-                  });
-                }}
-              />
-            )}
-          </ResultControlsItems>
+          <ResultLabel>{showOnlySQL ? 'SQL' : 'QUERY RESULTS'}</ResultLabel>
+          {!showOnlySQL && (
+            <ResultControlsItems>
+              <ResultKindToggle kind={resultKind} setKind={setResultKind} />
+              {canDownload && (
+                <DownloadButton
+                  canStream={canDownloadStream}
+                  onDownload={async downloadOptions => {
+                    vscode.postMessage({
+                      type: QueryMessageType.StartDownload,
+                      downloadOptions,
+                    });
+                  }}
+                />
+              )}
+            </ResultControlsItems>
+          )}
         </ResultControlsBar>
       )}
       {!error && resultKind === ResultKind.HTML && (
@@ -266,13 +290,14 @@ export const App: React.FC = () => {
               dangerouslySetInnerHTML={{
                 __html: Prism.highlight(sql, Prism.languages['sql'], 'sql'),
               }}
-              style={{margin: '10px'}}
+              style={{margin: '10px', whiteSpace: 'break-spaces'}}
             />
           </PrismContainer>
         </Scroll>
       )}
       {error && <Error multiline={error.includes('\n')}>{error}</Error>}
       {warning && <Warning>{warning}</Warning>}
+      {stats && <StatsBar>{stats}</StatsBar>}
       {tooltipVisible && (
         <Tooltip ref={setTooltipRef} {...getTooltipProps()}>
           Copied!
@@ -297,7 +322,7 @@ function getStatusLabel(status: Status) {
 
 function getStyledHTML(html: HTMLElement): string {
   const resolveStyles = getComputedStyle(html);
-  const styles = `<style>
+  const styles = /* html */ `<style>
   :root {
     --malloy-font-family: ${resolveStyles.getPropertyValue(
       '--malloy-font-family'
@@ -329,6 +354,13 @@ function getStyledHTML(html: HTMLElement): string {
   return styles + html.outerHTML;
 }
 
+function getStats(stats: QueryRunStats, queryCostBytes?: number): string {
+  const queryCostBytesFormatted = queryCostBytes
+    ? ` Processed ${(queryCostBytes / 1024 / 1024).toLocaleString()} MB.`
+    : '';
+  return `Compile Time: ${stats.compileTime.toLocaleString()}s, Run Time: ${stats.runTime.toLocaleString()}s, Total Time: ${stats.totalTime.toLocaleString()}s.${queryCostBytesFormatted}`;
+}
+
 const DOMElement: React.FC<{element: HTMLElement}> = ({element}) => {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -354,6 +386,13 @@ const Tooltip = styled.div`
 const Warning = styled.div`
   color: var(--vscode-statusBarItem-warningForeground);
   background-color: var(--vscode-statusBarItem-warningBackground);
+  padding: 5px;
+`;
+
+const StatsBar = styled.div`
+  background-color: #505050;
+  color: white;
+  box-shadow: rgb(144 144 144) 0px 1px 5px 0px;
   padding: 5px;
 `;
 

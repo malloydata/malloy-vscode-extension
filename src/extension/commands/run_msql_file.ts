@@ -21,7 +21,20 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {connectionManager} from '../../server/browser/connections_browser';
-import {BrowserMessageHandler} from './message_handler';
+import * as vscode from 'vscode';
+import {WorkerConnection} from '../worker_connection';
+import {runMSQLQuery} from './msql_utils';
 
-export const messageHandler = new BrowserMessageHandler(connectionManager);
+export function runMalloySQLFile(worker: WorkerConnection): void {
+  const document = vscode.window.activeTextEditor?.document;
+
+  if (document) {
+    runMSQLQuery(
+      worker,
+      document.uri.toString(),
+      document.fileName.split('/').pop() || document.fileName,
+      document,
+      null
+    );
+  }
+}

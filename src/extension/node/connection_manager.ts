@@ -22,7 +22,7 @@
  */
 
 import {VSCodeConnectionManager} from '../connection_manager';
-import {DesktopConnectionFactory} from './connection_factory';
+import {DesktopConnectionFactory} from '../../common/connections/node/connection_factory';
 
 export const connectionFactory = new DesktopConnectionFactory();
 export const connectionManager = new VSCodeConnectionManager(connectionFactory);

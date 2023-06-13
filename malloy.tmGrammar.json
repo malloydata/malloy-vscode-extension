@@ -1,19 +1,19 @@
 {
   "scopeName": "source.malloy",
   "patterns": [
-    { "include": "#sql-string" },
-    { "include": "#comments" },
-    { "include": "#strings" },
-    { "include": "#numbers" },
-    { "include": "#keywords" },
-    { "include": "#properties" },
-    { "include": "#functions" },
-    { "include": "#dates" },
-    { "include": "#identifiers-quoted" },
-    { "include": "#types" },
-    { "include": "#constants" },
-    { "include": "#timeframes" },
-    { "include": "#identifiers-unquoted" }
+    {"include": "#sql-string"},
+    {"include": "#comments"},
+    {"include": "#strings"},
+    {"include": "#numbers"},
+    {"include": "#keywords"},
+    {"include": "#properties"},
+    {"include": "#functions"},
+    {"include": "#dates"},
+    {"include": "#identifiers-quoted"},
+    {"include": "#types"},
+    {"include": "#constants"},
+    {"include": "#timeframes"},
+    {"include": "#identifiers-unquoted"}
   ],
   "repository": {
     "query-in-sql": {
@@ -21,52 +21,52 @@
       "name": "source.internal-query-stuff",
       "end": "}%",
       "patterns": [
-        { "include": "#sql-string" },
-        { "include": "#comments" },
-        { "include": "#strings" },
-        { "include": "#numbers" },
-        { "include": "#keywords" },
-        { "include": "#properties" },
-        { "include": "#functions" },
-        { "include": "#dates" },
-        { "include": "#identifiers-quoted" },
-        { "include": "#types" },
-        { "include": "#constants" },
-        { "include": "#timeframes" },
-        { "include": "#identifiers-unquoted" }
+        {"include": "#sql-string"},
+        {"include": "#comments"},
+        {"include": "#strings"},
+        {"include": "#numbers"},
+        {"include": "#keywords"},
+        {"include": "#properties"},
+        {"include": "#functions"},
+        {"include": "#dates"},
+        {"include": "#identifiers-quoted"},
+        {"include": "#types"},
+        {"include": "#constants"},
+        {"include": "#timeframes"},
+        {"include": "#identifiers-unquoted"}
       ]
     },
     "sql-string": {
       "begin": "\"\"\"",
       "end": "\"\"\"",
       "beginCaptures": {
-        "0": { "name": "punctuation.sql-block.open" }
+        "0": {"name": "punctuation.sql-block.open"}
       },
       "endCaptures": {
-        "0": { "name": "punctuation.sql-block.close" }
+        "0": {"name": "punctuation.sql-block.close"}
       },
       "name": "source.sql",
-      "patterns": [{ "include": "#query-in-sql" }, { "include": "source.sql" }]
+      "patterns": [{"include": "#query-in-sql"}, {"include": "source.sql"}]
     },
     "functions": {
       "patterns": [
         {
           "match": "(?i)\\b(count)(\\s*\\()(distinct)",
           "captures": {
-            "1": { "name": "entity.name.function" },
-            "3": { "name": "entity.name.function.modifier" }
+            "1": {"name": "entity.name.function"},
+            "3": {"name": "entity.name.function.modifier"}
           }
         },
         {
           "match": "(?i)\\b(AVG|COUNT|FIRST|FORMAT|LAST|LCASE|LEN|MAX|MID|MIN|MOD|NOW|ROUND|SUM|UCASE|TABLE|FROM|FROM_SQL|UNGROUPED)(\\s*\\()",
           "captures": {
-            "1": { "name": "entity.name.function" }
+            "1": {"name": "entity.name.function"}
           }
         },
         {
           "match": "(?i)\\b([a-zA-Z_][a-zA-Z_0-9]*)(\\s*\\()",
           "captures": {
-            "1": { "name": "entity.name.function" }
+            "1": {"name": "entity.name.function"}
           }
         },
         {
@@ -120,10 +120,10 @@
           "begin": "/\\*",
           "end": "\\*/",
           "beginCaptures": {
-            "0": { "name": "punctuation.definition.comment.begin" }
+            "0": {"name": "punctuation.definition.comment.begin"}
           },
           "endCaptures": {
-            "0": { "name": "punctuation.definition.comment.end" }
+            "0": {"name": "punctuation.definition.comment.end"}
           },
           "name": "comment.block"
         },
@@ -131,7 +131,7 @@
           "begin": "//",
           "end": "\\n",
           "beginCaptures": {
-            "0": { "name": "punctuation.definition.comment" }
+            "0": {"name": "punctuation.definition.comment"}
           },
           "name": "comment.line.double-slash"
         },
@@ -139,7 +139,7 @@
           "begin": "--",
           "end": "\\n",
           "beginCaptures": {
-            "0": { "name": "punctuation.definition.comment" }
+            "0": {"name": "punctuation.definition.comment"}
           },
           "name": "comment.line.double-hyphen"
         }
@@ -151,31 +151,31 @@
           "begin": "'",
           "end": "'",
           "beginCaptures": {
-            "0": { "name": "punctuation.definition.string.begin" }
+            "0": {"name": "punctuation.definition.string.begin"}
           },
           "endCaptures": {
-            "0": { "name": "punctuation.definition.string.end" }
+            "0": {"name": "punctuation.definition.string.end"}
           },
           "name": "string.unquoted.single",
-          "patterns": [{ "include": "#escapes" }]
+          "patterns": [{"include": "#escapes"}]
         },
         {
           "begin": "\"",
           "end": "\"",
           "beginCaptures": {
-            "0": { "name": "punctuation.definition.string.begin" }
+            "0": {"name": "punctuation.definition.string.begin"}
           },
           "endCaptures": {
-            "0": { "name": "punctuation.definition.string.end" }
+            "0": {"name": "punctuation.definition.string.end"}
           },
           "name": "string.unquoted.double",
-          "patterns": [{ "include": "#escapes" }]
+          "patterns": [{"include": "#escapes"}]
         },
         {
           "begin": "(?i)[r|/]'",
           "end": "'",
           "name": "string.regexp",
-          "patterns": [{ "include": "#escapes" }]
+          "patterns": [{"include": "#escapes"}]
         }
       ],
       "repository": {
@@ -183,7 +183,7 @@
           "name": "constant.character.escape",
           "match": "\\\\(x\\h{2}|[0-2][0-7]{0,2}|3[0-6][0-7]|37[0-7]?|[4-7][0-7]?|.)",
           "captures": {
-            "0": { "name": "constant.character.escape" }
+            "0": {"name": "constant.character.escape"}
           }
         }
       }

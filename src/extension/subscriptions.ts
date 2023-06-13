@@ -35,7 +35,9 @@ import {
   runUnnamedSQLBlock,
   showLicensesCommand,
 } from './commands';
+import {malloyLog} from './logger';
 import {trackModelLoad, trackModelSave} from './telemetry';
+import {HelpViewProvider} from './webviews/help_view';
 import {ConnectionManager} from '../common/connection_manager';
 import {URLReader} from '@malloydata/malloy';
 import {v4 as uuid} from 'uuid';
@@ -43,6 +45,24 @@ import {v4 as uuid} from 'uuid';
 import {MALLOY_EXTENSION_STATE} from './state';
 import {activateNotebookSerializer} from './notebook/malloy_serializer';
 import {activateNotebookController} from './notebook/malloy_controller';
+import {
+  FetchBinaryFileEvent,
+  FetchCellDataEvent,
+  FetchFileEvent,
+  FileHandler,
+} from '../common/types';
+import {showSQLCommand} from './commands/show_sql';
+import {showSQLFileCommand} from './commands/show_sql_file';
+import {showSQLNamedQueryCommand} from './commands/show_sql_named_query';
+import {runMalloySQLFile} from './commands/run_msql_file';
+import {showSQLMalloySQLFile} from './commands/show_sql_msql_file';
+import {
+  GenericConnection,
+  WorkerFetchMessage,
+} from '../common/worker_message_types';
+import {runMalloySQLStatement} from './commands/run_msql_statement';
+import {BaseLanguageClient} from 'vscode-languageclient';
+import {WorkerConnection} from './worker_connection';
 
 function getNewClientId(): string {
   return uuid();
@@ -51,35 +71,93 @@ function getNewClientId(): string {
 export const setupSubscriptions = (
   context: vscode.ExtensionContext,
   urlReader: URLReader,
-  connectionManager: ConnectionManager
+  connectionManager: ConnectionManager,
+  worker: WorkerConnection,
+  client: BaseLanguageClient
 ) => {
   MALLOY_EXTENSION_STATE.setExtensionUri(context.extensionUri);
 
   // Run Query (whole file)
   context.subscriptions.push(
-    vscode.commands.registerCommand('malloy.runQueryFile', runQueryFileCommand)
+    vscode.commands.registerCommand(
+      'malloy.runQueryFile',
+      (queryIndex?: number) => runQueryFileCommand(worker, queryIndex)
+    )
   );
 
   // Run query
   context.subscriptions.push(
-    vscode.commands.registerCommand('malloy.runQuery', runQueryCommand)
+    vscode.commands.registerCommand(
+      'malloy.runQuery',
+      (query: string, name?: string) => runQueryCommand(worker, query, name)
+    )
   );
 
   // Run named query
   context.subscriptions.push(
-    vscode.commands.registerCommand('malloy.runNamedQuery', runNamedQuery)
+    vscode.commands.registerCommand('malloy.runNamedQuery', (name: string) =>
+      runNamedQuery(worker, name)
+    )
+  );
+
+  // Show SQL (whole file)
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      'malloy.showSQLFile',
+      (queryIndex?: number) => showSQLFileCommand(worker, queryIndex)
+    )
+  );
+
+  // Show SQL
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      'malloy.showSQL',
+      (query: string, name?: string) => showSQLCommand(worker, query, name)
+    )
+  );
+
+  // Show named query SQL
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      'malloy.showSQLNamedQuery',
+      (name: string) => showSQLNamedQueryCommand(worker, name)
+    )
   );
 
   // Run named SQL block
   context.subscriptions.push(
-    vscode.commands.registerCommand('malloy.runNamedSQLBlock', runNamedSQLBlock)
+    vscode.commands.registerCommand('malloy.runNamedSQLBlock', (name: string) =>
+      runNamedSQLBlock(worker, name)
+    )
   );
 
   // Run unnamed SQL block
   context.subscriptions.push(
     vscode.commands.registerCommand(
       'malloy.runUnnamedSQLBlock',
-      runUnnamedSQLBlock
+      (index: number) => runUnnamedSQLBlock(worker, index)
+    )
+  );
+
+  // Run Malloy SQL File
+  context.subscriptions.push(
+    vscode.commands.registerCommand('malloy.runMalloySQLFile', () =>
+      runMalloySQLFile(worker)
+    )
+  );
+
+  // Run Malloy SQL Statement
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      'malloy.runMalloySQLStatement',
+      (statementIndex: number) => runMalloySQLStatement(worker, statementIndex)
+    )
+  );
+
+  // Show SQL Malloy SQL File
+  context.subscriptions.push(
+    vscode.commands.registerCommand('malloy.showSQLMalloySQLFile', () =>
+      showSQLMalloySQLFile(worker)
     )
   );
 
@@ -91,7 +169,12 @@ export const setupSubscriptions = (
     )
   );
 
-  const schemaTree = new SchemaProvider(context, connectionManager, urlReader);
+  const schemaTree = new SchemaProvider(
+    context,
+    connectionManager,
+    urlReader,
+    client
+  );
 
   context.subscriptions.push(
     vscode.window.registerTreeDataProvider('malloySchema', schemaTree)
@@ -138,6 +221,14 @@ export const setupSubscriptions = (
     })
   );
 
+  // Malloy HelpView provider.
+  const provider = new HelpViewProvider(context.extensionUri);
+
+  // Malloy help view.
+  context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider('malloyHelp', provider)
+  );
+
   activateNotebookSerializer(context);
   activateNotebookController(context, connectionManager, urlReader);
 
@@ -148,4 +239,43 @@ export const setupSubscriptions = (
     context.globalState.update('malloy_client_id', clientId);
   }
   MALLOY_EXTENSION_STATE.setClientId(clientId);
+};
+
+export const setupFileMessaging = (
+  context: vscode.ExtensionContext,
+  client: GenericConnection,
+  fileHandler: FileHandler
+) => {
+  context.subscriptions.push(
+    client.onRequest('malloy/fetchFile', async (event: FetchFileEvent) => {
+      malloyLog.appendLine(`fetchFile returning ${event.uri}`);
+      return await fileHandler.fetchFile(event.uri);
+    })
+  );
+
+  context.subscriptions.push(
+    client.onRequest(
+      'malloy/fetchBinaryFile',
+      async (event: FetchBinaryFileEvent) => {
+        malloyLog.appendLine(`fetchBinaryFile returning ${event.uri}`);
+        return await fileHandler.fetchBinaryFile(event.uri);
+      }
+    )
+  );
+  context.subscriptions.push(
+    client.onRequest(
+      'malloy/fetchCellData',
+      async (event: FetchCellDataEvent) => {
+        malloyLog.appendLine(`fetchCellData returning ${event.uri}`);
+        return await fileHandler.fetchCellData(event.uri);
+      }
+    )
+  );
+
+  context.subscriptions.push(
+    client.onRequest('malloy/fetch', async (message: WorkerFetchMessage) => {
+      malloyLog.appendLine(`reading file ${message.uri}`);
+      return await fileHandler.fetchFile(message.uri);
+    })
+  );
 };

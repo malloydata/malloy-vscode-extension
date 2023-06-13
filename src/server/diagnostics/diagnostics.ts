@@ -21,15 +21,11 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {
-  Diagnostic,
-  DiagnosticSeverity,
-  TextDocuments,
-} from 'vscode-languageserver';
+import {Diagnostic, DiagnosticSeverity} from 'vscode-languageserver';
 import {LogMessage, MalloyError} from '@malloydata/malloy';
 import {TextDocument} from 'vscode-languageserver-textdocument';
-import {ConnectionManager} from '../../common/connection_manager';
 import {TranslateCache} from '../translate_cache';
+import {parseMalloySQLWithCache} from '../parse_cache';
 
 const DEFAULT_RANGE = {
   start: {line: 0, character: 0},
@@ -38,8 +34,6 @@ const DEFAULT_RANGE = {
 
 export async function getMalloyDiagnostics(
   translateCache: TranslateCache,
-  connectionManager: ConnectionManager,
-  documents: TextDocuments<TextDocument>,
   document: TextDocument
 ): Promise<{[uri: string]: Diagnostic[]}> {
   const byURI: {[uri: string]: Diagnostic[]} = {
@@ -47,17 +41,18 @@ export async function getMalloyDiagnostics(
     // so that we clear old diagnostics
     [document.uri]: [],
   };
-  let errors: LogMessage[] = [];
+  const errors: LogMessage[] = [];
+
+  if (document.languageId === 'malloy-sql') {
+    const parse = parseMalloySQLWithCache(document);
+    if (parse.errors) parse.errors.forEach(e => errors.push(...e.log));
+  }
 
   try {
-    await translateCache.translateWithCache(
-      connectionManager,
-      document,
-      documents
-    );
+    await translateCache.translateWithCache(document.uri, document.version);
   } catch (error) {
     if (error instanceof MalloyError) {
-      errors = error.log;
+      errors.push(...error.log);
     } else {
       // TODO this kind of error should cease to exist. All errors should have source info.
       byURI[document.uri].push({

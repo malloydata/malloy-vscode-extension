@@ -32,7 +32,7 @@ import {
   ConnectionMessageTest,
   ConnectionTestStatus,
   ConnectionServiceAccountKeyRequestStatus,
-} from '../../message_types';
+} from '../../../common/message_types';
 import {useConnectionsVSCodeContext} from './connections_vscode_context';
 import {ConnectionEditorList} from './ConnectionEditorList';
 import {Spinner} from '../components';

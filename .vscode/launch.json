@@ -4,19 +4,10 @@
 // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
 {
   "version": "0.2.0",
+  "runtimeArgs": ["--preserve-symlinks"],
   "configurations": [
     {
       "name": "Run VSCode Extension",
-      "type": "extensionHost",
-      "request": "launch",
-      "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
-      "skipFiles": ["<node_internals>/**"],
-      "outFiles": ["${workspaceFolder}/dist/*.js"],
-      "preLaunchTask": "build-extension-task",
-      "sourceMaps": true
-    },
-    {
-      "name": "Run VSCode Extension (and Debug Webviews)",
       "type": "extensionHost",
       "request": "launch",
       "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
@@ -24,10 +15,7 @@
       "skipFiles": ["<node_internals>/**"],
       "outFiles": ["${workspaceFolder}/dist/*.js"],
       "preLaunchTask": "build-extension-task",
-      "sourceMaps": true,
-      "env": {
-        "MALLOY_DEBUG_WORKER": "true"
-      }
+      "sourceMaps": true
     },
     {
       "name": "Run VSCode Web Extension",
@@ -38,7 +26,7 @@
         "--extensionDevelopmentKind=web"
       ],
       "debugWebWorkerHost": true,
-      "skipFiles": ["${workspaceFolder}/node_modules/**/*.js"],
+      "skipFiles": ["<node_internals>/**"],
       "outFiles": ["${workspaceFolder}/dist/*.js"],
       "preLaunchTask": "build-extension-task",
       "sourceMaps": true
@@ -51,17 +39,29 @@
       "skipFiles": ["<node_internals>/**"],
       "restart": true,
       "smartStep": false,
-      "outFiles": ["${workspaceRoot}/dist/server.js"]
+      "outFiles": ["${workspaceRoot}/dist/server_*.js"]
     },
     {
       "type": "node",
       "request": "attach",
-      "name": "Attach to VSCode Worker",
+      "name": "Attach to Worker",
       "port": 6010,
       "skipFiles": ["<node_internals>/**"],
       "restart": true,
       "smartStep": false,
-      "outFiles": ["${workspaceRoot}/dist/worker.js"]
+      "outFiles": ["${workspaceRoot}/dist/worker_*.js"]
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Debug All (Node)",
+      "configurations": [
+        "Run VSCode Extension",
+        "Attach to VSCode Language Server",
+        "Attach to Worker"
+      ],
+      "preLaunchTask": "build-extension-task",
+      "stopAll": true
     }
   ]
 }

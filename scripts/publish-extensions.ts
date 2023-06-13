@@ -20,17 +20,15 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* eslint-disable no-console */
-/* eslint-disable no-process-exit */
-/* eslint-disable node/no-unpublished-import */
 
 import * as semver from 'semver';
 import {readFileSync} from 'fs';
-import {publishVSIX} from 'vsce';
+import {publishVSIX} from '@vscode/vsce';
 import {Target} from './build_common';
 import {targetKeytarMap} from './utils/fetch_keytar';
 import {doPackage} from './package-extension';
 import {publishCloudExtension} from './publish-cloud-extension';
+import {publishOvsx} from './publish-ovsx';
 
 /**
  * @returns Array of version bits. [major, minor, patch]
@@ -78,7 +76,7 @@ async function doPublish(version: string) {
   );
   console.log(`Pre-release: ${preRelease}`);
 
-  for (const target in targetKeytarMap) {
+  for (const target in {...targetKeytarMap, web: undefined}) {
     const packagePath = await doPackage(
       target as Target,
       versionCode,
@@ -91,16 +89,9 @@ async function doPublish(version: string) {
       useYarn: false,
       pat: process.env['VSCE_PAT'],
     });
+
+    await publishOvsx(packagePath, target, preRelease);
   }
-
-  const packagePath = await doPackage('web', versionCode, preRelease);
-
-  await publishVSIX(packagePath, {
-    githubBranch: 'main',
-    preRelease: preRelease,
-    useYarn: false,
-    pat: process.env['VSCE_PAT'],
-  });
 
   if (!preRelease) {
     const cloudPackagePath = await doPackage(

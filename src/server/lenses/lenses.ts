@@ -53,23 +53,43 @@ export function getMalloyLenses(document: TextDocument): CodeLens[] {
   let currentUnnamedSQLBlockIndex = 0;
   symbols.forEach(symbol => {
     if (symbol.type === 'query') {
-      lenses.push({
-        range: symbol.range.toJSON(),
-        command: {
-          title: 'Run',
-          command: 'malloy.runNamedQuery',
-          arguments: [symbol.name],
+      lenses.push(
+        {
+          range: symbol.range.toJSON(),
+          command: {
+            title: 'Run Query',
+            command: 'malloy.runNamedQuery',
+            arguments: [symbol.name],
+          },
         },
-      });
+        {
+          range: symbol.range.toJSON(),
+          command: {
+            title: 'Show SQL',
+            command: 'malloy.showSQLNamedQuery',
+            arguments: [symbol.name],
+          },
+        }
+      );
     } else if (symbol.type === 'unnamed_query') {
-      lenses.push({
-        range: symbol.range.toJSON(),
-        command: {
-          title: 'Run',
-          command: 'malloy.runQueryFile',
-          arguments: [currentUnnamedQueryIndex],
+      lenses.push(
+        {
+          range: symbol.range.toJSON(),
+          command: {
+            title: 'Run Query',
+            command: 'malloy.runQueryFile',
+            arguments: [currentUnnamedQueryIndex],
+          },
         },
-      });
+        {
+          range: symbol.range.toJSON(),
+          command: {
+            title: 'Show SQL',
+            command: 'malloy.showSQLFile',
+            arguments: [currentUnnamedQueryIndex],
+          },
+        }
+      );
       currentUnnamedQueryIndex++;
     } else if (symbol.type === 'explore') {
       const children = symbol.children;
@@ -99,17 +119,30 @@ export function getMalloyLenses(document: TextDocument): CodeLens[] {
       children.forEach(child => {
         if (child.type === 'query') {
           const queryName = child.name;
-          lenses.push({
-            range: child.range.toJSON(),
-            command: {
-              title: 'Run',
-              command: 'malloy.runQuery',
-              arguments: [
-                `query: ${exploreName}->${queryName}`,
-                `${exploreName}->${queryName}`,
-              ],
+          lenses.push(
+            {
+              range: child.range.toJSON(),
+              command: {
+                title: 'Run Query',
+                command: 'malloy.runQuery',
+                arguments: [
+                  `query: ${exploreName}->${queryName}`,
+                  `${exploreName}->${queryName}`,
+                ],
+              },
             },
-          });
+            {
+              range: child.range.toJSON(),
+              command: {
+                title: 'Show SQL',
+                command: 'malloy.showSQL',
+                arguments: [
+                  `query: ${exploreName}->${queryName}`,
+                  `${exploreName}->${queryName}`,
+                ],
+              },
+            }
+          );
         }
       });
     } else if (symbol.type === 'sql') {

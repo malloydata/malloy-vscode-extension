@@ -20,7 +20,6 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* eslint-disable no-console */
 
 import {
   TextDocuments,
@@ -39,7 +38,7 @@ import {TextDocument} from 'vscode-languageserver-textdocument';
 import {getMalloyDiagnostics} from './diagnostics';
 import {getMalloySymbols} from './symbols';
 import {TOKEN_TYPES, TOKEN_MODIFIERS, stubMalloyHighlights} from './highlights';
-import {getMalloyLenses} from './lenses';
+import {getMalloyLenses, getMalloySQLLenses} from './lenses';
 import {
   getCompletionItems,
   resolveCompletionItem,
@@ -56,7 +55,7 @@ export const initServer = (
 ) => {
   let haveConnectionsBeenSet = false;
   connection.onInitialize((params: InitializeParams) => {
-    console.info('Server onInitialize');
+    connection.console.info('Server onInitialize');
     const capabilities = params.capabilities;
 
     const result: InitializeResult = {
@@ -93,7 +92,11 @@ export const initServer = (
     return result;
   });
 
-  const translateCache = new TranslateCache(connection);
+  const translateCache = new TranslateCache(
+    documents,
+    connection,
+    connectionManager
+  );
 
   async function diagnoseDocument(document: TextDocument) {
     if (haveConnectionsBeenSet) {
@@ -101,12 +104,8 @@ export const initServer = (
       const versionsAtRequestTime = new Map(
         documents.all().map(document => [document.uri, document.version])
       );
-      const diagnostics = await getMalloyDiagnostics(
-        translateCache,
-        connectionManager,
-        documents,
-        document
-      );
+      const diagnostics = await getMalloyDiagnostics(translateCache, document);
+
       // Only send diagnostics if the document hasn't changed since this request started
       for (const uri in diagnostics) {
         const versionAtRequest = versionsAtRequestTime.get(uri);
@@ -127,33 +126,35 @@ export const initServer = (
   const debouncedDiagnoseDocument = debounce(diagnoseDocument, 300);
 
   documents.onDidChangeContent(change => {
-    console.info('Server onDidChangeContent');
     debouncedDiagnoseDocument(change.document);
   });
 
   connection.onDocumentSymbol(handler => {
-    console.info('Server onDocumentSymbol');
     const document = documents.get(handler.textDocument.uri);
-    return document ? getMalloySymbols(document) : [];
+    return document && document.languageId === 'malloy'
+      ? getMalloySymbols(document)
+      : [];
   });
 
   connection.languages.semanticTokens.on(handler => {
     const document = documents.get(handler.textDocument.uri);
-    return document
+    return document && document.languageId === 'malloy'
       ? stubMalloyHighlights(document)
       : new SemanticTokensBuilder().build();
   });
 
   connection.onCodeLens(handler => {
-    console.info('Server onCodeLens');
     const document = documents.get(handler.textDocument.uri);
-    return document ? getMalloyLenses(document) : [];
+    if (document) {
+      if (document.languageId === 'malloy') return getMalloyLenses(document);
+      if (document.languageId === 'malloy-sql')
+        return getMalloySQLLenses(document);
+    }
   });
 
   connection.onDefinition(handler => {
-    console.info('Server onDefinition');
     const document = documents.get(handler.textDocument.uri);
-    return document
+    return document && document.languageId === 'malloy'
       ? getMalloyDefinitionReference(
           translateCache,
           connectionManager,
@@ -165,7 +166,6 @@ export const initServer = (
   });
 
   connection.onDidChangeConfiguration(change => {
-    console.info('Server onDidChangeConfiguration');
     connectionManager.setConnectionsConfig(change.settings.malloy.connections);
     haveConnectionsBeenSet = true;
     documents.all().forEach(diagnoseDocument);
@@ -173,23 +173,24 @@ export const initServer = (
 
   // This handler provides the initial list of the completion items.
   connection.onCompletion((params): CompletionItem[] => {
-    console.info('Server onCompletion');
     const document = documents.get(params.textDocument.uri);
-    return document ? getCompletionItems(document, params) : [];
+    return document && document.languageId === 'malloy'
+      ? getCompletionItems(document, params)
+      : [];
   });
 
   // This handler resolves additional information for the item selected in
   // the completion list.
   connection.onCompletionResolve((item: CompletionItem): CompletionItem => {
-    console.info('Server onCompletionResolve');
     return resolveCompletionItem(item);
   });
 
   connection.onHover((params: HoverParams): Hover | null => {
-    console.info('Server onHover');
     const document = documents.get(params.textDocument.uri);
 
-    return document ? getHover(document, params) : null;
+    return document && document.languageId === 'malloy'
+      ? getHover(document, params)
+      : null;
   });
 
   documents.listen(connection);

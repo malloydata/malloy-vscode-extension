@@ -23,14 +23,19 @@
 
 import * as vscode from 'vscode';
 import {MALLOY_EXTENSION_STATE} from '../state';
+import {WorkerConnection} from '../worker_connection';
 import {runMalloyQuery} from './run_query_utils';
 
-export function runUnnamedSQLBlock(index: number): void {
+export function runUnnamedSQLBlock(
+  worker: WorkerConnection,
+  index: number
+): void {
   const document =
     vscode.window.activeTextEditor?.document ||
     MALLOY_EXTENSION_STATE.getActiveWebviewPanel()?.document;
   if (document) {
     runMalloyQuery(
+      worker,
       {type: 'unnamed_sql', index, file: document},
       document.uri.toString(),
       document.fileName.split('/').pop() || document.fileName

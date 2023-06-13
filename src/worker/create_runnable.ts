@@ -27,19 +27,19 @@ import {
   Runtime,
   SQLBlockMaterializer,
 } from '@malloydata/malloy';
-import {CellData} from '../extension/types';
-import {WorkerQuerySpec} from './types';
+import {WorkerQuerySpec} from '../common/worker_message_types';
+import {FileHandler} from '../common/types';
 
 export const createRunnable = async (
   query: WorkerQuerySpec,
   runtime: Runtime,
-  fetchCellData: (uri: string) => Promise<CellData[]>
+  fileHandler: FileHandler
 ): Promise<SQLBlockMaterializer | QueryMaterializer> => {
   let runnable: QueryMaterializer | SQLBlockMaterializer;
   const queryFileURL = new URL(query.uri);
+  let mm: ModelMaterializer | null = null;
   if (queryFileURL.protocol === 'vscode-notebook-cell:') {
-    const allCells = await fetchCellData(query.uri);
-    let mm: ModelMaterializer | null = null;
+    const allCells = await fileHandler.fetchCellData(query.uri);
     for (let idx = 0; idx < allCells.length; idx++) {
       const url = new URL(allCells[idx].uri);
       if (mm) {
@@ -48,53 +48,31 @@ export const createRunnable = async (
         mm = runtime.loadModel(url);
       }
     }
-    switch (query.type) {
-      case 'string':
-        runnable = mm.loadQuery(query.text);
-        break;
-      case 'named':
-        runnable = mm.loadQueryByName(query.name);
-        break;
-      case 'file':
-        if (query.index === -1) {
-          runnable = mm.loadFinalQuery();
-        } else {
-          runnable = mm.loadQueryByIndex(query.index);
-        }
-        break;
-      case 'named_sql':
-        runnable = mm.loadSQLBlockByName(query.name);
-        break;
-      case 'unnamed_sql':
-        runnable = mm.loadSQLBlockByIndex(query.index);
-        break;
-      default:
-        throw new Error('Internal Error: Unexpected query type');
-    }
   } else {
-    switch (query.type) {
-      case 'string':
-        runnable = runtime.loadModel(queryFileURL).loadQuery(query.text);
-        break;
-      case 'named':
-        runnable = runtime.loadQueryByName(queryFileURL, query.name);
-        break;
-      case 'file':
-        if (query.index === -1) {
-          runnable = runtime.loadQuery(queryFileURL);
-        } else {
-          runnable = runtime.loadQueryByIndex(queryFileURL, query.index);
-        }
-        break;
-      case 'named_sql':
-        runnable = runtime.loadSQLBlockByName(queryFileURL, query.name);
-        break;
-      case 'unnamed_sql':
-        runnable = runtime.loadSQLBlockByIndex(queryFileURL, query.index);
-        break;
-      default:
-        throw new Error('Internal Error: Unexpected query type');
-    }
+    mm = runtime.loadModel(queryFileURL);
+  }
+  switch (query.type) {
+    case 'string':
+      runnable = mm.loadQuery(query.text);
+      break;
+    case 'named':
+      runnable = mm.loadQueryByName(query.name);
+      break;
+    case 'file':
+      if (query.index === -1) {
+        runnable = mm.loadFinalQuery();
+      } else {
+        runnable = mm.loadQueryByIndex(query.index);
+      }
+      break;
+    case 'named_sql':
+      runnable = mm.loadSQLBlockByName(query.name);
+      break;
+    case 'unnamed_sql':
+      runnable = mm.loadSQLBlockByIndex(query.index);
+      break;
+    default:
+      throw new Error('Internal Error: Unexpected query type');
   }
   return runnable;
 };

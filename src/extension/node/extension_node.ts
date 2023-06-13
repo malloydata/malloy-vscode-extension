@@ -32,27 +32,15 @@ import {
 } from 'vscode-languageclient/node';
 import {editConnectionsCommand} from './commands/edit_connections';
 import {ConnectionsProvider} from '../tree_views/connections_view';
-import {WorkerConnection} from '../../worker/node/worker_connection';
-import {
-  FetchBinaryFileEvent,
-  FetchCellDataEvent,
-  FetchFileEvent,
-  MalloyConfig,
-} from '../types';
 import {connectionManager} from './connection_manager';
-import {setupSubscriptions} from '../subscriptions';
-import {
-  fetchFile,
-  fetchBinaryFile,
-  VSCodeURLReader,
-  fetchCellData,
-} from '../utils';
-import {getWorker, setWorker} from '../../worker/worker';
+import {setupFileMessaging, setupSubscriptions} from '../subscriptions';
+import {fileHandler} from '../utils';
 import {MALLOY_EXTENSION_STATE} from '../state';
+import {WorkerConnectionNode} from './worker_connection_node';
+import {FileHandler, MalloyConfig} from '../../common/types';
 
 let client: LanguageClient;
-
-export let extensionModeProduction: boolean;
+let worker: WorkerConnectionNode | null = null;
 
 const cloudshellEnv = () => {
   const cloudShellProject = vscode.workspace
@@ -66,8 +54,10 @@ const cloudshellEnv = () => {
 };
 
 export function activate(context: vscode.ExtensionContext): void {
-  const urlReader = new VSCodeURLReader();
-  setupSubscriptions(context, urlReader, connectionManager);
+  cloudshellEnv();
+  setupLanguageServer(context);
+  setupWorker(context, fileHandler);
+  setupSubscriptions(context, fileHandler, connectionManager, worker, client);
   const connectionsTree = new ConnectionsProvider(context, connectionManager);
 
   MALLOY_EXTENSION_STATE.setHomeUri(vscode.Uri.file(os.homedir()));
@@ -83,31 +73,22 @@ export function activate(context: vscode.ExtensionContext): void {
     )
   );
 
-  cloudshellEnv();
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration(async e => {
       if (e.affectsConfiguration('malloy')) {
         await connectionManager.onConfigurationUpdated();
         connectionsTree.refresh();
-        sendWorkerConfig();
       }
       if (e.affectsConfiguration('cloudshell')) {
         cloudshellEnv();
       }
     })
   );
-
-  setupLanguageServer(context);
-  setupWorker(context);
 }
 
 export async function deactivate(): Promise<void> | undefined {
   if (client) {
     await client.stop();
-  }
-  const worker = getWorker();
-  if (worker) {
-    worker.send({type: 'exit'});
   }
 }
 
@@ -134,10 +115,16 @@ async function setupLanguageServer(
   };
 
   const clientOptions: LanguageClientOptions = {
-    documentSelector: [{language: 'malloy'}],
+    documentSelector: [{language: 'malloy'}, {language: 'malloy-sql'}],
     synchronize: {
       configurationSection: 'malloy',
       fileEvents: vscode.workspace.createFileSystemWatcher('**/.clientrc'),
+    },
+    connectionOptions: {
+      // If the server crashes X times in Y mins(e.g., 3 min), it won't get
+      // restarted again(https://github.com/microsoft/vscode-languageserver-node/blob/1320922f95ef182df2cf76b7c96b1a2d3ba14c2a/client/src/common/client.ts#L438).
+      // We can be overly confident and set it to a large number. For now, set the max restart count to Number.MAX_SAFE_INTEGER.
+      maxRestartCount: Number.MAX_SAFE_INTEGER,
     },
   };
 
@@ -148,41 +135,23 @@ async function setupLanguageServer(
     clientOptions
   );
 
-  client.start();
-  await client.onReady();
+  await client.start();
 
-  client.onRequest('malloy/fetchFile', async (event: FetchFileEvent) => {
-    console.info('fetchFile returning', event.uri);
-    return await fetchFile(event.uri);
-  });
-
-  client.onRequest(
-    'malloy/fetchBinaryFile',
-    async (event: FetchBinaryFileEvent) => {
-      console.info('fetchBinaryFile returning', event.uri);
-      return await fetchBinaryFile(event.uri);
-    }
-  );
-  client.onRequest(
-    'malloy/fetchCellData',
-    async (event: FetchCellDataEvent) => {
-      console.info('fetchCellData returning', event.uri);
-      return await fetchCellData(event.uri);
-    }
-  );
+  setupFileMessaging(context, client, fileHandler);
 }
 
 function sendWorkerConfig() {
-  getWorker().send({
-    type: 'config',
+  worker.sendRequest('malloy/config', {
     config: vscode.workspace.getConfiguration(
       'malloy'
     ) as unknown as MalloyConfig,
   });
 }
 
-function setupWorker(context: vscode.ExtensionContext): void {
-  const worker = new WorkerConnection(context);
-  setWorker(worker);
+function setupWorker(
+  context: vscode.ExtensionContext,
+  fileHandler: FileHandler
+): void {
+  worker = new WorkerConnectionNode(context, fileHandler);
   sendWorkerConfig();
 }

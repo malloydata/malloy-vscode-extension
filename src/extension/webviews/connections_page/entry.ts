@@ -21,7 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as _webviewAPI from 'vscode-webview';
 import ReactDOM from 'react-dom';
 import React from 'react';
 import {App} from './App';
@@ -29,7 +28,7 @@ import {
   getVSCodeAPI,
   ConnectionsVSCodeContext,
 } from './connections_vscode_context';
-import {ConnectionPanelMessage} from '../../message_types';
+import {ConnectionPanelMessage} from '../../../common/message_types';
 
 (() => {
   const vscode = getVSCodeAPI<void, ConnectionPanelMessage>();

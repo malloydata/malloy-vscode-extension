@@ -28,7 +28,7 @@ import {
   MarkupKind,
 } from 'vscode-languageserver/node';
 import {TextDocument} from 'vscode-languageserver-textdocument';
-import {COMPLETION_DOCS} from './completion_docs';
+import {COMPLETION_DOCS} from '../../common/completion_docs';
 import {parseWithCache} from '../parse_cache';
 
 export function getCompletionItems(

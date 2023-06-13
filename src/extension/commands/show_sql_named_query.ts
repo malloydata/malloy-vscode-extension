@@ -21,21 +21,25 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {MessageConfig} from './types';
-import {log} from './logger';
-import {ConnectionManager} from '../common/connection_manager';
+import * as vscode from 'vscode';
+import {MALLOY_EXTENSION_STATE} from '../state';
+import {WorkerConnection} from '../worker_connection';
+import {runMalloyQuery} from './run_query_utils';
 
-const DEFAULT_ROW_LIMIT = 50;
-
-export const refreshConfig = (
-  connectionManager: ConnectionManager,
-  {config}: MessageConfig
-): void => {
-  const {rowLimit: rowLimitRaw, connections} = config;
-
-  log('Config updated');
-
-  connectionManager.setConnectionsConfig(connections);
-  const rowLimit = rowLimitRaw || DEFAULT_ROW_LIMIT;
-  connectionManager.setCurrentRowLimit(+rowLimit);
-};
+export function showSQLNamedQueryCommand(
+  worker: WorkerConnection,
+  name: string
+): void {
+  const document =
+    vscode.window.activeTextEditor?.document ||
+    MALLOY_EXTENSION_STATE.getActiveWebviewPanel()?.document;
+  if (document) {
+    runMalloyQuery(
+      worker,
+      {type: 'named', name, file: document},
+      `${document.uri.toString()} ${name}`,
+      name,
+      true
+    );
+  }
+}

@@ -29,34 +29,18 @@ import {
   LanguageClientOptions,
 } from 'vscode-languageclient/browser';
 
-// import { WorkerConnection } from "../../worker/browser/worker_connection";
-import {WorkerConnection} from '../../worker/browser/workerless_worker';
-import {setupSubscriptions} from '../subscriptions';
-import {
-  FetchBinaryFileEvent,
-  FetchCellDataEvent,
-  FetchFileEvent,
-  MalloyConfig,
-} from '../types';
+import {setupFileMessaging, setupSubscriptions} from '../subscriptions';
 import {connectionManager} from './connection_manager';
 import {ConnectionsProvider} from '../tree_views/connections_view';
 import {editConnectionsCommand} from './commands/edit_connections';
-import {
-  fetchFile,
-  fetchBinaryFile,
-  fetchCellData,
-  VSCodeURLReader,
-} from '../utils';
-import {setWorker} from '../../worker/worker';
-
+import {fileHandler} from '../utils';
+import {WorkerConnectionBrowser} from './worker_connection_browser';
 let client: LanguageClient;
-let worker: WorkerConnection;
-
-export let extensionModeProduction: boolean;
 
 export function activate(context: vscode.ExtensionContext): void {
-  const urlReader = new VSCodeURLReader();
-  setupSubscriptions(context, urlReader, connectionManager);
+  setupLanguageServer(context);
+  const worker = new WorkerConnectionBrowser(context, client, fileHandler);
+  setupSubscriptions(context, fileHandler, connectionManager, worker, client);
 
   const connectionsTree = new ConnectionsProvider(context, connectionManager);
   context.subscriptions.push(
@@ -67,7 +51,6 @@ export function activate(context: vscode.ExtensionContext): void {
       if (e.affectsConfiguration('malloy')) {
         await connectionManager.onConfigurationUpdated();
         connectionsTree.refresh();
-        sendWorkerConfig();
       }
     })
   );
@@ -77,23 +60,18 @@ export function activate(context: vscode.ExtensionContext): void {
       editConnectionsCommand
     )
   );
-  setupLanguageServer(context);
-  setupWorker(context);
 }
 
 export async function deactivate(): Promise<void> | undefined {
   if (client) {
     await client.stop();
   }
-  if (worker) {
-    worker.send({type: 'exit'});
-  }
 }
 
 async function setupLanguageServer(
   context: vscode.ExtensionContext
 ): Promise<void> {
-  const documentSelector = [{language: 'malloy'}];
+  const documentSelector = [{language: 'malloy'}, {language: 'malloy-sql'}];
 
   // Options to control the language client
   const clientOptions: LanguageClientOptions = {
@@ -102,48 +80,19 @@ async function setupLanguageServer(
       configurationSection: 'malloy',
     },
     initializationOptions: {},
+    connectionOptions: {
+      // If the server crashes X times in Y mins(e.g., 3 min), it won't get
+      // restarted again(https://github.com/microsoft/vscode-languageserver-node/blob/1320922f95ef182df2cf76b7c96b1a2d3ba14c2a/client/src/common/client.ts#L438).
+      // We can be overly confident and set it to a large number. For now, set the max restart count to Number.MAX_SAFE_INTEGER.
+      maxRestartCount: Number.MAX_SAFE_INTEGER,
+    },
   };
 
-  const client = createWorkerLanguageClient(context, clientOptions);
+  client = createWorkerLanguageClient(context, clientOptions);
 
-  client.start();
-  await client.onReady();
+  await client.start();
 
-  client.onRequest('malloy/fetchFile', async (event: FetchFileEvent) => {
-    console.info('fetchFile returning', event.uri);
-    return await fetchFile(event.uri);
-  });
-
-  client.onRequest(
-    'malloy/fetchBinaryFile',
-    async (event: FetchBinaryFileEvent) => {
-      console.info('fetchBinaryFile returning', event.uri);
-      return await fetchBinaryFile(event.uri);
-    }
-  );
-  client.onRequest(
-    'malloy/fetchCellData',
-    async (event: FetchCellDataEvent) => {
-      console.info('fetchCellData returning', event.uri);
-      return await fetchCellData(event.uri);
-    }
-  );
-}
-
-function sendWorkerConfig() {
-  const rawConfig = vscode.workspace.getConfiguration('malloy');
-  // Strip out functions
-  const config: MalloyConfig = JSON.parse(JSON.stringify(rawConfig));
-  worker.send({
-    type: 'config',
-    config,
-  });
-}
-
-function setupWorker(context: vscode.ExtensionContext): void {
-  worker = new WorkerConnection(context);
-  setWorker(worker);
-  sendWorkerConfig();
+  setupFileMessaging(context, client, fileHandler);
 }
 
 function createWorkerLanguageClient(

@@ -20,14 +20,11 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* eslint-disable no-console */
-/* eslint-disable no-process-exit */
-/* eslint-disable node/no-unpublished-import */
 
 import {doBuild, outDir, Target} from './build_common';
 import * as path from 'path';
 import * as semver from 'semver';
-import {createVSIX} from 'vsce';
+import {createVSIX} from '@vscode/vsce';
 
 // importing this in normal fashion seems to import an older API?!
 // for ex, when imported, "Property 'rmSync' does not exist on type 'typeof import("fs")'"
@@ -59,17 +56,12 @@ export async function doPackage(
       : `malloy-vscode-${version}.vsix`
   );
 
-  fs.copyFileSync('package.json', 'package.json.original');
-
-  packageJSON.version = version;
-  if (target === 'web') {
-    delete packageJSON['main'];
-  } else {
-    delete packageJSON['browser'];
-  }
-  fs.writeFileSync('package.json', JSON.stringify(packageJSON, null, 2));
-
   try {
+    fs.copyFileSync('package.json', 'package.json.original');
+
+    packageJSON.version = version;
+    fs.writeFileSync('package.json', JSON.stringify(packageJSON, null, 2));
+
     await createVSIX({
       githubBranch: 'main',
       preRelease,

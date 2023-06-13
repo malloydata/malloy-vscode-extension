@@ -23,11 +23,16 @@
 
 import {TextDocument} from 'vscode-languageserver-textdocument';
 import {Malloy} from '@malloydata/malloy';
+import {MalloySQLParse, MalloySQLParser} from '@malloydata/malloy-sql';
 
 // TODO(whscullin): Export Parse from Malloy
 type Parse = ReturnType<typeof Malloy.parse>;
 
 const PARSE_CACHE = new Map<string, {parsed: Parse; version: number}>();
+const MALLOYSQL_PARSE_CACHE = new Map<
+  string,
+  {parsed: MalloySQLParse; version: number}
+>();
 
 export const parseWithCache = (document: TextDocument): Parse => {
   const {version, uri} = document;
@@ -39,5 +44,20 @@ export const parseWithCache = (document: TextDocument): Parse => {
 
   const parsed = Malloy.parse({source: document.getText()});
   PARSE_CACHE.set(uri, {parsed, version});
+  return parsed;
+};
+
+export const parseMalloySQLWithCache = (
+  document: TextDocument
+): MalloySQLParse => {
+  const {version, uri} = document;
+
+  const entry = MALLOYSQL_PARSE_CACHE.get(uri);
+  if (entry && entry.version === version) {
+    return entry.parsed;
+  }
+
+  const parsed: MalloySQLParse = MalloySQLParser.parse(document.getText(), uri);
+  MALLOYSQL_PARSE_CACHE.set(uri, {parsed, version});
   return parsed;
 };

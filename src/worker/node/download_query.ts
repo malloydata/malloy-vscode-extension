@@ -23,39 +23,43 @@
 
 import * as fs from 'fs';
 import {fileURLToPath} from 'url';
-
 import {CSVWriter, JSONWriter, Runtime} from '@malloydata/malloy';
-
-import {MessageDownload, WorkerDownloadMessage} from '../types';
+import {
+  MessageDownload,
+  WorkerMessageHandler,
+  WorkerDownloadMessage,
+} from '../../common/worker_message_types';
 import {createRunnable} from '../create_runnable';
-import {WorkerURLReader} from './files';
+import {FileHandler} from '../../common/types';
 import {ConnectionManager} from '../../common/connection_manager';
-import {CellData} from '../../extension/types';
 
-const sendMessage = (name: string, error?: string) => {
+const sendMessage = (
+  messageHandler: WorkerMessageHandler,
+  name: string,
+  error?: string
+) => {
   const msg: WorkerDownloadMessage = {
-    type: 'download',
     name,
     error,
   };
-  process.send?.(msg);
+  messageHandler.sendRequest('malloy/download', msg);
 };
 
 export async function downloadQuery(
+  messageHandler: WorkerMessageHandler,
   connectionManager: ConnectionManager,
   {query, panelId, downloadOptions, name, uri}: MessageDownload,
-  fetchCellData: (uri: string) => Promise<CellData[]>
+  fileHandler: FileHandler
 ): Promise<void> {
-  const files = new WorkerURLReader();
   const url = new URL(panelId);
 
   try {
     const runtime = new Runtime(
-      files,
+      fileHandler,
       connectionManager.getConnectionLookup(url)
     );
 
-    const runnable = await createRunnable(query, runtime, fetchCellData);
+    const runnable = await createRunnable(query, runtime, fileHandler);
     const writeStream = fs.createWriteStream(fileURLToPath(uri));
     const writer =
       downloadOptions.format === 'json'
@@ -69,8 +73,8 @@ export async function downloadQuery(
       rowLimit,
     });
     await writer.process(rowStream);
-    sendMessage(name);
+    sendMessage(messageHandler, name);
   } catch (error) {
-    sendMessage(name, error.message);
+    sendMessage(messageHandler, error.message);
   }
 }

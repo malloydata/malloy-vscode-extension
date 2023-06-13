@@ -21,30 +21,22 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {ConnectionConfig} from '../common/connection_manager_types';
+import * as vscode from 'vscode';
+import {WorkerConnection} from '../worker_connection';
+import {runMalloyQuery} from './run_query_utils';
 
-export interface MalloyConfig {
-  /** Maximum number of top-level rows to fetch when running queries. */
-  rowLimit: number;
-  /** Path to directory to save downloaded results */
-  downloadsPath: string;
-  /** Connections for Malloy to use to access data when compiling and querying. */
-  connections: ConnectionConfig[];
-}
-
-export interface FetchFileEvent {
-  uri: string;
-}
-
-export interface FetchBinaryFileEvent {
-  uri: string;
-}
-
-export interface FetchCellDataEvent {
-  uri: string;
-}
-
-export interface CellData {
-  uri: string;
-  text: string;
+export function showSQLFileCommand(
+  worker: WorkerConnection,
+  queryIndex = -1
+): void {
+  const document = vscode.window.activeTextEditor?.document;
+  if (document) {
+    runMalloyQuery(
+      worker,
+      {type: 'file', index: queryIndex, file: document},
+      document.uri.toString(),
+      document.fileName.split('/').pop() || document.fileName,
+      true
+    );
+  }
 }

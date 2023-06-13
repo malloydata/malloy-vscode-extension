@@ -26,14 +26,12 @@ import {Utils} from 'vscode-uri';
 
 import {
   Explore,
-  Runtime,
   JoinRelationship,
   Field,
   QueryField,
   AtomicField,
   URLReader,
-  Model,
-  ModelMaterializer,
+  SerializedExplore,
 } from '@malloydata/malloy';
 import numberIcon from '../../media/number.svg';
 import numberAggregateIcon from '../../media/number-aggregate.svg';
@@ -47,6 +45,8 @@ import manyToOneIcon from '../../media/many_to_one.svg';
 import oneToOneIcon from '../../media/one_to_one.svg';
 import {MALLOY_EXTENSION_STATE} from '../state';
 import {ConnectionManager} from '../../common/connection_manager';
+import {BaseLanguageClient} from 'vscode-languageclient/node';
+import {BuildModelRequest} from '../../common/types';
 
 export class SchemaProvider
   implements vscode.TreeDataProvider<ExploreItem | FieldItem>
@@ -57,7 +57,8 @@ export class SchemaProvider
   constructor(
     private context: vscode.ExtensionContext,
     private connectionManager: ConnectionManager,
-    private urlReader: URLReader
+    private urlReader: URLReader,
+    private client: BaseLanguageClient
   ) {
     this.resultCache = new Map();
   }
@@ -121,7 +122,8 @@ export class SchemaProvider
       const explores = await getStructs(
         this.connectionManager,
         this.urlReader,
-        document
+        document,
+        this.client
       );
       if (explores === undefined) {
         return this.resultCache.get(cacheKey) || [];
@@ -146,40 +148,22 @@ export class SchemaProvider
 async function getStructs(
   connectionManager: ConnectionManager,
   reader: URLReader,
-  document: vscode.TextDocument
+  document: vscode.TextDocument,
+  client: BaseLanguageClient
 ): Promise<Explore[] | undefined> {
-  const url = new URL(document.uri.toString());
   try {
-    const runtime = new Runtime(
-      reader,
-      connectionManager.getConnectionLookup(url)
+    const request: BuildModelRequest = {
+      uri: document.uri.toString(),
+      version: document.version,
+    };
+    const serialized_explores: SerializedExplore[] = await client.sendRequest(
+      'malloy/fetchModel',
+      request
     );
-    let model: Model;
-    if (url.protocol === 'vscode-notebook-cell:') {
-      const notebook = vscode.workspace.notebookDocuments.find(
-        notebook => notebook.uri.path === document.uri.path
-      );
-      let mm: ModelMaterializer | null = null;
-      for (const cell of notebook.getCells()) {
-        const {uri: cellUri} = cell.document;
-        if (cell.kind === vscode.NotebookCellKind.Code) {
-          const cellUrl = new URL(cellUri.toString());
-          if (mm) {
-            mm = mm.extendModel(cellUrl);
-          } else {
-            mm = runtime.loadModel(cellUrl);
-          }
-        }
-        if (cellUri.fragment === document.uri.fragment) {
-          break;
-        }
-      }
-      model = await mm.getModel();
-    } else {
-      model = await runtime.getModel(url);
-    }
-
-    return Object.values(model.explores).sort(exploresByName);
+    const explores = serialized_explores.map(explore =>
+      Explore.fromJSON(explore)
+    );
+    return Object.values(explores).sort(exploresByName);
   } catch (error) {
     return undefined;
   }

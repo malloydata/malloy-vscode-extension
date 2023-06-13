@@ -35,9 +35,8 @@ export async function getMalloyDefinitionReference(
 ): Promise<Location[]> {
   try {
     const model = await translateCache.translateWithCache(
-      connectionManager,
-      document,
-      documents
+      document.uri,
+      document.version
     );
     const reference = model.getReference(position);
     const location = reference?.definition.location;

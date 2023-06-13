@@ -40,6 +40,7 @@ interface RawNotebookCell {
   language: string;
   value: string;
   kind: vscode.NotebookCellKind;
+  metadata?: {[key: string]: unknown};
 }
 
 class MalloySerializer implements vscode.NotebookSerializer {
@@ -56,9 +57,17 @@ class MalloySerializer implements vscode.NotebookSerializer {
       raw = [];
     }
 
-    const cells = raw.map(
-      item => new vscode.NotebookCellData(item.kind, item.value, item.language)
-    );
+    const cells = raw.map(item => {
+      const cell = new vscode.NotebookCellData(
+        item.kind,
+        item.value,
+        item.language
+      );
+      if (item.metadata) {
+        cell.metadata = item.metadata;
+      }
+      return cell;
+    });
 
     return new vscode.NotebookData(cells);
   }
@@ -70,8 +79,8 @@ class MalloySerializer implements vscode.NotebookSerializer {
     const contents: RawNotebookCell[] = [];
 
     for (const cell of data.cells) {
-      const {kind, languageId: language, value} = cell;
-      contents.push({kind, language, value});
+      const {kind, languageId: language, value, metadata} = cell;
+      contents.push({kind, language, value, metadata});
     }
 
     return new TextEncoder().encode(JSON.stringify(contents, null, 2));

@@ -21,15 +21,11 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as _webviewAPI from 'vscode-webview';
 import React, {useContext} from 'react';
 import {WebviewApi} from './vscode_wrapper';
 
 export function makeVSCodeContext<S, M>(): React.Context<WebviewApi<S, M>> {
-  return React.createContext<WebviewApi<S, M>>(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    undefined as any
-  );
+  return React.createContext<WebviewApi<S, M>>(undefined);
 }
 
 export function makeUseVSCodeContext<S, M>(

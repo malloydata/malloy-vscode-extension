@@ -21,11 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {ConnectionManager} from '../../common/connection_manager';
-import {WebConnectionFactory} from '../../extension/browser/connection_factory';
-import {fetchFileBinary} from './files';
+import * as vscode from 'vscode';
 
-export const connectionManager = new ConnectionManager(
-  new WebConnectionFactory(fetchFileBinary),
-  []
-);
+export const malloyLog = vscode.window.createOutputChannel('Malloy');
