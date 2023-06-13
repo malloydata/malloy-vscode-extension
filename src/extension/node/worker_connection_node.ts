@@ -23,6 +23,7 @@
 
 /* eslint-disable no-console */
 import * as child_process from 'child_process';
+import stream from 'stream';
 import * as vscode from 'vscode';
 import * as rpc from 'vscode-jsonrpc/node';
 import {FileHandler} from '../../common/types';
@@ -51,9 +52,24 @@ export class WorkerConnectionNode extends WorkerConnection {
     const startWorker = () => {
       let connection: rpc.MessageConnection | null = null;
 
+      const stdoutStream = new stream.Writable({
+        write: data => {
+          console.log(data.toString());
+        },
+      });
+      const stderrStream = new stream.Writable({
+        write: data => {
+          console.error(data.toString());
+        },
+      });
+
       this.worker = child_process
         // .spawn('node', [workerModule, ...execArgv], {stdio: ['ipc'], cwd})
-        .fork(workerModule, {execArgv, cwd})
+        .fork(workerModule, {
+          execArgv,
+          cwd,
+          stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
+        })
         .on('error', console.error)
         .on('exit', status => {
           connection.dispose();
@@ -65,6 +81,9 @@ export class WorkerConnectionNode extends WorkerConnection {
             setTimeout(startWorker, DEFAULT_RESTART_SECONDS * 1000);
           }
         });
+
+      this.worker.stdout.pipe(stdoutStream);
+      this.worker.stderr.pipe(stderrStream);
 
       connection = rpc.createMessageConnection(
         new rpc.IPCMessageReader(this.worker),
