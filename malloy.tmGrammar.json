@@ -64,9 +64,16 @@
           }
         },
         {
-          "match": "(?i)\\b([a-zA-Z]*)(\\s*\\()",
+          "match": "(?i)\\b([a-zA-Z_][a-zA-Z_0-9]*)(\\s*\\()",
           "captures": {
             "1": {"name": "entity.name.function"}
+          }
+        },
+        {
+          "match": "(?i)\\b([a-zA-Z_][a-zA-Z_0-9]*)\\!(timestamp|number|string|boolean|date)?(\\s*\\()",
+          "captures": {
+            "1": { "name": "entity.name.function" },
+            "2": { "name": "entity.name.type" }
           }
         }
       ]
@@ -246,6 +253,18 @@
         {
           "match": "(?i)\\baggregate\\b",
           "name": "keyword.control.aggregate"
+        },
+        {
+          "match": "(?i)\\bsample\\b",
+          "name": "keyword.control.sample"
+        },
+        {
+          "match": "(?i)\\bcalculate\\b",
+          "name": "keyword.control.calculate"
+        },
+        {
+          "match": "(?i)\\btimezone\\b",
+          "name": "keyword.control.timezone"
         },
         {
           "match": "(?i)\\bdimension\\b",
