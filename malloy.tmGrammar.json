@@ -275,10 +275,6 @@
           "name": "keyword.control.except"
         },
         {
-          "match": "(?i)\\bexplore\\b",
-          "name": "keyword.control.explore"
-        },
-        {
           "match": "(?i)\\bsource\\b",
           "name": "keyword.control.source"
         },
