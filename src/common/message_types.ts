@@ -104,7 +104,6 @@ export interface QueryRunStats {
 type QueryMessageStatus =
   | QueryMessageStatusCompiling
   | QueryMessageStatusCompiled
-  | QueryMessageStatusEstimatedCost
   | QueryMessageStatusError
   | QueryMessageStatusRunning
   | QueryMessageStatusDone;
