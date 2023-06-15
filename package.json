@@ -626,7 +626,7 @@
     "@malloydata/render": "0.0.42",
     "@popperjs/core": "^2.11.6",
     "@vscode/webview-ui-toolkit": "^1.2.1",
-    "duckdb": "0.7.1",
+    "duckdb": "0.8.1",
     "keytar": "7.7.0",
     "lodash": "^4.17.21",
     "node-fetch": "^2.6.6",
