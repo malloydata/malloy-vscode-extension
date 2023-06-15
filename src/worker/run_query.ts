@@ -123,6 +123,7 @@ export const runQuery = async (
       );
 
       if (showSQLOnly) {
+        delete runningQueries[panelId];
         const estimatedRunStats = await runnable.estimateQueryCost();
         sendMessage(
           messageHandler,
@@ -133,7 +134,6 @@ export const runQuery = async (
           },
           panelId
         );
-        delete runningQueries[panelId];
         return;
       }
 
