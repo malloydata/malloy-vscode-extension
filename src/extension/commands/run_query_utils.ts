@@ -141,9 +141,13 @@ https://github.com/malloydata/malloy-vscode-extension/issues.`,
 
                     if (showSQLOnly) {
                       progress.report({increment: 100, message: 'Complete'});
-                      unsubscribe();
                       resolve(undefined);
                     }
+                  }
+                  break;
+                case QueryRunStatus.EstimatedCost:
+                  {
+                    unsubscribe();
                   }
                   break;
                 case QueryRunStatus.Running:

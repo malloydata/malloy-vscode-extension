@@ -33,6 +33,7 @@ import {ConnectionBackend, ConnectionConfig} from './connection_manager_types';
 export enum QueryRunStatus {
   Compiling = 'compiling',
   Compiled = 'compiled',
+  EstimatedCost = 'estimatedCost',
   Running = 'running',
   Error = 'error',
   Done = 'done',
@@ -41,6 +42,7 @@ export enum QueryRunStatus {
 export enum MSQLQueryRunStatus {
   Compiling = 'compiling',
   Compiled = 'compiled',
+  EstimatedCost = 'estimatedCost',
   Running = 'running',
   Error = 'error',
   Done = 'done',
@@ -63,6 +65,12 @@ interface QueryMessageStatusCompiled {
   sql: string;
   dialect: string;
   showSQLOnly: boolean;
+}
+
+interface QueryMessageStatusEstimatedCost {
+  type: QueryMessageType.QueryStatus;
+  status: QueryRunStatus.EstimatedCost;
+  queryCostBytes: number | undefined;
 }
 
 interface QueryMessageStatusRunning {
@@ -96,6 +104,7 @@ export interface QueryRunStats {
 type QueryMessageStatus =
   | QueryMessageStatusCompiling
   | QueryMessageStatusCompiled
+  | QueryMessageStatusEstimatedCost
   | QueryMessageStatusError
   | QueryMessageStatusRunning
   | QueryMessageStatusDone;

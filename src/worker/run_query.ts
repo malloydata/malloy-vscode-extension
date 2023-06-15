@@ -107,7 +107,6 @@ export const runQuery = async (
 
     try {
       sql = await runnable.getSQL();
-
       if (runningQueries[panelId].canceled) return;
       messageHandler.log(sql);
 
@@ -124,6 +123,16 @@ export const runQuery = async (
       );
 
       if (showSQLOnly) {
+        const estimatedRunStats = await runnable.estimateQueryCost();
+        sendMessage(
+          messageHandler,
+          {
+            type: QueryMessageType.QueryStatus,
+            status: QueryRunStatus.EstimatedCost,
+            queryCostBytes: estimatedRunStats?.queryCostBytes,
+          },
+          panelId
+        );
         delete runningQueries[panelId];
         return;
       }
