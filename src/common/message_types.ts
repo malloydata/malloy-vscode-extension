@@ -42,7 +42,6 @@ export enum QueryRunStatus {
 export enum MSQLQueryRunStatus {
   Compiling = 'compiling',
   Compiled = 'compiled',
-  EstimatedCost = 'estimatedCost',
   Running = 'running',
   Error = 'error',
   Done = 'done',
@@ -104,6 +103,7 @@ export interface QueryRunStats {
 type QueryMessageStatus =
   | QueryMessageStatusCompiling
   | QueryMessageStatusCompiled
+  | QueryMessageStatusEstimatedCost
   | QueryMessageStatusError
   | QueryMessageStatusRunning
   | QueryMessageStatusDone;
