@@ -129,6 +129,8 @@ export const App: React.FC = () => {
             setStatus(Status.Done);
             setSQL(message.sql);
             setResultKind(ResultKind.SQL);
+          } else if (message.status === QueryRunStatus.EstimatedCost) {
+            setStats(getQueryCostStats(message.queryCostBytes, true));
           } else if (message.status === QueryRunStatus.Done) {
             const {resultJson, dataStyles, canDownloadStream} = message;
             setWarning(undefined);
@@ -355,10 +357,22 @@ function getStyledHTML(html: HTMLElement): string {
 }
 
 function getStats(stats: QueryRunStats, queryCostBytes?: number): string {
-  const queryCostBytesFormatted = queryCostBytes
-    ? ` Processed ${(queryCostBytes / 1024 / 1024).toLocaleString()} MB.`
-    : '';
-  return `Compile Time: ${stats.compileTime.toLocaleString()}s, Run Time: ${stats.runTime.toLocaleString()}s, Total Time: ${stats.totalTime.toLocaleString()}s.${queryCostBytesFormatted}`;
+  return `Compile Time: ${stats.compileTime.toLocaleString()}s, Run Time: ${stats.runTime.toLocaleString()}s, Total Time: ${stats.totalTime.toLocaleString()}s.${
+    getQueryCostStats(queryCostBytes) ?? ''
+  }`;
+}
+
+function getQueryCostStats(
+  queryCostBytes?: number,
+  isEstimate?: boolean
+): string | undefined {
+  return queryCostBytes
+    ? ` ${isEstimate ? 'Will process' : 'Processed'} ${(
+        queryCostBytes /
+        1024 /
+        1024
+      ).toLocaleString()} MB.`
+    : undefined;
 }
 
 const DOMElement: React.FC<{element: HTMLElement}> = ({element}) => {
