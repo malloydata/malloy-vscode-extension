@@ -49,7 +49,13 @@ export async function getMalloyDiagnostics(
   }
 
   try {
-    await translateCache.translateWithCache(document.uri, document.version);
+    const model = await translateCache.translateWithCache(
+      document.uri,
+      document.version
+    );
+    if (model.logs) {
+      errors.push(...model.logs);
+    }
   } catch (error) {
     if (error instanceof MalloyError) {
       errors.push(...error.log);
