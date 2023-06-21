@@ -23,6 +23,7 @@
 
 import {Connection, TextDocuments} from 'vscode-languageserver';
 import {
+  Malloy,
   MalloyError,
   Model,
   ModelMaterializer,
@@ -127,6 +128,11 @@ export class TranslateCache implements TranslateCache {
           try {
             await mm.getQuery(`query:\n${malloyQuery.query}`);
           } catch (e) {
+            // some errors come from Runtime stuff
+            if (!(e instanceof MalloyError)) {
+              throw e;
+            }
+
             (e as MalloyError).log.forEach(log => {
               log.at.url = uri;
 
