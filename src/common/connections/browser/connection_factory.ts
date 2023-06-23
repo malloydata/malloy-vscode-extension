@@ -74,7 +74,7 @@ export class WebConnectionFactory implements ConnectionFactory {
           const duckDBConnection: DuckDBWASMConnection =
             await createDuckDbWasmConnection(connectionConfig, configOptions);
           duckDBConnection.registerRemoteTableCallback(remoteTableCallback);
-          connection = duckDBConnection;
+          connection = duckDBConnection as TestableConnection;
         }
         break;
     }

@@ -45,14 +45,14 @@ export async function getMalloyDiagnostics(
 
   if (document.languageId === 'malloy-sql') {
     const parse = parseMalloySQLWithCache(document);
-    if (parse.errors) parse.errors.forEach(e => errors.push(...e.log));
+    if (parse.errors) parse.errors.forEach(e => errors.push(...e.problems));
   }
 
   try {
     await translateCache.translateWithCache(document.uri, document.version);
   } catch (error) {
     if (error instanceof MalloyError) {
-      errors.push(...error.log);
+      errors.push(...error.problems);
     } else {
       // TODO this kind of error should cease to exist. All errors should have source info.
       byURI[document.uri].push({

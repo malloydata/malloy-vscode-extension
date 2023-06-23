@@ -133,7 +133,7 @@ export class TranslateCache implements TranslateCache {
               throw e;
             }
 
-            (e as MalloyError).log.forEach(log => {
+            (e as MalloyError).problems.forEach(log => {
               log.at.url = uri;
 
               // if the embedded malloy is on the same line as SQL, pad character start (and maybe end)
