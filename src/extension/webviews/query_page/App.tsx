@@ -142,6 +142,7 @@ export const App: React.FC = () => {
             setStatus(Status.Rendering);
             setTimeout(async () => {
               const result = Result.fromJSON(resultJson);
+              // eslint-disable-next-line no-console
               const data = result.data;
               setJSON(JSON.stringify(data.toObject(), null, 2));
               setSQL(result.sql);
@@ -150,21 +151,25 @@ export const App: React.FC = () => {
                   getStats(message.stats, result.runStats?.queryCostBytes)
                 );
               }
-              const rendered = await new HTMLView(document).render(data, {
-                dataStyles,
-                isDrillingEnabled: false,
-                onDrill: (drillQuery, target) => {
-                  navigator.clipboard.writeText(drillQuery);
-                  setTriggerRef(target);
-                  setTooltipVisible(true);
-                  const currentTooltipId = ++tooltipId.current;
-                  setTimeout(() => {
-                    if (currentTooltipId === tooltipId.current) {
-                      setTooltipVisible(false);
-                    }
-                  }, 1000);
+              const rendered = await new HTMLView(document).render(
+                data,
+                {
+                  dataStyles,
+                  isDrillingEnabled: false,
+                  onDrill: (drillQuery, target) => {
+                    navigator.clipboard.writeText(drillQuery);
+                    setTriggerRef(target);
+                    setTooltipVisible(true);
+                    const currentTooltipId = ++tooltipId.current;
+                    setTimeout(() => {
+                      if (currentTooltipId === tooltipId.current) {
+                        setTooltipVisible(false);
+                      }
+                    }, 1000);
+                  },
                 },
-              });
+                result.getTags()
+              );
               setStatus(Status.Displaying);
               setTimeout(() => {
                 setHTML(rendered);
