@@ -271,7 +271,7 @@ export const App: React.FC = () => {
                   result.errors.map((compileError, index) => {
                     return (
                       <Error multiline={true} key={index}>
-                        {compileError.log
+                        {compileError.problems
                           .map(error => error.message)
                           .join('\n')}
                       </Error>
@@ -310,7 +310,7 @@ export const App: React.FC = () => {
                   result.errors.map((compileError, index) => {
                     return (
                       <Error multiline={true} key={index}>
-                        {compileError.log
+                        {compileError.problems
                           .map(error => error.message)
                           .join('\n')}
                       </Error>
