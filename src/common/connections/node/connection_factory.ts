@@ -81,10 +81,10 @@ export class DesktopConnectionFactory implements ConnectionFactory {
         break;
       }
       case ConnectionBackend.DuckDB: {
-        connection = await createDuckDbConnection(
+        connection = (await createDuckDbConnection(
           connectionConfig,
           configOptions
-        );
+        )) as TestableConnection;
         break;
       }
     }
