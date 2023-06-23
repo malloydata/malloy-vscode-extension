@@ -38,7 +38,7 @@ export class WorkerConnectionNode extends WorkerConnection {
     super(context, fileHandler);
 
     const workerModule = context.asAbsolutePath('dist/worker_node.js');
-    const execArgv = ['--no-lazy', '--max_old_space_size=40000'];
+    const execArgv = ['--no-lazy'];
     if (context.extensionMode === vscode.ExtensionMode.Development) {
       execArgv.push(
         '--inspect=6010',
@@ -63,16 +63,12 @@ export class WorkerConnectionNode extends WorkerConnection {
         },
       });
 
-      const env = process.env;
-      env['NODE_OPTIONS'] = '--max_old_space_size=40000';
-
       this.worker = child_process
         // .spawn('node', [workerModule, ...execArgv], {stdio: ['ipc'], cwd})
         .fork(workerModule, {
           execArgv,
           cwd,
           stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
-          env: env,
         })
         .on('error', console.error)
         .on('exit', status => {
