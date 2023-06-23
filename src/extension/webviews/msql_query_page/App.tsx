@@ -147,8 +147,9 @@ export const App: React.FC = () => {
                   evaluatedStatement.resultType ===
                   ExecutedMSQLStatementResultType.WithStructdef
                 ) {
+                  const result = Result.fromJSON(evaluatedStatement.results);
                   const renderedTable = await new HTMLView(document).render(
-                    Result.fromJSON(evaluatedStatement.results).data,
+                    result,
                     {
                       dataStyles: {},
                     }

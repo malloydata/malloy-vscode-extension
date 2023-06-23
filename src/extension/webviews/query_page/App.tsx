@@ -151,25 +151,21 @@ export const App: React.FC = () => {
                   getStats(message.stats, result.runStats?.queryCostBytes)
                 );
               }
-              const rendered = await new HTMLView(document).render(
-                data,
-                {
-                  dataStyles,
-                  isDrillingEnabled: false,
-                  onDrill: (drillQuery, target) => {
-                    navigator.clipboard.writeText(drillQuery);
-                    setTriggerRef(target);
-                    setTooltipVisible(true);
-                    const currentTooltipId = ++tooltipId.current;
-                    setTimeout(() => {
-                      if (currentTooltipId === tooltipId.current) {
-                        setTooltipVisible(false);
-                      }
-                    }, 1000);
-                  },
+              const rendered = await new HTMLView(document).render(result, {
+                dataStyles,
+                isDrillingEnabled: false,
+                onDrill: (drillQuery, target) => {
+                  navigator.clipboard.writeText(drillQuery);
+                  setTriggerRef(target);
+                  setTooltipVisible(true);
+                  const currentTooltipId = ++tooltipId.current;
+                  setTimeout(() => {
+                    if (currentTooltipId === tooltipId.current) {
+                      setTooltipVisible(false);
+                    }
+                  }, 1000);
                 },
-                result.getTags()
-              );
+              });
               setStatus(Status.Displaying);
               setTimeout(() => {
                 setHTML(rendered);
