@@ -3,6 +3,7 @@
   "patterns": [
     {"include": "#sql-string"},
     {"include": "#comments"},
+    {"include": "#tags"},
     {"include": "#strings"},
     {"include": "#numbers"},
     {"include": "#keywords"},
@@ -23,6 +24,7 @@
       "patterns": [
         {"include": "#sql-string"},
         {"include": "#comments"},
+        {"include": "#tags"},
         {"include": "#strings"},
         {"include": "#numbers"},
         {"include": "#keywords"},
@@ -144,6 +146,70 @@
           "name": "comment.line.double-hyphen"
         }
       ]
+    },
+    "tags": {
+      "patterns": [
+        {
+          "match": "##\\n",
+          "name": "string.quoted",
+          "captures": {
+            "0": {"name": "string.quoted"}
+          }
+        },
+        {
+          "begin": "#\"",
+          "end": "\\n",
+          "beginCaptures": {
+            "0": {"name": "punctuation.definition.comment"}
+          },
+          "name": "comment.line.double-slash"
+        },
+        {
+          "match": "#\\n",
+          "name": "string.quoted",
+          "captures": {
+            "0": {"name": "string.quoted"}
+          }
+        },
+        {
+          "begin": "#\\s",
+          "end": "\\n",
+          "beginCaptures": {
+            "0": {"name": "support.type.property-name.json"}
+          },
+          "name": "comment.line.double-slash",
+          "patterns": [{"include": "#tag-values"}]
+        },
+        {
+          "begin": "##\\s",
+          "end": "\\n",
+          "beginCaptures": {
+            "0": {"name": "support.type.property-name.json"}
+          },
+          "name": "comment.line.double-slash",
+          "patterns": [{"include": "#tag-values"}]
+        },
+        {
+          "begin": "#",
+          "end": "\\n",
+          "beginCaptures": {
+            "0": {"name": "string.quoted"}
+          },
+          "name": "string.quoted"
+        }
+      ],
+      "repository": {
+        "tag-values": {
+          "name": "support.type.property-name.json",
+          "match": "(-)?((?:[^\\s=#]+)|(?:\"[^#]+\"))(?:\\s*(=)\\s*((?:[^\\s=#]+)|(?:\"[^#]+\")))?",
+          "captures": {
+            "1": {"name": "keyword.control.negate"},
+            "2": {"name": "support.type.property-name.json"},
+            "3": {"name": "keyword.operator.comparison.ts"},
+            "4": {"name": "string.quoted"}
+          }
+        }
+      }
     },
     "strings": {
       "patterns": [
