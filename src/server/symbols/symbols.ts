@@ -29,7 +29,7 @@ import {parseWithCache} from '../parse_cache';
 function mapSymbol(symbol: MalloyDocumentSymbol): DocumentSymbol {
   const type = symbol.type;
   return {
-    name: symbol.name,
+    name: symbol.name || 'unnamed',
     range: symbol.range.toJSON(),
     detail: symbol.type,
     kind:
