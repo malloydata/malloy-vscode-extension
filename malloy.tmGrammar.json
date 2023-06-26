@@ -317,6 +317,14 @@
           "name": "keyword.control.connection"
         },
         {
+          "match": "(?i)\\brun\\b",
+          "name": "keyword.control.run"
+        },
+        {
+          "match": "(?i)\\bextend\\b",
+          "name": "keyword.control.extend"
+        },
+        {
           "match": "(?i)\\baggregate\\b",
           "name": "keyword.control.aggregate"
         },

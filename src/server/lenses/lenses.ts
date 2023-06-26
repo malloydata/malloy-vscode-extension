@@ -55,7 +55,7 @@ export function getMalloyLenses(document: TextDocument): CodeLens[] {
     if (symbol.type === 'query') {
       lenses.push(
         {
-          range: symbol.range.toJSON(),
+          range: symbol.lensRange.toJSON(),
           command: {
             title: 'Run Query',
             command: 'malloy.runNamedQuery',
@@ -63,7 +63,7 @@ export function getMalloyLenses(document: TextDocument): CodeLens[] {
           },
         },
         {
-          range: symbol.range.toJSON(),
+          range: symbol.lensRange.toJSON(),
           command: {
             title: 'Show SQL',
             command: 'malloy.showSQLNamedQuery',
@@ -74,7 +74,7 @@ export function getMalloyLenses(document: TextDocument): CodeLens[] {
     } else if (symbol.type === 'unnamed_query') {
       lenses.push(
         {
-          range: symbol.range.toJSON(),
+          range: symbol.lensRange.toJSON(),
           command: {
             title: 'Run Query',
             command: 'malloy.runQueryFile',
@@ -82,7 +82,7 @@ export function getMalloyLenses(document: TextDocument): CodeLens[] {
           },
         },
         {
-          range: symbol.range.toJSON(),
+          range: symbol.lensRange.toJSON(),
           command: {
             title: 'Show SQL',
             command: 'malloy.showSQLFile',
@@ -95,7 +95,7 @@ export function getMalloyLenses(document: TextDocument): CodeLens[] {
       const children = symbol.children;
       const exploreName = symbol.name;
       lenses.push({
-        range: symbol.range.toJSON(),
+        range: symbol.lensRange.toJSON(),
         command: {
           title: 'Preview',
           command: 'malloy.runQuery',
@@ -121,7 +121,7 @@ export function getMalloyLenses(document: TextDocument): CodeLens[] {
           const queryName = child.name;
           lenses.push(
             {
-              range: child.range.toJSON(),
+              range: child.lensRange.toJSON(),
               command: {
                 title: 'Run Query',
                 command: 'malloy.runQuery',
@@ -132,7 +132,7 @@ export function getMalloyLenses(document: TextDocument): CodeLens[] {
               },
             },
             {
-              range: child.range.toJSON(),
+              range: child.lensRange.toJSON(),
               command: {
                 title: 'Show SQL',
                 command: 'malloy.showSQL',
@@ -147,7 +147,7 @@ export function getMalloyLenses(document: TextDocument): CodeLens[] {
       });
     } else if (symbol.type === 'sql') {
       lenses.push({
-        range: symbol.range.toJSON(),
+        range: symbol.lensRange.toJSON(),
         command: {
           title: 'Run',
           command: 'malloy.runNamedSQLBlock',
@@ -162,7 +162,7 @@ export function getMalloyLenses(document: TextDocument): CodeLens[] {
       currentUnnamedSQLBlockIndex++;
     } else if (symbol.type === 'unnamed_sql') {
       lenses.push({
-        range: symbol.range.toJSON(),
+        range: symbol.lensRange.toJSON(),
         command: {
           title: 'Run',
           command: 'malloy.runUnnamedSQLBlock',
