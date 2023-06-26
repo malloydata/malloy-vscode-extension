@@ -147,8 +147,9 @@ export const App: React.FC = () => {
                   evaluatedStatement.resultType ===
                   ExecutedMSQLStatementResultType.WithStructdef
                 ) {
+                  const result = Result.fromJSON(evaluatedStatement.results);
                   const renderedTable = await new HTMLView(document).render(
-                    Result.fromJSON(evaluatedStatement.results).data,
+                    result,
                     {
                       dataStyles: {},
                     }
@@ -270,7 +271,7 @@ export const App: React.FC = () => {
                   result.errors.map((compileError, index) => {
                     return (
                       <Error multiline={true} key={index}>
-                        {compileError.log
+                        {compileError.problems
                           .map(error => error.message)
                           .join('\n')}
                       </Error>
@@ -309,7 +310,7 @@ export const App: React.FC = () => {
                   result.errors.map((compileError, index) => {
                     return (
                       <Error multiline={true} key={index}>
-                        {compileError.log
+                        {compileError.problems
                           .map(error => error.message)
                           .join('\n')}
                       </Error>

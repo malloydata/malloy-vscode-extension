@@ -23,6 +23,7 @@
 
 import {Connection, TextDocuments} from 'vscode-languageserver';
 import {
+  Malloy,
   MalloyError,
   Model,
   ModelMaterializer,
@@ -127,7 +128,12 @@ export class TranslateCache implements TranslateCache {
           try {
             await mm.getQuery(`query:\n${malloyQuery.query}`);
           } catch (e) {
-            (e as MalloyError).log.forEach(log => {
+            // some errors come from Runtime stuff
+            if (!(e instanceof MalloyError)) {
+              throw e;
+            }
+
+            (e as MalloyError).problems.forEach(log => {
               log.at.url = uri;
 
               // if the embedded malloy is on the same line as SQL, pad character start (and maybe end)
