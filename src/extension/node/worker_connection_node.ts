@@ -47,7 +47,7 @@ export class WorkerConnectionNode extends WorkerConnection {
       );
     }
 
-    const cwd = vscode.workspace.workspaceFolders[0].uri.fsPath;
+    const cwd = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
 
     const startWorker = () => {
       let connection: rpc.MessageConnection | null = null;
