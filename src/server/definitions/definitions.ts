@@ -21,7 +21,12 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {TextDocuments, Location, Position} from 'vscode-languageserver/node';
+import {
+  TextDocuments,
+  Location,
+  Position,
+  DefinitionLink,
+} from 'vscode-languageserver/node';
 import {TextDocument} from 'vscode-languageserver-textdocument';
 import {ConnectionManager} from '../../common/connection_manager';
 import {TranslateCache} from '../translate_cache';
@@ -32,7 +37,7 @@ export async function getMalloyDefinitionReference(
   documents: TextDocuments<TextDocument>,
   document: TextDocument,
   position: Position
-): Promise<Location[]> {
+): Promise<Location[] | DefinitionLink[]> {
   try {
     const model = await translateCache.translateWithCache(
       document.uri,
@@ -47,9 +52,25 @@ export async function getMalloyDefinitionReference(
           range: location.range,
         },
       ];
+    } else {
+      const importLocation = model.getImport(position);
+      if (importLocation) {
+        const documentStart = {
+          start: {line: 0, character: 0},
+          end: {line: 0, character: 0},
+        };
+        return [
+          {
+            originSelectionRange: importLocation.location.range,
+            targetUri: importLocation.importURL,
+            targetRange: documentStart,
+            targetSelectionRange: documentStart,
+          },
+        ];
+      }
     }
     return [];
-  } catch {
+  } catch (error) {
     // TODO It's probably possible to get some references from a model that has errors;
     //      maybe the Model api should not throw an error if there are errors, but just
     //      make them available via `.errors` or something.
