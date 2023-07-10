@@ -20,7 +20,7 @@
     "query-in-sql": {
       "begin": "%{",
       "name": "source.internal-query-stuff",
-      "end": "}%",
+      "end": "}?%",
       "patterns": [
         {"include": "#sql-string"},
         {"include": "#comments"},
