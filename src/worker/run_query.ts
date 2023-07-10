@@ -29,10 +29,10 @@ import {
   MessageCancel,
   WorkerMessageHandler,
   MessageRun,
-  WorkerQueryPanelMessage,
 } from '../common/worker_message_types';
 
 import {
+  QueryMessageStatus,
   QueryMessageType,
   QueryPanelMessage,
   QueryRunStatus,
@@ -40,6 +40,7 @@ import {
 import {createRunnable} from './create_runnable';
 import {ConnectionManager} from '../common/connection_manager';
 import {FileHandler} from '../common/types';
+import {ProgressType} from 'vscode-jsonrpc';
 
 interface QueryEntry {
   panelId: string;
@@ -53,12 +54,9 @@ const sendMessage = (
   message: QueryPanelMessage,
   panelId: string
 ) => {
-  const msg: WorkerQueryPanelMessage = {
-    panelId,
-    message,
-  };
+  const progress = new ProgressType<QueryMessageStatus>();
 
-  messageHandler.sendRequest('malloy/queryPanel', msg);
+  messageHandler.sendProgress(progress, panelId, message);
 };
 
 export const runQuery = async (
@@ -84,7 +82,6 @@ export const runQuery = async (
     sendMessage(
       messageHandler,
       {
-        type: QueryMessageType.QueryStatus,
         status: QueryRunStatus.Compiling,
       },
       panelId
@@ -113,7 +110,6 @@ export const runQuery = async (
       sendMessage(
         messageHandler,
         {
-          type: QueryMessageType.QueryStatus,
           status: QueryRunStatus.Compiled,
           sql,
           dialect,
@@ -128,7 +124,6 @@ export const runQuery = async (
         sendMessage(
           messageHandler,
           {
-            type: QueryMessageType.QueryStatus,
             status: QueryRunStatus.EstimatedCost,
             queryCostBytes: estimatedRunStats?.queryCostBytes,
           },
@@ -142,7 +137,6 @@ export const runQuery = async (
       sendMessage(
         messageHandler,
         {
-          type: QueryMessageType.QueryStatus,
           status: QueryRunStatus.Error,
           error: error.message || 'Something went wrong',
         },
@@ -155,7 +149,6 @@ export const runQuery = async (
     sendMessage(
       messageHandler,
       {
-        type: QueryMessageType.QueryStatus,
         status: QueryRunStatus.Running,
         sql,
         dialect,
@@ -174,7 +167,6 @@ export const runQuery = async (
     sendMessage(
       messageHandler,
       {
-        type: QueryMessageType.QueryStatus,
         status: QueryRunStatus.Done,
         resultJson: queryResult.toJSON(),
         dataStyles,
@@ -191,7 +183,6 @@ export const runQuery = async (
     sendMessage(
       messageHandler,
       {
-        type: QueryMessageType.QueryStatus,
         status: QueryRunStatus.Error,
         error: error.message,
       },

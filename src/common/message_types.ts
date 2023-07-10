@@ -24,6 +24,7 @@
 import {MalloyError, MalloyQueryData, ResultJSON} from '@malloydata/malloy';
 import {DataStyles} from '@malloydata/render';
 import {ConnectionBackend, ConnectionConfig} from './connection_manager_types';
+import {ProgressType} from 'vscode-jsonrpc';
 
 /*
  * These messages are used to pass status back from the worker to
@@ -37,6 +38,7 @@ export enum QueryRunStatus {
   Running = 'running',
   Error = 'error',
   Done = 'done',
+  StartDownload = 'start-download',
 }
 
 export enum MSQLQueryRunStatus {
@@ -48,18 +50,19 @@ export enum MSQLQueryRunStatus {
 }
 
 export enum QueryMessageType {
-  QueryStatus = 'query-status',
   AppReady = 'app-ready',
-  StartDownload = 'start-download',
+}
+
+export interface QueryMessageStartDownload {
+  status: QueryRunStatus.StartDownload;
+  downloadOptions: QueryDownloadOptions;
 }
 
 interface QueryMessageStatusCompiling {
-  type: QueryMessageType.QueryStatus;
   status: QueryRunStatus.Compiling;
 }
 
 interface QueryMessageStatusCompiled {
-  type: QueryMessageType.QueryStatus;
   status: QueryRunStatus.Compiled;
   sql: string;
   dialect: string;
@@ -67,26 +70,22 @@ interface QueryMessageStatusCompiled {
 }
 
 interface QueryMessageStatusEstimatedCost {
-  type: QueryMessageType.QueryStatus;
   status: QueryRunStatus.EstimatedCost;
   queryCostBytes: number | undefined;
 }
 
 interface QueryMessageStatusRunning {
-  type: QueryMessageType.QueryStatus;
   status: QueryRunStatus.Running;
   sql: string;
   dialect: string;
 }
 
 interface QueryMessageStatusError {
-  type: QueryMessageType.QueryStatus;
   status: QueryRunStatus.Error;
   error: string;
 }
 
 interface QueryMessageStatusDone {
-  type: QueryMessageType.QueryStatus;
   status: QueryRunStatus.Done;
   resultJson: ResultJSON;
   dataStyles: DataStyles;
@@ -100,7 +99,8 @@ export interface QueryRunStats {
   totalTime: number;
 }
 
-type QueryMessageStatus =
+export type QueryMessageStatus =
+  | QueryMessageStartDownload
   | QueryMessageStatusCompiling
   | QueryMessageStatusCompiled
   | QueryMessageStatusEstimatedCost
@@ -117,13 +117,7 @@ export interface QueryDownloadOptions {
   amount: 'current' | 'all' | number;
 }
 
-interface QueryMessageStartDownload {
-  type: QueryMessageType.StartDownload;
-  downloadOptions: QueryDownloadOptions;
-}
-
 export enum MSQLMessageType {
-  QueryStatus = 'query-status',
   AppReady = 'app-ready',
 }
 
@@ -193,34 +187,30 @@ export type EvaluatedMSQLStatement =
   | CompiledMSQLStatement;
 
 interface MSQLMessageStatusDone {
-  type: MSQLMessageType.QueryStatus;
   status: MSQLQueryRunStatus.Done;
   results: EvaluatedMSQLStatement[];
   showSQLOnly?: boolean;
 }
 
 interface MSQLMessageStatusCompiling {
-  type: MSQLMessageType.QueryStatus;
   status: MSQLQueryRunStatus.Compiling;
   totalStatements: number;
   statementIndex: number;
 }
 
 interface MSQLMessageStatusRunning {
-  type: MSQLMessageType.QueryStatus;
   status: MSQLQueryRunStatus.Running;
   totalStatements: number;
   statementIndex: number;
 }
 
 interface MSQLMessageStatusError {
-  type: MSQLMessageType.QueryStatus;
   status: MSQLQueryRunStatus.Error;
   error: string;
   sql?: string;
 }
 
-type MSQLMessageStatus =
+export type MSQLMessageStatus =
   | MSQLMessageStatusError
   | MSQLMessageStatusCompiling
   | MSQLMessageStatusRunning
@@ -322,3 +312,7 @@ interface HelpMessageEditConnections {
 }
 
 export type HelpPanelMessage = HelpMessageAppReady | HelpMessageEditConnections;
+
+export const queryPanelProgress = new ProgressType<QueryMessageStatus>();
+
+export const msqlPanelProgress = new ProgressType<MSQLMessageStatus>();

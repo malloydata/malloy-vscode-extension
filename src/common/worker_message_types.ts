@@ -25,6 +25,8 @@ import {
   CancellationToken,
   Disposable,
   GenericRequestHandler,
+  NotificationHandler,
+  ProgressType,
 } from 'vscode-jsonrpc';
 import {
   QueryDownloadOptions,
@@ -194,7 +196,6 @@ export interface WorkerFetchMessage {
 export interface WorkerMessageMap {
   'malloy/download': WorkerDownloadMessage;
   'malloy/log': WorkerLogMessage;
-  'malloy/queryPanel': WorkerQueryPanelMessage;
   'malloy/fetchBinary': WorkerFetchBinaryMessage;
   'malloy/fetch': WorkerFetchMessage;
   'malloy/fetchCellData': WorkerFetchCellDataMessage;
@@ -209,6 +210,12 @@ export interface WorkerMessageHandler {
     type: K,
     message: ListenerType<MessageMap[K]>
   ): Disposable;
+
+  sendProgress<P>(
+    type: ProgressType<P>,
+    token: string | number,
+    value: P
+  ): Promise<void>;
 
   sendRequest<R, K extends keyof WorkerMessageMap>(
     type: K,
@@ -244,12 +251,24 @@ export interface GenericConnection {
     handler: GenericRequestHandler<R, E>
   ): Disposable;
 
+  onProgress<P>(
+    type: ProgressType<P>,
+    token: string | number,
+    handler: NotificationHandler<P>
+  ): Disposable;
+
   sendRequest<R>(
     method: string,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     param: any,
     token?: CancellationToken
   ): Promise<R>;
+
+  sendProgress<P>(
+    type: ProgressType<P>,
+    token: string | number,
+    value: P
+  ): Promise<void>;
 }
 
 export type ListenerType<K> = (message: K) => void;

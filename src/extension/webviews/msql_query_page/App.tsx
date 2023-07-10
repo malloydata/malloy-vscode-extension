@@ -27,6 +27,7 @@ import {
   EvaluatedMSQLStatement,
   EvaluatedMSQLStatementType,
   ExecutedMSQLStatementResultType,
+  MSQLMessageStatus,
   MSQLMessageType,
   MSQLQueryPanelMessage,
   MSQLQueryRunStatus,
@@ -94,10 +95,8 @@ export const App: React.FC = () => {
   }, [observer, document.body]);
 
   useEffect(() => {
-    const listener = (event: MessageEvent<MSQLQueryPanelMessage>) => {
+    const listener = (event: MessageEvent<MSQLMessageStatus>) => {
       const message = event.data;
-
-      if (message.type !== MSQLMessageType.QueryStatus) return;
 
       if (message.status === MSQLQueryRunStatus.Error) {
         setStatus(Status.Error);

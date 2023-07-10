@@ -31,15 +31,15 @@ import {
 } from './vscode_utils';
 import {Utils} from 'vscode-uri';
 import {
-  MSQLMessageType,
+  MSQLMessageStatus,
   MSQLQueryRunStatus,
   QueryMessageType,
   QueryRunStatus,
+  msqlPanelProgress,
 } from '../../common/message_types';
 import {MALLOY_EXTENSION_STATE, RunState} from '../state';
 import {Disposable /* , State */} from 'vscode-languageclient';
 import {WorkerConnection} from '../worker_connection';
-import {WorkerSQLQueryPanelMessage} from '../../common/worker_message_types';
 
 export function runMSQLQuery(
   worker: WorkerConnection,
@@ -104,13 +104,14 @@ export function runMSQLQuery(
           })
           .catch(() => {
             current.messages.postMessage({
-              type: QueryMessageType.QueryStatus,
               status: QueryRunStatus.Error,
               error: `The worker process has died, and has been restarted.
 This is possibly the result of a database bug. \
 Please consider filing an issue with as much detail as possible at \
 https://github.com/malloydata/malloy-vscode-extension/issues.`,
             });
+          })
+          .finally(() => {
             unsubscribe();
             resolve(undefined);
           });
@@ -118,55 +119,45 @@ https://github.com/malloydata/malloy-vscode-extension/issues.`,
         const subscriptions: Disposable[] = [];
         const unsubscribe = () =>
           subscriptions.forEach(subscription => subscription.dispose());
-        const listener = (msg: WorkerSQLQueryPanelMessage) => {
-          const {message, panelId: msgPanelId} = msg;
-
-          if (msgPanelId !== panelId) return;
-
+        const listener = (message: MSQLMessageStatus) => {
           current.messages.postMessage({
             ...message,
           });
 
-          if (message.type === MSQLMessageType.QueryStatus) {
-            switch (message.status) {
-              case MSQLQueryRunStatus.Compiling:
-                {
-                  progress.report({
-                    increment: 100 / message.totalStatements / 4,
-                    message: `Compiling Statement ${
-                      message.statementIndex + 1
-                    }`,
-                  });
-                }
-                break;
-              case MSQLQueryRunStatus.Running:
-                {
-                  progress.report({
-                    increment: ((100 / message.totalStatements) * 3) / 4,
-                    message: `Running Statement ${message.statementIndex + 1}`,
-                  });
-                }
-                break;
-              case MSQLQueryRunStatus.Done:
-                {
-                  logTime('Run', runBegin, Date.now());
-                  progress.report({increment: 100, message: 'Rendering'});
-
-                  unsubscribe();
-                  resolve(undefined);
-                }
-                break;
-              case MSQLQueryRunStatus.Error:
-                {
-                  unsubscribe();
-                  resolve(undefined);
-                }
-                break;
-            }
+          switch (message.status) {
+            case MSQLQueryRunStatus.Compiling:
+              {
+                progress.report({
+                  increment: 100 / message.totalStatements / 4,
+                  message: `Compiling Statement ${message.statementIndex + 1}`,
+                });
+              }
+              break;
+            case MSQLQueryRunStatus.Running:
+              {
+                progress.report({
+                  increment: ((100 / message.totalStatements) * 3) / 4,
+                  message: `Running Statement ${message.statementIndex + 1}`,
+                });
+              }
+              break;
+            case MSQLQueryRunStatus.Done:
+              {
+                logTime('Run', runBegin, Date.now());
+                progress.report({increment: 100, message: 'Rendering'});
+              }
+              break;
+            case MSQLQueryRunStatus.Error:
+              {
+                progress.report({increment: 100, message: 'Error'});
+              }
+              break;
           }
         };
 
-        subscriptions.push(worker.onRequest('malloy/MSQLQueryPanel', listener));
+        subscriptions.push(
+          worker.onProgress(msqlPanelProgress, panelId, listener)
+        );
       });
     }
   );
