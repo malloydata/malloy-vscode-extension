@@ -29,7 +29,7 @@ import {ResultJSON} from '@malloydata/malloy';
 export async function runQueryFileCommand(
   worker: WorkerConnection,
   queryIndex = -1
-): Promise<ResultJSON> {
+): Promise<ResultJSON | undefined> {
   const document = vscode.window.activeTextEditor?.document;
   if (document) {
     return runMalloyQuery(

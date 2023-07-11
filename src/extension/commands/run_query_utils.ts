@@ -46,8 +46,8 @@ export function runMalloyQuery(
   panelId: string,
   name: string,
   showSQLOnly = false
-): Thenable<ResultJSON> {
-  return vscode.window.withProgress<ResultJSON>(
+): Thenable<ResultJSON | undefined> {
+  return vscode.window.withProgress<ResultJSON | undefined>(
     {
       location: vscode.ProgressLocation.Notification,
       title: `Malloy Query (${name})`,
