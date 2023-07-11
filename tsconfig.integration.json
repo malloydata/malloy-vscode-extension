@@ -1,0 +1,14 @@
+{
+	"compilerOptions": {
+		"lib": ["es2020"],
+		"module": "commonjs",
+		"target": "es2020",
+		"outDir": "integration/out",
+		"rootDir": "integration",
+    "skipLibCheck": true,
+    "sourceMap": true,
+		"strict": true,
+	},
+	"exclude": ["node_modules", ".vscode-test"],
+  "include": ["integration/**/*"]
+}

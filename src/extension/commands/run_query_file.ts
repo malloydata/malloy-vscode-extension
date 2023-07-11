@@ -24,14 +24,15 @@
 import * as vscode from 'vscode';
 import {runMalloyQuery} from './run_query_utils';
 import {WorkerConnection} from '../worker_connection';
+import {ResultJSON} from '@malloydata/malloy';
 
-export function runQueryFileCommand(
+export async function runQueryFileCommand(
   worker: WorkerConnection,
   queryIndex = -1
-): void {
+): Promise<ResultJSON> {
   const document = vscode.window.activeTextEditor?.document;
   if (document) {
-    runMalloyQuery(
+    return runMalloyQuery(
       worker,
       {type: 'file', index: queryIndex, file: document},
       document.uri.toString(),
