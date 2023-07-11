@@ -21,23 +21,35 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as assert from 'assert';
-
-import * as vscode from 'vscode';
 import * as path from 'path';
+import * as Mocha from 'mocha';
+import * as glob from 'glob';
 
-import {ResultJSON} from '@malloydata/malloy';
+export function run(): Promise<void> {
+  const mocha = new Mocha();
 
-suite('Smoke tests', function () {
-  this.timeout(20000);
+  const testsRoot = path.resolve(__dirname, '..');
 
-  test('Activate and run a query', async () => {
-    const filePath = path.resolve(__dirname, '../../suite/data/test.malloy');
-    const document = await vscode.workspace.openTextDocument(filePath);
-    await vscode.window.showTextDocument(document);
-    const resultJson = await vscode.commands.executeCommand<
-      ResultJSON | undefined
-    >('malloy.runQueryFile');
-    assert.notStrictEqual(resultJson?.queryResult.result, [{one: 1}]);
+  return new Promise((resolve, reject) => {
+    glob
+      .glob('**/**.test.js', {cwd: testsRoot})
+      .then(files => {
+        files.forEach(f => mocha.addFile(path.resolve(testsRoot, f)));
+
+        try {
+          // Run the mocha test
+          mocha.run(failures => {
+            if (failures > 0) {
+              reject(new Error(`${failures} tests failed.`));
+            } else {
+              resolve();
+            }
+          });
+        } catch (err) {
+          console.error(err);
+          reject(err);
+        }
+      })
+      .catch(reject);
   });
-});
+}
