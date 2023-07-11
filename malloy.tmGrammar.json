@@ -20,7 +20,7 @@
     "query-in-sql": {
       "begin": "%{",
       "name": "source.internal-query-stuff",
-      "end": "}%",
+      "end": "}%?",
       "patterns": [
         {"include": "#sql-string"},
         {"include": "#comments"},
@@ -315,6 +315,18 @@
         {
           "match": "(?i)\\bconnection\\b",
           "name": "keyword.control.connection"
+        },
+        {
+          "match": "(?i)\\brun\\b",
+          "name": "keyword.control.run"
+        },
+        {
+          "match": "(?i)\\bextend\\b",
+          "name": "keyword.control.extend"
+        },
+        {
+          "match": "(?i)\\brefine\\b",
+          "name": "keyword.control.refine"
         },
         {
           "match": "(?i)\\baggregate\\b",
