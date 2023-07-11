@@ -24,6 +24,7 @@
 import * as path from 'path';
 
 import {runTests} from '@vscode/test-electron';
+import {TestOptions} from '@vscode/test-electron/out/runTest';
 
 async function main() {
   try {
@@ -35,8 +36,28 @@ async function main() {
     // Passed to --extensionTestsPath
     const extensionTestsPath = path.resolve(__dirname, './tests/index');
 
-    // Download VS Code, unzip it and run the integration test
-    await runTests({extensionDevelopmentPath, extensionTestsPath});
+    const testOptions: TestOptions = {
+      extensionDevelopmentPath,
+      extensionTestsPath,
+    };
+
+    if (process.env.NIX_STORE) {
+      const executablePaths = process.env.PATH?.split(':');
+      const vscodePath = executablePaths?.find(path =>
+        path.match(/\/nix\/store\/.*-vscode-.*\/bin/)
+      );
+      if (vscodePath) {
+        console.log('Found code path', vscodePath);
+        const codeDir = vscodePath.substring(0, vscodePath.length - 4);
+        testOptions.vscodeExecutablePath = codeDir + '/lib/vscode/code';
+      }
+    }
+
+    if (process.getuid() === 0) {
+      testOptions.launchArgs = ['--no-sandbox', '--user-data-dir=/tmp'];
+    }
+
+    await runTests(testOptions);
   } catch (err) {
     console.error('Failed to run tests');
     process.exit(1);

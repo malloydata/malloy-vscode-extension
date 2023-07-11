@@ -23,7 +23,6 @@
 
 import {Connection, TextDocuments} from 'vscode-languageserver';
 import {
-  Malloy,
   MalloyError,
   Model,
   ModelMaterializer,
