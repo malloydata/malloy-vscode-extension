@@ -20,7 +20,7 @@
     "query-in-sql": {
       "begin": "%{",
       "name": "source.internal-query-stuff",
-      "end": "}?%",
+      "end": "}%?",
       "patterns": [
         {"include": "#sql-string"},
         {"include": "#comments"},
@@ -323,6 +323,10 @@
         {
           "match": "(?i)\\bextend\\b",
           "name": "keyword.control.extend"
+        },
+        {
+          "match": "(?i)\\brefine\\b",
+          "name": "keyword.control.refine"
         },
         {
           "match": "(?i)\\baggregate\\b",
