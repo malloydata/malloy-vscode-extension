@@ -22,6 +22,7 @@
  */
 
 import madge from 'madge';
+import 'jest-expect-message';
 
 describe('dependencies', () => {
   function getMessage(circles: string[][]): string {

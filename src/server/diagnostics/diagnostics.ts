@@ -41,18 +41,24 @@ export async function getMalloyDiagnostics(
     // so that we clear old diagnostics
     [document.uri]: [],
   };
-  const errors: LogMessage[] = [];
+  const problems: LogMessage[] = [];
 
   if (document.languageId === 'malloy-sql') {
     const parse = parseMalloySQLWithCache(document);
-    if (parse.errors) parse.errors.forEach(e => errors.push(...e.problems));
+    if (parse.errors) parse.errors.forEach(e => problems.push(...e.problems));
   }
 
   try {
-    await translateCache.translateWithCache(document.uri, document.version);
+    const model = await translateCache.translateWithCache(
+      document.uri,
+      document.version
+    );
+    if (model.problems) {
+      problems.push(...model.problems);
+    }
   } catch (error) {
     if (error instanceof MalloyError) {
-      errors.push(...error.problems);
+      problems.push(...error.problems);
     } else {
       // TODO this kind of error should cease to exist. All errors should have source info.
       byURI[document.uri].push({
@@ -64,27 +70,27 @@ export async function getMalloyDiagnostics(
     }
   }
 
-  for (const err of errors) {
+  for (const problem of problems) {
     const sev =
-      err.severity === 'warn'
+      problem.severity === 'warn'
         ? DiagnosticSeverity.Warning
-        : err.severity === 'debug'
+        : problem.severity === 'debug'
         ? DiagnosticSeverity.Information
         : DiagnosticSeverity.Error;
 
-    const uri = err.at ? err.at.url : document.uri;
+    const uri = problem.at ? problem.at.url : document.uri;
 
     if (byURI[uri] === undefined) {
       byURI[uri] = [];
     }
 
-    const range = err.at?.range || DEFAULT_RANGE;
+    const range = problem.at?.range || DEFAULT_RANGE;
 
     if (range.start.line >= 0) {
       byURI[uri].push({
         severity: sev,
         range,
-        message: err.message,
+        message: problem.message,
         source: 'malloy',
       });
     }
