@@ -22,9 +22,12 @@
  */
 
 import * as path from 'path';
+import * as fs from 'fs';
 
 import {runTests} from '@vscode/test-electron';
 import {TestOptions} from '@vscode/test-electron/out/runTest';
+
+const CLOUDBUILD_CODE = '/usr/share/code/code';
 
 async function main() {
   try {
@@ -41,16 +44,8 @@ async function main() {
       extensionTestsPath,
     };
 
-    if (process.env.NIX_STORE) {
-      const executablePaths = process.env.PATH?.split(':');
-      const vscodePath = executablePaths?.find(path =>
-        path.match(/\/nix\/store\/.*-vscode-.*\/bin/)
-      );
-      if (vscodePath) {
-        console.log('Found code path', vscodePath);
-        const codeDir = vscodePath.substring(0, vscodePath.length - 4);
-        testOptions.vscodeExecutablePath = codeDir + '/lib/vscode/code';
-      }
+    if (fs.existsSync(CLOUDBUILD_CODE)) {
+      testOptions.vscodeExecutablePath = CLOUDBUILD_CODE;
     }
 
     if (process.getuid() === 0) {

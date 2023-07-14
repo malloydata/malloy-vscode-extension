@@ -200,10 +200,14 @@ export async function doBuild(
     fs.writeFileSync(fullLicenseFilePath, 'LICENSES GO HERE\n');
   }
 
-  fs.writeFileSync(
-    path.join(outDir, 'build-sha'),
-    execSync('git rev-parse HEAD')
-  );
+  try {
+    fs.writeFileSync(
+      path.join(outDir, 'build-sha'),
+      execSync('git rev-parse HEAD')
+    );
+  } catch {
+    console.log('Skipping git SHA');
+  }
 
   const baseOptions: BuildOptions = {
     bundle: true,
