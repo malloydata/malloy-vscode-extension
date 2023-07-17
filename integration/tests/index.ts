@@ -21,25 +21,35 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as vscode from 'vscode';
-import {MALLOY_EXTENSION_STATE} from '../state';
-import {WorkerConnection} from '../worker_connection';
-import {runMalloyQuery} from './run_query_utils';
-import {ResultJSON} from '@malloydata/malloy';
+import * as path from 'path';
+import * as Mocha from 'mocha';
+import * as glob from 'glob';
 
-export async function runUnnamedSQLBlock(
-  worker: WorkerConnection,
-  index: number
-): Promise<ResultJSON | undefined> {
-  const document =
-    vscode.window.activeTextEditor?.document ||
-    MALLOY_EXTENSION_STATE.getActiveWebviewPanel()?.document;
-  if (document) {
-    return runMalloyQuery(
-      worker,
-      {type: 'unnamed_sql', index, file: document},
-      document.uri.toString(),
-      document.fileName.split('/').pop() || document.fileName
-    );
-  }
+export function run(): Promise<void> {
+  const mocha = new Mocha();
+
+  const testsRoot = path.resolve(__dirname, '..');
+
+  return new Promise((resolve, reject) => {
+    glob
+      .glob('**/**.test.js', {cwd: testsRoot})
+      .then(files => {
+        files.forEach(f => mocha.addFile(path.resolve(testsRoot, f)));
+
+        try {
+          // Run the mocha test
+          mocha.run(failures => {
+            if (failures > 0) {
+              reject(new Error(`${failures} tests failed.`));
+            } else {
+              resolve();
+            }
+          });
+        } catch (err) {
+          console.error(err);
+          reject(err);
+        }
+      })
+      .catch(reject);
+  });
 }

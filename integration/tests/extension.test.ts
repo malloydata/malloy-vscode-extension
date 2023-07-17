@@ -21,25 +21,23 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import * as assert from 'assert';
+
 import * as vscode from 'vscode';
-import {MALLOY_EXTENSION_STATE} from '../state';
-import {WorkerConnection} from '../worker_connection';
-import {runMalloyQuery} from './run_query_utils';
+import * as path from 'path';
+
 import {ResultJSON} from '@malloydata/malloy';
 
-export async function runUnnamedSQLBlock(
-  worker: WorkerConnection,
-  index: number
-): Promise<ResultJSON | undefined> {
-  const document =
-    vscode.window.activeTextEditor?.document ||
-    MALLOY_EXTENSION_STATE.getActiveWebviewPanel()?.document;
-  if (document) {
-    return runMalloyQuery(
-      worker,
-      {type: 'unnamed_sql', index, file: document},
-      document.uri.toString(),
-      document.fileName.split('/').pop() || document.fileName
-    );
-  }
-}
+describe('Smoke tests', function () {
+  this.timeout(20000);
+
+  it('Activate and run a query', async () => {
+    const filePath = path.resolve(__dirname, '../../tests/data/test.malloy');
+    const document = await vscode.workspace.openTextDocument(filePath);
+    await vscode.window.showTextDocument(document);
+    const resultJson = await vscode.commands.executeCommand<
+      ResultJSON | undefined
+    >('malloy.runQueryFile');
+    assert.notStrictEqual(resultJson?.queryResult.result, [{one: 1}]);
+  });
+});

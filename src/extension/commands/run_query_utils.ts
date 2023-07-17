@@ -25,7 +25,7 @@ import * as vscode from 'vscode';
 import {Utils} from 'vscode-uri';
 
 import {MALLOY_EXTENSION_STATE, RunState} from '../state';
-import {Result} from '@malloydata/malloy';
+import {Result, ResultJSON} from '@malloydata/malloy';
 import {QueryMessageType, QueryRunStatus} from '../../common/message_types';
 import {queryDownload} from './query_download';
 import {malloyLog} from '../logger';
@@ -46,8 +46,8 @@ export function runMalloyQuery(
   panelId: string,
   name: string,
   showSQLOnly = false
-): void {
-  vscode.window.withProgress(
+): Thenable<ResultJSON | undefined> {
+  return vscode.window.withProgress<ResultJSON | undefined>(
     {
       location: vscode.ProgressLocation.Notification,
       title: `Malloy Query (${name})`,
@@ -182,7 +182,7 @@ https://github.com/malloydata/malloy-vscode-extension/issues.`,
                     });
 
                     unsubscribe();
-                    resolve(undefined);
+                    resolve(message.resultJson);
                   }
                   break;
                 case QueryRunStatus.Error:

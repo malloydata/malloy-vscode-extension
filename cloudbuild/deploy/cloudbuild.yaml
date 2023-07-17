@@ -1,7 +1,6 @@
 steps:
-  - id: deploy-marketplace
-    name: 'nixos/nix'
-    entrypoint: sh
+  - name: 'gcr.io/malloy-303216/vscode-builder'
+    entrypoint: 'bash'
     args:
       - -c
       - './cloudbuild/deploy/$TRIGGER_NAME.sh'

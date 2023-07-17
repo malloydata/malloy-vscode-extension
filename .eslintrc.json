@@ -97,7 +97,7 @@
       }
     },
     {
-      "files": ["scripts/**", "test/**"],
+      "files": ["scripts/**", "test/**", "integration/**"],
       "rules": {
         "node/no-unpublished-import": "off",
         "no-console": "off",

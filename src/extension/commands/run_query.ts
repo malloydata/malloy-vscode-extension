@@ -25,17 +25,18 @@ import * as vscode from 'vscode';
 import {MALLOY_EXTENSION_STATE} from '../state';
 import {WorkerConnection} from '../worker_connection';
 import {runMalloyQuery} from './run_query_utils';
+import {ResultJSON} from '@malloydata/malloy';
 
-export function runQueryCommand(
+export async function runQueryCommand(
   worker: WorkerConnection,
   query: string,
   name?: string
-): void {
+): Promise<ResultJSON | undefined> {
   const document =
     vscode.window.activeTextEditor?.document ||
     MALLOY_EXTENSION_STATE.getActiveWebviewPanel()?.document;
   if (document) {
-    runMalloyQuery(
+    return runMalloyQuery(
       worker,
       {type: 'string', text: query, file: document},
       `${document.uri.toString()} ${name}`,

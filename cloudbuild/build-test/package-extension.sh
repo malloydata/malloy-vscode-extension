@@ -1,9 +1,7 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
+
 set -euxo pipefail
 
-nix-shell --quiet --pure --command "$(cat <<NIXCMD
-  cd /workspace
-  npm ci --silent
-  npm run package-extension
-NIXCMD
-)"
+cd /workspace
+npm ci --silent
+npm run package-extension
