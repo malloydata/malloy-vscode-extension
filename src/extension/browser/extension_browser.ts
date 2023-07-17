@@ -35,6 +35,7 @@ import {ConnectionsProvider} from '../tree_views/connections_view';
 import {editConnectionsCommand} from './commands/edit_connections';
 import {fileHandler} from '../utils';
 import {WorkerConnectionBrowser} from './worker_connection_browser';
+import {MalloyConfig} from '../../common/types';
 let client: LanguageClient;
 
 export function activate(context: vscode.ExtensionContext): void {
@@ -50,6 +51,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.workspace.onDidChangeConfiguration(async e => {
       if (e.affectsConfiguration('malloy')) {
         await connectionManager.onConfigurationUpdated();
+        sendWorkerConfig(worker);
         connectionsTree.refresh();
       }
     })
@@ -60,6 +62,14 @@ export function activate(context: vscode.ExtensionContext): void {
       editConnectionsCommand
     )
   );
+}
+
+function sendWorkerConfig(worker: WorkerConnectionBrowser) {
+  worker.sendRequest('malloy/config', {
+    config: vscode.workspace.getConfiguration(
+      'malloy'
+    ) as unknown as MalloyConfig,
+  });
 }
 
 export async function deactivate(): Promise<void> | undefined {

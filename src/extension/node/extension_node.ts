@@ -77,6 +77,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.workspace.onDidChangeConfiguration(async e => {
       if (e.affectsConfiguration('malloy')) {
         await connectionManager.onConfigurationUpdated();
+        sendWorkerConfig();
         connectionsTree.refresh();
       }
       if (e.affectsConfiguration('cloudshell')) {
