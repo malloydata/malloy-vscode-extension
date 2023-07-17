@@ -32,7 +32,6 @@ import {
   EvaluatedMSQLStatementType,
   ExecutedMSQLStatementResultType,
   MSQLMessageStatus,
-  MSQLMessageType,
   MSQLQueryPanelMessage,
   MSQLQueryRunStatus,
 } from '../common/message_types';

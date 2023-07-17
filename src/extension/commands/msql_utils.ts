@@ -33,7 +33,6 @@ import {Utils} from 'vscode-uri';
 import {
   MSQLMessageStatus,
   MSQLQueryRunStatus,
-  QueryMessageType,
   QueryRunStatus,
   msqlPanelProgress,
 } from '../../common/message_types';

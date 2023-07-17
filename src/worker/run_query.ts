@@ -33,7 +33,6 @@ import {
 
 import {
   QueryMessageStatus,
-  QueryMessageType,
   QueryPanelMessage,
   QueryRunStatus,
 } from '../common/message_types';

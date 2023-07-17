@@ -28,11 +28,7 @@ import {
   NotificationHandler,
   ProgressType,
 } from 'vscode-jsonrpc';
-import {
-  QueryDownloadOptions,
-  QueryPanelMessage,
-  MSQLQueryPanelMessage,
-} from './message_types';
+import {QueryDownloadOptions, MSQLQueryPanelMessage} from './message_types';
 import {CellData, MalloyConfig} from './types';
 
 interface NamedQuerySpec {
@@ -166,11 +162,6 @@ export interface WorkerDownloadMessage {
 
 export interface WorkerLogMessage {
   message: string;
-}
-
-export interface WorkerQueryPanelMessage {
-  panelId: string;
-  message: QueryPanelMessage;
 }
 
 export interface WorkerSQLQueryPanelMessage {

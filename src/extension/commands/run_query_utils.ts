@@ -28,7 +28,6 @@ import {MALLOY_EXTENSION_STATE, RunState} from '../state';
 import {Result, ResultJSON} from '@malloydata/malloy';
 import {
   QueryMessageStatus,
-  QueryMessageType,
   QueryRunStatus,
   queryPanelProgress,
 } from '../../common/message_types';
@@ -43,7 +42,6 @@ import {
   showSchemaTreeViewWhenFocused,
 } from './vscode_utils';
 import {WorkerConnection} from '../worker_connection';
-import {WorkerQueryPanelMessage} from '../../common/worker_message_types';
 
 export function runMalloyQuery(
   worker: WorkerConnection,
