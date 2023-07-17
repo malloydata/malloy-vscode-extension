@@ -39,7 +39,8 @@
     "pretest": "npm run compile",
     "posttest": "npm run lint",
     "preintegration": "npm run build-extension && tsc --project tsconfig.integration.json",
-    "integration": "node ./integration/out/runTest.js"
+    "integration": "node ./integration/out/runTest.js",
+    "build-cloud-build-image": "./scripts/build_cloud_build_image.sh"
   },
   "icon": "img/logo.png",
   "license": "MIT",
