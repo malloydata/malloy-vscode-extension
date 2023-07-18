@@ -204,66 +204,6 @@
         "category": "Create",
         "command": "malloy.newUntitledNotebook",
         "title": "Malloy Notebook"
-      },
-      {
-        "title": "Table",
-        "category": "Malloy Renderer",
-        "command": "malloy.rendererTable",
-        "enablement": "notebookType == malloy-notebook && notebookCellType == code"
-      },
-      {
-        "title": "List",
-        "category": "Malloy Renderer",
-        "command": "malloy.rendererList",
-        "enablement": "notebookType == malloy-notebook && notebookCellType == code"
-      },
-      {
-        "title": "Bar Chart",
-        "category": "Malloy Renderer",
-        "command": "malloy.rendererBarChart",
-        "enablement": "notebookType == malloy-notebook && notebookCellType == code"
-      },
-      {
-        "title": "Line Chart",
-        "category": "Malloy Renderer",
-        "command": "malloy.rendererLineChart",
-        "enablement": "notebookType == malloy-notebook && notebookCellType == code"
-      },
-      {
-        "title": "Scatter Chart",
-        "category": "Malloy Renderer",
-        "command": "malloy.rendererScatterChart",
-        "enablement": "notebookType == malloy-notebook && notebookCellType == code"
-      },
-      {
-        "title": "Shape Map",
-        "category": "Malloy Renderer",
-        "command": "malloy.rendererShapeMap",
-        "enablement": "notebookType == malloy-notebook && notebookCellType == code"
-      },
-      {
-        "title": "Point Map",
-        "category": "Malloy Renderer",
-        "command": "malloy.rendererPointMap",
-        "enablement": "notebookType == malloy-notebook && notebookCellType == code"
-      },
-      {
-        "title": "Segment Map",
-        "category": "Malloy Renderer",
-        "command": "malloy.rendererSegmentMap",
-        "enablement": "notebookType == malloy-notebook && notebookCellType == code"
-      },
-      {
-        "title": "JSON",
-        "category": "Malloy Renderer",
-        "command": "malloy.rendererJson",
-        "enablement": "notebookType == malloy-notebook && notebookCellType == code"
-      },
-      {
-        "title": "Dashboard",
-        "category": "Malloy Renderer",
-        "command": "malloy.rendererDashboard",
-        "enablement": "notebookType == malloy-notebook && notebookCellType == code"
       }
     ],
     "menus": {
@@ -291,52 +231,8 @@
           "command": "malloy.newUntitledNotebook",
           "group": "notebook"
         }
-      ],
-      "notebook/cell/title": [
-        {
-          "submenu": "malloy.renderer",
-          "when": "notebookType == malloy-notebook && notebookCellType == code"
-        }
-      ],
-      "malloy.renderer": [
-        {
-          "command": "malloy.rendererTable"
-        },
-        {
-          "command": "malloy.rendererBarChart"
-        },
-        {
-          "command": "malloy.rendererLineChart"
-        },
-        {
-          "command": "malloy.rendererScatterChart"
-        },
-        {
-          "command": "malloy.rendererShapeMap"
-        },
-        {
-          "command": "malloy.rendererPointMap"
-        },
-        {
-          "command": "malloy.rendererSegmentMap"
-        },
-        {
-          "command": "malloy.rendererJson"
-        },
-        {
-          "command": "malloy.rendererList"
-        },
-        {
-          "command": "malloy.rendererDashboard"
-        }
       ]
     },
-    "submenus": [
-      {
-        "id": "malloy.renderer",
-        "label": "Select Renderer"
-      }
-    ],
     "languages": [
       {
         "id": "malloy",
