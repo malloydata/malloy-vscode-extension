@@ -27,7 +27,7 @@ import {publishVSIX} from '@vscode/vsce';
 import {doPackage} from './package-extension';
 import {publishCloudExtension} from './publish-cloud-extension';
 import {publishOvsx} from './publish-ovsx';
-import {Targets} from './build_common';
+import {Targets} from './constants';
 
 /**
  * @returns Array of version bits. [major, minor, patch]

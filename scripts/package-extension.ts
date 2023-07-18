@@ -21,7 +21,8 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {doBuild, outDir, Target} from './build_common';
+import {doBuild} from './build_common';
+import {outDir, Target} from './constants';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as semver from 'semver';

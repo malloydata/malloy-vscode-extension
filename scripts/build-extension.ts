@@ -22,7 +22,8 @@
  */
 
 import * as yargs from 'yargs';
-import {doBuild, outDir, Targets} from './build_common';
+import {doBuild} from './build_common';
+import {outDir, Targets} from './constants';
 
 yargs
   .scriptName('build-extension')

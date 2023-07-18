@@ -27,7 +27,7 @@ import * as path from 'path';
 
 import extensionPackage from '../../package.json';
 import {fetchNode} from './fetch_node';
-import {Target} from '../build_common';
+import {Target} from '../constants';
 
 const KEYTAR_VERSION = extensionPackage.dependencies.keytar;
 
