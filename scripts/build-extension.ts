@@ -22,7 +22,7 @@
  */
 
 import * as yargs from 'yargs';
-import {doBuild, outDir, Target} from './build_common';
+import {doBuild, outDir, Targets} from './build_common';
 
 yargs
   .scriptName('build-extension')
@@ -44,7 +44,7 @@ yargs
         describe: 'Output build metadata',
       },
       target: {
-        type: 'string',
+        choices: Targets,
         default: undefined,
         describe: 'Target platform',
       },
@@ -56,7 +56,7 @@ yargs
         } mode`
       );
 
-      doBuild(development, target as Target | undefined, metadata)
+      doBuild(development, target, metadata)
         .then(() => {
           console.log('Extension built successfully');
           if (!development) {

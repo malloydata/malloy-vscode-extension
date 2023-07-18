@@ -219,7 +219,7 @@ const getLicenses = async () => {
     row.copyrightIncluded = 'true';
 
     // if we happened to add a lib with a mirror-required license, mark a TODO
-    if (sourceMirrorLicenses.includes(row.licenseName as string)) {
+    if (row.licenseName && sourceMirrorLicenses.includes(row.licenseName)) {
       row.sourceCodeIncluded = 'TODO';
     } else row.sourceCodeIncluded = 'false';
 

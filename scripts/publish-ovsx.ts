@@ -22,10 +22,11 @@
  */
 
 import {spawn} from 'child_process';
+import {Target} from './build_common';
 
 export async function publishOvsx(
   path: string,
-  target: string,
+  target: Target,
   preRelease: boolean
 ): Promise<number | null> {
   const token = process.env['OVSX_TOKEN'];

@@ -27,10 +27,11 @@ import * as path from 'path';
 
 import extensionPackage from '../../package.json';
 import {fetchNode} from './fetch_node';
+import {Target} from '../build_common';
 
 const KEYTAR_VERSION = extensionPackage.dependencies.keytar;
 
-export const targetKeytarMap: Record<string, string> = {
+export const targetKeytarMap: Record<Target, string | undefined> = {
   'linux-x64': `keytar-v${KEYTAR_VERSION}-napi-v3-linux-x64`,
   'linux-arm64': `keytar-v${KEYTAR_VERSION}-napi-v3-linux-arm64`,
   'linux-armhf': `keytar-v${KEYTAR_VERSION}-napi-v3-linux-ia32`,
@@ -39,10 +40,14 @@ export const targetKeytarMap: Record<string, string> = {
   'darwin-x64': `keytar-v${KEYTAR_VERSION}-napi-v3-darwin-x64`,
   'darwin-arm64': `keytar-v${KEYTAR_VERSION}-napi-v3-darwin-arm64`,
   'win32-x64': `keytar-v${KEYTAR_VERSION}-napi-v3-win32-x64`,
-};
+  web: undefined,
+} as const;
 
-export const fetchKeytar = async (target: string): Promise<string> => {
+export const fetchKeytar = async (target: Target): Promise<string> => {
   const file = targetKeytarMap[target];
+  if (!file) {
+    throw new Error(`No binary available for ${target}`);
+  }
   const url = `https://github.com/atom/node-keytar/releases/download/v${KEYTAR_VERSION}/${file}.tar.gz`;
   const directoryPath = path.resolve(
     path.join('third_party', 'github.com', 'atom', 'node-keytar')

@@ -22,14 +22,10 @@
  */
 
 import {doBuild, outDir, Target} from './build_common';
+import * as fs from 'fs';
 import * as path from 'path';
 import * as semver from 'semver';
 import {createVSIX} from '@vscode/vsce';
-
-// importing this in normal fashion seems to import an older API?!
-// for ex, when imported, "Property 'rmSync' does not exist on type 'typeof import("fs")'"
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const fs = require('fs');
 
 export async function doPackage(
   target?: Target,
