@@ -30,7 +30,6 @@ import {
 } from '@malloydata/malloy';
 import {ConnectionManager} from '../../common/connection_manager';
 import {newUntitledNotebookCommand} from '../commands/new_untitled_notebook';
-import {registerRendererCommands} from './commands/renderer';
 
 const NO_QUERY = 'Model has no queries.';
 
@@ -49,8 +48,6 @@ export function activateNotebookController(
       newUntitledNotebookCommand
     )
   );
-
-  registerRendererCommands(context);
 }
 
 class MalloyController {
