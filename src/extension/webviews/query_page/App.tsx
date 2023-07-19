@@ -32,10 +32,10 @@ import React, {
 } from 'react';
 import styled from 'styled-components';
 import {
-  QueryMessageType,
   QueryPanelMessage,
   QueryRunStatus,
   QueryRunStats,
+  QueryMessageStatus,
 } from '../../../common/message_types';
 import {Spinner} from '../components';
 import {ResultKind, ResultKindToggle} from './ResultKindToggle';
@@ -108,91 +108,83 @@ export const App: React.FC = () => {
   }, [observer, document.body]);
 
   useEffect(() => {
-    const listener = (event: MessageEvent<QueryPanelMessage>) => {
+    const listener = (event: MessageEvent<QueryMessageStatus>) => {
       const message = event.data;
 
-      switch (message.type) {
-        case QueryMessageType.QueryStatus:
-          if (message.status === QueryRunStatus.Error) {
-            setStatus(Status.Error);
-            setError(message.error);
-          } else {
-            setError(undefined);
+      if (message.status === QueryRunStatus.Error) {
+        setStatus(Status.Error);
+        setError(message.error);
+      } else {
+        setError(undefined);
+      }
+      if (message.status === QueryRunStatus.Compiled && message.showSQLOnly) {
+        setShowOnlySQL(true);
+        setWarning(undefined);
+        setStats(undefined);
+        setStatus(Status.Done);
+        setSQL(message.sql);
+        setResultKind(ResultKind.SQL);
+      } else if (message.status === QueryRunStatus.EstimatedCost) {
+        setStats(getQueryCostStats(message.queryCostBytes, true));
+      } else if (message.status === QueryRunStatus.Done) {
+        const {resultJson, dataStyles, canDownloadStream} = message;
+        setWarning(undefined);
+        setShowOnlySQL(false);
+        setStats(undefined);
+        // TODO(web) Figure out some way to download current result set
+        setCanDownload(canDownloadStream);
+        setCanDownloadStream(canDownloadStream);
+        setStatus(Status.Rendering);
+        setTimeout(async () => {
+          const result = Result.fromJSON(resultJson);
+          // eslint-disable-next-line no-console
+          const data = result.data;
+          setJSON(JSON.stringify(data.toObject(), null, 2));
+          setSQL(result.sql);
+          if (message.stats) {
+            setStats(getStats(message.stats, result.runStats?.queryCostBytes));
           }
-          if (
-            message.status === QueryRunStatus.Compiled &&
-            message.showSQLOnly
-          ) {
-            setShowOnlySQL(true);
-            setWarning(undefined);
-            setStats(undefined);
-            setStatus(Status.Done);
-            setSQL(message.sql);
-            setResultKind(ResultKind.SQL);
-          } else if (message.status === QueryRunStatus.EstimatedCost) {
-            setStats(getQueryCostStats(message.queryCostBytes, true));
-          } else if (message.status === QueryRunStatus.Done) {
-            const {resultJson, dataStyles, canDownloadStream} = message;
-            setWarning(undefined);
-            setShowOnlySQL(false);
-            setStats(undefined);
-            // TODO(web) Figure out some way to download current result set
-            setCanDownload(canDownloadStream);
-            setCanDownloadStream(canDownloadStream);
-            setStatus(Status.Rendering);
-            setTimeout(async () => {
-              const result = Result.fromJSON(resultJson);
-              // eslint-disable-next-line no-console
-              const data = result.data;
-              setJSON(JSON.stringify(data.toObject(), null, 2));
-              setSQL(result.sql);
-              if (message.stats) {
-                setStats(
-                  getStats(message.stats, result.runStats?.queryCostBytes)
-                );
-              }
-              const rendered = await new HTMLView(document).render(result, {
-                dataStyles,
-                isDrillingEnabled: false,
-                onDrill: (drillQuery, target) => {
-                  navigator.clipboard.writeText(drillQuery);
-                  setTriggerRef(target);
-                  setTooltipVisible(true);
-                  const currentTooltipId = ++tooltipId.current;
-                  setTimeout(() => {
-                    if (currentTooltipId === tooltipId.current) {
-                      setTooltipVisible(false);
-                    }
-                  }, 1000);
-                },
-              });
-              setStatus(Status.Displaying);
+          const rendered = await new HTMLView(document).render(result, {
+            dataStyles,
+            isDrillingEnabled: false,
+            onDrill: (drillQuery, target) => {
+              navigator.clipboard.writeText(drillQuery);
+              setTriggerRef(target);
+              setTooltipVisible(true);
+              const currentTooltipId = ++tooltipId.current;
               setTimeout(() => {
-                setHTML(rendered);
-                if (data.rowCount < result.totalRows) {
-                  const rowCount = data.rowCount.toLocaleString();
-                  const totalRows = result.totalRows.toLocaleString();
-                  setWarning(
-                    `Row limit hit. Viewing ${rowCount} of ${totalRows} results.`
-                  );
+                if (currentTooltipId === tooltipId.current) {
+                  setTooltipVisible(false);
                 }
-                setStatus(Status.Done);
-              }, 0);
-            }, 0);
-          } else {
-            setHTML(document.createElement('span'));
-            setJSON('');
-            setSQL('');
-            setShowOnlySQL(false);
-            switch (message.status) {
-              case QueryRunStatus.Compiling:
-                setStatus(Status.Compiling);
-                break;
-              case QueryRunStatus.Running:
-                setStatus(Status.Running);
-                break;
+              }, 1000);
+            },
+          });
+          setStatus(Status.Displaying);
+          setTimeout(() => {
+            setHTML(rendered);
+            if (data.rowCount < result.totalRows) {
+              const rowCount = data.rowCount.toLocaleString();
+              const totalRows = result.totalRows.toLocaleString();
+              setWarning(
+                `Row limit hit. Viewing ${rowCount} of ${totalRows} results.`
+              );
             }
-          }
+            setStatus(Status.Done);
+          }, 0);
+        }, 0);
+      } else {
+        setHTML(document.createElement('span'));
+        setJSON('');
+        setSQL('');
+        setShowOnlySQL(false);
+        switch (message.status) {
+          case QueryRunStatus.Compiling:
+            setStatus(Status.Compiling);
+            break;
+          case QueryRunStatus.Running:
+            setStatus(Status.Running);
+            break;
+        }
       }
     };
     window.addEventListener('message', listener);
@@ -254,7 +246,7 @@ export const App: React.FC = () => {
                   canStream={canDownloadStream}
                   onDownload={async downloadOptions => {
                     vscode.postMessage({
-                      type: QueryMessageType.StartDownload,
+                      status: QueryRunStatus.StartDownload,
                       downloadOptions,
                     });
                   }}

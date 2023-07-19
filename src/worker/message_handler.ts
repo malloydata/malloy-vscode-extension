@@ -36,6 +36,7 @@ import {ConnectionManager} from '../common/connection_manager';
 import {cancelMSQLQuery, runMSQLQuery} from './run_msql_query';
 import {RpcFileHandler} from './file_handler';
 import {FileHandler} from '../common/types';
+import {ProgressType} from 'vscode-jsonrpc';
 
 export class MessageHandler implements WorkerMessageHandler {
   public fileHandler: FileHandler;
@@ -74,6 +75,14 @@ export class MessageHandler implements WorkerMessageHandler {
     message: WorkerMessageMap[K]
   ): Promise<R> {
     return this.connection.sendRequest(type, message);
+  }
+
+  sendProgress<P>(
+    type: ProgressType<P>,
+    token: string | number,
+    value: P
+  ): Promise<void> {
+    return this.connection.sendProgress(type, token, value);
   }
 
   log(message: string) {

@@ -22,16 +22,13 @@
  */
 
 import vscode, {TextDocument, WebviewPanel} from 'vscode';
-import {
-  QueryPanelMessage,
-  MSQLQueryPanelMessage,
-} from '../common/message_types';
+import {MSQLMessageStatus, QueryMessageStatus} from '../common/message_types';
 import {WebviewMessageManager} from './webview_message_manager';
 
 export interface RunState {
   cancel: () => void;
   panel: WebviewPanel;
-  messages: WebviewMessageManager<QueryPanelMessage | MSQLQueryPanelMessage>;
+  messages: WebviewMessageManager<QueryMessageStatus | MSQLMessageStatus>;
   panelId: string;
   document: TextDocument;
 }

@@ -35,6 +35,7 @@ import {
   ExtensionMessageHandler,
 } from '../common/worker_message_types';
 import {FileHandler} from '../common/types';
+import {Disposable, NotificationHandler, ProgressType} from 'vscode-jsonrpc';
 
 const workerLog = vscode.window.createOutputChannel('Malloy Worker');
 export abstract class WorkerConnection implements ExtensionMessageHandler {
@@ -94,6 +95,22 @@ export abstract class WorkerConnection implements ExtensionMessageHandler {
     listener: ListenerType<WorkerMessageMap[K]>
   ): vscode.Disposable {
     return this.connection.onRequest(event, listener);
+  }
+
+  sendProgress<P>(
+    type: ProgressType<P>,
+    token: string | number,
+    value: P
+  ): Promise<void> {
+    return this.connection.sendProgress(type, token, value);
+  }
+
+  onProgress<P>(
+    type: ProgressType<P>,
+    token: string | number,
+    handler: NotificationHandler<P>
+  ): Disposable {
+    return this.connection.onProgress(type, token, handler);
   }
 
   abstract dispose(): void;

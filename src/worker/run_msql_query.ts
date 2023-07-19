@@ -25,14 +25,13 @@ import {
   MessageCancel,
   WorkerMessageHandler,
   MessageRunMSQL,
-  WorkerSQLQueryPanelMessage as WorkerMSQLQueryPanelMessage,
 } from '../common/worker_message_types';
 
 import {
   EvaluatedMSQLStatement,
   EvaluatedMSQLStatementType,
   ExecutedMSQLStatementResultType,
-  MSQLMessageType,
+  MSQLMessageStatus,
   MSQLQueryPanelMessage,
   MSQLQueryRunStatus,
 } from '../common/message_types';
@@ -46,6 +45,7 @@ import {
   URLReader,
 } from '@malloydata/malloy';
 import {MalloySQLStatementType, MalloySQLParser} from '@malloydata/malloy-sql';
+import {ProgressType} from 'vscode-jsonrpc';
 
 interface QueryEntry {
   panelId: string;
@@ -90,12 +90,9 @@ export const runMSQLQuery = async (
   {panelId, malloySQLQuery, statementIndex, showSQLOnly}: MessageRunMSQL
 ): Promise<void> => {
   const sendMessage = (message: MSQLQueryPanelMessage) => {
-    const msg: WorkerMSQLQueryPanelMessage = {
-      panelId,
-      message,
-    };
+    const progress = new ProgressType<MSQLMessageStatus>();
 
-    messageHandler.sendRequest('malloy/MSQLQueryPanel', msg);
+    messageHandler.sendProgress(progress, panelId, message);
   };
 
   // conveniently, what we call panelId is also the document URI
@@ -111,7 +108,6 @@ export const runMSQLQuery = async (
     const parse = MalloySQLParser.parse(malloySQLQuery, panelId);
     if (parse.errors.length > 0) {
       sendMessage({
-        type: MSQLMessageType.QueryStatus,
         status: MSQLQueryRunStatus.Error,
         error: parse.errors.map(e => e.message).join('\n'),
       });
@@ -139,7 +135,6 @@ export const runMSQLQuery = async (
       const compileErrors = [];
 
       sendMessage({
-        type: MSQLMessageType.QueryStatus,
         status: MSQLQueryRunStatus.Compiling,
         totalStatements: statements.length,
         statementIndex: i,
@@ -174,7 +169,6 @@ export const runMSQLQuery = async (
               });
             } else {
               sendMessage({
-                type: MSQLMessageType.QueryStatus,
                 status: MSQLQueryRunStatus.Running,
                 totalStatements: statements.length,
                 statementIndex: i,
@@ -222,7 +216,6 @@ export const runMSQLQuery = async (
         }
       } else if (statement.type === MalloySQLStatementType.SQL) {
         sendMessage({
-          type: MSQLMessageType.QueryStatus,
           status: MSQLQueryRunStatus.Compiling,
           totalStatements: statements.length,
           statementIndex: i,
@@ -261,7 +254,6 @@ export const runMSQLQuery = async (
           });
         } else {
           sendMessage({
-            type: MSQLMessageType.QueryStatus,
             status: MSQLQueryRunStatus.Running,
             totalStatements: statements.length,
             statementIndex: i,
@@ -326,14 +318,12 @@ export const runMSQLQuery = async (
     }
 
     sendMessage({
-      type: MSQLMessageType.QueryStatus,
       status: MSQLQueryRunStatus.Done,
       results: evaluatedStatements,
       showSQLOnly,
     });
   } catch (error) {
     sendMessage({
-      type: MSQLMessageType.QueryStatus,
       status: MSQLQueryRunStatus.Error,
       error: error.message,
     });

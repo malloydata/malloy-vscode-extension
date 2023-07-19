@@ -155,14 +155,10 @@ A message indicating that a query is now running against the database:
 
 ```json
 {
-  "type": "malloy/queryPanel",
-  "panelId": "file://flights.malloy",
-  "message": {
-    "type": "query-status",
-    "status": "Running",
-    "sql": "SELECT * FROM ...",
-    "dialect": "commonsql"
-  }
+  "type": "query-status",
+  "status": "Running",
+  "sql": "SELECT * FROM ...",
+  "dialect": "commonsql"
 }
 ```
 
