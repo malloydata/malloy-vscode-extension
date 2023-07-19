@@ -22,25 +22,17 @@
  */
 
 import * as vscode from 'vscode';
-import {
-  ModelMaterializer,
-  QueryMaterializer,
-  Runtime,
-  URLReader,
-} from '@malloydata/malloy';
-import {ConnectionManager} from '../../common/connection_manager';
 import {newUntitledNotebookCommand} from '../commands/new_untitled_notebook';
+import {runMalloyQuery} from '../commands/run_query_utils';
+import {WorkerConnection} from '../worker_connection';
 
 const NO_QUERY = 'Model has no queries.';
 
 export function activateNotebookController(
   context: vscode.ExtensionContext,
-  connectionManager: ConnectionManager,
-  urlReader: URLReader
+  worker: WorkerConnection
 ) {
-  context.subscriptions.push(
-    new MalloyController(connectionManager, urlReader)
-  );
+  context.subscriptions.push(new MalloyController(worker));
 
   context.subscriptions.push(
     vscode.commands.registerCommand(
@@ -59,10 +51,7 @@ class MalloyController {
   private readonly _controller: vscode.NotebookController;
   private _executionOrder = 0;
 
-  constructor(
-    private connectionManager: ConnectionManager,
-    private urlReader: URLReader
-  ) {
+  constructor(private worker: WorkerConnection) {
     if (!vscode.notebooks) {
       return;
     }
@@ -88,47 +77,29 @@ class MalloyController {
   }
 
   private async _doExecution(
-    notebook: vscode.NotebookDocument,
+    _notebook: vscode.NotebookDocument,
     cell: vscode.NotebookCell
   ): Promise<void> {
     const execution = this._controller.createNotebookCellExecution(cell);
     execution.executionOrder = ++this._executionOrder;
     execution.start(Date.now());
 
-    const url = new URL(cell.document.uri.toString());
-
     try {
-      const runtime = new Runtime(
-        this.urlReader,
-        this.connectionManager.getConnectionLookup(url)
+      const results = await runMalloyQuery(
+        this.worker,
+        {type: 'file', index: -1, file: cell.document},
+        cell.document.uri.toString(),
+        cell.document.fileName.split('/').pop() || cell.document.fileName,
+        {withWebview: false}
       );
 
-      const allCells = notebook.getCells();
-      let mm: ModelMaterializer | null = null;
-      for (let idx = 0; idx < cell.index; idx++) {
-        if (allCells[idx].kind === vscode.NotebookCellKind.Code) {
-          const url = new URL(allCells[idx].document.uri.toString());
-          if (mm) {
-            mm = mm.extendModel(url);
-          } else {
-            mm = runtime.loadModel(url);
-          }
-        }
-      }
       const text = cell.document.getText();
-      let query: QueryMaterializer;
-      if (mm) {
-        query = mm.loadQuery(url);
-      } else {
-        query = runtime.loadQuery(url);
-      }
-      const results = await query.run();
       let meta = cell.metadata ? {...cell.metadata} : {};
       const style = text.match(/\/\/ --! style ([a-z_]+)/m);
       if (style) {
         meta = {renderer: style[1]};
       }
-      const jsonResults = results.toJSON();
+      const jsonResults = results;
       const output = new vscode.NotebookCellOutput(
         [
           vscode.NotebookCellOutputItem.json(

@@ -43,13 +43,21 @@ import {
 } from './vscode_utils';
 import {WorkerConnection} from '../worker_connection';
 
+export interface RunMalloyQueryOptions {
+  showSQLOnly?: boolean;
+  withWebview?: boolean;
+}
+
 export function runMalloyQuery(
   worker: WorkerConnection,
   query: QuerySpec,
   panelId: string,
   name: string,
-  showSQLOnly = false
+  options: RunMalloyQueryOptions = {}
 ): Thenable<ResultJSON | undefined> {
+  const showSQLOnly = options.showSQLOnly ?? false;
+  const withWebview = options.withWebview ?? true;
+
   return vscode.window.withProgress<ResultJSON | undefined>(
     {
       location: vscode.ProgressLocation.Notification,
@@ -75,26 +83,30 @@ export function runMalloyQuery(
 
       token.onCancellationRequested(cancel);
 
-      const current: RunState = createOrReuseWebviewPanel(
-        'malloyQuery',
-        name,
-        panelId,
-        cancel,
-        query.file
-      );
+      let current: RunState | null = null;
 
-      const queryPageOnDiskPath = Utils.joinPath(
-        MALLOY_EXTENSION_STATE.getExtensionUri(),
-        'dist',
-        'query_page.js'
-      );
-      loadWebview(current, queryPageOnDiskPath);
-      showSchemaTreeViewWhenFocused(current.panel, panelId);
+      if (withWebview) {
+        current = createOrReuseWebviewPanel(
+          'malloyQuery',
+          name,
+          panelId,
+          cancel,
+          query.file
+        );
+        const queryPageOnDiskPath = Utils.joinPath(
+          MALLOY_EXTENSION_STATE.getExtensionUri(),
+          'dist',
+          'query_page.js'
+        );
+
+        loadWebview(current, queryPageOnDiskPath);
+        showSchemaTreeViewWhenFocused(current.panel, panelId);
+      }
 
       const {file, ...params} = query;
       const uri = file.uri.toString();
 
-      return new Promise(resolve => {
+      return new Promise((resolve, reject) => {
         worker
           .sendRequest('malloy/run', {
             query: {
@@ -106,17 +118,18 @@ export function runMalloyQuery(
             showSQLOnly,
           })
           .catch(() => {
-            current.messages.postMessage({
-              status: QueryRunStatus.Error,
-              error: `The worker process has died, and has been restarted.
+            const error = `The worker process has died, and has been restarted.
 This is possibly the result of a database bug. \
 Please consider filing an issue with as much detail as possible at \
-https://github.com/malloydata/malloy-vscode-extension/issues.`,
+https://github.com/malloydata/malloy-vscode-extension/issues.`;
+            current?.messages.postMessage({
+              status: QueryRunStatus.Error,
+              error,
             });
+            reject(new Error(error));
           })
           .finally(() => {
             unsubscribe();
-            resolve(undefined);
           });
 
         const subscriptions: Disposable[] = [];
@@ -124,7 +137,7 @@ https://github.com/malloydata/malloy-vscode-extension/issues.`,
           subscriptions.forEach(subscription => subscription.dispose());
 
         const listener = (message: QueryMessageStatus) => {
-          current.messages.postMessage({
+          current?.messages.postMessage({
             ...message,
           });
 
@@ -167,7 +180,7 @@ https://github.com/malloydata/malloy-vscode-extension/issues.`,
                 const queryResult = Result.fromJSON(resultJson);
                 progress.report({increment: 100, message: 'Rendering'});
 
-                current.messages.onReceiveMessage(message => {
+                current?.messages.onReceiveMessage(message => {
                   if (message.status === QueryRunStatus.StartDownload) {
                     queryDownload(
                       worker,
@@ -187,7 +200,7 @@ https://github.com/malloydata/malloy-vscode-extension/issues.`,
             case QueryRunStatus.Error:
               {
                 unsubscribe();
-                resolve(undefined);
+                reject(new Error(message.error));
               }
               break;
           }

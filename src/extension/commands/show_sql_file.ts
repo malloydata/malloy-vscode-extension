@@ -36,7 +36,7 @@ export function showSQLFileCommand(
       {type: 'file', index: queryIndex, file: document},
       document.uri.toString(),
       document.fileName.split('/').pop() || document.fileName,
-      true
+      {showSQLOnly: true}
     );
   }
 }
