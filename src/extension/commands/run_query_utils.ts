@@ -126,7 +126,11 @@ https://github.com/malloydata/malloy-vscode-extension/issues.`;
               status: QueryRunStatus.Error,
               error,
             });
-            reject(new Error(error));
+            if (withWebview) {
+              resolve(undefined);
+            } else {
+              reject(new Error(error));
+            }
           })
           .finally(() => {
             unsubscribe();
@@ -200,7 +204,11 @@ https://github.com/malloydata/malloy-vscode-extension/issues.`;
             case QueryRunStatus.Error:
               {
                 unsubscribe();
-                reject(new Error(message.error));
+                if (withWebview) {
+                  resolve(undefined);
+                } else {
+                  reject(new Error(message.error));
+                }
               }
               break;
           }
