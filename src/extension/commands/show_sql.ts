@@ -40,7 +40,7 @@ export function showSQLCommand(
       {type: 'string', text: query, file: document},
       `${document.uri.toString()} ${name}`,
       name || document.uri.toString(),
-      true
+      {showSQLOnly: true}
     );
   }
 }

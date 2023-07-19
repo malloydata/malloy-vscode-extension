@@ -230,7 +230,7 @@ export const setupSubscriptions = (
   );
 
   activateNotebookSerializer(context);
-  activateNotebookController(context, connectionManager, urlReader);
+  activateNotebookController(context, worker);
 
   let clientId: string | undefined =
     context.globalState.get('malloy_client_id');

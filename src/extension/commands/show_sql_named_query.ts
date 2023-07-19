@@ -39,7 +39,7 @@ export function showSQLNamedQueryCommand(
       {type: 'named', name, file: document},
       `${document.uri.toString()} ${name}`,
       name,
-      true
+      {showSQLOnly: true}
     );
   }
 }
