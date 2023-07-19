@@ -94,7 +94,7 @@ async function createRelease(
     );
   }
 
-  return (await response.json()) as GithubRelease;
+  return response.json();
 }
 
 /**
@@ -130,7 +130,7 @@ async function uploadAsset(
     );
   }
 
-  return (await response.json()) as GithubAsset;
+  return response.json();
 }
 
 /** Minimal interface for github release fields used. */

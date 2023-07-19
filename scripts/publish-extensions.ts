@@ -24,11 +24,10 @@
 import * as semver from 'semver';
 import {readFileSync} from 'fs';
 import {publishVSIX} from '@vscode/vsce';
-import {Target} from './build_common';
-import {targetKeytarMap} from './utils/fetch_keytar';
 import {doPackage} from './package-extension';
 import {publishCloudExtension} from './publish-cloud-extension';
 import {publishOvsx} from './publish-ovsx';
+import {Targets} from './constants';
 
 /**
  * @returns Array of version bits. [major, minor, patch]
@@ -76,12 +75,8 @@ async function doPublish(version: string) {
   );
   console.log(`Pre-release: ${preRelease}`);
 
-  for (const target in {...targetKeytarMap, web: undefined}) {
-    const packagePath = await doPackage(
-      target as Target,
-      versionCode,
-      preRelease
-    );
+  for (const target of Targets) {
+    const packagePath = await doPackage(target, versionCode, preRelease);
 
     await publishVSIX(packagePath, {
       githubBranch: 'main',
@@ -95,7 +90,7 @@ async function doPublish(version: string) {
 
   if (!preRelease) {
     const cloudPackagePath = await doPackage(
-      'linux-x64' as Target,
+      'linux-x64',
       versionCode,
       preRelease
     );
