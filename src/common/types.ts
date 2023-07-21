@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {URLReader} from '@malloydata/malloy';
+import {StructDef, URLReader} from '@malloydata/malloy';
 import {ConnectionConfig} from './connection_manager_types';
 
 export interface MalloyConfig {
@@ -83,3 +83,13 @@ export interface FileHandler extends URLReader {
    */
   fetchCellData(uri: string): Promise<CellData[]>;
 }
+
+export type StructDefResult =
+  | {
+      structDef: StructDef;
+      error?: undefined;
+    }
+  | {
+      error: string;
+      structDef?: undefined;
+    };

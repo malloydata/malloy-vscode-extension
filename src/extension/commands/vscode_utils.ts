@@ -29,11 +29,11 @@ import {getWebviewHtml} from '../webviews';
 import turtleIcon from '../../media/turtle.svg';
 
 export function createOrReuseWebviewPanel(
-  viewType,
-  title,
-  panelId,
-  cancel,
-  document
+  viewType: string,
+  title: string,
+  panelId: string,
+  cancel: () => void,
+  document: vscode.TextDocument
 ): RunState {
   const previous = MALLOY_EXTENSION_STATE.getRunState(panelId);
 

@@ -36,7 +36,7 @@ import {
   MSQLQueryRunStatus,
 } from '../common/message_types';
 import {ConnectionManager} from '../common/connection_manager';
-import {FileHandler} from '../common/types';
+import {FileHandler, StructDefResult} from '../common/types';
 import {
   MalloyQueryData,
   ModelMaterializer,
@@ -337,7 +337,7 @@ export const cancelMSQLQuery = ({panelId}: MessageCancel): void => {
 };
 
 const fakeMalloyResult = (
-  structDefResult,
+  structDefResult: StructDefResult,
   sql: string,
   sqlResult: MalloyQueryData,
   connectionName: string
