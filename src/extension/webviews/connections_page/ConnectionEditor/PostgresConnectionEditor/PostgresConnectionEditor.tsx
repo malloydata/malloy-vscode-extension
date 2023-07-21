@@ -116,8 +116,8 @@ export const PostgresConnectionEditor: React.FC<
                 <VSCodeRadio
                   value="keychain"
                   checked={config.useKeychainPassword}
-                  onChange={event => {
-                    if (event.target?.checked) {
+                  onChange={({target}) => {
+                    if ((target as HTMLInputElement).checked) {
                       setConfig({
                         ...config,
                         password: undefined,
@@ -137,8 +137,8 @@ export const PostgresConnectionEditor: React.FC<
                 checked={
                   !config.useKeychainPassword && config.password === undefined
                 }
-                onChange={event => {
-                  if (event.target?.checked) {
+                onChange={({target}) => {
+                  if ((target as HTMLInputElement).checked) {
                     setConfig({
                       ...config,
                       password: undefined,
@@ -158,8 +158,8 @@ export const PostgresConnectionEditor: React.FC<
                 value="specified"
                 key="specified"
                 checked={config.password !== undefined}
-                onChange={event => {
-                  if (event.target?.checked) {
+                onChange={({target}) => {
+                  if ((target as HTMLInputElement).checked) {
                     setConfig({
                       ...config,
                       password: '',
@@ -198,8 +198,8 @@ export const PostgresConnectionEditor: React.FC<
             <td style={{paddingLeft: '10px'}}>
               <VSCodeCheckbox
                 checked={showPassword}
-                onChange={event => {
-                  setShowPassword(event.target?.checked);
+                onChange={({target}) => {
+                  setShowPassword((target as HTMLInputElement).checked);
                 }}
               >
                 Show Password
