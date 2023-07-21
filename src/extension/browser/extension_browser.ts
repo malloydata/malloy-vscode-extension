@@ -40,7 +40,7 @@ let client: LanguageClient;
 export function activate(context: vscode.ExtensionContext): void {
   setupLanguageServer(context);
   const worker = new WorkerConnectionBrowser(context, client, fileHandler);
-  setupSubscriptions(context, fileHandler, connectionManager, worker, client);
+  setupSubscriptions(context, worker, client);
 
   const connectionsTree = new ConnectionsProvider(context, connectionManager);
   context.subscriptions.push(
@@ -62,7 +62,7 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 }
 
-export async function deactivate(): Promise<void> | undefined {
+export async function deactivate(): Promise<void | undefined> {
   if (client) {
     await client.stop();
   }

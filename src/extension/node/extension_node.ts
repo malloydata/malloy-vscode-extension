@@ -57,7 +57,7 @@ export function activate(context: vscode.ExtensionContext): void {
   cloudshellEnv();
   setupLanguageServer(context);
   setupWorker(context, fileHandler);
-  setupSubscriptions(context, fileHandler, connectionManager, worker, client);
+  setupSubscriptions(context, worker, client);
   const connectionsTree = new ConnectionsProvider(context, connectionManager);
 
   MALLOY_EXTENSION_STATE.setHomeUri(vscode.Uri.file(os.homedir()));
