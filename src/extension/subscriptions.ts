@@ -70,8 +70,6 @@ function getNewClientId(): string {
 
 export const setupSubscriptions = (
   context: vscode.ExtensionContext,
-  urlReader: URLReader,
-  connectionManager: ConnectionManager,
   worker: WorkerConnection,
   client: BaseLanguageClient
 ) => {
@@ -169,12 +167,7 @@ export const setupSubscriptions = (
     )
   );
 
-  const schemaTree = new SchemaProvider(
-    context,
-    connectionManager,
-    urlReader,
-    client
-  );
+  const schemaTree = new SchemaProvider(context, client);
 
   context.subscriptions.push(
     vscode.window.registerTreeDataProvider('malloySchema', schemaTree)

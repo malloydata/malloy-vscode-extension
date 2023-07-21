@@ -30,7 +30,6 @@ import {
   Field,
   QueryField,
   AtomicField,
-  URLReader,
   SerializedExplore,
 } from '@malloydata/malloy';
 import numberIcon from '../../media/number.svg';
@@ -44,7 +43,6 @@ import oneToManyIcon from '../../media/one_to_many.svg';
 import manyToOneIcon from '../../media/many_to_one.svg';
 import oneToOneIcon from '../../media/one_to_one.svg';
 import {MALLOY_EXTENSION_STATE} from '../state';
-import {ConnectionManager} from '../../common/connection_manager';
 import {BaseLanguageClient} from 'vscode-languageclient/node';
 import {BuildModelRequest} from '../../common/types';
 
@@ -56,8 +54,6 @@ export class SchemaProvider
 
   constructor(
     private context: vscode.ExtensionContext,
-    private connectionManager: ConnectionManager,
-    private urlReader: URLReader,
     private client: BaseLanguageClient
   ) {
     this.resultCache = new Map();
@@ -119,12 +115,7 @@ export class SchemaProvider
         return this.resultCache.get(cacheKey) || [];
       }
 
-      const explores = await getStructs(
-        this.connectionManager,
-        this.urlReader,
-        document,
-        this.client
-      );
+      const explores = await getStructs(document, this.client);
       if (explores === undefined) {
         return this.resultCache.get(cacheKey) || [];
       } else {
@@ -146,8 +137,6 @@ export class SchemaProvider
 }
 
 async function getStructs(
-  connectionManager: ConnectionManager,
-  reader: URLReader,
   document: vscode.TextDocument,
   client: BaseLanguageClient
 ): Promise<Explore[] | undefined> {
