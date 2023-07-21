@@ -21,20 +21,12 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {
-  TextDocuments,
-  Location,
-  Position,
-  DefinitionLink,
-} from 'vscode-languageserver/node';
+import {Location, Position, DefinitionLink} from 'vscode-languageserver/node';
 import {TextDocument} from 'vscode-languageserver-textdocument';
-import {ConnectionManager} from '../../common/connection_manager';
 import {TranslateCache} from '../translate_cache';
 
 export async function getMalloyDefinitionReference(
   translateCache: TranslateCache,
-  connectionManager: ConnectionManager,
-  documents: TextDocuments<TextDocument>,
   document: TextDocument,
   position: Position
 ): Promise<Location[] | DefinitionLink[]> {

@@ -155,13 +155,7 @@ export const initServer = (
   connection.onDefinition(handler => {
     const document = documents.get(handler.textDocument.uri);
     return document && document.languageId === 'malloy'
-      ? getMalloyDefinitionReference(
-          translateCache,
-          connectionManager,
-          documents,
-          document,
-          handler.position
-        )
+      ? getMalloyDefinitionReference(translateCache, document, handler.position)
       : [];
   });
 
