@@ -257,6 +257,7 @@
       {
         "id": "malloy-sql",
         "extensions": [
+          ".malloy-sql",
           ".malloysql"
         ],
         "aliases": [
@@ -484,7 +485,7 @@
         "displayName": "Malloy Notebook",
         "selector": [
           {
-            "filenamePattern": "*.malloynb"
+            "filenamePattern": "{*.malloynb,*.malloysql}"
           }
         ]
       }

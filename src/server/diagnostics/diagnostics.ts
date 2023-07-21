@@ -52,7 +52,8 @@ export async function getMalloyDiagnostics(
   try {
     const model = await translateCache.translateWithCache(
       document.uri,
-      document.version
+      document.version,
+      document.languageId
     );
     if (model?.problems) {
       problems.push(...model.problems);

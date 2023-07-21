@@ -28,29 +28,39 @@ import {
   SQLBlockMaterializer,
 } from '@malloydata/malloy';
 import {WorkerQuerySpec} from '../common/worker_message_types';
-import {FileHandler} from '../common/types';
+import {CellData} from '../common/types';
 
-export const createRunnable = async (
+export const createModelMaterializer = async (
   query: WorkerQuerySpec,
   runtime: Runtime,
-  fileHandler: FileHandler
-): Promise<SQLBlockMaterializer | QueryMaterializer> => {
-  let runnable: QueryMaterializer | SQLBlockMaterializer;
-  const queryFileURL = new URL(query.uri);
+  allCells: CellData[]
+): Promise<ModelMaterializer | null> => {
   let mm: ModelMaterializer | null = null;
+  const queryFileURL = new URL(query.uri);
   if (queryFileURL.protocol === 'vscode-notebook-cell:') {
-    const allCells = await fileHandler.fetchCellData(query.uri);
-    for (let idx = 0; idx < allCells.length; idx++) {
-      const url = new URL(allCells[idx].uri);
-      if (mm) {
-        mm = mm.extendModel(url);
-      } else {
-        mm = runtime.loadModel(url);
+    for (const cell of allCells) {
+      if (cell.languageId === 'malloy') {
+        const url = new URL(cell.uri);
+        if (mm) {
+          mm = mm.extendModel(url);
+        } else {
+          mm = runtime.loadModel(url);
+        }
       }
     }
   } else {
     mm = runtime.loadModel(queryFileURL);
   }
+  return mm;
+};
+
+export const createRunnable = async (
+  query: WorkerQuerySpec,
+  runtime: Runtime,
+  allCells: CellData[]
+): Promise<SQLBlockMaterializer | QueryMaterializer> => {
+  let runnable: QueryMaterializer | SQLBlockMaterializer;
+  const mm = await createModelMaterializer(query, runtime, allCells);
   if (!mm) {
     throw new Error('No Malloy to run');
   }

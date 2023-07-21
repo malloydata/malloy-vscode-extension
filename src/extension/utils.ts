@@ -98,6 +98,8 @@ export async function fetchCellData(uriString: string): Promise<CellData[]> {
         result.push({
           uri: cell.document.uri.toString(),
           text: cell.document.getText(),
+          languageId: cell.document.languageId,
+          metadata: cell.metadata,
         });
       }
       if (cell.document.uri.fragment === uri.fragment) {

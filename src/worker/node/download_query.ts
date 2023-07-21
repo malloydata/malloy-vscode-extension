@@ -30,7 +30,7 @@ import {
   WorkerDownloadMessage,
 } from '../../common/worker_message_types';
 import {createRunnable} from '../create_runnable';
-import {FileHandler} from '../../common/types';
+import {CellData, FileHandler} from '../../common/types';
 import {ConnectionManager} from '../../common/connection_manager';
 import {errorMessage} from '../../common/errors';
 
@@ -60,7 +60,12 @@ export async function downloadQuery(
       connectionManager.getConnectionLookup(url)
     );
 
-    const runnable = await createRunnable(query, runtime, fileHandler);
+    let allCells: CellData[] = [];
+    if (query.uri.startsWith('vscode-notebook-cell:')) {
+      allCells = await fileHandler.fetchCellData(query.uri);
+    }
+    const runnable = await createRunnable(query, runtime, allCells);
+
     const writeStream = fs.createWriteStream(fileURLToPath(uri));
     const writer =
       downloadOptions.format === 'json'

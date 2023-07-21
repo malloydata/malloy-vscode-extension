@@ -57,7 +57,12 @@ export const parseMalloySQLWithCache = (
     return entry.parsed;
   }
 
-  const parsed: MalloySQLParse = MalloySQLParser.parse(document.getText(), uri);
+  let text = document.getText();
+  // TODO: Fix pegjs parser to not require demark line
+  if (!text.startsWith('>>>')) {
+    text = '>>>sql connection:fake\n' + text;
+  }
+  const parsed: MalloySQLParse = MalloySQLParser.parse(text, uri);
   MALLOYSQL_PARSE_CACHE.set(uri, {parsed, version});
   return parsed;
 };

@@ -48,11 +48,14 @@ export interface FetchCellDataEvent {
 export interface CellData {
   uri: string;
   text: string;
+  languageId: string;
+  metadata?: {[key: string]: unknown};
 }
 
 export interface BuildModelRequest {
   uri: string;
   version: number;
+  languageId: string;
 }
 
 export interface FileHandler extends URLReader {
