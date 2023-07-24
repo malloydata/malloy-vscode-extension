@@ -108,14 +108,9 @@ export class TranslateCache implements TranslateCache {
 
   async translateWithCache(
     uri: string,
-<<<<<<< HEAD
-    currentVersion: number
-  ): Promise<Model | undefined> {
-=======
     currentVersion: number,
     languageId: string
-  ): Promise<Model> {
->>>>>>> 17f57a6 (Use malloysql as notebook format)
+  ): Promise<Model | undefined> {
     const entry = this.cache.get(uri);
     if (entry && entry.version === currentVersion) {
       return entry.model;
@@ -142,6 +137,9 @@ export class TranslateCache implements TranslateCache {
         const mm = await this.createModelMaterializer(uri, runtime);
 
         for (const malloyQuery of statement.embeddedMalloyQueries) {
+          if (!mm) {
+            throw new Error('Missing model definition');
+          }
           try {
             await mm.getQuery(`query:\n${malloyQuery.query}`);
           } catch (e) {
@@ -151,29 +149,31 @@ export class TranslateCache implements TranslateCache {
             }
 
             e.problems.forEach(log => {
-              if (log.at.url === 'internal://internal.malloy') {
-                log.at.url = uri;
-              } else if (log.at.url !== uri) {
-                return;
-              }
-              // if the embedded malloy is on the same line as SQL, pad character start (and maybe end)
-              // ">>>sql...\n" adds a line, so we subtract it here
-              // "query:\n" adds a line, so we subtract the line here
-              const embeddedStart: number = log.at.range.start.line - 2;
-              if (embeddedStart === 0) {
-                log.at.range.start.character +=
-                  malloyQuery.malloyRange.start.character;
-                if (log.at.range.start.line === log.at.range.end.line)
-                  log.at.range.end.character +=
+              if (log.at) {
+                if (log.at.url === 'internal://internal.malloy') {
+                  log.at.url = uri;
+                } else if (log.at.url !== uri) {
+                  return;
+                }
+                // if the embedded malloy is on the same line as SQL, pad character start (and maybe end)
+                // ">>>sql...\n" adds a line, so we subtract it here
+                // "query:\n" adds a line, so we subtract the line here
+                const embeddedStart: number = log.at.range.start.line - 2;
+                if (embeddedStart === 0) {
+                  log.at.range.start.character +=
                     malloyQuery.malloyRange.start.character;
-              }
+                  if (log.at.range.start.line === log.at.range.end.line)
+                    log.at.range.end.character +=
+                      malloyQuery.malloyRange.start.character;
+                }
 
-              const lineDifference =
-                log.at.range.end.line - log.at.range.start.line;
-              log.at.range.start.line =
-                malloyQuery.range.start.line + embeddedStart;
-              log.at.range.end.line =
-                malloyQuery.range.start.line + embeddedStart + lineDifference;
+                const lineDifference =
+                  log.at.range.end.line - log.at.range.start.line;
+                log.at.range.start.line =
+                  malloyQuery.range.start.line + embeddedStart;
+                log.at.range.end.line =
+                  malloyQuery.range.start.line + embeddedStart + lineDifference;
+              }
             });
 
             throw e;
@@ -181,7 +181,9 @@ export class TranslateCache implements TranslateCache {
         }
 
         const model = await mm?.getModel();
-        this.cache.set(uri, {version: currentVersion, model});
+        if (model) {
+          this.cache.set(uri, {version: currentVersion, model});
+        }
         return model;
       }
 
@@ -264,30 +266,11 @@ export class TranslateCache implements TranslateCache {
         this.connectionManager.getConnectionLookup(new URL(uri))
       );
 
-<<<<<<< HEAD
-      let model: Model | undefined;
-
-      if (uri.startsWith('vscode-notebook-cell:')) {
-        const allCells = await this.getCellData(new URL(uri));
-        let mm: ModelMaterializer | null = null;
-        for (let idx = 0; idx < allCells.length; idx++) {
-          const url = new URL(allCells[idx].uri);
-          if (mm) {
-            mm = mm.extendModel(url);
-          } else {
-            mm = runtime.loadModel(url);
-          }
-        }
-        model = await mm?.getModel();
-      } else {
-        model = await runtime.getModel(new URL(uri));
+      const mm = await this.createModelMaterializer(uri, runtime);
+      const model = await mm?.getModel();
+      if (model) {
         this.cache.set(uri, {version: currentVersion, model});
       }
-=======
-      const mm = await this.createModelMaterializer(uri, runtime);
-      const model = await mm.getModel();
-      this.cache.set(uri, {version: currentVersion, model});
->>>>>>> 17f57a6 (Use malloysql as notebook format)
       return model;
     }
   }

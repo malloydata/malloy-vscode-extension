@@ -63,7 +63,7 @@ const fakeMalloyResult = (
 ): Result => {
   return new Result(
     {
-      structs: [structDefResult.structDef],
+      structs: structDefResult.structDef ? [structDefResult.structDef] : [],
       sql,
       result: sqlResult.rows,
       totalRows: sqlResult.totalRows,
@@ -110,7 +110,8 @@ const runMSQLCell = async (
     allCells
   );
 
-  let connectionName = currentCell.metadata?.['connection'];
+  let connectionName: string =
+    (currentCell.metadata?.['connection'] as string) || 'unknown';
   for (const cell of allCells) {
     const match = /^-- connection:(?<connectionName>.*)/.exec(cell.text);
     if (match && match.groups) {
@@ -129,6 +130,9 @@ const runMSQLCell = async (
   const dialect = 'unknown';
 
   for (const malloyQuery of statement.embeddedMalloyQueries) {
+    if (!modelMaterializer) {
+      throw new Error('Missing model definition');
+    }
     const runnable = modelMaterializer.loadQuery(
       `\nquery: ${malloyQuery.query}`
     );
@@ -168,9 +172,7 @@ const runMSQLCell = async (
     dialect,
   });
 
-  const connection = await connectionLookup.lookupConnection(
-    statement.config.connection
-  );
+  const connection = await connectionLookup.lookupConnection(connectionName);
 
   const sqlResults = await connection.runSQL(compiledStatement);
 
@@ -190,7 +192,7 @@ const runMSQLCell = async (
     structDefAttempt,
     compiledStatement,
     sqlResults,
-    statement.config.connection
+    connectionName
   );
 
   // Calculate execution times.
@@ -247,14 +249,18 @@ export const runQuery = async (
     }
 
     if (isMalloySql) {
-      await runMSQLCell(
-        messageHandler,
-        fileHandler,
-        connectionManager,
-        messageRun,
-        allCells,
-        currentCell
-      );
+      if (currentCell) {
+        await runMSQLCell(
+          messageHandler,
+          fileHandler,
+          connectionManager,
+          messageRun,
+          allCells,
+          currentCell
+        );
+      } else {
+        throw new Error('Unexpected state: Malloy SQL outside of notebook');
+      }
       return;
     }
 

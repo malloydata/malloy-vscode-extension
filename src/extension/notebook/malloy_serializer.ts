@@ -146,7 +146,7 @@ class MalloySerializer implements vscode.NotebookSerializer {
       let separator = `>>>${statementType}`;
       if (
         statementType === MalloySQLStatementType.SQL &&
-        metadata['connection']
+        metadata?.['connection']
       ) {
         separator += ` connection:${metadata['connection']}`;
       }

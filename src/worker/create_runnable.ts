@@ -62,7 +62,7 @@ export const createRunnable = async (
   let runnable: QueryMaterializer | SQLBlockMaterializer;
   const mm = await createModelMaterializer(query, runtime, allCells);
   if (!mm) {
-    throw new Error('No Malloy to run');
+    throw new Error('Missing model definition');
   }
   switch (query.type) {
     case 'string':

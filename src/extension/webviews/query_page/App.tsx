@@ -32,7 +32,6 @@ import React, {
 } from 'react';
 import styled from 'styled-components';
 import {
-  QueryPanelMessage,
   QueryRunStatus,
   QueryRunStats,
   QueryMessageStatus,

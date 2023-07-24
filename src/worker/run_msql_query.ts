@@ -233,7 +233,7 @@ export const runMSQLQuery = async (
 
         for (const malloyQuery of statement.embeddedMalloyQueries) {
           if (!modelMaterializer) {
-            throw new Error('Missing Model definition');
+            throw new Error('Missing model definition');
           }
           try {
             const runnable = modelMaterializer.loadQuery(
