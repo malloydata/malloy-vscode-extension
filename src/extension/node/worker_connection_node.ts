@@ -33,8 +33,8 @@ import {GenericConnection} from '../../common/worker_message_types';
 const DEFAULT_RESTART_SECONDS = 1;
 
 export class WorkerConnectionNode extends WorkerConnection {
-  worker!: child_process.ChildProcess;
-  _connection!: GenericConnection;
+  worker: child_process.ChildProcess | undefined;
+  _connection: GenericConnection | undefined;
 
   constructor(context: vscode.ExtensionContext, fileHandler: FileHandler) {
     super(context, fileHandler);
@@ -101,10 +101,13 @@ export class WorkerConnectionNode extends WorkerConnection {
   }
 
   get connection() {
+    if (!this._connection) {
+      throw new Error('Uninitialized connection');
+    }
     return this._connection;
   }
 
   dispose(): void {
-    this.worker.kill('SIGHUP');
+    this.worker?.kill('SIGHUP');
   }
 }
