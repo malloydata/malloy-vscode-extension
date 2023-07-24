@@ -95,3 +95,15 @@ export interface StructDefFailure {
 }
 
 export type StructDefResult = StructDefSuccess | StructDefFailure;
+
+export const isStructDefSuccess = (
+  structDefResult: StructDefResult
+): structDefResult is StructDefSuccess => {
+  return !!structDefResult.structDef;
+};
+
+export const isStructDefFailure = (
+  structDefResult: StructDefResult
+): structDefResult is StructDefFailure => {
+  return !!structDefResult.error;
+};

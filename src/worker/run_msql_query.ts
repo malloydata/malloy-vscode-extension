@@ -36,7 +36,11 @@ import {
   MSQLQueryRunStatus,
 } from '../common/message_types';
 import {ConnectionManager} from '../common/connection_manager';
-import {FileHandler, StructDefSuccess} from '../common/types';
+import {
+  FileHandler,
+  StructDefSuccess,
+  isStructDefFailure,
+} from '../common/types';
 import {
   MalloyError,
   MalloyQueryData,
@@ -292,7 +296,7 @@ export const runMSQLQuery = async (
 
             if (runningQueries[panelId].canceled) return;
 
-            structDefAttempt.error
+            isStructDefFailure(structDefAttempt)
               ? evaluatedStatements.push({
                   type: EvaluatedMSQLStatementType.Executed,
                   resultType: ExecutedMSQLStatementResultType.WithoutStructdef,
@@ -304,7 +308,7 @@ export const runMSQLQuery = async (
                   type: EvaluatedMSQLStatementType.Executed,
                   resultType: ExecutedMSQLStatementResultType.WithStructdef,
                   results: fakeMalloyResult(
-                    structDefAttempt as StructDefSuccess,
+                    structDefAttempt,
                     compiledStatement,
                     sqlResults,
                     statement.config?.connection || 'unknown'
