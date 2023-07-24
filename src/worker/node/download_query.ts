@@ -32,6 +32,7 @@ import {
 import {createRunnable} from '../create_runnable';
 import {FileHandler} from '../../common/types';
 import {ConnectionManager} from '../../common/connection_manager';
+import {errorMessage} from '../../common/errors';
 
 const sendMessage = (
   messageHandler: WorkerMessageHandler,
@@ -75,6 +76,6 @@ export async function downloadQuery(
     await writer.process(rowStream);
     sendMessage(messageHandler, name);
   } catch (error) {
-    sendMessage(messageHandler, error.message);
+    sendMessage(messageHandler, errorMessage(error));
   }
 }

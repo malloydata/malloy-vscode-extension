@@ -36,6 +36,7 @@ import {
   QueryRunStatus,
   QueryRunStats,
   QueryMessageStatus,
+  QueryMessageType,
 } from '../../../common/message_types';
 import {Spinner} from '../components';
 import {ResultKind, ResultKindToggle} from './ResultKindToggle';
@@ -81,7 +82,7 @@ export const App: React.FC = () => {
   const vscode = useQueryVSCodeContext();
 
   useEffect(() => {
-    vscode.postMessage({type: 'app-ready'} as QueryPanelMessage);
+    vscode.postMessage({type: QueryMessageType.AppReady});
   }, []);
 
   const themeCallback = useCallback(() => {

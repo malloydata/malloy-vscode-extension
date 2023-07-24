@@ -28,22 +28,23 @@ import {
 } from 'vscode-languageserver/browser';
 import {ConnectionManager} from '../../common/connection_manager';
 import {WebConnectionFactory} from '../../common/connections/browser/connection_factory';
+import {errorMessage} from '../../common/errors';
 
 const messageReader = new BrowserMessageReader(self);
 const messageWriter = new BrowserMessageWriter(self);
 
 export const connection = createConnection(messageReader, messageWriter);
 
-const fetchBinaryFile = async (
-  uri: string
-): Promise<Uint8Array | undefined> => {
+const fetchBinaryFile = async (uri: string): Promise<Uint8Array> => {
   try {
     connection.console.info(`fetchBinaryFile requesting ${uri}`);
     return await connection.sendRequest('malloy/fetchBinaryFile', {uri});
   } catch (error) {
-    connection.console.error(error);
+    connection.console.error(errorMessage(error));
+    throw new Error(
+      `fetchBinaryFile: unable to load '${uri}': ${errorMessage(error)}`
+    );
   }
-  return undefined;
 };
 
 export const connectionManager = new ConnectionManager(

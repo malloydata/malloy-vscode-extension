@@ -26,7 +26,7 @@ const BYTE_MATCH = /^(?<bytes>\d+)((?<suffix>[kmgtp])((?<iec>i)?b)?)?$/i;
 
 export const convertToBytes = (bytes: string): string => {
   const match = BYTE_MATCH.exec(bytes);
-  if (match?.groups ? match.groups['suffix'] : false) {
+  if (match?.groups && match.groups['suffix']) {
     const value =
       +match.groups['bytes'] *
       Math.pow(

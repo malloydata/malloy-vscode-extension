@@ -39,12 +39,12 @@ import {Disposable, NotificationHandler, ProgressType} from 'vscode-jsonrpc';
 
 const workerLog = vscode.window.createOutputChannel('Malloy Worker');
 export abstract class WorkerConnection implements ExtensionMessageHandler {
-  connection: GenericConnection;
-
   constructor(
     private context: vscode.ExtensionContext,
     private fileHandler: FileHandler
   ) {}
+
+  abstract get connection(): GenericConnection;
 
   subscribe() {
     this.context.subscriptions.push(

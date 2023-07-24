@@ -26,6 +26,7 @@ import {LogMessage, MalloyError} from '@malloydata/malloy';
 import {TextDocument} from 'vscode-languageserver-textdocument';
 import {TranslateCache} from '../translate_cache';
 import {parseMalloySQLWithCache} from '../parse_cache';
+import {errorMessage} from '../../common/errors';
 
 const DEFAULT_RANGE = {
   start: {line: 0, character: 0},
@@ -53,7 +54,7 @@ export async function getMalloyDiagnostics(
       document.uri,
       document.version
     );
-    if (model.problems) {
+    if (model?.problems) {
       problems.push(...model.problems);
     }
   } catch (error) {
@@ -64,7 +65,7 @@ export async function getMalloyDiagnostics(
       byURI[document.uri].push({
         severity: DiagnosticSeverity.Error,
         range: DEFAULT_RANGE,
-        message: error.message,
+        message: errorMessage(error),
         source: 'malloy',
       });
     }

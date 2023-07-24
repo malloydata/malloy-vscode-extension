@@ -40,6 +40,7 @@ import {
 } from '../../../common/connection_manager_types';
 import {deletePassword, setPassword} from 'keytar';
 import {MALLOY_EXTENSION_STATE} from '../../state';
+import {errorMessage} from '../../../common/errors';
 
 export function editConnectionsCommand(): void {
   const panel = vscode.window.createWebviewPanel(
@@ -114,7 +115,7 @@ export function editConnectionsCommand(): void {
             type: ConnectionMessageType.TestConnection,
             status: ConnectionTestStatus.Error,
             connection: message.connection,
-            error: error.message,
+            error: errorMessage(error),
           });
         }
         break;

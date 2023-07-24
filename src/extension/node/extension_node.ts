@@ -37,10 +37,9 @@ import {setupFileMessaging, setupSubscriptions} from '../subscriptions';
 import {fileHandler} from '../utils';
 import {MALLOY_EXTENSION_STATE} from '../state';
 import {WorkerConnectionNode} from './worker_connection_node';
-import {FileHandler, MalloyConfig} from '../../common/types';
+import {MalloyConfig} from '../../common/types';
 
 let client: LanguageClient;
-let worker: WorkerConnectionNode | null = null;
 
 const cloudshellEnv = () => {
   const cloudShellProject = vscode.workspace
@@ -56,7 +55,8 @@ const cloudshellEnv = () => {
 export function activate(context: vscode.ExtensionContext): void {
   cloudshellEnv();
   setupLanguageServer(context);
-  setupWorker(context, fileHandler);
+  const worker = new WorkerConnectionNode(context, fileHandler);
+  sendWorkerConfig(worker);
   setupSubscriptions(context, worker, client);
   const connectionsTree = new ConnectionsProvider(context, connectionManager);
 
@@ -77,7 +77,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.workspace.onDidChangeConfiguration(async e => {
       if (e.affectsConfiguration('malloy')) {
         await connectionManager.onConfigurationUpdated();
-        sendWorkerConfig();
+        sendWorkerConfig(worker);
         connectionsTree.refresh();
       }
       if (e.affectsConfiguration('cloudshell')) {
@@ -87,7 +87,7 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 }
 
-export async function deactivate(): Promise<void> | undefined {
+export async function deactivate(): Promise<void> {
   if (client) {
     await client.stop();
   }
@@ -141,18 +141,10 @@ async function setupLanguageServer(
   setupFileMessaging(context, client, fileHandler);
 }
 
-function sendWorkerConfig() {
+function sendWorkerConfig(worker: WorkerConnectionNode) {
   worker.sendRequest('malloy/config', {
     config: vscode.workspace.getConfiguration(
       'malloy'
     ) as unknown as MalloyConfig,
   });
-}
-
-function setupWorker(
-  context: vscode.ExtensionContext,
-  fileHandler: FileHandler
-): void {
-  worker = new WorkerConnectionNode(context, fileHandler);
-  sendWorkerConfig();
 }

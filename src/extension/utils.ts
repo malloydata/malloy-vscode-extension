@@ -35,7 +35,9 @@ import {CellData, FileHandler} from '../common/types';
  */
 const fixNotebookUri = (uri: vscode.Uri) => {
   if (uri.scheme === 'vscode-notebook-cell') {
-    const {scheme} = vscode.workspace.workspaceFolders[0].uri;
+    const {scheme} = vscode.workspace.workspaceFolders?.[0].uri || {
+      scheme: 'file:',
+    };
     const {authority, path, query} = uri;
     uri = vscode.Uri.from({
       scheme,
@@ -74,16 +76,14 @@ export async function fetchFile(uriString: string): Promise<string> {
   }
 }
 
-export async function fetchBinaryFile(
-  uriString: string
-): Promise<Uint8Array | undefined> {
+export async function fetchBinaryFile(uriString: string): Promise<Uint8Array> {
   const uri = fixNotebookUri(vscode.Uri.parse(uriString));
   try {
     return await vscode.workspace.fs.readFile(uri);
   } catch (error) {
     console.error(error);
   }
-  return undefined;
+  throw new Error(`fetchBinaryFile: Unable to fetch '${uriString}'`);
 }
 
 export async function fetchCellData(uriString: string): Promise<CellData[]> {

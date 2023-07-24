@@ -40,6 +40,7 @@ import {createRunnable} from './create_runnable';
 import {ConnectionManager} from '../common/connection_manager';
 import {FileHandler} from '../common/types';
 import {ProgressType} from 'vscode-jsonrpc';
+import {errorMessage} from '../common/errors';
 
 interface QueryEntry {
   panelId: string;
@@ -119,7 +120,7 @@ export const runQuery = async (
     } catch (error) {
       sendMessage({
         status: QueryRunStatus.Error,
-        error: error.message || 'Something went wrong',
+        error: errorMessage(error),
       });
       return;
     }
@@ -153,7 +154,7 @@ export const runQuery = async (
   } catch (error) {
     sendMessage({
       status: QueryRunStatus.Error,
-      error: error.message,
+      error: errorMessage(error),
     });
   } finally {
     delete runningQueries[panelId];
