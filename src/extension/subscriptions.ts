@@ -38,8 +38,6 @@ import {
 import {malloyLog} from './logger';
 import {trackModelLoad, trackModelSave} from './telemetry';
 import {HelpViewProvider} from './webviews/help_view';
-import {ConnectionManager} from '../common/connection_manager';
-import {URLReader} from '@malloydata/malloy';
 import {v4 as uuid} from 'uuid';
 
 import {MALLOY_EXTENSION_STATE} from './state';
