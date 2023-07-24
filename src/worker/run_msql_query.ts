@@ -232,9 +232,8 @@ export const runMSQLQuery = async (
         });
 
         for (const malloyQuery of statement.embeddedMalloyQueries) {
-          // TODO assumes modelMaterializer exists, because >>>malloy always happens before >>>sql with embedded malloy
           if (!modelMaterializer) {
-            continue;
+            throw new Error('Missing Model definition');
           }
           try {
             const runnable = modelMaterializer.loadQuery(
