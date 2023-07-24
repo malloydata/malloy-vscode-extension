@@ -110,10 +110,17 @@ const runMSQLCell = async (
     allCells
   );
 
+  let connectionName = currentCell.metadata?.['connection'];
+  for (const cell of allCells) {
+    const match = /^-- connection:(?<connectionName>.*)/.exec(cell.text);
+    if (match && match.groups) {
+      connectionName = match.groups['connectionName'];
+    }
+  }
+
   const parsed = MalloySQLParser.parse(
-    // TODO: Fix connection configuration
     // TODO: Fix pegjs parser to not require demark line
-    `>>>sql connection:${currentCell.metadata['connection']}\n${currentCell.text}`,
+    `>>>sql connection:${connectionName}\n${currentCell.text}`,
     currentCell.uri
   );
 
