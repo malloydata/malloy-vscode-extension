@@ -28,8 +28,8 @@ import {
   EvaluatedMSQLStatementType,
   ExecutedMSQLStatementResultType,
   MSQLMessageStatus,
-  MSQLQueryPanelMessage,
   MSQLQueryRunStatus,
+  QueryMessageType,
 } from '../../../common/message_types';
 import {Spinner} from '../components';
 import {useQueryVSCodeContext} from './msql_query_vscode_context';
@@ -67,7 +67,7 @@ export const App: React.FC = () => {
   const vscode = useQueryVSCodeContext();
 
   useEffect(() => {
-    vscode.postMessage({type: 'app-ready'} as MSQLQueryPanelMessage);
+    vscode.postMessage({type: QueryMessageType.AppReady});
   }, []);
 
   const themeCallback = useCallback(() => {
