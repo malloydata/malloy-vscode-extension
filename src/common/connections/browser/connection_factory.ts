@@ -57,7 +57,7 @@ export class WebConnectionFactory implements ConnectionFactory {
   ): Promise<TestableConnection> {
     const {useCache, workingDirectory} = configOptions;
     const cacheKey = `${connectionConfig.name}::${workingDirectory}`;
-    let connection: TestableConnection;
+    let connection: TestableConnection | undefined;
     if (useCache && this.connectionCache[cacheKey]) {
       return this.connectionCache[cacheKey];
     }
@@ -78,7 +78,7 @@ export class WebConnectionFactory implements ConnectionFactory {
         }
         break;
     }
-    if (useCache) {
+    if (useCache && connection) {
       this.connectionCache[cacheKey] = connection;
     }
     if (!connection) {

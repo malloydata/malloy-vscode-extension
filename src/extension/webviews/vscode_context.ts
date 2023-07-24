@@ -25,7 +25,9 @@ import React, {useContext} from 'react';
 import {WebviewApi} from './vscode_wrapper';
 
 export function makeVSCodeContext<S, M>(): React.Context<WebviewApi<S, M>> {
-  return React.createContext<WebviewApi<S, M>>(undefined);
+  return React.createContext<WebviewApi<S, M>>(
+    undefined as unknown as WebviewApi<S, M>
+  );
 }
 
 export function makeUseVSCodeContext<S, M>(

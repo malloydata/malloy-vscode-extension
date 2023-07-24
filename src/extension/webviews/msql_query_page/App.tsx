@@ -131,7 +131,7 @@ export const App: React.FC = () => {
         case MSQLQueryRunStatus.Done:
           setWarning(undefined);
           setStatus(Status.Rendering);
-          setShowOnlySQL(message.showSQLOnly);
+          setShowOnlySQL(message.showSQLOnly || false);
           setResultKind(
             message.showSQLOnly ? ResultKind.SQL : ResultKind.RESULTS
           );
@@ -257,11 +257,12 @@ export const App: React.FC = () => {
             return (
               <ResultsContainer key={result.statementIndex}>
                 {(result.type === EvaluatedMSQLStatementType.Executed ||
-                  result.type === EvaluatedMSQLStatementType.Compiled) && (
-                  <div style={{margin: '10px'}}>
-                    <DOMElement element={result.renderedHTML} />
-                  </div>
-                )}
+                  result.type === EvaluatedMSQLStatementType.Compiled) &&
+                  result.renderedHTML && (
+                    <div style={{margin: '10px'}}>
+                      <DOMElement element={result.renderedHTML} />
+                    </div>
+                  )}
                 {result.type === EvaluatedMSQLStatementType.ExecutionError && (
                   <Error multiline={true}>{result.prettyError}</Error>
                 )}

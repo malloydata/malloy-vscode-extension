@@ -36,8 +36,9 @@ import {
   MSQLQueryRunStatus,
 } from '../common/message_types';
 import {ConnectionManager} from '../common/connection_manager';
-import {FileHandler, StructDefResult} from '../common/types';
+import {FileHandler, StructDefSuccess} from '../common/types';
 import {
+  MalloyError,
   MalloyQueryData,
   ModelMaterializer,
   Result,
@@ -46,6 +47,7 @@ import {
 } from '@malloydata/malloy';
 import {MalloySQLStatementType, MalloySQLParser} from '@malloydata/malloy-sql';
 import {ProgressType} from 'vscode-jsonrpc';
+import {errorMessage} from '../common/errors';
 
 interface QueryEntry {
   panelId: string;
@@ -60,8 +62,8 @@ const runningQueries: Record<string, QueryEntry> = {};
 // so wrap the fileHandler to pretend the on-the-fly models have a URI
 class VirtualURIFileHandler implements URLReader {
   private uriReader: URLReader;
-  private url: URL;
-  private contents: string;
+  private url: URL | null = null;
+  private contents: string | null = null;
 
   constructor(uriReader: URLReader) {
     this.uriReader = uriReader;
@@ -73,8 +75,8 @@ class VirtualURIFileHandler implements URLReader {
   }
 
   async readURL(uri: URL): Promise<string> {
-    if (uri.toString() === this.url.toString()) {
-      return this.contents;
+    if (uri.toString() === this.url?.toString()) {
+      return this.contents || '';
     } else {
       const contents = await this.uriReader.readURL(uri);
       return contents;
@@ -102,7 +104,7 @@ export const runMSQLQuery = async (
 
   runningQueries[panelId] = {panelId, canceled: false};
   const virturlURIFileHandler = new VirtualURIFileHandler(fileHandler);
-  let modelMaterializer: ModelMaterializer;
+  let modelMaterializer: ModelMaterializer | null = null;
 
   try {
     const parse = MalloySQLParser.parse(malloySQLQuery, panelId);
@@ -132,7 +134,7 @@ export const runMSQLQuery = async (
         continue;
 
       let compiledStatement = statement.text;
-      const compileErrors = [];
+      const compileErrors: MalloyError[] = [];
 
       sendMessage({
         status: MSQLQueryRunStatus.Compiling,
@@ -187,7 +189,7 @@ export const runMSQLQuery = async (
               } catch (error) {
                 evaluatedStatements.push({
                   type: EvaluatedMSQLStatementType.ExecutionError,
-                  error: error.message,
+                  error: errorMessage(error),
                   compiledStatement,
                   statementIndex: i,
                   statementFirstLine: statement.range.start.line,
@@ -208,11 +210,15 @@ export const runMSQLQuery = async (
             // else if (abortOnExecutionError) break;
           }
         } catch (error) {
-          evaluatedStatements.push({
-            type: EvaluatedMSQLStatementType.CompileError,
-            errors: error,
-            statementIndex: i,
-          });
+          if (error instanceof MalloyError) {
+            evaluatedStatements.push({
+              type: EvaluatedMSQLStatementType.CompileError,
+              errors: [error],
+              statementIndex: i,
+            });
+          } else {
+            throw error;
+          }
         }
       } else if (statement.type === MalloySQLStatementType.SQL) {
         sendMessage({
@@ -222,8 +228,11 @@ export const runMSQLQuery = async (
         });
 
         for (const malloyQuery of statement.embeddedMalloyQueries) {
+          // TODO assumes modelMaterializer exists, because >>>malloy always happens before >>>sql with embedded malloy
+          if (!modelMaterializer) {
+            continue;
+          }
           try {
-            // TODO assumes modelMaterializer exists, because >>>malloy always happens before >>>sql with embedded malloy
             const runnable = modelMaterializer.loadQuery(
               `\nquery: ${malloyQuery.query}`
             );
@@ -234,7 +243,11 @@ export const runMSQLQuery = async (
               `(${generatedSQL})`
             );
           } catch (e) {
-            compileErrors.push(e);
+            if (e instanceof MalloyError) {
+              compileErrors.push(e);
+            } else {
+              throw e;
+            }
           }
         }
 
@@ -263,7 +276,7 @@ export const runMSQLQuery = async (
 
           try {
             const connection = await connectionLookup.lookupConnection(
-              statement.config.connection
+              statement.config?.connection || 'unknown'
             );
             const sqlResults = await connection.runSQL(compiledStatement);
 
@@ -291,10 +304,10 @@ export const runMSQLQuery = async (
                   type: EvaluatedMSQLStatementType.Executed,
                   resultType: ExecutedMSQLStatementResultType.WithStructdef,
                   results: fakeMalloyResult(
-                    structDefAttempt,
+                    structDefAttempt as StructDefSuccess,
                     compiledStatement,
                     sqlResults,
-                    statement.config.connection
+                    statement.config?.connection || 'unknown'
                   ).toJSON(),
                   compiledStatement,
                   statementIndex: i,
@@ -302,7 +315,7 @@ export const runMSQLQuery = async (
           } catch (error) {
             evaluatedStatements.push({
               type: EvaluatedMSQLStatementType.ExecutionError,
-              error: error.message,
+              error: errorMessage(error),
               compiledStatement,
               statementIndex: i,
               statementFirstLine: statement.range.start.line,
@@ -325,7 +338,7 @@ export const runMSQLQuery = async (
   } catch (error) {
     sendMessage({
       status: MSQLQueryRunStatus.Error,
-      error: error.message,
+      error: errorMessage(error),
     });
   }
 };
@@ -337,7 +350,7 @@ export const cancelMSQLQuery = ({panelId}: MessageCancel): void => {
 };
 
 const fakeMalloyResult = (
-  structDefResult: StructDefResult,
+  structDefResult: StructDefSuccess,
   sql: string,
   sqlResult: MalloyQueryData,
   connectionName: string

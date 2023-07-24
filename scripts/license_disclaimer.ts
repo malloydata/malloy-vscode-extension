@@ -23,6 +23,7 @@
 
 import path from 'path';
 import {readPackageJson} from './utils/licenses';
+import {errorMessage} from './utils/errors';
 import fs from 'fs';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -127,7 +128,7 @@ function doDependencies(nodeModulesPath: string, packageJson: any): void {
         seen[dependency] = true;
         doDependencies(nodeModulesPath, pkg);
       } catch (error) {
-        console.warn('Could not read package.json', error.message);
+        console.warn('Could not read package.json', errorMessage(error));
       }
     }
   }

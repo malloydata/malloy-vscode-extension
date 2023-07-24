@@ -84,12 +84,14 @@ export interface FileHandler extends URLReader {
   fetchCellData(uri: string): Promise<CellData[]>;
 }
 
-export type StructDefResult =
-  | {
-      structDef: StructDef;
-      error?: undefined;
-    }
-  | {
-      error: string;
-      structDef?: undefined;
-    };
+export interface StructDefSuccess {
+  structDef: StructDef;
+  error?: undefined;
+}
+
+export interface StructDefFailure {
+  error: string;
+  structDef?: undefined;
+}
+
+export type StructDefResult = StructDefSuccess | StructDefFailure;

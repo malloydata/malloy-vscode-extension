@@ -62,7 +62,7 @@ export class DesktopConnectionFactory implements ConnectionFactory {
     const {useCache, workingDirectory} = configOptions;
     const cacheKey = `${connectionConfig.name}::${workingDirectory}`;
 
-    let connection: TestableConnection;
+    let connection: TestableConnection | undefined;
     if (useCache && this.connectionCache[cacheKey]) {
       return this.connectionCache[cacheKey];
     }
@@ -88,8 +88,13 @@ export class DesktopConnectionFactory implements ConnectionFactory {
         break;
       }
     }
-    if (useCache) {
+    if (useCache && connection) {
       this.connectionCache[cacheKey] = connection;
+    }
+    if (!connection) {
+      throw new Error(
+        `Unsupported connection back end "${connectionConfig.backend}"`
+      );
     }
 
     return connection;

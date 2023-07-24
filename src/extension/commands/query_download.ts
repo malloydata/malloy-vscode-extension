@@ -36,6 +36,7 @@ import {
 import {MALLOY_EXTENSION_STATE} from '../state';
 import {Disposable} from 'vscode-jsonrpc';
 import {WorkerConnection} from '../worker_connection';
+import {errorMessage} from '../../common/errors';
 
 /**
  * VSCode doesn't support streaming writes, so fake it.
@@ -170,7 +171,7 @@ export async function queryDownload(
         }
       } catch (error) {
         vscode.window.showErrorMessage(
-          `Malloy Download (${name}): Error\n${error.message}`
+          `Malloy Download (${name}): Error\n${errorMessage(error)}`
         );
       }
     }
@@ -181,7 +182,7 @@ async function dedupeFileName(uri: vscode.Uri, name: string, ext: string) {
   let index = 0;
   let attempt = Utils.joinPath(uri, `${name}.${ext}`);
   try {
-    let stat = await vscode.workspace.fs.stat(attempt);
+    let stat: vscode.FileStat | null = await vscode.workspace.fs.stat(attempt);
     while (stat) {
       attempt = Utils.joinPath(uri, `${name} ${++index}.${ext}`);
       try {

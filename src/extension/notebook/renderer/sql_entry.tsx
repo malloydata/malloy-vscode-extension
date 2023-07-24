@@ -38,6 +38,9 @@ export const activate: ActivationFunction = () => {
         shadow.append(root);
       }
       const root = shadow.querySelector<HTMLElement>('#root');
+      if (!root) {
+        throw new Error('Element #root not found');
+      }
       ReactDOM.render(
         <StyleSheetManager target={root}>
           <SqlRenderer results={info.json()} />

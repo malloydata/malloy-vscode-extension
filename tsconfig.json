@@ -10,7 +10,8 @@
     "target": "es2019",
     "lib": ["es2020"],
     "noPropertyAccessFromIndexSignature": true,
-    "noImplicitAny": true
+    "noImplicitAny": true,
+    "strict": true
   },
   "include": ["./src", "src/malloy.tmGrammar.json"],
   "exclude": ["node_modules", ".vscode-test", ".vscode-test-web", "dist"]

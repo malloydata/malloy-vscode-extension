@@ -25,6 +25,7 @@ import * as vscode from 'vscode';
 import {newUntitledNotebookCommand} from '../commands/new_untitled_notebook';
 import {runMalloyQuery} from '../commands/run_query_utils';
 import {WorkerConnection} from '../worker_connection';
+import {errorMessage} from '../../common/errors';
 
 const NO_QUERY = 'Model has no queries.';
 
@@ -32,6 +33,9 @@ export function activateNotebookController(
   context: vscode.ExtensionContext,
   worker: WorkerConnection
 ) {
+  if (!vscode.notebooks) {
+    return;
+  }
   context.subscriptions.push(new MalloyController(worker));
 
   context.subscriptions.push(
@@ -52,9 +56,6 @@ class MalloyController {
   private _executionOrder = 0;
 
   constructor(private worker: WorkerConnection) {
-    if (!vscode.notebooks) {
-      return;
-    }
     this._controller = vscode.notebooks.createNotebookController(
       this.controllerId,
       this.notebookType,
@@ -85,7 +86,7 @@ class MalloyController {
     execution.start(Date.now());
 
     try {
-      const results = await runMalloyQuery(
+      const jsonResults = await runMalloyQuery(
         this.worker,
         {type: 'file', index: -1, file: cell.document},
         cell.document.uri.toString(),
@@ -99,27 +100,33 @@ class MalloyController {
       if (style) {
         meta = {renderer: style[1]};
       }
-      const jsonResults = results;
-      const output = new vscode.NotebookCellOutput(
-        [
-          vscode.NotebookCellOutputItem.json(
-            jsonResults,
-            'x-application/malloy-results'
-          ),
-          vscode.NotebookCellOutputItem.json(jsonResults.queryResult.result),
-        ],
-        meta
-      );
+      const output: vscode.NotebookCellOutput[] = [];
+      if (jsonResults) {
+        output.push(
+          new vscode.NotebookCellOutput(
+            [
+              vscode.NotebookCellOutputItem.json(
+                jsonResults,
+                'x-application/malloy-results'
+              ),
+              vscode.NotebookCellOutputItem.json(
+                jsonResults.queryResult.result
+              ),
+            ],
+            meta
+          )
+        );
+      }
 
-      execution.replaceOutput([output]);
+      execution.replaceOutput(output);
       execution.end(true, Date.now());
     } catch (error) {
       execution.replaceOutput([
         new vscode.NotebookCellOutput([
-          vscode.NotebookCellOutputItem.text(error.message),
+          vscode.NotebookCellOutputItem.text(errorMessage(error)),
         ]),
       ]);
-      execution.end(error.message === NO_QUERY, Date.now());
+      execution.end(errorMessage(error) === NO_QUERY, Date.now());
     }
   }
 

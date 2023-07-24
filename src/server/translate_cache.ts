@@ -51,7 +51,7 @@ export class TranslateCache implements TranslateCache {
       'malloy/fetchModel',
       async (event: BuildModelRequest): Promise<SerializedExplore[]> => {
         const model = await this.translateWithCache(event.uri, event.version);
-        return model.explores.map(explore => explore.toJSON());
+        return model?.explores.map(explore => explore.toJSON()) || [];
       }
     );
   }
@@ -81,7 +81,7 @@ export class TranslateCache implements TranslateCache {
   async translateWithCache(
     uri: string,
     currentVersion: number
-  ): Promise<Model> {
+  ): Promise<Model | undefined> {
     const entry = this.cache.get(uri);
     if (entry && entry.version === currentVersion) {
       return entry.model;
@@ -93,7 +93,7 @@ export class TranslateCache implements TranslateCache {
         uri
       );
 
-      let malloyStatements = '\n'.repeat(parse.initialCommentsLineCount);
+      let malloyStatements = '\n'.repeat(parse.initialCommentsLineCount || 0);
       for (const statement of parse.statements) {
         malloyStatements += '\n';
         if (statement.type === MalloySQLStatementType.MALLOY) {
@@ -133,25 +133,27 @@ export class TranslateCache implements TranslateCache {
             }
 
             e.problems.forEach(log => {
-              log.at.url = uri;
+              if (log.at) {
+                log.at.url = uri;
 
-              // if the embedded malloy is on the same line as SQL, pad character start (and maybe end)
-              // "query:\n" adds a line, so we subtract the line here
-              const embeddedStart: number = log.at.range.start.line - 1;
-              if (embeddedStart === 0) {
-                log.at.range.start.character +=
-                  malloyQuery.malloyRange.start.character;
-                if (log.at.range.start.line === log.at.range.end.line)
-                  log.at.range.end.character +=
+                // if the embedded malloy is on the same line as SQL, pad character start (and maybe end)
+                // "query:\n" adds a line, so we subtract the line here
+                const embeddedStart: number = log.at.range.start.line - 1;
+                if (embeddedStart === 0) {
+                  log.at.range.start.character +=
                     malloyQuery.malloyRange.start.character;
-              }
+                  if (log.at.range.start.line === log.at.range.end.line)
+                    log.at.range.end.character +=
+                      malloyQuery.malloyRange.start.character;
+                }
 
-              const lineDifference =
-                log.at.range.end.line - log.at.range.start.line;
-              log.at.range.start.line =
-                malloyQuery.range.start.line + embeddedStart;
-              log.at.range.end.line =
-                malloyQuery.range.start.line + embeddedStart + lineDifference;
+                const lineDifference =
+                  log.at.range.end.line - log.at.range.start.line;
+                log.at.range.start.line =
+                  malloyQuery.range.start.line + embeddedStart;
+                log.at.range.end.line =
+                  malloyQuery.range.start.line + embeddedStart + lineDifference;
+              }
             });
 
             throw e;
@@ -169,7 +171,7 @@ export class TranslateCache implements TranslateCache {
         this.connectionManager.getConnectionLookup(new URL(uri))
       );
 
-      let model: Model;
+      let model: Model | undefined;
 
       if (uri.startsWith('vscode-notebook-cell:')) {
         const allCells = await this.getCellData(new URL(uri));
@@ -182,7 +184,7 @@ export class TranslateCache implements TranslateCache {
             mm = runtime.loadModel(url);
           }
         }
-        model = await mm.getModel();
+        model = await mm?.getModel();
       } else {
         model = await runtime.getModel(new URL(uri));
         this.cache.set(uri, {version: currentVersion, model});

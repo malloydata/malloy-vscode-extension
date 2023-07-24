@@ -26,6 +26,8 @@ import React from 'react';
 import {StyleSheetManager} from 'styled-components';
 import {ActivationFunction} from 'vscode-notebook-renderer';
 import {MalloyRenderer} from './MalloyRenderer';
+// TODO: export RenderDef from @malloydata/render
+import {RenderDef} from '@malloydata/render/dist/data_styles';
 
 export const activate: ActivationFunction = () => {
   return {
@@ -38,9 +40,15 @@ export const activate: ActivationFunction = () => {
         shadow.append(root);
       }
       const root = shadow.querySelector<HTMLElement>('#root');
+      if (!root) {
+        throw new Error('Element #root not found');
+      }
       ReactDOM.render(
         <StyleSheetManager target={root}>
-          <MalloyRenderer results={info.json()} meta={info.metadata} />
+          <MalloyRenderer
+            results={info.json()}
+            meta={info.metadata as RenderDef}
+          />
         </StyleSheetManager>,
         shadow.querySelector('#root')
       );

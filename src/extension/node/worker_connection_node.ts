@@ -28,11 +28,13 @@ import * as vscode from 'vscode';
 import * as rpc from 'vscode-jsonrpc/node';
 import {FileHandler} from '../../common/types';
 import {WorkerConnection} from '../worker_connection';
+import {GenericConnection} from '../../common/worker_message_types';
 
 const DEFAULT_RESTART_SECONDS = 1;
 
 export class WorkerConnectionNode extends WorkerConnection {
   worker!: child_process.ChildProcess;
+  _connection!: GenericConnection;
 
   constructor(context: vscode.ExtensionContext, fileHandler: FileHandler) {
     super(context, fileHandler);
@@ -72,7 +74,7 @@ export class WorkerConnectionNode extends WorkerConnection {
         })
         .on('error', console.error)
         .on('exit', status => {
-          connection.dispose();
+          connection?.dispose();
           console.error(`Worker exited with ${status}`);
           if (status !== 0) {
             console.info(`Restarting in ${DEFAULT_RESTART_SECONDS} seconds`);
@@ -82,8 +84,8 @@ export class WorkerConnectionNode extends WorkerConnection {
           }
         });
 
-      this.worker.stdout.pipe(stdoutStream);
-      this.worker.stderr.pipe(stderrStream);
+      this.worker.stdout?.pipe(stdoutStream);
+      this.worker.stderr?.pipe(stderrStream);
 
       connection = rpc.createMessageConnection(
         new rpc.IPCMessageReader(this.worker),
@@ -91,11 +93,15 @@ export class WorkerConnectionNode extends WorkerConnection {
       );
       connection.listen();
       context.subscriptions.push(connection);
-      this.connection = connection;
+      this._connection = connection;
 
       this.subscribe();
     };
     startWorker();
+  }
+
+  get connection() {
+    return this._connection;
   }
 
   dispose(): void {

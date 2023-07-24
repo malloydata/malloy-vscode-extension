@@ -23,12 +23,13 @@
 
 import {URLReader} from '@malloydata/malloy';
 import {DataStyles} from '@malloydata/render';
+import {errorMessage} from '../common/errors';
 
 export function compileDataStyles(styles: string): DataStyles {
   try {
     return JSON.parse(styles) as DataStyles;
   } catch (error) {
-    throw new Error(`Error compiling data styles: ${error.message}`);
+    throw new Error(`Error compiling data styles: ${errorMessage(error)}`);
   }
 }
 

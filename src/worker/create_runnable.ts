@@ -51,6 +51,9 @@ export const createRunnable = async (
   } else {
     mm = runtime.loadModel(queryFileURL);
   }
+  if (!mm) {
+    throw new Error('No Malloy to run');
+  }
   switch (query.type) {
     case 'string':
       runnable = mm.loadQuery(query.text);
