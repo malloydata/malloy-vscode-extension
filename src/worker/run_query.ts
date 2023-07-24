@@ -48,16 +48,6 @@ interface QueryEntry {
 
 const runningQueries: Record<string, QueryEntry> = {};
 
-const sendMessage = (
-  messageHandler: WorkerMessageHandler,
-  message: QueryPanelMessage,
-  panelId: string
-) => {
-  const progress = new ProgressType<QueryMessageStatus>();
-
-  messageHandler.sendProgress(progress, panelId, message);
-};
-
 export const runQuery = async (
   messageHandler: WorkerMessageHandler,
   fileHandler: FileHandler,
@@ -65,6 +55,12 @@ export const runQuery = async (
   isBrowser: boolean,
   {query, panelId, showSQLOnly}: MessageRun
 ): Promise<void> => {
+  const sendMessage = (message: QueryPanelMessage) => {
+    const progress = new ProgressType<QueryMessageStatus>();
+
+    messageHandler.sendProgress(progress, panelId, message);
+  };
+
   const files = new HackyDataStylesAccumulator(fileHandler);
   const url = new URL(panelId);
 
@@ -78,13 +74,9 @@ export const runQuery = async (
 
     const allBegin = Date.now();
     const compileBegin = allBegin;
-    sendMessage(
-      messageHandler,
-      {
-        status: QueryRunStatus.Compiling,
-      },
-      panelId
-    );
+    sendMessage({
+      status: QueryRunStatus.Compiling,
+    });
 
     let dataStyles: DataStyles = {};
     let sql: string;
@@ -106,54 +98,38 @@ export const runQuery = async (
       if (runningQueries[panelId].canceled) return;
       messageHandler.log(sql);
 
-      sendMessage(
-        messageHandler,
-        {
-          status: QueryRunStatus.Compiled,
-          sql,
-          dialect,
-          showSQLOnly,
-        },
-        panelId
-      );
+      sendMessage({
+        status: QueryRunStatus.Compiled,
+        sql,
+        dialect,
+        showSQLOnly,
+      });
 
       if (showSQLOnly) {
         delete runningQueries[panelId];
         const estimatedRunStats = await runnable.estimateQueryCost();
-        sendMessage(
-          messageHandler,
-          {
-            status: QueryRunStatus.EstimatedCost,
-            queryCostBytes: estimatedRunStats?.queryCostBytes,
-          },
-          panelId
-        );
+        sendMessage({
+          status: QueryRunStatus.EstimatedCost,
+          queryCostBytes: estimatedRunStats?.queryCostBytes,
+        });
         return;
       }
 
       dataStyles = {...dataStyles, ...files.getHackyAccumulatedDataStyles()};
     } catch (error) {
-      sendMessage(
-        messageHandler,
-        {
-          status: QueryRunStatus.Error,
-          error: error.message || 'Something went wrong',
-        },
-        panelId
-      );
+      sendMessage({
+        status: QueryRunStatus.Error,
+        error: error.message || 'Something went wrong',
+      });
       return;
     }
 
     const runBegin = Date.now();
-    sendMessage(
-      messageHandler,
-      {
-        status: QueryRunStatus.Running,
-        sql,
-        dialect,
-      },
-      panelId
-    );
+    sendMessage({
+      status: QueryRunStatus.Running,
+      sql,
+      dialect,
+    });
     const queryResult = await runnable.run({rowLimit});
     if (runningQueries[panelId].canceled) return;
 
@@ -163,30 +139,22 @@ export const runQuery = async (
     const runTime = ellapsedTime(runBegin, runFinish);
     const totalTime = ellapsedTime(allBegin, runFinish);
 
-    sendMessage(
-      messageHandler,
-      {
-        status: QueryRunStatus.Done,
-        resultJson: queryResult.toJSON(),
-        dataStyles,
-        canDownloadStream: !isBrowser,
-        stats: {
-          compileTime: compileTime,
-          runTime: runTime,
-          totalTime: totalTime,
-        },
+    sendMessage({
+      status: QueryRunStatus.Done,
+      resultJson: queryResult.toJSON(),
+      dataStyles,
+      canDownloadStream: !isBrowser,
+      stats: {
+        compileTime,
+        runTime,
+        totalTime,
       },
-      panelId
-    );
+    });
   } catch (error) {
-    sendMessage(
-      messageHandler,
-      {
-        status: QueryRunStatus.Error,
-        error: error.message,
-      },
-      panelId
-    );
+    sendMessage({
+      status: QueryRunStatus.Error,
+      error: error.message,
+    });
   } finally {
     delete runningQueries[panelId];
   }
