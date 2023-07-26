@@ -22,16 +22,22 @@
  */
 
 import {TextDocument} from 'vscode-languageserver-textdocument';
-import {Malloy} from '@malloydata/malloy';
-import {MalloySQLParse, MalloySQLParser} from '@malloydata/malloy-sql';
-
-// TODO(whscullin): Export Parse from Malloy
-type Parse = ReturnType<typeof Malloy.parse>;
+import {Malloy, Parse} from '@malloydata/malloy';
+import {
+  MalloySQLParse,
+  MalloySQLParser,
+  MalloySQLSQLParse,
+  MalloySQLSQLParser,
+} from '@malloydata/malloy-sql';
 
 const PARSE_CACHE = new Map<string, {parsed: Parse; version: number}>();
 const MALLOYSQL_PARSE_CACHE = new Map<
   string,
   {parsed: MalloySQLParse; version: number}
+>();
+const MALLOYSQLSQL_PARSE_CACHE = new Map<
+  string,
+  {parsed: MalloySQLSQLParse; version: number}
 >();
 
 export const parseWithCache = (document: TextDocument): Parse => {
@@ -57,12 +63,22 @@ export const parseMalloySQLWithCache = (
     return entry.parsed;
   }
 
-  let text = document.getText();
-  // TODO: Fix pegjs parser to not require demark line
-  if (!text.startsWith('>>>')) {
-    text = '>>>sql connection:fake\n' + text;
-  }
-  const parsed: MalloySQLParse = MalloySQLParser.parse(text, uri);
+  const parsed = MalloySQLParser.parse(document.getText(), uri);
   MALLOYSQL_PARSE_CACHE.set(uri, {parsed, version});
+  return parsed;
+};
+
+export const parseMalloySQLSQLWithCache = (
+  document: TextDocument
+): MalloySQLSQLParse => {
+  const {version, uri} = document;
+
+  const entry = MALLOYSQLSQL_PARSE_CACHE.get(uri);
+  if (entry && entry.version === version) {
+    return entry.parsed;
+  }
+
+  const parsed = MalloySQLSQLParser.parse(document.getText(), uri);
+  MALLOYSQLSQL_PARSE_CACHE.set(uri, {parsed, version});
   return parsed;
 };

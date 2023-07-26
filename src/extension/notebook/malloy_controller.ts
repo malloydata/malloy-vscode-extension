@@ -103,7 +103,7 @@ class MalloyController {
       const output: vscode.NotebookCellOutput[] = [];
       if (jsonResults) {
         const items: vscode.NotebookCellOutputItem[] = [];
-        if (jsonResults.modelDef.name !== 'empty_model') {
+        if (jsonResults.queryResult.structs.length) {
           items.push(
             vscode.NotebookCellOutputItem.json(
               jsonResults,

@@ -25,7 +25,10 @@ import {Diagnostic, DiagnosticSeverity} from 'vscode-languageserver';
 import {LogMessage, MalloyError} from '@malloydata/malloy';
 import {TextDocument} from 'vscode-languageserver-textdocument';
 import {TranslateCache} from '../translate_cache';
-import {parseMalloySQLWithCache} from '../parse_cache';
+import {
+  parseMalloySQLWithCache,
+  parseMalloySQLSQLWithCache,
+} from '../parse_cache';
 import {errorMessage} from '../../common/errors';
 
 const DEFAULT_RANGE = {
@@ -45,8 +48,13 @@ export async function getMalloyDiagnostics(
   const problems: LogMessage[] = [];
 
   if (document.languageId === 'malloy-sql') {
-    const parse = parseMalloySQLWithCache(document);
-    if (parse.errors) parse.errors.forEach(e => problems.push(...e.problems));
+    if (document.uri.startsWith('vscode-notebook-cell:')) {
+      const {errors} = parseMalloySQLSQLWithCache(document);
+      if (errors) errors.forEach(e => problems.push(...e.problems));
+    } else {
+      const {errors} = parseMalloySQLWithCache(document);
+      if (errors) errors.forEach(e => problems.push(...e.problems));
+    }
   }
 
   try {

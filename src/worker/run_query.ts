@@ -22,12 +22,13 @@
  */
 
 import {
+  MalloyError,
   MalloyQueryData,
   QueryMaterializer,
   Result,
   Runtime,
 } from '@malloydata/malloy';
-import {MalloySQLParser, MalloySQLSQLStatement} from '@malloydata/malloy-sql';
+import {MalloySQLSQLParser} from '@malloydata/malloy-sql';
 import {DataStyles} from '@malloydata/render';
 
 import {HackyDataStylesAccumulator} from './data_styles';
@@ -119,29 +120,57 @@ const runMSQLCell = async (
     }
   }
 
-  const parsed = MalloySQLParser.parse(
-    // TODO: Fix pegjs parser to not require demark line
-    `>>>sql connection:${connectionName}\n${currentCell.text}`,
-    currentCell.uri
-  );
+  const parsed = MalloySQLSQLParser.parse(currentCell.text, currentCell.uri);
 
-  const statement = parsed.statements[0] as MalloySQLSQLStatement;
-  let compiledStatement = statement.text;
+  let compiledStatement = currentCell.text;
   const dialect = 'unknown';
 
-  for (const malloyQuery of statement.embeddedMalloyQueries) {
+  for (const malloyQuery of parsed.embeddedMalloyQueries) {
     if (!modelMaterializer) {
       throw new Error('Missing model definition');
     }
-    const runnable = modelMaterializer.loadQuery(
-      `\nquery: ${malloyQuery.query}`
-    );
-    const generatedSQL = await runnable.getSQL();
+    try {
+      const runnable = modelMaterializer.loadQuery(
+        `\nquery: ${malloyQuery.query}`
+      );
+      const generatedSQL = await runnable.getSQL();
 
-    compiledStatement = compiledStatement.replace(
-      malloyQuery.text,
-      `(${generatedSQL})`
-    );
+      compiledStatement = compiledStatement.replace(
+        malloyQuery.text,
+        `(${generatedSQL})`
+      );
+    } catch (e) {
+      if (e instanceof MalloyError) {
+        let message = 'Error:';
+        e.problems.forEach(log => {
+          if (log.at) {
+            if (log.at.url === 'internal://internal.malloy') {
+              log.at.url = panelId;
+            } else if (log.at.url !== panelId) {
+              return;
+            }
+            const embeddedStart: number = log.at.range.start.line;
+            if (embeddedStart === 0) {
+              log.at.range.start.character +=
+                malloyQuery.malloyRange.start.character;
+              if (log.at.range.start.line === log.at.range.end.line)
+                log.at.range.end.character +=
+                  malloyQuery.malloyRange.start.character;
+            }
+
+            const lineDifference =
+              log.at.range.end.line - log.at.range.start.line;
+            log.at.range.start.line =
+              malloyQuery.range.start.line + embeddedStart;
+            log.at.range.end.line =
+              malloyQuery.range.start.line + embeddedStart + lineDifference;
+          }
+          message += `\n${log.message} at line ${log.at?.range.start.line}`;
+        });
+        throw new MalloyError(message, e.problems);
+      }
+      throw e;
+    }
   }
 
   const dataStyles: DataStyles = {};

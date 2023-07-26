@@ -35,6 +35,7 @@ import {ConnectionManager} from '../common/connection_manager';
 import {BuildModelRequest, CellData} from '../common/types';
 import {
   MalloySQLParser,
+  MalloySQLSQLParser,
   MalloySQLSQLStatement,
   MalloySQLStatementType,
 } from '@malloydata/malloy-sql';
@@ -117,15 +118,9 @@ export class TranslateCache implements TranslateCache {
     }
 
     if (languageId === 'malloy-sql') {
-      let text = await this.getDocumentText(this.documents, new URL(uri));
-      // TODO: Fix pegjs parser to not require demark line
-      if (!text.startsWith('>>>')) {
-        text = '>>>sql connection:fake\n' + text;
-      }
-      const parse = MalloySQLParser.parse(text, uri);
-
-      if (uri.startsWith('vscode-notebook-cell')) {
-        const statement = parse.statements[0] as MalloySQLSQLStatement;
+      const text = await this.getDocumentText(this.documents, new URL(uri));
+      if (uri.startsWith('vscode-notebook-cell:')) {
+        const parse = MalloySQLSQLParser.parse(text, uri);
         const files = {
           readURL: (url: URL) => this.getDocumentText(this.documents, url),
         };
@@ -136,7 +131,7 @@ export class TranslateCache implements TranslateCache {
 
         const mm = await this.createModelMaterializer(uri, runtime);
 
-        for (const malloyQuery of statement.embeddedMalloyQueries) {
+        for (const malloyQuery of parse.embeddedMalloyQueries) {
           if (!mm) {
             throw new Error('Missing model definition');
           }
@@ -156,9 +151,8 @@ export class TranslateCache implements TranslateCache {
                   return;
                 }
                 // if the embedded malloy is on the same line as SQL, pad character start (and maybe end)
-                // ">>>sql...\n" adds a line, so we subtract it here
                 // "query:\n" adds a line, so we subtract the line here
-                const embeddedStart: number = log.at.range.start.line - 2;
+                const embeddedStart: number = log.at.range.start.line - 1;
                 if (embeddedStart === 0) {
                   log.at.range.start.character +=
                     malloyQuery.malloyRange.start.character;
@@ -186,6 +180,8 @@ export class TranslateCache implements TranslateCache {
         }
         return model;
       }
+
+      const parse = MalloySQLParser.parse(text, uri);
 
       let malloyStatements = '\n'.repeat(parse.initialCommentsLineCount || 0);
       for (const statement of parse.statements) {
