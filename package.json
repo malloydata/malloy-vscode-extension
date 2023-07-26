@@ -255,16 +255,29 @@
       },
       {
         "id": "malloy-sql",
-        "extensions": [
-          ".malloy-sql",
-          ".malloysql"
-        ],
         "aliases": [
           "Malloy SQL",
           "malloy SQL"
         ],
         "filenames": [],
         "configuration": "malloy-sql-language.json",
+        "icon": {
+          "dark": "./img/icon.svg",
+          "light": "./img/icon.svg"
+        }
+      },
+      {
+        "id": "malloy-notebook",
+        "extensions": [
+          ".malloynb",
+          ".malloysql"
+        ],
+        "aliases": [
+          "Malloy Notebook",
+          "malloy notebook"
+        ],
+        "filenames": [],
+        "configuration": "malloy-notebook-language.json",
         "icon": {
           "dark": "./img/icon.svg",
           "light": "./img/icon.svg"
@@ -281,6 +294,11 @@
         "language": "malloy-sql",
         "scopeName": "source.malloy-sql",
         "path": "./malloy-sql.tmGrammar.json"
+      },
+      {
+        "language": "malloy-notebook",
+        "scopeName": "source.malloy-notebook",
+        "path": "./malloy-notebook.tmGrammar.json"
       }
     ],
     "views": {
