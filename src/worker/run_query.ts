@@ -114,7 +114,7 @@ const runMSQLCell = async (
   let connectionName: string =
     (currentCell.metadata?.['connection'] as string) || 'unknown';
   for (const cell of allCells) {
-    const match = /^-- connection:(?<connectionName>.*)/.exec(cell.text);
+    const match = /^--\s*connection:\s*(?<connectionName>\S+)/.exec(cell.text);
     if (match && match.groups) {
       connectionName = match.groups['connectionName'];
     }
@@ -211,7 +211,9 @@ const runMSQLCell = async (
   // and if we get one, return Result object for rendering
   const structDefAttempt = await connection.fetchSchemaForSQLBlock({
     type: 'sqlBlock',
-    selectStr: compiledStatement,
+    selectStr: compiledStatement
+      .replaceAll(/^--[^\n]*$/gm, '') // Remove comments
+      .replace(/;\s*$/, ''), // Remove trailing `;`
     name: compiledStatement,
   });
 

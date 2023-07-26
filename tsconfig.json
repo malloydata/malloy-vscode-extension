@@ -8,7 +8,7 @@
     "rootDir": "src",
     "skipLibCheck": true,
     "target": "es2019",
-    "lib": ["es2020"],
+    "lib": ["es2021"],
     "noPropertyAccessFromIndexSignature": true,
     "noImplicitAny": true,
     "strict": true
