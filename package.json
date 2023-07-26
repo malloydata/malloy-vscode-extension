@@ -240,8 +240,7 @@
       {
         "id": "malloy",
         "extensions": [
-          ".malloy",
-          ".malloynb"
+          ".malloy"
         ],
         "aliases": [
           "Malloy",
