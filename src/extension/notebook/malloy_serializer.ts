@@ -23,6 +23,7 @@
 
 import * as vscode from 'vscode';
 import {MalloySQLParser, MalloySQLStatementType} from '@malloydata/malloy-sql';
+import {CellMetadata} from '../../common/types';
 
 export function activateNotebookSerializer(context: vscode.ExtensionContext) {
   if (!vscode.notebooks) {
@@ -91,14 +92,20 @@ class MalloySerializer implements vscode.NotebookSerializer {
     } else if (contents.startsWith('>>>')) {
       const parsed = MalloySQLParser.parse(contents);
       for (const statement of parsed.statements) {
+        const {config, type} = statement;
+        let {text} = statement;
+        if (config?.fromDelimiter && config?.connection) {
+          text = `-- connection: ${config?.connection}\n\n` + text;
+        }
         const cell: RawNotebookCell = {
-          language: languageIdFromStatementType(statement.type),
-          value: statement.text,
-          kind: kindFromStatementType(statement.type),
+          language: languageIdFromStatementType(type),
+          value: text,
+          kind: kindFromStatementType(type),
         };
-        cell.metadata = {
-          ...statement.config,
+        const metadata: CellMetadata = {
+          config: {...config},
         };
+        cell.metadata = metadata;
         raw.push(cell);
       }
     } else if (contents.startsWith('[')) {
@@ -136,18 +143,12 @@ class MalloySerializer implements vscode.NotebookSerializer {
       if (malloySql) {
         malloySql += '\n';
       }
-      const {kind, languageId, value, metadata} = cell;
+      const {kind, languageId, value} = cell;
       const statementType = statementTypeFromLanguageIdAndKind(
         languageId,
         kind
       );
-      let separator = `>>>${statementType}`;
-      if (
-        statementType === MalloySQLStatementType.SQL &&
-        metadata?.['connection']
-      ) {
-        separator += ` connection:${metadata['connection']}`;
-      }
+      const separator = `>>>${statementType}`;
       malloySql += `${separator}\n${value}`;
     }
 

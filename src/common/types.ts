@@ -45,11 +45,21 @@ export interface FetchCellDataEvent {
   uri: string;
 }
 
+export interface CellMetadataConfig {
+  [key: string]: unknown;
+  connection?: string;
+}
+
+export interface CellMetadata {
+  [key: string]: unknown;
+  config?: CellMetadataConfig;
+}
+
 export interface CellData {
   uri: string;
   text: string;
   languageId: string;
-  metadata?: {[key: string]: unknown};
+  metadata?: CellMetadata;
 }
 
 export interface BuildModelRequest {

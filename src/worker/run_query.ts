@@ -82,6 +82,23 @@ const fakeMalloyResult = (
   );
 };
 
+// Cell metadata doesn't get updated when editing yet so re-parse
+// each preceding cell to see if a connection has been defined
+
+const computeConnectionName = (allCells: CellData[]) => {
+  let connectionName = 'unknown';
+  for (const cell of allCells) {
+    if (cell.languageId !== 'malloy-sql') {
+      continue;
+    }
+    const parsed = MalloySQLSQLParser.parse(cell.text);
+    if (parsed.config.connection) {
+      connectionName = parsed.config.connection;
+    }
+  }
+  return connectionName;
+};
+
 const runMSQLCell = async (
   messageHandler: WorkerMessageHandler,
   files: FileHandler,
@@ -111,9 +128,7 @@ const runMSQLCell = async (
     allCells
   );
 
-  const connectionName: string =
-    (currentCell.metadata?.['connection'] as string) || 'unknown';
-
+  const connectionName = computeConnectionName(allCells);
   const parsed = MalloySQLSQLParser.parse(currentCell.text, currentCell.uri);
 
   let compiledStatement = currentCell.text;
