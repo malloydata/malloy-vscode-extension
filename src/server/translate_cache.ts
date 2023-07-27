@@ -117,70 +117,68 @@ export class TranslateCache implements TranslateCache {
       return entry.model;
     }
 
+    const text = await this.getDocumentText(this.documents, new URL(uri));
     if (languageId === 'malloy-sql') {
-      const text = await this.getDocumentText(this.documents, new URL(uri));
-      if (uri.startsWith('vscode-notebook-cell:')) {
-        const parse = MalloySQLSQLParser.parse(text, uri);
-        const files = {
-          readURL: (url: URL) => this.getDocumentText(this.documents, url),
-        };
-        const runtime = new Runtime(
-          files,
-          this.connectionManager.getConnectionLookup(new URL(uri))
-        );
+      const parse = MalloySQLSQLParser.parse(text, uri);
+      const files = {
+        readURL: (url: URL) => this.getDocumentText(this.documents, url),
+      };
+      const runtime = new Runtime(
+        files,
+        this.connectionManager.getConnectionLookup(new URL(uri))
+      );
 
-        const mm = await this.createModelMaterializer(uri, runtime);
+      const mm = await this.createModelMaterializer(uri, runtime);
 
-        for (const malloyQuery of parse.embeddedMalloyQueries) {
-          if (!mm) {
-            throw new Error('Missing model definition');
-          }
-          try {
-            await mm.getQuery(`query:\n${malloyQuery.query}`);
-          } catch (e) {
-            // some errors come from Runtime stuff
-            if (!(e instanceof MalloyError)) {
-              throw e;
-            }
-
-            e.problems.forEach(log => {
-              if (log.at) {
-                if (log.at.url === 'internal://internal.malloy') {
-                  log.at.url = uri;
-                } else if (log.at.url !== uri) {
-                  return;
-                }
-                // if the embedded malloy is on the same line as SQL, pad character start (and maybe end)
-                // "query:\n" adds a line, so we subtract the line here
-                const embeddedStart: number = log.at.range.start.line - 1;
-                if (embeddedStart === 0) {
-                  log.at.range.start.character +=
-                    malloyQuery.malloyRange.start.character;
-                  if (log.at.range.start.line === log.at.range.end.line)
-                    log.at.range.end.character +=
-                      malloyQuery.malloyRange.start.character;
-                }
-
-                const lineDifference =
-                  log.at.range.end.line - log.at.range.start.line;
-                log.at.range.start.line =
-                  malloyQuery.range.start.line + embeddedStart;
-                log.at.range.end.line =
-                  malloyQuery.range.start.line + embeddedStart + lineDifference;
-              }
-            });
-
+      for (const malloyQuery of parse.embeddedMalloyQueries) {
+        if (!mm) {
+          throw new Error('Missing model definition');
+        }
+        try {
+          await mm.getQuery(`query:\n${malloyQuery.query}`);
+        } catch (e) {
+          // some errors come from Runtime stuff
+          if (!(e instanceof MalloyError)) {
             throw e;
           }
-        }
 
-        const model = await mm?.getModel();
-        if (model) {
-          this.cache.set(uri, {version: currentVersion, model});
+          e.problems.forEach(log => {
+            if (log.at) {
+              if (log.at.url === 'internal://internal.malloy') {
+                log.at.url = uri;
+              } else if (log.at.url !== uri) {
+                return;
+              }
+              // if the embedded malloy is on the same line as SQL, pad character start (and maybe end)
+              // "query:\n" adds a line, so we subtract the line here
+              const embeddedStart: number = log.at.range.start.line - 1;
+              if (embeddedStart === 0) {
+                log.at.range.start.character +=
+                  malloyQuery.malloyRange.start.character;
+                if (log.at.range.start.line === log.at.range.end.line)
+                  log.at.range.end.character +=
+                    malloyQuery.malloyRange.start.character;
+              }
+
+              const lineDifference =
+                log.at.range.end.line - log.at.range.start.line;
+              log.at.range.start.line =
+                malloyQuery.range.start.line + embeddedStart;
+              log.at.range.end.line =
+                malloyQuery.range.start.line + embeddedStart + lineDifference;
+            }
+          });
+
+          throw e;
         }
-        return model;
       }
 
+      const model = await mm?.getModel();
+      if (model) {
+        this.cache.set(uri, {version: currentVersion, model});
+      }
+      return model;
+    } else if (languageId === 'malloy-notebook') {
       const parse = MalloySQLParser.parse(text, uri);
 
       let malloyStatements = '\n'.repeat(parse.initialCommentsLineCount || 0);

@@ -96,11 +96,9 @@ class MalloySerializer implements vscode.NotebookSerializer {
           value: statement.text,
           kind: kindFromStatementType(statement.type),
         };
-        if (statement.type === MalloySQLStatementType.SQL) {
-          cell.metadata = {
-            ...statement.config,
-          };
-        }
+        cell.metadata = {
+          ...statement.config,
+        };
         raw.push(cell);
       }
     } else if (contents.startsWith('[')) {

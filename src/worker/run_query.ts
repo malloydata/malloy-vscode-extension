@@ -111,14 +111,8 @@ const runMSQLCell = async (
     allCells
   );
 
-  let connectionName: string =
+  const connectionName: string =
     (currentCell.metadata?.['connection'] as string) || 'unknown';
-  for (const cell of allCells) {
-    const match = /^--\s*connection:\s*(?<connectionName>\S+)/.exec(cell.text);
-    if (match && match.groups) {
-      connectionName = match.groups['connectionName'];
-    }
-  }
 
   const parsed = MalloySQLSQLParser.parse(currentCell.text, currentCell.uri);
 

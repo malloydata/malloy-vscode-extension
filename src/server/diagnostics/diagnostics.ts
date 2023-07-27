@@ -48,13 +48,11 @@ export async function getMalloyDiagnostics(
   const problems: LogMessage[] = [];
 
   if (document.languageId === 'malloy-sql') {
-    if (document.uri.startsWith('vscode-notebook-cell:')) {
-      const {errors} = parseMalloySQLSQLWithCache(document);
-      if (errors) errors.forEach(e => problems.push(...e.problems));
-    } else {
-      const {errors} = parseMalloySQLWithCache(document);
-      if (errors) errors.forEach(e => problems.push(...e.problems));
-    }
+    const {errors} = parseMalloySQLSQLWithCache(document);
+    if (errors) errors.forEach(e => problems.push(...e.problems));
+  } else if (document.languageId === 'malloy-notebook') {
+    const {errors} = parseMalloySQLWithCache(document);
+    if (errors) errors.forEach(e => problems.push(...e.problems));
   }
 
   try {

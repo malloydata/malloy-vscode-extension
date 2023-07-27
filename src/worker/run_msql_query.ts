@@ -289,7 +289,9 @@ export const runMSQLQuery = async (
             // and if we get one, return Result object for rendering
             const structDefAttempt = await connection.fetchSchemaForSQLBlock({
               type: 'sqlBlock',
-              selectStr: compiledStatement,
+              selectStr: compiledStatement
+                .replaceAll(/^--[^\n]*$/gm, '') // Remove comments
+                .replace(/;\s*$/, ''), // Remove trailing `;`,
               name: compiledStatement,
             });
 

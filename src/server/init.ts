@@ -147,11 +147,8 @@ export const initServer = (
     const document = documents.get(handler.textDocument.uri);
     if (document) {
       if (document.languageId === 'malloy') return getMalloyLenses(document);
-      if (document.languageId === 'malloy-sql') {
-        // Code lens don't make sense in notebook cells.
-        if (!document.uri.startsWith('vscode-notebook-cell:')) {
-          return getMalloySQLLenses(document);
-        }
+      if (document.languageId === 'malloy-notebook') {
+        return getMalloySQLLenses(document);
       }
     }
   });
