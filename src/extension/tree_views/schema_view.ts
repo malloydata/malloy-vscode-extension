@@ -144,6 +144,7 @@ async function getStructs(
     const request: BuildModelRequest = {
       uri: document.uri.toString(),
       version: document.version,
+      languageId: document.languageId,
     };
     const serialized_explores: SerializedExplore[] = await client.sendRequest(
       'malloy/fetchModel',

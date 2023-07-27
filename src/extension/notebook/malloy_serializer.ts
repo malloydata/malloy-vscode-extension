@@ -22,6 +22,8 @@
  */
 
 import * as vscode from 'vscode';
+import {MalloySQLParser, MalloySQLStatementType} from '@malloydata/malloy-sql';
+import {CellMetadata} from '../../common/types';
 
 export function activateNotebookSerializer(context: vscode.ExtensionContext) {
   if (!vscode.notebooks) {
@@ -36,6 +38,40 @@ export function activateNotebookSerializer(context: vscode.ExtensionContext) {
   );
 }
 
+const languageIdFromStatementType = (type: MalloySQLStatementType) => {
+  switch (type) {
+    case MalloySQLStatementType.MALLOY:
+      return 'malloy';
+    case MalloySQLStatementType.SQL:
+      return 'malloy-sql';
+    case MalloySQLStatementType.MARKDOWN:
+      return 'markdown';
+  }
+};
+
+const kindFromStatementType = (type: MalloySQLStatementType) => {
+  if (type === MalloySQLStatementType.MARKDOWN) {
+    return vscode.NotebookCellKind.Markup;
+  } else {
+    return vscode.NotebookCellKind.Code;
+  }
+};
+
+const statementTypeFromLanguageIdAndKind = (
+  language: string,
+  kind: vscode.NotebookCellKind
+) => {
+  if (kind === vscode.NotebookCellKind.Markup) {
+    return MalloySQLStatementType.MARKDOWN;
+  } else {
+    if (language === 'malloy-sql') {
+      return MalloySQLStatementType.SQL;
+    } else {
+      return MalloySQLStatementType.MALLOY;
+    }
+  }
+};
+
 interface RawNotebookCell {
   language: string;
   value: string;
@@ -49,12 +85,37 @@ class MalloySerializer implements vscode.NotebookSerializer {
     _token: vscode.CancellationToken
   ): Promise<vscode.NotebookData> {
     const contents = new TextDecoder().decode(content);
+    let raw: RawNotebookCell[] = [];
 
-    let raw: RawNotebookCell[];
-    try {
-      raw = <RawNotebookCell[]>JSON.parse(contents);
-    } catch {
-      raw = [];
+    if (contents.length === 0) {
+      raw = []; // Handle empty (new) notebook
+    } else if (contents.startsWith('>>>')) {
+      const parsed = MalloySQLParser.parse(contents);
+      for (const statement of parsed.statements) {
+        const {config, type} = statement;
+        let {text} = statement;
+        if (config?.fromDelimiter && config?.connection) {
+          text = `-- connection: ${config?.connection}\n\n` + text;
+        }
+        const cell: RawNotebookCell = {
+          language: languageIdFromStatementType(type),
+          value: text,
+          kind: kindFromStatementType(type),
+        };
+        const metadata: CellMetadata = {
+          config: {...config},
+        };
+        cell.metadata = metadata;
+        raw.push(cell);
+      }
+    } else if (contents.startsWith('[')) {
+      try {
+        raw = <RawNotebookCell[]>JSON.parse(contents);
+      } catch {
+        raw = [];
+      }
+    } else {
+      throw new Error('Unrecognized notebook format');
     }
 
     const cells = raw.map(item => {
@@ -76,13 +137,21 @@ class MalloySerializer implements vscode.NotebookSerializer {
     data: vscode.NotebookData,
     _token: vscode.CancellationToken
   ): Promise<Uint8Array> {
-    const contents: RawNotebookCell[] = [];
+    let malloySql = '';
 
     for (const cell of data.cells) {
-      const {kind, languageId: language, value, metadata} = cell;
-      contents.push({kind, language, value, metadata});
+      if (malloySql) {
+        malloySql += '\n';
+      }
+      const {kind, languageId, value} = cell;
+      const statementType = statementTypeFromLanguageIdAndKind(
+        languageId,
+        kind
+      );
+      const separator = `>>>${statementType}`;
+      malloySql += `${separator}\n${value}`;
     }
 
-    return new TextEncoder().encode(JSON.stringify(contents, null, 2));
+    return new TextEncoder().encode(malloySql);
   }
 }

@@ -50,7 +50,7 @@ class MalloyController {
   readonly controllerId = 'malloy-notebook-controller';
   readonly notebookType = 'malloy-notebook';
   readonly label = 'Malloy Notebook';
-  readonly supportedLanguages = ['malloy'];
+  readonly supportedLanguages = ['malloy', 'malloy-sql'];
 
   private readonly _controller: vscode.NotebookController;
   private _executionOrder = 0;
@@ -102,20 +102,19 @@ class MalloyController {
       }
       const output: vscode.NotebookCellOutput[] = [];
       if (jsonResults) {
-        output.push(
-          new vscode.NotebookCellOutput(
-            [
-              vscode.NotebookCellOutputItem.json(
-                jsonResults,
-                'x-application/malloy-results'
-              ),
-              vscode.NotebookCellOutputItem.json(
-                jsonResults.queryResult.result
-              ),
-            ],
-            meta
-          )
+        const items: vscode.NotebookCellOutputItem[] = [];
+        if (jsonResults.queryResult.structs.length) {
+          items.push(
+            vscode.NotebookCellOutputItem.json(
+              jsonResults,
+              'x-application/malloy-results'
+            )
+          );
+        }
+        items.push(
+          vscode.NotebookCellOutputItem.json(jsonResults.queryResult.result)
         );
+        output.push(new vscode.NotebookCellOutput(items, meta));
       }
 
       execution.replaceOutput(output);

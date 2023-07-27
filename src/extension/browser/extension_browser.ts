@@ -71,7 +71,11 @@ export async function deactivate(): Promise<void | undefined> {
 async function setupLanguageServer(
   context: vscode.ExtensionContext
 ): Promise<void> {
-  const documentSelector = [{language: 'malloy'}, {language: 'malloy-sql'}];
+  const documentSelector = [
+    {language: 'malloy'},
+    {language: 'malloy-sql'},
+    {language: 'malloy-notebook'},
+  ];
 
   // Options to control the language client
   const clientOptions: LanguageClientOptions = {

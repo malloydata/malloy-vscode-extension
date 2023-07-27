@@ -240,8 +240,7 @@
       {
         "id": "malloy",
         "extensions": [
-          ".malloy",
-          ".malloynb"
+          ".malloy"
         ],
         "aliases": [
           "Malloy",
@@ -256,15 +255,29 @@
       },
       {
         "id": "malloy-sql",
-        "extensions": [
-          ".malloysql"
-        ],
         "aliases": [
           "Malloy SQL",
           "malloy SQL"
         ],
         "filenames": [],
         "configuration": "malloy-sql-language.json",
+        "icon": {
+          "dark": "./img/icon.svg",
+          "light": "./img/icon.svg"
+        }
+      },
+      {
+        "id": "malloy-notebook",
+        "extensions": [
+          ".malloynb",
+          ".malloysql"
+        ],
+        "aliases": [
+          "Malloy Notebook",
+          "malloy notebook"
+        ],
+        "filenames": [],
+        "configuration": "malloy-notebook-language.json",
         "icon": {
           "dark": "./img/icon.svg",
           "light": "./img/icon.svg"
@@ -281,6 +294,11 @@
         "language": "malloy-sql",
         "scopeName": "source.malloy-sql",
         "path": "./malloy-sql.tmGrammar.json"
+      },
+      {
+        "language": "malloy-notebook",
+        "scopeName": "source.malloy-notebook",
+        "path": "./malloy-notebook.tmGrammar.json"
       }
     ],
     "views": {
@@ -484,7 +502,7 @@
         "displayName": "Malloy Notebook",
         "selector": [
           {
-            "filenamePattern": "*.malloynb"
+            "filenamePattern": "{*.malloynb,*.malloysql}"
           }
         ]
       }
@@ -517,12 +535,12 @@
     ]
   },
   "dependencies": {
-    "@malloydata/db-bigquery": "0.0.61",
-    "@malloydata/db-duckdb": "0.0.61",
-    "@malloydata/db-postgres": "0.0.61",
-    "@malloydata/malloy": "0.0.61",
-    "@malloydata/malloy-sql": "0.0.61",
-    "@malloydata/render": "0.0.61",
+    "@malloydata/db-bigquery": "0.0.62",
+    "@malloydata/db-duckdb": "0.0.62",
+    "@malloydata/db-postgres": "0.0.62",
+    "@malloydata/malloy": "0.0.62",
+    "@malloydata/malloy-sql": "0.0.62",
+    "@malloydata/render": "0.0.62",
     "@popperjs/core": "^2.11.6",
     "@vscode/webview-ui-toolkit": "^1.2.1",
     "duckdb": "0.8.1",

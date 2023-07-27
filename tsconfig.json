@@ -8,11 +8,11 @@
     "rootDir": "src",
     "skipLibCheck": true,
     "target": "es2019",
-    "lib": ["es2020"],
+    "lib": ["es2021"],
     "noPropertyAccessFromIndexSignature": true,
     "noImplicitAny": true,
     "strict": true
   },
-  "include": ["./src", "src/malloy.tmGrammar.json"],
+  "include": ["./src"],
   "exclude": ["node_modules", ".vscode-test", ".vscode-test-web", "dist"]
 }

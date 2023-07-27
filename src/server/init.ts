@@ -147,8 +147,9 @@ export const initServer = (
     const document = documents.get(handler.textDocument.uri);
     if (document) {
       if (document.languageId === 'malloy') return getMalloyLenses(document);
-      if (document.languageId === 'malloy-sql')
+      if (document.languageId === 'malloy-notebook') {
         return getMalloySQLLenses(document);
+      }
     }
   });
 
