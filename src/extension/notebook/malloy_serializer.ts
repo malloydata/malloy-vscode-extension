@@ -140,7 +140,7 @@ class MalloySerializer implements vscode.NotebookSerializer {
     let malloySql = '';
 
     for (const cell of data.cells) {
-      if (malloySql) {
+      if (malloySql.length && !malloySql.endsWith('\n')) {
         malloySql += '\n';
       }
       const {kind, languageId, value} = cell;
