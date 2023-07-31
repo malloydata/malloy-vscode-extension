@@ -37,3 +37,19 @@ export const convertToBytes = (bytes: string): string => {
   }
   return bytes;
 };
+
+export const convertFromBytes = (bytes: number | string): string => {
+  const value = Number(bytes);
+
+  if (isNaN(value)) return String(bytes);
+
+  let idx = 0;
+  let suffix = '';
+  let outVal = value;
+
+  while (outVal >= 1024 && idx < BYTE_SUFFIXES.length) {
+    outVal = value / Math.pow(1024, idx + 1);
+    suffix = BYTE_SUFFIXES[idx++].toUpperCase();
+  }
+  return `${outVal.toLocaleString()}${suffix}B`;
+};

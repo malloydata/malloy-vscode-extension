@@ -27,8 +27,6 @@ import {
   ListenerType,
   WorkerMessageHandler,
   MessageMap,
-  MessageRun,
-  MessageRunMSQL,
   WorkerMessageMap,
 } from '../common/worker_message_types';
 import {ConnectionManager} from '../common/connection_manager';

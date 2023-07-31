@@ -50,9 +50,15 @@ export interface CellMetadataConfig {
   connection?: string;
 }
 
+export interface QueryCost {
+  queryCostBytes: number;
+  isEstimate: boolean;
+}
+
 export interface CellMetadata {
   [key: string]: unknown;
   config?: CellMetadataConfig;
+  cost?: QueryCost;
 }
 
 export interface CellData {

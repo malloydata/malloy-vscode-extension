@@ -26,8 +26,60 @@ import {newUntitledNotebookCommand} from '../commands/new_untitled_notebook';
 import {runMalloyQuery} from '../commands/run_query_utils';
 import {WorkerConnection} from '../worker_connection';
 import {errorMessage} from '../../common/errors';
+import {CellMetadata, QueryCost} from '../../common/types';
+import {convertFromBytes} from '../../common/convert_to_bytes';
 
 const NO_QUERY = 'Model has no queries.';
+
+function getQueryCostStats({queryCostBytes, isEstimate}: QueryCost): string {
+  if (queryCostBytes === 0) {
+    return 'Cached';
+  }
+
+  return `${isEstimate ? 'Will process' : 'Processed'} ${convertFromBytes(
+    queryCostBytes
+  )}`;
+}
+
+class MalloyNotebookCellStatusBarItem extends vscode.NotebookCellStatusBarItem {}
+
+class MalloyNotebookCellStatusBarItemProvider
+  implements vscode.NotebookCellStatusBarItemProvider
+{
+  _onDidChangeCellStatusBarItems = new vscode.EventEmitter<void>();
+
+  provideCellStatusBarItems(
+    cell: vscode.NotebookCell,
+    _token: vscode.CancellationToken
+  ): vscode.ProviderResult<
+    vscode.NotebookCellStatusBarItem | vscode.NotebookCellStatusBarItem[]
+  > {
+    const results: vscode.NotebookCellStatusBarItem[] = [];
+    const metadata = cell.metadata as CellMetadata;
+    const cost = metadata.cost;
+    if (cost) {
+      results.push(
+        new MalloyNotebookCellStatusBarItem(
+          getQueryCostStats(cost),
+          vscode.NotebookCellStatusBarAlignment.Left
+        )
+      );
+    }
+    return results;
+  }
+
+  get onDidChangeCellStatusBarItems() {
+    return this._onDidChangeCellStatusBarItems.event;
+  }
+
+  dispose() {
+    this._onDidChangeCellStatusBarItems.dispose();
+  }
+
+  update() {
+    this._onDidChangeCellStatusBarItems.fire();
+  }
+}
 
 export function activateNotebookController(
   context: vscode.ExtensionContext,
@@ -36,7 +88,16 @@ export function activateNotebookController(
   if (!vscode.notebooks) {
     return;
   }
-  context.subscriptions.push(new MalloyController(worker));
+
+  const statusBarProvider = new MalloyNotebookCellStatusBarItemProvider();
+  context.subscriptions.push(
+    vscode.notebooks.registerNotebookCellStatusBarItemProvider(
+      'malloy-notebook',
+      statusBarProvider
+    )
+  );
+
+  context.subscriptions.push(new MalloyController(worker, statusBarProvider));
 
   context.subscriptions.push(
     vscode.commands.registerCommand(
@@ -55,7 +116,10 @@ class MalloyController {
   private readonly _controller: vscode.NotebookController;
   private _executionOrder = 0;
 
-  constructor(private worker: WorkerConnection) {
+  constructor(
+    private worker: WorkerConnection,
+    private statusBarProvider: MalloyNotebookCellStatusBarItemProvider
+  ) {
     this._controller = vscode.notebooks.createNotebookController(
       this.controllerId,
       this.notebookType,
@@ -86,6 +150,19 @@ class MalloyController {
     execution.start(Date.now());
 
     try {
+      let meta = cell.metadata ? {...cell.metadata} : {};
+      const newMeta: CellMetadata = {
+        ...meta,
+        cost: undefined,
+      };
+      const edits: vscode.NotebookEdit[] = [
+        vscode.NotebookEdit.updateCellMetadata(cell.index, newMeta),
+      ];
+      const edit = new vscode.WorkspaceEdit();
+      edit.set(cell.document.uri, edits);
+      vscode.workspace.applyEdit(edit);
+      this.statusBarProvider.update();
+
       const jsonResults = await runMalloyQuery(
         this.worker,
         {type: 'file', index: -1, file: cell.document},
@@ -95,7 +172,6 @@ class MalloyController {
       );
 
       const text = cell.document.getText();
-      let meta = cell.metadata ? {...cell.metadata} : {};
       const style = text.match(/\/\/ --! style ([a-z_]+)/m);
       if (style) {
         meta = {renderer: style[1]};
@@ -115,6 +191,21 @@ class MalloyController {
           vscode.NotebookCellOutputItem.json(jsonResults.queryResult.result)
         );
         output.push(new vscode.NotebookCellOutput(items, meta));
+
+        const queryCostBytes = jsonResults.queryResult.runStats?.queryCostBytes;
+        if (typeof queryCostBytes === 'number') {
+          const newMeta: CellMetadata = {
+            ...meta,
+            cost: {queryCostBytes, isEstimate: false},
+          };
+          const edits: vscode.NotebookEdit[] = [
+            vscode.NotebookEdit.updateCellMetadata(cell.index, newMeta),
+          ];
+          const edit = new vscode.WorkspaceEdit();
+          edit.set(cell.document.uri, edits);
+          vscode.workspace.applyEdit(edit);
+          this.statusBarProvider.update();
+        }
       }
 
       execution.replaceOutput(output);
