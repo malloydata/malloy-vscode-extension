@@ -67,13 +67,13 @@ class MalloyController {
     this._controller.executeHandler = this._execute.bind(this);
   }
 
-  private _execute(
+  private async _execute(
     cells: vscode.NotebookCell[],
     notebook: vscode.NotebookDocument,
     _controller: vscode.NotebookController
-  ): void {
+  ): Promise<void> {
     for (const cell of cells) {
-      this._doExecution(notebook, cell);
+      await this._doExecution(notebook, cell);
     }
   }
 
