@@ -95,7 +95,7 @@ const runMSQLCell = async (
   {query, panelId, showSQLOnly}: MessageRun,
   allCells: CellData[],
   currentCell: CellData,
-  cancelationToken: CancellationToken
+  cancellationToken: CancellationToken
 ) => {
   const sendMessage = (message: QueryPanelMessage) => {
     const progress = new ProgressType<QueryMessageStatus>();
@@ -173,7 +173,7 @@ const runMSQLCell = async (
   }
 
   const dataStyles: DataStyles = {};
-  if (cancelationToken.isCancellationRequested) return;
+  if (cancellationToken.isCancellationRequested) return;
 
   messageHandler.log(compiledStatement);
 
@@ -203,7 +203,7 @@ const runMSQLCell = async (
 
   const sqlResults = await connection.runSQL(compiledStatement);
 
-  if (cancelationToken.isCancellationRequested) return;
+  if (cancellationToken.isCancellationRequested) return;
 
   // rendering is nice if we can do it. try to get a structdef for the last query,
   // and if we get one, return Result object for rendering
@@ -215,7 +215,7 @@ const runMSQLCell = async (
     name: compiledStatement,
   });
 
-  if (cancelationToken.isCancellationRequested) return;
+  if (cancellationToken.isCancellationRequested) return;
 
   const queryResult = fakeMalloyResult(
     structDefAttempt,
@@ -251,7 +251,7 @@ export const runQuery = async (
   connectionManager: ConnectionManager,
   isBrowser: boolean,
   messageRun: MessageRun,
-  cancelationToken: CancellationToken
+  cancellationToken: CancellationToken
 ): Promise<void> => {
   const {query, panelId, showSQLOnly} = messageRun;
 
@@ -285,7 +285,7 @@ export const runQuery = async (
           messageRun,
           allCells,
           currentCell,
-          cancelationToken
+          cancellationToken
         );
       } else {
         throw new Error('Unexpected state: Malloy SQL outside of notebook');
@@ -317,7 +317,7 @@ export const runQuery = async (
 
     try {
       sql = await runnable.getSQL();
-      if (cancelationToken.isCancellationRequested) return;
+      if (cancellationToken.isCancellationRequested) return;
       messageHandler.log(sql);
 
       sendMessage({
@@ -352,7 +352,7 @@ export const runQuery = async (
       dialect,
     });
     const queryResult = await runnable.run({rowLimit});
-    if (cancelationToken.isCancellationRequested) return;
+    if (cancellationToken.isCancellationRequested) return;
 
     // Calculate execution times.
     const runFinish = Date.now();

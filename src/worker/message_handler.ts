@@ -45,24 +45,24 @@ export class MessageHandler implements WorkerMessageHandler {
   ) {
     this.fileHandler = new RpcFileHandler(this);
 
-    this.onRequest('malloy/run', (message, cancelationToken) =>
+    this.onRequest('malloy/run', (message, cancellationToken) =>
       runQuery(
         this,
         this.fileHandler,
         connectionManager,
         false,
         message,
-        cancelationToken
+        cancellationToken
       )
     );
 
-    this.onRequest('malloy/run-msql', (message, cancelationToken) =>
+    this.onRequest('malloy/run-msql', (message, cancellationToken) =>
       runMSQLQuery(
         this,
         this.fileHandler,
         connectionManager,
         message,
-        cancelationToken
+        cancellationToken
       )
     );
   }

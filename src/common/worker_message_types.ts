@@ -254,5 +254,5 @@ export interface GenericConnection {
 
 export type ListenerType<K> = (
   message: K,
-  cancelationToken: CancellationToken
+  cancellationToken: CancellationToken
 ) => void;

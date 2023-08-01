@@ -54,7 +54,7 @@ export function runMSQLQuery(
       title: `MalloySQL Query (${name})`,
       cancellable: true,
     },
-    (progress, cancelationToken) => {
+    (progress, cancellationToken) => {
       const cancel = () => {
         if (current) {
           const actuallyCurrent = MALLOY_EXTENSION_STATE.getRunState(
@@ -67,7 +67,7 @@ export function runMSQLQuery(
         }
       };
 
-      cancelationToken.onCancellationRequested(cancel);
+      cancellationToken.onCancellationRequested(cancel);
 
       const current: RunState = createOrReuseWebviewPanel(
         'malloySQLQuery',
@@ -98,7 +98,7 @@ export function runMSQLQuery(
               statementIndex,
               showSQLOnly,
             },
-            cancelationToken
+            cancellationToken
           )
           .catch(() => {
             current.messages.postMessage({

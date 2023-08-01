@@ -86,7 +86,7 @@ export const runMSQLQuery = async (
   fileHandler: FileHandler,
   connectionManager: ConnectionManager,
   {panelId, malloySQLQuery, statementIndex, showSQLOnly}: MessageRunMSQL,
-  cancelationToken: CancellationToken
+  cancellationToken: CancellationToken
 ): Promise<void> => {
   const sendMessage = (message: MSQLQueryPanelMessage) => {
     const progress = new ProgressType<MSQLMessageStatus>();
@@ -151,7 +151,7 @@ export const runMSQLQuery = async (
           }
 
           const _model = modelMaterializer.getModel();
-          if (cancelationToken.isCancellationRequested) return;
+          if (cancellationToken.isCancellationRequested) return;
 
           // the only way to know if there's a query in this statement is to try
           // to run query by index and catch if it fails.
@@ -246,7 +246,7 @@ export const runMSQLQuery = async (
           }
         }
 
-        if (cancelationToken.isCancellationRequested) return;
+        if (cancellationToken.isCancellationRequested) return;
 
         if (compileErrors.length > 0) {
           evaluatedStatements.push({
@@ -275,7 +275,7 @@ export const runMSQLQuery = async (
             );
             const sqlResults = await connection.runSQL(compiledStatement);
 
-            if (cancelationToken.isCancellationRequested) return;
+            if (cancellationToken.isCancellationRequested) return;
 
             // rendering is nice if we can do it. try to get a structdef for the last query,
             // and if we get one, return Result object for rendering
@@ -287,7 +287,7 @@ export const runMSQLQuery = async (
               name: compiledStatement,
             });
 
-            if (cancelationToken.isCancellationRequested) return;
+            if (cancellationToken.isCancellationRequested) return;
 
             isStructDefFailure(structDefAttempt)
               ? evaluatedStatements.push({
@@ -322,7 +322,7 @@ export const runMSQLQuery = async (
           }
         }
 
-        if (cancelationToken.isCancellationRequested) return;
+        if (cancellationToken.isCancellationRequested) return;
       }
       if (i === statementIndex) break;
     }

@@ -64,7 +64,7 @@ export function runMalloyQuery(
       title: `Malloy Query (${name})`,
       cancellable: true,
     },
-    (progress, cancelationToken) => {
+    (progress, cancellationToken) => {
       const onCancel = () => {
         if (current) {
           const actuallyCurrent = MALLOY_EXTENSION_STATE.getRunState(
@@ -77,7 +77,7 @@ export function runMalloyQuery(
         }
       };
 
-      cancelationToken.onCancellationRequested(onCancel);
+      cancellationToken.onCancellationRequested(onCancel);
 
       let current: RunState | null = null;
 
@@ -114,7 +114,7 @@ export function runMalloyQuery(
               name,
               showSQLOnly,
             },
-            cancelationToken
+            cancellationToken
           )
           .catch(() => {
             const error = `The worker process has died, and has been restarted.
