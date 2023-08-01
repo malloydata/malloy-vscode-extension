@@ -21,11 +21,10 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {cancelQuery, runQuery} from './run_query';
+import {runQuery} from './run_query';
 import {
   GenericConnection,
   ListenerType,
-  MessageCancel,
   WorkerMessageHandler,
   MessageMap,
   MessageRun,
@@ -33,7 +32,7 @@ import {
   WorkerMessageMap,
 } from '../common/worker_message_types';
 import {ConnectionManager} from '../common/connection_manager';
-import {cancelMSQLQuery, runMSQLQuery} from './run_msql_query';
+import {runMSQLQuery} from './run_msql_query';
 import {RpcFileHandler} from './file_handler';
 import {FileHandler} from '../common/types';
 import {ProgressType} from 'vscode-jsonrpc';
@@ -46,20 +45,25 @@ export class MessageHandler implements WorkerMessageHandler {
   ) {
     this.fileHandler = new RpcFileHandler(this);
 
-    this.onRequest('malloy/cancel', (message: MessageCancel) =>
-      cancelQuery(message)
+    this.onRequest('malloy/run', (message, cancellationToken) =>
+      runQuery(
+        this,
+        this.fileHandler,
+        connectionManager,
+        false,
+        message,
+        cancellationToken
+      )
     );
 
-    this.onRequest('malloy/cancelMSQL', (message: MessageCancel) =>
-      cancelMSQLQuery(message)
-    );
-
-    this.onRequest('malloy/run', (message: MessageRun) =>
-      runQuery(this, this.fileHandler, connectionManager, false, message)
-    );
-
-    this.onRequest('malloy/run-msql', (message: MessageRunMSQL) =>
-      runMSQLQuery(this, this.fileHandler, connectionManager, message)
+    this.onRequest('malloy/run-msql', (message, cancellationToken) =>
+      runMSQLQuery(
+        this,
+        this.fileHandler,
+        connectionManager,
+        message,
+        cancellationToken
+      )
     );
   }
 

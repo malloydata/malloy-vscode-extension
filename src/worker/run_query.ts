@@ -32,11 +32,7 @@ import {MalloySQLSQLParser} from '@malloydata/malloy-sql';
 import {DataStyles} from '@malloydata/render';
 
 import {HackyDataStylesAccumulator} from './data_styles';
-import {
-  MessageCancel,
-  WorkerMessageHandler,
-  MessageRun,
-} from '../common/worker_message_types';
+import {WorkerMessageHandler, MessageRun} from '../common/worker_message_types';
 
 import {
   QueryMessageStatus,
@@ -46,15 +42,8 @@ import {
 import {createModelMaterializer, createRunnable} from './create_runnable';
 import {ConnectionManager} from '../common/connection_manager';
 import {CellData, FileHandler, StructDefResult} from '../common/types';
-import {ProgressType} from 'vscode-jsonrpc';
+import {CancellationToken, ProgressType} from 'vscode-jsonrpc';
 import {errorMessage} from '../common/errors';
-
-interface QueryEntry {
-  panelId: string;
-  canceled: boolean;
-}
-
-const runningQueries: Record<string, QueryEntry> = {};
 
 const fakeMalloyResult = (
   structDefResult: StructDefResult,
@@ -105,14 +94,15 @@ const runMSQLCell = async (
   connectionManager: ConnectionManager,
   {query, panelId, showSQLOnly}: MessageRun,
   allCells: CellData[],
-  currentCell: CellData
+  currentCell: CellData,
+  cancellationToken: CancellationToken
 ) => {
   const sendMessage = (message: QueryPanelMessage) => {
     const progress = new ProgressType<QueryMessageStatus>();
     messageHandler.sendProgress(progress, panelId, message);
   };
 
-  const url = new URL(panelId);
+  const url = new URL(query.uri);
   const connectionLookup = connectionManager.getConnectionLookup(url);
 
   const runtime = new Runtime(files, connectionLookup);
@@ -154,8 +144,8 @@ const runMSQLCell = async (
         e.problems.forEach(log => {
           if (log.at) {
             if (log.at.url === 'internal://internal.malloy') {
-              log.at.url = panelId;
-            } else if (log.at.url !== panelId) {
+              log.at.url = query.uri;
+            } else if (log.at.url !== query.uri) {
               return;
             }
             const embeddedStart: number = log.at.range.start.line;
@@ -183,7 +173,7 @@ const runMSQLCell = async (
   }
 
   const dataStyles: DataStyles = {};
-  if (runningQueries[panelId].canceled) return;
+  if (cancellationToken.isCancellationRequested) return;
 
   messageHandler.log(compiledStatement);
 
@@ -195,7 +185,6 @@ const runMSQLCell = async (
   });
 
   if (showSQLOnly) {
-    delete runningQueries[panelId];
     sendMessage({
       status: QueryRunStatus.EstimatedCost,
       queryCostBytes: undefined,
@@ -214,7 +203,7 @@ const runMSQLCell = async (
 
   const sqlResults = await connection.runSQL(compiledStatement);
 
-  if (runningQueries[panelId].canceled) return;
+  if (cancellationToken.isCancellationRequested) return;
 
   // rendering is nice if we can do it. try to get a structdef for the last query,
   // and if we get one, return Result object for rendering
@@ -226,7 +215,7 @@ const runMSQLCell = async (
     name: compiledStatement,
   });
 
-  if (runningQueries[panelId].canceled) return;
+  if (cancellationToken.isCancellationRequested) return;
 
   const queryResult = fakeMalloyResult(
     structDefAttempt,
@@ -237,9 +226,9 @@ const runMSQLCell = async (
 
   // Calculate execution times.
   const runFinish = Date.now();
-  const compileTime = ellapsedTime(compileBegin, runBegin);
-  const runTime = ellapsedTime(runBegin, runFinish);
-  const totalTime = ellapsedTime(allBegin, runFinish);
+  const compileTime = elapsedTime(compileBegin, runBegin);
+  const runTime = elapsedTime(runBegin, runFinish);
+  const totalTime = elapsedTime(allBegin, runFinish);
 
   sendMessage({
     status: QueryRunStatus.Done,
@@ -261,7 +250,8 @@ export const runQuery = async (
   fileHandler: FileHandler,
   connectionManager: ConnectionManager,
   isBrowser: boolean,
-  messageRun: MessageRun
+  messageRun: MessageRun,
+  cancellationToken: CancellationToken
 ): Promise<void> => {
   const {query, panelId, showSQLOnly} = messageRun;
 
@@ -271,12 +261,10 @@ export const runQuery = async (
   };
 
   const files = new HackyDataStylesAccumulator(fileHandler);
-  const url = new URL(panelId);
+  const url = new URL(query.uri);
   const connectionLookup = connectionManager.getConnectionLookup(url);
 
   try {
-    runningQueries[panelId] = {panelId, canceled: false};
-
     const queryFileURL = new URL(query.uri);
     let allCells: CellData[] = [];
     let currentCell: CellData | null = null;
@@ -296,7 +284,8 @@ export const runQuery = async (
           connectionManager,
           messageRun,
           allCells,
-          currentCell
+          currentCell,
+          cancellationToken
         );
       } else {
         throw new Error('Unexpected state: Malloy SQL outside of notebook');
@@ -328,7 +317,7 @@ export const runQuery = async (
 
     try {
       sql = await runnable.getSQL();
-      if (runningQueries[panelId].canceled) return;
+      if (cancellationToken.isCancellationRequested) return;
       messageHandler.log(sql);
 
       sendMessage({
@@ -339,7 +328,6 @@ export const runQuery = async (
       });
 
       if (showSQLOnly) {
-        delete runningQueries[panelId];
         const estimatedRunStats = await runnable.estimateQueryCost();
         sendMessage({
           status: QueryRunStatus.EstimatedCost,
@@ -364,13 +352,13 @@ export const runQuery = async (
       dialect,
     });
     const queryResult = await runnable.run({rowLimit});
-    if (runningQueries[panelId].canceled) return;
+    if (cancellationToken.isCancellationRequested) return;
 
     // Calculate execution times.
     const runFinish = Date.now();
-    const compileTime = ellapsedTime(compileBegin, runBegin);
-    const runTime = ellapsedTime(runBegin, runFinish);
-    const totalTime = ellapsedTime(allBegin, runFinish);
+    const compileTime = elapsedTime(compileBegin, runBegin);
+    const runTime = elapsedTime(runBegin, runFinish);
+    const totalTime = elapsedTime(allBegin, runFinish);
 
     sendMessage({
       status: QueryRunStatus.Done,
@@ -388,17 +376,9 @@ export const runQuery = async (
       status: QueryRunStatus.Error,
       error: errorMessage(error),
     });
-  } finally {
-    delete runningQueries[panelId];
   }
 };
 
-export const cancelQuery = ({panelId}: MessageCancel): void => {
-  if (runningQueries[panelId]) {
-    runningQueries[panelId].canceled = true;
-  }
-};
-
-function ellapsedTime(start: number, end: number): number {
+function elapsedTime(start: number, end: number): number {
   return (end - start) / 1000;
 }

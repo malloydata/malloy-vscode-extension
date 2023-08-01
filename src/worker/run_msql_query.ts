@@ -22,7 +22,6 @@
  */
 
 import {
-  MessageCancel,
   WorkerMessageHandler,
   MessageRunMSQL,
 } from '../common/worker_message_types';
@@ -50,15 +49,8 @@ import {
   URLReader,
 } from '@malloydata/malloy';
 import {MalloySQLStatementType, MalloySQLParser} from '@malloydata/malloy-sql';
-import {ProgressType} from 'vscode-jsonrpc';
+import {CancellationToken, ProgressType} from 'vscode-jsonrpc';
 import {errorMessage} from '../common/errors';
-
-interface QueryEntry {
-  panelId: string;
-  canceled: boolean;
-}
-
-const runningQueries: Record<string, QueryEntry> = {};
 
 // Malloy needs to load model via a URI to know how to import relative model files, but we
 // don't have a real URI because we're constructing the model from only parts of a real document.
@@ -93,7 +85,8 @@ export const runMSQLQuery = async (
   messageHandler: WorkerMessageHandler,
   fileHandler: FileHandler,
   connectionManager: ConnectionManager,
-  {panelId, malloySQLQuery, statementIndex, showSQLOnly}: MessageRunMSQL
+  {panelId, malloySQLQuery, statementIndex, showSQLOnly}: MessageRunMSQL,
+  cancellationToken: CancellationToken
 ): Promise<void> => {
   const sendMessage = (message: MSQLQueryPanelMessage) => {
     const progress = new ProgressType<MSQLMessageStatus>();
@@ -106,8 +99,7 @@ export const runMSQLQuery = async (
   const evaluatedStatements: EvaluatedMSQLStatement[] = [];
   const abortOnExecutionError = true;
 
-  runningQueries[panelId] = {panelId, canceled: false};
-  const virturlURIFileHandler = new VirtualURIFileHandler(fileHandler);
+  const virtualURIFileHandler = new VirtualURIFileHandler(fileHandler);
   let modelMaterializer: ModelMaterializer | null = null;
 
   try {
@@ -121,7 +113,7 @@ export const runMSQLQuery = async (
     }
     const statements = parse.statements;
     const malloyRuntime = new Runtime(
-      virturlURIFileHandler,
+      virtualURIFileHandler,
       connectionManager.getConnectionLookup(url)
     );
 
@@ -149,7 +141,7 @@ export const runMSQLQuery = async (
       const connectionLookup = connectionManager.getConnectionLookup(url);
 
       if (statement.type === MalloySQLStatementType.MALLOY) {
-        virturlURIFileHandler.setVirtualFile(url, statement.text);
+        virtualURIFileHandler.setVirtualFile(url, statement.text);
 
         try {
           if (!modelMaterializer) {
@@ -159,7 +151,7 @@ export const runMSQLQuery = async (
           }
 
           const _model = modelMaterializer.getModel();
-          if (runningQueries[panelId].canceled) return;
+          if (cancellationToken.isCancellationRequested) return;
 
           // the only way to know if there's a query in this statement is to try
           // to run query by index and catch if it fails.
@@ -254,7 +246,7 @@ export const runMSQLQuery = async (
           }
         }
 
-        if (runningQueries[panelId].canceled) return;
+        if (cancellationToken.isCancellationRequested) return;
 
         if (compileErrors.length > 0) {
           evaluatedStatements.push({
@@ -283,7 +275,7 @@ export const runMSQLQuery = async (
             );
             const sqlResults = await connection.runSQL(compiledStatement);
 
-            if (runningQueries[panelId].canceled) return;
+            if (cancellationToken.isCancellationRequested) return;
 
             // rendering is nice if we can do it. try to get a structdef for the last query,
             // and if we get one, return Result object for rendering
@@ -295,7 +287,7 @@ export const runMSQLQuery = async (
               name: compiledStatement,
             });
 
-            if (runningQueries[panelId].canceled) return;
+            if (cancellationToken.isCancellationRequested) return;
 
             isStructDefFailure(structDefAttempt)
               ? evaluatedStatements.push({
@@ -330,7 +322,7 @@ export const runMSQLQuery = async (
           }
         }
 
-        if (runningQueries[panelId].canceled) return;
+        if (cancellationToken.isCancellationRequested) return;
       }
       if (i === statementIndex) break;
     }
@@ -345,12 +337,6 @@ export const runMSQLQuery = async (
       status: MSQLQueryRunStatus.Error,
       error: errorMessage(error),
     });
-  }
-};
-
-export const cancelMSQLQuery = ({panelId}: MessageCancel): void => {
-  if (runningQueries[panelId]) {
-    runningQueries[panelId].canceled = true;
   }
 };
 
