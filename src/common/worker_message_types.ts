@@ -89,14 +89,6 @@ export interface MessageRunMSQL {
   showSQLOnly?: boolean;
 }
 
-export interface MessageCancel {
-  panelId: string;
-}
-
-export interface MessageCancelMSQL {
-  panelId: string;
-}
-
 export interface MessageConfig {
   config: MalloyConfig;
 }
@@ -139,13 +131,11 @@ export type FetchMessage =
  * Type map of extension message types to message interfaces.
  */
 export interface MessageMap {
-  'malloy/cancel': MessageCancel;
   'malloy/config': MessageConfig;
   'malloy/exit': void;
   'malloy/fetch': MessageFetch;
   'malloy/fetchBinary': MessageFetchBinary;
   'malloy/fetchCellData': MessageFetchCellData;
-  'malloy/cancelMSQL': MessageCancelMSQL;
   'malloy/run': MessageRun;
   'malloy/download': MessageDownload;
   'malloy/run-msql': MessageRunMSQL;
@@ -262,4 +252,7 @@ export interface GenericConnection {
   ): Promise<void>;
 }
 
-export type ListenerType<K> = (message: K) => void;
+export type ListenerType<K> = (
+  message: K,
+  cancelationToken: CancellationToken
+) => void;

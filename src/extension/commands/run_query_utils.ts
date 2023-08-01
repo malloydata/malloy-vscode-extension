@@ -64,11 +64,8 @@ export function runMalloyQuery(
       title: `Malloy Query (${name})`,
       cancellable: true,
     },
-    (progress, token) => {
-      const cancel = () => {
-        worker.sendRequest('malloy/cancel', {
-          panelId: panelId,
-        });
+    (progress, cancelationToken) => {
+      const onCancel = () => {
         if (current) {
           const actuallyCurrent = MALLOY_EXTENSION_STATE.getRunState(
             current.panelId
@@ -76,12 +73,11 @@ export function runMalloyQuery(
           if (actuallyCurrent === current) {
             current.panel.dispose();
             MALLOY_EXTENSION_STATE.setRunState(current.panelId, undefined);
-            token.isCancellationRequested = true;
           }
         }
       };
 
-      token.onCancellationRequested(cancel);
+      cancelationToken.onCancellationRequested(onCancel);
 
       let current: RunState | null = null;
 
@@ -90,7 +86,6 @@ export function runMalloyQuery(
           'malloyQuery',
           name,
           panelId,
-          cancel,
           query.file
         );
         const queryPageOnDiskPath = Utils.joinPath(
@@ -108,15 +103,19 @@ export function runMalloyQuery(
 
       return new Promise((resolve, reject) => {
         worker
-          .sendRequest('malloy/run', {
-            query: {
-              uri,
-              ...params,
+          .sendRequest(
+            'malloy/run',
+            {
+              query: {
+                uri,
+                ...params,
+              },
+              panelId,
+              name,
+              showSQLOnly,
             },
-            panelId,
-            name,
-            showSQLOnly,
-          })
+            cancelationToken
+          )
           .catch(() => {
             const error = `The worker process has died, and has been restarted.
 This is possibly the result of a database bug. \

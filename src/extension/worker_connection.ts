@@ -85,9 +85,10 @@ export abstract class WorkerConnection implements ExtensionMessageHandler {
 
   sendRequest<R, K extends keyof MessageMap>(
     type: K,
-    message: MessageMap[K]
+    message: MessageMap[K],
+    cancellationToken?: vscode.CancellationToken | undefined
   ): Promise<R> {
-    return this.connection.sendRequest(type, message);
+    return this.connection.sendRequest(type, message, cancellationToken);
   }
 
   onRequest<K extends keyof WorkerMessageMap>(

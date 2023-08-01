@@ -26,7 +26,6 @@ import {MSQLMessageStatus, QueryMessageStatus} from '../common/message_types';
 import {WebviewMessageManager} from './webview_message_manager';
 
 export interface RunState {
-  cancel: () => void;
   panel: WebviewPanel;
   messages: WebviewMessageManager<QueryMessageStatus | MSQLMessageStatus>;
   panelId: string;

@@ -54,11 +54,8 @@ export function runMSQLQuery(
       title: `MalloySQL Query (${name})`,
       cancellable: true,
     },
-    (progress, token) => {
+    (progress, cancelationToken) => {
       const cancel = () => {
-        worker.sendRequest('malloy/cancelMSQL', {
-          panelId: panelId,
-        });
         if (current) {
           const actuallyCurrent = MALLOY_EXTENSION_STATE.getRunState(
             current.panelId
@@ -66,18 +63,16 @@ export function runMSQLQuery(
           if (actuallyCurrent === current) {
             current.panel.dispose();
             MALLOY_EXTENSION_STATE.setRunState(current.panelId, undefined);
-            token.isCancellationRequested = true;
           }
         }
       };
 
-      token.onCancellationRequested(cancel);
+      cancelationToken.onCancellationRequested(cancel);
 
       const current: RunState = createOrReuseWebviewPanel(
         'malloySQLQuery',
         name,
         panelId,
-        cancel,
         document
       );
 
@@ -95,12 +90,16 @@ export function runMSQLQuery(
 
       return new Promise(resolve => {
         worker
-          .sendRequest('malloy/run-msql', {
-            panelId,
-            malloySQLQuery,
-            statementIndex,
-            showSQLOnly,
-          })
+          .sendRequest(
+            'malloy/run-msql',
+            {
+              panelId,
+              malloySQLQuery,
+              statementIndex,
+              showSQLOnly,
+            },
+            cancelationToken
+          )
           .catch(() => {
             current.messages.postMessage({
               status: QueryRunStatus.Error,

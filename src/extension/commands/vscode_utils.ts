@@ -32,7 +32,6 @@ export function createOrReuseWebviewPanel(
   viewType: string,
   title: string,
   panelId: string,
-  cancel: () => void,
   document: vscode.TextDocument
 ): RunState {
   const previous = MALLOY_EXTENSION_STATE.getRunState(panelId);
@@ -40,14 +39,12 @@ export function createOrReuseWebviewPanel(
   let current: RunState;
   if (previous) {
     current = {
-      cancel,
       panelId,
       panel: previous.panel,
       messages: previous.messages,
       document: previous.document,
     };
     MALLOY_EXTENSION_STATE.setRunState(panelId, current);
-    previous.cancel();
     if (!previous.panel.visible) {
       previous.panel.reveal(vscode.ViewColumn.Beside, true);
     }
@@ -63,7 +60,6 @@ export function createOrReuseWebviewPanel(
       panel,
       messages: new WebviewMessageManager(panel),
       panelId,
-      cancel,
       document,
     };
     current.panel.iconPath = Utils.joinPath(
@@ -84,10 +80,6 @@ export function loadWebview(current: RunState, onDiskPath: URI): void {
     entrySrc.toString(),
     current.panel.webview
   );
-
-  current.panel.onDidDispose(() => {
-    current.cancel();
-  });
 
   MALLOY_EXTENSION_STATE.setActiveWebviewPanelId(current.panelId);
 }
