@@ -105,8 +105,8 @@ export function runMalloyQuery(
             'malloyQuery',
             name,
             panelId,
-            query.file,
-            cancel
+            cancel,
+            query.file
           );
           const queryPageOnDiskPath = Utils.joinPath(
             MALLOY_EXTENSION_STATE.getExtensionUri(),

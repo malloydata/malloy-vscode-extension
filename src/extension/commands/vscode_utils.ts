@@ -32,19 +32,19 @@ export function createOrReuseWebviewPanel(
   viewType: string,
   title: string,
   panelId: string,
-  document: vscode.TextDocument,
-  cancel: () => void
+  cancel: () => void,
+  document: vscode.TextDocument
 ): RunState {
   const previous = MALLOY_EXTENSION_STATE.getRunState(panelId);
 
   let current: RunState;
   if (previous) {
     current = {
+      cancel,
       panelId,
       panel: previous.panel,
       messages: previous.messages,
       document: previous.document,
-      cancel,
     };
     MALLOY_EXTENSION_STATE.setRunState(panelId, current);
     previous.cancel();
@@ -63,8 +63,8 @@ export function createOrReuseWebviewPanel(
       panel,
       messages: new WebviewMessageManager(panel),
       panelId,
-      document,
       cancel,
+      document,
     };
     current.panel.iconPath = Utils.joinPath(
       MALLOY_EXTENSION_STATE.getExtensionUri(),

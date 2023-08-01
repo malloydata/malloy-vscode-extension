@@ -90,8 +90,8 @@ export function runMSQLQuery(
           'malloySQLQuery',
           name,
           panelId,
-          document,
-          cancel
+          cancel,
+          document
         );
 
         const queryPageOnDiskPath = Utils.joinPath(
