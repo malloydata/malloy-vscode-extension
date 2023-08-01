@@ -1,26 +1,10 @@
 {
   "scopeName": "source.malloy",
   "patterns": [
-    {"include": "#sql-string"},
-    {"include": "#comments"},
-    {"include": "#tags"},
-    {"include": "#strings"},
-    {"include": "#numbers"},
-    {"include": "#keywords"},
-    {"include": "#properties"},
-    {"include": "#functions"},
-    {"include": "#dates"},
-    {"include": "#identifiers-quoted"},
-    {"include": "#types"},
-    {"include": "#constants"},
-    {"include": "#timeframes"},
-    {"include": "#identifiers-unquoted"}
+    {"include": "#malloy-language"}
   ],
   "repository": {
-    "query-in-sql": {
-      "begin": "%{",
-      "name": "source.internal-query-stuff",
-      "end": "}%?",
+    "malloy-language": {
       "patterns": [
         {"include": "#sql-string"},
         {"include": "#comments"},
@@ -30,12 +14,29 @@
         {"include": "#keywords"},
         {"include": "#properties"},
         {"include": "#functions"},
-        {"include": "#dates"},
+        {"include": "#datetimes"},
         {"include": "#identifiers-quoted"},
         {"include": "#types"},
         {"include": "#constants"},
         {"include": "#timeframes"},
         {"include": "#identifiers-unquoted"}
+      ]
+    },
+    "malloy-matched": {
+      "begin": "{",
+      "end": "}",
+      "patterns": [
+        {"include": "#malloy-matched"},
+        {"include": "#malloy-language"}
+      ]
+    },
+    "malloy-in-sql": {
+      "begin": "%{",
+      "name": "source.malloy-in-sql",
+      "end": "}%?",
+      "patterns": [
+        {"include": "#malloy-matched"},
+        {"include": "#malloy-language"}
       ]
     },
     "sql-string": {
@@ -48,7 +49,7 @@
         "0": {"name": "punctuation.sql-block.close"}
       },
       "name": "source.sql",
-      "patterns": [{"include": "#query-in-sql"}, {"include": "source.sql"}]
+      "patterns": [{"include": "#malloy-in-sql"}, {"include": "source.sql"}]
     },
     "functions": {
       "patterns": [
@@ -80,10 +81,14 @@
         }
       ]
     },
-    "dates": {
+    "datetimes": {
       "patterns": [
         {
-          "match": "(?i)@[0-9A-Z-]*(\\s[0-9A-Z-][0-9A-Z-](:[0-9A-Z-][0-9A-Z-])?(:[0-9A-Z-][0-9A-Z-])?)?",
+          "match": "(?i)@[0-9]{4}-[0-9]{2}-[0-9]{2}[ T][0-9]{2}:[0-9]{2}((:[0-9]{2})(([\\.,][0-9]+)(\\[[A-Za-z_\/]+\\])?)?)?",
+          "name": "constant.numeric.timestamp"
+        },
+        {
+          "match": "(?i)@[0-9]{4}(-Q[1-4]|-[0-9]{2}(-[0-9]{2}(-WK)?)?)?",
           "name": "constant.numeric.date"
         }
       ]
@@ -99,7 +104,7 @@
     "identifiers-unquoted": {
       "patterns": [
         {
-          "match": "(?i)\\b[A-z_][A-z_0-9]*\\b",
+          "match": "(?i)\\b[A-Za-z_][A-Za-z_0-9]*\\b",
           "name": "variable.other"
         }
       ]
@@ -241,13 +246,20 @@
           "begin": "(?i)[r|/]'",
           "end": "'",
           "name": "string.regexp",
-          "patterns": [{"include": "#escapes"}]
+          "patterns": [{"include": "#regex-escapes"}]
         }
       ],
       "repository": {
         "escapes": {
           "name": "constant.character.escape",
-          "match": "\\\\(x\\h{2}|[0-2][0-7]{0,2}|3[0-6][0-7]|37[0-7]?|[4-7][0-7]?|.)",
+          "match": "\\\\(u[A-Fa-f0-9]{4}|.)",
+          "captures": {
+            "0": {"name": "constant.character.escape"}
+          }
+        },
+        "regex-escapes": {
+          "name": "constant.character.escape",
+          "match": "\\\\.",
           "captures": {
             "0": {"name": "constant.character.escape"}
           }
@@ -255,7 +267,7 @@
       }
     },
     "numbers": {
-      "match": "\\b((0|[1-9][0-9]*)(\\.[0-9]*)?| \\.[0-9]+)\\b",
+      "match": "(?i)(\\b(0|[1-9][0-9]*(E[+-]?[0-9]+|\\.[0-9]*)?)|\\.[0-9]+)",
       "name": "constant.numeric"
     },
     "constants": {
