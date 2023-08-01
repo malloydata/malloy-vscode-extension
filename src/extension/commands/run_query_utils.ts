@@ -35,7 +35,7 @@ import {queryDownload} from './query_download';
 import {malloyLog} from '../logger';
 import {trackQueryRun} from '../telemetry';
 import {QuerySpec} from './query_spec';
-import {Disposable} from 'vscode-jsonrpc';
+import {CancellationTokenSource, Disposable} from 'vscode-jsonrpc';
 import {
   createOrReuseWebviewPanel,
   loadWebview,
@@ -65,43 +65,62 @@ export function runMalloyQuery(
       cancellable: true,
     },
     (progress, cancellationToken) => {
-      const onCancel = () => {
-        if (current) {
-          const actuallyCurrent = MALLOY_EXTENSION_STATE.getRunState(
-            current.panelId
-          );
-          if (actuallyCurrent === current) {
-            current.panel.dispose();
-            MALLOY_EXTENSION_STATE.setRunState(current.panelId, undefined);
-          }
-        }
-      };
-
-      cancellationToken.onCancellationRequested(onCancel);
-
-      let current: RunState | null = null;
-
-      if (withWebview) {
-        current = createOrReuseWebviewPanel(
-          'malloyQuery',
-          name,
-          panelId,
-          query.file
-        );
-        const queryPageOnDiskPath = Utils.joinPath(
-          MALLOY_EXTENSION_STATE.getExtensionUri(),
-          'dist',
-          'query_page.js'
-        );
-
-        loadWebview(current, queryPageOnDiskPath);
-        showSchemaTreeViewWhenFocused(current.panel, panelId);
-      }
-
-      const {file, ...params} = query;
-      const uri = file.uri.toString();
-
       return new Promise((resolve, reject) => {
+        const cancellationTokenSource = new CancellationTokenSource();
+        const subscriptions: Disposable[] = [cancellationTokenSource];
+        const unsubscribe = () => {
+          let subscription;
+          while ((subscription = subscriptions.pop())) {
+            subscription.dispose();
+          }
+        };
+
+        const cancel = () => {
+          unsubscribe();
+          cancellationTokenSource.cancel();
+          resolve(undefined);
+        };
+
+        const onCancel = () => {
+          cancel();
+
+          // Cancel worker request
+          if (current) {
+            const actuallyCurrent = MALLOY_EXTENSION_STATE.getRunState(
+              current.panelId
+            );
+            if (actuallyCurrent === current) {
+              current.panel.dispose();
+              MALLOY_EXTENSION_STATE.setRunState(current.panelId, undefined);
+            }
+          }
+        };
+
+        cancellationToken.onCancellationRequested(onCancel);
+
+        let current: RunState | null = null;
+
+        if (withWebview) {
+          current = createOrReuseWebviewPanel(
+            'malloyQuery',
+            name,
+            panelId,
+            query.file,
+            cancel
+          );
+          const queryPageOnDiskPath = Utils.joinPath(
+            MALLOY_EXTENSION_STATE.getExtensionUri(),
+            'dist',
+            'query_page.js'
+          );
+
+          loadWebview(current, queryPageOnDiskPath);
+          showSchemaTreeViewWhenFocused(current.panel, panelId);
+        }
+
+        const {file, ...params} = query;
+        const uri = file.uri.toString();
+
         worker
           .sendRequest(
             'malloy/run',
@@ -114,7 +133,7 @@ export function runMalloyQuery(
               name,
               showSQLOnly,
             },
-            cancellationToken
+            cancellationTokenSource.token
           )
           .catch(() => {
             const error = `The worker process has died, and has been restarted.
@@ -134,10 +153,6 @@ https://github.com/malloydata/malloy-vscode-extension/issues.`;
           .finally(() => {
             unsubscribe();
           });
-
-        const subscriptions: Disposable[] = [];
-        const unsubscribe = () =>
-          subscriptions.forEach(subscription => subscription.dispose());
 
         const listener = (message: QueryMessageStatus) => {
           current?.messages.postMessage({

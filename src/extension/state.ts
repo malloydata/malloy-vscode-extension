@@ -29,6 +29,7 @@ export interface RunState {
   panel: WebviewPanel;
   messages: WebviewMessageManager<QueryMessageStatus | MSQLMessageStatus>;
   panelId: string;
+  cancel: () => void;
   document: TextDocument;
 }
 

@@ -37,7 +37,7 @@ import {
   msqlPanelProgress,
 } from '../../common/message_types';
 import {MALLOY_EXTENSION_STATE, RunState} from '../state';
-import {Disposable /* , State */} from 'vscode-languageclient';
+import {CancellationTokenSource, Disposable} from 'vscode-jsonrpc';
 import {WorkerConnection} from '../worker_connection';
 
 export function runMSQLQuery(
@@ -55,40 +55,57 @@ export function runMSQLQuery(
       cancellable: true,
     },
     (progress, cancellationToken) => {
-      const cancel = () => {
-        if (current) {
-          const actuallyCurrent = MALLOY_EXTENSION_STATE.getRunState(
-            current.panelId
-          );
-          if (actuallyCurrent === current) {
-            current.panel.dispose();
-            MALLOY_EXTENSION_STATE.setRunState(current.panelId, undefined);
-          }
-        }
-      };
-
-      cancellationToken.onCancellationRequested(cancel);
-
-      const current: RunState = createOrReuseWebviewPanel(
-        'malloySQLQuery',
-        name,
-        panelId,
-        document
-      );
-
-      const queryPageOnDiskPath = Utils.joinPath(
-        MALLOY_EXTENSION_STATE.getExtensionUri(),
-        'dist',
-        'msql_query_page.js'
-      );
-      loadWebview(current, queryPageOnDiskPath);
-      showSchemaTreeViewWhenFocused(current.panel, panelId);
-
-      const malloySQLQuery = document.getText();
-
-      const runBegin = Date.now();
-
       return new Promise(resolve => {
+        const cancellationTokenSource = new CancellationTokenSource();
+        const subscriptions: Disposable[] = [];
+        const unsubscribe = () => {
+          let subscription;
+          while ((subscription = subscriptions.pop())) {
+            subscription.dispose();
+          }
+        };
+
+        const cancel = () => {
+          unsubscribe();
+          cancellationTokenSource.cancel();
+          resolve(undefined);
+        };
+
+        const onCancel = () => {
+          cancellationTokenSource.cancel();
+          if (current) {
+            const actuallyCurrent = MALLOY_EXTENSION_STATE.getRunState(
+              current.panelId
+            );
+            if (actuallyCurrent === current) {
+              current.panel.dispose();
+              MALLOY_EXTENSION_STATE.setRunState(current.panelId, undefined);
+            }
+          }
+        };
+
+        cancellationToken.onCancellationRequested(onCancel);
+
+        const current: RunState = createOrReuseWebviewPanel(
+          'malloySQLQuery',
+          name,
+          panelId,
+          document,
+          cancel
+        );
+
+        const queryPageOnDiskPath = Utils.joinPath(
+          MALLOY_EXTENSION_STATE.getExtensionUri(),
+          'dist',
+          'msql_query_page.js'
+        );
+        loadWebview(current, queryPageOnDiskPath);
+        showSchemaTreeViewWhenFocused(current.panel, panelId);
+
+        const malloySQLQuery = document.getText();
+
+        const runBegin = Date.now();
+
         worker
           .sendRequest(
             'malloy/run-msql',
@@ -114,9 +131,6 @@ https://github.com/malloydata/malloy-vscode-extension/issues.`,
             resolve(undefined);
           });
 
-        const subscriptions: Disposable[] = [];
-        const unsubscribe = () =>
-          subscriptions.forEach(subscription => subscription.dispose());
         const listener = (message: MSQLMessageStatus) => {
           current.messages.postMessage({
             ...message,
