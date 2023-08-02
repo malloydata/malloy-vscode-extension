@@ -99,7 +99,7 @@ class MalloySerializer implements vscode.NotebookSerializer {
         }
         const cell: RawNotebookCell = {
           language: languageIdFromStatementType(type),
-          value: text,
+          value: text.replaceAll(/^\\/gm, ''),
           kind: kindFromStatementType(type),
         };
         const metadata: CellMetadata = {
@@ -149,7 +149,7 @@ class MalloySerializer implements vscode.NotebookSerializer {
         kind
       );
       const separator = `>>>${statementType}`;
-      malloySql += `${separator}\n${value}`;
+      malloySql += `${separator}\n${value.replaceAll(/^([>\\])/gm, '\\$1')}`;
     }
 
     return new TextEncoder().encode(malloySql);
