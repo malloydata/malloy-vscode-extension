@@ -38,6 +38,6 @@ describe('Smoke tests', function () {
     const resultJson = await vscode.commands.executeCommand<
       ResultJSON | undefined
     >('malloy.runQueryFile');
-    assert.notStrictEqual(resultJson?.queryResult.result, [{one: 1}]);
+    assert.deepStrictEqual(resultJson?.queryResult.result, [{one: 1}]);
   });
 });
