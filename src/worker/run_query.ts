@@ -81,9 +81,9 @@ const computeConnectionName = (allCells: CellData[]) => {
     if (cell.languageId !== 'malloy-sql') {
       continue;
     }
-    const parsed = MalloySQLSQLParser.parse(cell.text);
-    if (parsed.config.connection) {
-      connectionName = parsed.config.connection;
+    const cellConnection = cell.metadata?.config?.connection;
+    if (cellConnection) {
+      connectionName = cellConnection;
     }
   }
   return connectionName;
