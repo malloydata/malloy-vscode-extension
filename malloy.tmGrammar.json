@@ -40,16 +40,36 @@
       ]
     },
     "sql-string": {
-      "begin": "\"\"\"",
-      "end": "\"\"\"",
-      "beginCaptures": {
-        "0": {"name": "punctuation.sql-block.open"}
-      },
-      "endCaptures": {
-        "0": {"name": "punctuation.sql-block.close"}
-      },
-      "name": "source.sql",
-      "patterns": [{"include": "#malloy-in-sql"}, {"include": "source.sql"}]
+      "patterns": 
+        [
+          {
+            "begin": "\\b(select)(\\s*:\\s*)(\"\"\")",
+            "end": "\"\"\"",
+            "beginCaptures": {
+              "1": {"name": "keyword.control.select"},
+              "3": {"name": "punctuation.sql-block.open"}
+            },
+            "endCaptures": {
+              "0": {"name": "punctuation.sql-block.close"}
+            },
+            "name": "source.sql",
+            "patterns": [{"include": "#malloy-in-sql"}, {"include": "source.sql"}]
+        },
+        {
+          "begin": "(\\b[A-Za-z_][A-Za-z_0-9]*)(\\s*\\.\\s*)(sql)(\\s*\\(\\s*)(\"\"\")",
+          "end": "\"\"\"",
+          "beginCaptures": {
+            "1": {"name": "variable.other"},
+            "3": {"name": "keyword.control.sql"},
+            "5": {"name": "punctuation.sql-block.open"}
+          },
+          "endCaptures": {
+            "0": {"name": "punctuation.sql-block.close"}
+          },
+          "name": "source.sql",
+          "patterns": [{"include": "#malloy-in-sql"}, {"include": "source.sql"}]
+        }
+      ]
     },
     "functions": {
       "patterns": [
@@ -227,7 +247,7 @@
           "endCaptures": {
             "0": {"name": "punctuation.definition.string.end"}
           },
-          "name": "string.unquoted.single",
+          "name": "string.quoted.single",
           "patterns": [{"include": "#escapes"}]
         },
         {
@@ -239,8 +259,19 @@
           "endCaptures": {
             "0": {"name": "punctuation.definition.string.end"}
           },
-          "name": "string.unquoted.double",
+          "name": "string.quoted.double",
           "patterns": [{"include": "#escapes"}]
+        },
+        {
+          "begin": "\"\"\"",
+          "end": "\"\"\"",
+          "beginCaptures": {
+            "0": {"name": "punctuation.definition.string.begin"}
+          },
+          "endCaptures": {
+            "0": {"name": "punctuation.definition.string.end"}
+          },
+          "name": "string.quoted.triple"
         },
         {
           "begin": "(?i)[r|/]'",
