@@ -53,11 +53,193 @@ export function runMalloyQuery(
   query: QuerySpec,
   panelId: string,
   name: string,
-  options: RunMalloyQueryOptions = {}
+  options: RunMalloyQueryOptions = {},
+  cancellationToken: vscode.CancellationToken,
+  progress?: vscode.Progress<{message?: string; increment?: number}>
 ): Thenable<ResultJSON | undefined> {
   const showSQLOnly = options.showSQLOnly ?? false;
   const withWebview = options.withWebview ?? true;
 
+  return new Promise((resolve, reject) => {
+    const cancellationTokenSource = new CancellationTokenSource();
+    const subscriptions: Disposable[] = [cancellationTokenSource];
+    const unsubscribe = () => {
+      let subscription;
+      while ((subscription = subscriptions.pop())) {
+        subscription.dispose();
+      }
+    };
+
+    const cancel = () => {
+      unsubscribe();
+      cancellationTokenSource.cancel();
+      resolve(undefined);
+    };
+
+    const onCancel = () => {
+      cancel();
+
+      // Cancel worker request
+      if (current) {
+        const actuallyCurrent = MALLOY_EXTENSION_STATE.getRunState(
+          current.panelId
+        );
+        if (actuallyCurrent === current) {
+          current.panel.dispose();
+          MALLOY_EXTENSION_STATE.setRunState(current.panelId, undefined);
+        }
+      }
+    };
+
+    cancellationToken.onCancellationRequested(onCancel);
+
+    let current: RunState | null = null;
+
+    if (withWebview) {
+      current = createOrReuseWebviewPanel(
+        'malloyQuery',
+        name,
+        panelId,
+        cancel,
+        query.file
+      );
+      const queryPageOnDiskPath = Utils.joinPath(
+        MALLOY_EXTENSION_STATE.getExtensionUri(),
+        'dist',
+        'query_page.js'
+      );
+
+      loadWebview(current, queryPageOnDiskPath);
+      showSchemaTreeViewWhenFocused(current.panel, panelId);
+    }
+
+    const {file, ...params} = query;
+    const uri = file.uri.toString();
+
+    worker
+      .sendRequest(
+        'malloy/run',
+        {
+          query: {
+            uri,
+            ...params,
+          },
+          panelId,
+          name,
+          showSQLOnly,
+        },
+        cancellationTokenSource.token
+      )
+      .catch(() => {
+        const error = `The worker process has died, and has been restarted.
+This is possibly the result of a database bug. \
+Please consider filing an issue with as much detail as possible at \
+https://github.com/malloydata/malloy-vscode-extension/issues.`;
+        current?.messages.postMessage({
+          status: QueryRunStatus.Error,
+          error,
+        });
+        if (withWebview) {
+          resolve(undefined);
+        } else {
+          reject(new Error(error));
+        }
+      })
+      .finally(() => {
+        unsubscribe();
+      });
+
+    const listener = (message: QueryMessageStatus) => {
+      current?.messages.postMessage({
+        ...message,
+      });
+
+      switch (message.status) {
+        case QueryRunStatus.Compiling:
+          {
+            progress?.report({increment: 20, message: 'Compiling'});
+          }
+          break;
+        case QueryRunStatus.Compiled:
+          {
+            malloyLog.appendLine(message.sql);
+
+            if (showSQLOnly) {
+              progress?.report({increment: 100, message: 'Complete'});
+              resolve(undefined);
+            }
+          }
+          break;
+        case QueryRunStatus.EstimatedCost:
+          {
+            unsubscribe();
+          }
+          break;
+        case QueryRunStatus.Running:
+          {
+            trackQueryRun({dialect: message.dialect});
+
+            progress?.report({increment: 40, message: 'Running'});
+          }
+          break;
+        case QueryRunStatus.Done:
+          {
+            if (message.stats !== undefined) {
+              logTime('Compile', message.stats.compileTime);
+              logTime('Run', message.stats.runTime);
+              logTime('Total', message.stats.totalTime);
+            }
+            const {resultJson} = message;
+            const queryResult = Result.fromJSON(resultJson);
+            progress?.report({increment: 100, message: 'Rendering'});
+
+            current?.messages.onReceiveMessage(message => {
+              if (message.status === QueryRunStatus.StartDownload) {
+                queryDownload(
+                  worker,
+                  query,
+                  message.downloadOptions,
+                  queryResult,
+                  panelId,
+                  name
+                );
+              }
+            });
+
+            unsubscribe();
+            resolve(message.resultJson);
+          }
+          break;
+        case QueryRunStatus.Error:
+          {
+            unsubscribe();
+            if (withWebview) {
+              resolve(undefined);
+            } else {
+              reject(new Error(message.error));
+            }
+          }
+          break;
+      }
+    };
+
+    subscriptions.push(
+      worker.onProgress(queryPanelProgress, panelId, listener)
+    );
+  });
+}
+
+function logTime(name: string, time: number) {
+  malloyLog.appendLine(`${name} time: ${time}s`);
+}
+
+export function runMalloyQueryWithProgress(
+  worker: WorkerConnection,
+  query: QuerySpec,
+  panelId: string,
+  name: string,
+  options: RunMalloyQueryOptions = {}
+): Thenable<ResultJSON | undefined> {
   return vscode.window.withProgress<ResultJSON | undefined>(
     {
       location: vscode.ProgressLocation.Notification,
@@ -65,177 +247,15 @@ export function runMalloyQuery(
       cancellable: true,
     },
     (progress, cancellationToken) => {
-      return new Promise((resolve, reject) => {
-        const cancellationTokenSource = new CancellationTokenSource();
-        const subscriptions: Disposable[] = [cancellationTokenSource];
-        const unsubscribe = () => {
-          let subscription;
-          while ((subscription = subscriptions.pop())) {
-            subscription.dispose();
-          }
-        };
-
-        const cancel = () => {
-          unsubscribe();
-          cancellationTokenSource.cancel();
-          resolve(undefined);
-        };
-
-        const onCancel = () => {
-          cancel();
-
-          // Cancel worker request
-          if (current) {
-            const actuallyCurrent = MALLOY_EXTENSION_STATE.getRunState(
-              current.panelId
-            );
-            if (actuallyCurrent === current) {
-              current.panel.dispose();
-              MALLOY_EXTENSION_STATE.setRunState(current.panelId, undefined);
-            }
-          }
-        };
-
-        cancellationToken.onCancellationRequested(onCancel);
-
-        let current: RunState | null = null;
-
-        if (withWebview) {
-          current = createOrReuseWebviewPanel(
-            'malloyQuery',
-            name,
-            panelId,
-            cancel,
-            query.file
-          );
-          const queryPageOnDiskPath = Utils.joinPath(
-            MALLOY_EXTENSION_STATE.getExtensionUri(),
-            'dist',
-            'query_page.js'
-          );
-
-          loadWebview(current, queryPageOnDiskPath);
-          showSchemaTreeViewWhenFocused(current.panel, panelId);
-        }
-
-        const {file, ...params} = query;
-        const uri = file.uri.toString();
-
-        worker
-          .sendRequest(
-            'malloy/run',
-            {
-              query: {
-                uri,
-                ...params,
-              },
-              panelId,
-              name,
-              showSQLOnly,
-            },
-            cancellationTokenSource.token
-          )
-          .catch(() => {
-            const error = `The worker process has died, and has been restarted.
-This is possibly the result of a database bug. \
-Please consider filing an issue with as much detail as possible at \
-https://github.com/malloydata/malloy-vscode-extension/issues.`;
-            current?.messages.postMessage({
-              status: QueryRunStatus.Error,
-              error,
-            });
-            if (withWebview) {
-              resolve(undefined);
-            } else {
-              reject(new Error(error));
-            }
-          })
-          .finally(() => {
-            unsubscribe();
-          });
-
-        const listener = (message: QueryMessageStatus) => {
-          current?.messages.postMessage({
-            ...message,
-          });
-
-          switch (message.status) {
-            case QueryRunStatus.Compiling:
-              {
-                progress.report({increment: 20, message: 'Compiling'});
-              }
-              break;
-            case QueryRunStatus.Compiled:
-              {
-                malloyLog.appendLine(message.sql);
-
-                if (showSQLOnly) {
-                  progress.report({increment: 100, message: 'Complete'});
-                  resolve(undefined);
-                }
-              }
-              break;
-            case QueryRunStatus.EstimatedCost:
-              {
-                unsubscribe();
-              }
-              break;
-            case QueryRunStatus.Running:
-              {
-                trackQueryRun({dialect: message.dialect});
-
-                progress.report({increment: 40, message: 'Running'});
-              }
-              break;
-            case QueryRunStatus.Done:
-              {
-                if (message.stats !== undefined) {
-                  logTime('Compile', message.stats.compileTime);
-                  logTime('Run', message.stats.runTime);
-                  logTime('Total', message.stats.totalTime);
-                }
-                const {resultJson} = message;
-                const queryResult = Result.fromJSON(resultJson);
-                progress.report({increment: 100, message: 'Rendering'});
-
-                current?.messages.onReceiveMessage(message => {
-                  if (message.status === QueryRunStatus.StartDownload) {
-                    queryDownload(
-                      worker,
-                      query,
-                      message.downloadOptions,
-                      queryResult,
-                      panelId,
-                      name
-                    );
-                  }
-                });
-
-                unsubscribe();
-                resolve(message.resultJson);
-              }
-              break;
-            case QueryRunStatus.Error:
-              {
-                unsubscribe();
-                if (withWebview) {
-                  resolve(undefined);
-                } else {
-                  reject(new Error(message.error));
-                }
-              }
-              break;
-          }
-        };
-
-        subscriptions.push(
-          worker.onProgress(queryPanelProgress, panelId, listener)
-        );
-      });
+      return runMalloyQuery(
+        worker,
+        query,
+        panelId,
+        name,
+        options,
+        cancellationToken,
+        progress
+      );
     }
   );
-}
-
-function logTime(name: string, time: number) {
-  malloyLog.appendLine(`${name} time: ${time}s`);
 }

@@ -24,7 +24,7 @@
 import * as vscode from 'vscode';
 import {MALLOY_EXTENSION_STATE} from '../state';
 import {WorkerConnection} from '../worker_connection';
-import {runMalloyQuery} from './run_query_utils';
+import {runMalloyQuery, runMalloyQueryWithProgress} from './run_query_utils';
 import {ResultJSON} from '@malloydata/malloy';
 
 export async function runNamedQuery(
@@ -35,7 +35,7 @@ export async function runNamedQuery(
     vscode.window.activeTextEditor?.document ||
     MALLOY_EXTENSION_STATE.getActiveWebviewPanel()?.document;
   if (document) {
-    return runMalloyQuery(
+    return runMalloyQueryWithProgress(
       worker,
       {type: 'named', name, file: document},
       `${document.uri.toString()} ${name}`,
