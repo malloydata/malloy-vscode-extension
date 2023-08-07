@@ -60,6 +60,7 @@ const fakeMalloyResult = (
       lastStageName: sql,
       malloy: '',
       connectionName,
+      runStats: sqlResult.runStats ? {...sqlResult.runStats} : undefined,
       sourceExplore: '',
       sourceFilters: [],
     },
