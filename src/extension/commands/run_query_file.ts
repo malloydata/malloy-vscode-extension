@@ -22,7 +22,7 @@
  */
 
 import * as vscode from 'vscode';
-import {runMalloyQuery} from './run_query_utils';
+import {runMalloyQueryWithProgress} from './run_query_utils';
 import {WorkerConnection} from '../worker_connection';
 import {ResultJSON} from '@malloydata/malloy';
 
@@ -32,7 +32,7 @@ export async function runQueryFileCommand(
 ): Promise<ResultJSON | undefined> {
   const document = vscode.window.activeTextEditor?.document;
   if (document) {
-    return runMalloyQuery(
+    return runMalloyQueryWithProgress(
       worker,
       {type: 'file', index: queryIndex, file: document},
       document.uri.toString(),

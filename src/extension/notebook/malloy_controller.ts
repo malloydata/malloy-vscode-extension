@@ -168,13 +168,14 @@ class MalloyController {
         {type: 'file', index: -1, file: cell.document},
         cell.document.uri.toString(),
         cell.document.fileName.split('/').pop() || cell.document.fileName,
-        {withWebview: false}
+        {withWebview: false},
+        execution.token
       );
 
       const text = cell.document.getText();
-      const style = text.match(/\/\/ --! style ([a-z_]+)/m);
+      const style = text.match(/(\/\/ |^)--! style ([a-z_]+)/m);
       if (style) {
-        meta = {renderer: style[1]};
+        meta = {renderer: style[2]};
       }
       const output: vscode.NotebookCellOutput[] = [];
       if (jsonResults) {

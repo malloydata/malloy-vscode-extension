@@ -24,14 +24,14 @@
 import * as vscode from 'vscode';
 import {MALLOY_EXTENSION_STATE} from '../state';
 import {WorkerConnection} from '../worker_connection';
-import {runMalloyQuery} from './run_query_utils';
+import {runMalloyQueryWithProgress} from './run_query_utils';
 
 export function runNamedSQLBlock(worker: WorkerConnection, name: string): void {
   const document =
     vscode.window.activeTextEditor?.document ||
     MALLOY_EXTENSION_STATE.getActiveWebviewPanel()?.document;
   if (document) {
-    runMalloyQuery(
+    runMalloyQueryWithProgress(
       worker,
       {type: 'named_sql', name, file: document},
       `${document.uri.toString()} ${name}`,

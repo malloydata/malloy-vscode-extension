@@ -23,7 +23,7 @@
 
 import * as vscode from 'vscode';
 import {WorkerConnection} from '../worker_connection';
-import {runMalloyQuery} from './run_query_utils';
+import {runMalloyQueryWithProgress} from './run_query_utils';
 
 export function showSQLFileCommand(
   worker: WorkerConnection,
@@ -31,7 +31,7 @@ export function showSQLFileCommand(
 ): void {
   const document = vscode.window.activeTextEditor?.document;
   if (document) {
-    runMalloyQuery(
+    runMalloyQueryWithProgress(
       worker,
       {type: 'file', index: queryIndex, file: document},
       document.uri.toString(),
