@@ -25,6 +25,10 @@ import * as vscode from 'vscode';
 import {MalloySQLParser, MalloySQLStatementType} from '@malloydata/malloy-sql';
 import {CellMetadata} from '../../common/types';
 
+interface NotebookMetadata {
+  initialComments?: string | undefined;
+}
+
 export function activateNotebookSerializer(context: vscode.ExtensionContext) {
   if (!vscode.notebooks) {
     return;
@@ -86,11 +90,15 @@ class MalloySerializer implements vscode.NotebookSerializer {
   ): Promise<vscode.NotebookData> {
     const contents = new TextDecoder().decode(content);
     let raw: RawNotebookCell[] = [];
+    const metadata: NotebookMetadata = {};
 
     if (contents.length === 0) {
       raw = []; // Handle empty (new) notebook
-    } else if (contents.startsWith('>>>')) {
+    } else if (contents.startsWith('[')) {
+      raw = <RawNotebookCell[]>JSON.parse(contents);
+    } else {
       const parsed = MalloySQLParser.parse(contents);
+      metadata.initialComments = parsed.initialComments;
       for (const statement of parsed.statements) {
         const {config, type} = statement;
         let {text} = statement;
@@ -103,19 +111,14 @@ class MalloySerializer implements vscode.NotebookSerializer {
           kind: kindFromStatementType(type),
         };
         const metadata: CellMetadata = {
-          config: {...config},
+          config: {},
         };
+        if (config?.connection && !config.inheritedConnection) {
+          metadata.config = {connection: config.connection};
+        }
         cell.metadata = metadata;
         raw.push(cell);
       }
-    } else if (contents.startsWith('[')) {
-      try {
-        raw = <RawNotebookCell[]>JSON.parse(contents);
-      } catch {
-        raw = [];
-      }
-    } else {
-      throw new Error('Unrecognized notebook format');
     }
 
     const cells = raw.map(item => {
@@ -130,14 +133,16 @@ class MalloySerializer implements vscode.NotebookSerializer {
       return cell;
     });
 
-    return new vscode.NotebookData(cells);
+    const notebook = new vscode.NotebookData(cells);
+    notebook.metadata = metadata;
+    return notebook;
   }
 
   async serializeNotebook(
     data: vscode.NotebookData,
     _token: vscode.CancellationToken
   ): Promise<Uint8Array> {
-    let malloySql = '';
+    let malloySql = (data.metadata as NotebookMetadata).initialComments || '';
 
     for (const cell of data.cells) {
       if (malloySql.length && !malloySql.endsWith('\n')) {
