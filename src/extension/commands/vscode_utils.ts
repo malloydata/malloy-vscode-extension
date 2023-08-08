@@ -87,9 +87,20 @@ export function loadWebview(current: RunState, onDiskPath: URI): void {
 
   current.panel.onDidDispose(() => {
     current.cancel();
+    const actuallyCurrent = MALLOY_EXTENSION_STATE.getRunState(current.panelId);
+    if (actuallyCurrent === current) {
+      MALLOY_EXTENSION_STATE.setRunState(current.panelId, undefined);
+    }
   });
 
   MALLOY_EXTENSION_STATE.setActiveWebviewPanelId(current.panelId);
+}
+
+export function disposeWebviewPanel(current: RunState) {
+  const actuallyCurrent = MALLOY_EXTENSION_STATE.getRunState(current.panelId);
+  if (actuallyCurrent === current) {
+    current.panel.dispose();
+  }
 }
 
 export function showSchemaTreeViewWhenFocused(

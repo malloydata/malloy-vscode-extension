@@ -38,6 +38,7 @@ import {QuerySpec} from './query_spec';
 import {CancellationTokenSource, Disposable} from 'vscode-jsonrpc';
 import {
   createOrReuseWebviewPanel,
+  disposeWebviewPanel,
   loadWebview,
   showSchemaTreeViewWhenFocused,
 } from './vscode_utils';
@@ -78,16 +79,8 @@ export function runMalloyQuery(
 
     const onCancel = () => {
       cancel();
-
-      // Cancel worker request
       if (current) {
-        const actuallyCurrent = MALLOY_EXTENSION_STATE.getRunState(
-          current.panelId
-        );
-        if (actuallyCurrent === current) {
-          current.panel.dispose();
-          MALLOY_EXTENSION_STATE.setRunState(current.panelId, undefined);
-        }
+        disposeWebviewPanel(current);
       }
     };
 
