@@ -24,6 +24,7 @@
 import vscode, {TextDocument, WebviewPanel} from 'vscode';
 import {MSQLMessageStatus, QueryMessageStatus} from '../common/message_types';
 import {WebviewMessageManager} from './webview_message_manager';
+import {Position} from 'vscode-languageclient';
 
 export interface RunState {
   cancel: () => void;
@@ -39,6 +40,7 @@ class MalloyExtensionState {
   private extensionUri: vscode.Uri | undefined;
   private runStates: Map<string, RunState> = new Map();
   private homeUri: vscode.Uri | undefined;
+  private position: Position | undefined;
 
   setActiveWebviewPanelId(panelId: string) {
     this.activeWebviewPanelId = panelId;
@@ -51,6 +53,14 @@ class MalloyExtensionState {
   getActiveWebviewPanel() {
     const id = this.activeWebviewPanelId;
     return id ? this.getRunState(id) : undefined;
+  }
+
+  setActivePosition(position: Position) {
+    this.position = position;
+  }
+
+  getActivePosition() {
+    return this.position;
   }
 
   setRunState(panelId: string, state: RunState | undefined) {

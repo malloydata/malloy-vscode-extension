@@ -121,6 +121,16 @@
         "enablement": "false"
       },
       {
+        "command": "malloy.runQueryAtCursor",
+        "title": "Run Query at Cursor",
+        "category": "Malloy",
+        "enablement": "editorLangId == malloy",
+        "icon": {
+          "dark": "img/play.svg",
+          "light": "img/play.svg"
+        }
+      },
+      {
         "command": "malloy.showSQLFile",
         "title": "Show SQL File",
         "category": "Malloy",
