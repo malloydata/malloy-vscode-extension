@@ -191,6 +191,12 @@ class MalloyController {
         items.push(
           vscode.NotebookCellOutputItem.json(jsonResults.queryResult.result)
         );
+        items.push(
+          vscode.NotebookCellOutputItem.text(
+            jsonResults.queryResult.sql,
+            'text/x-sql'
+          )
+        );
         output.push(new vscode.NotebookCellOutput(items, meta));
 
         const queryCostBytes = jsonResults.queryResult.runStats?.queryCostBytes;
