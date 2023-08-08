@@ -24,22 +24,45 @@
 import * as vscode from 'vscode';
 import {MALLOY_EXTENSION_STATE} from '../state';
 import {WorkerConnection} from '../worker_connection';
-import {runMalloyQueryWithProgress} from './run_query_utils';
+// import {runMalloyQueryWithProgress} from './run_query_utils';
 import {ResultJSON} from '@malloydata/malloy';
+import {BaseLanguageClient, CodeLens} from 'vscode-languageclient';
 
-export async function runNamedQuery(
+export async function runQueryAtCursorCommand(
   worker: WorkerConnection,
-  name: string
+  client: BaseLanguageClient
 ): Promise<ResultJSON | undefined> {
   const document =
     vscode.window.activeTextEditor?.document ||
     MALLOY_EXTENSION_STATE.getActiveWebviewPanel()?.document;
   if (document) {
-    return runMalloyQueryWithProgress(
-      worker,
-      {type: 'named', name, file: document},
-      `${document.uri.toString()} ${name}`,
-      name
-    );
+    const lenses: CodeLens[] = await client.sendRequest('malloy/findLensesAt', {
+      uri: document.uri.toString(),
+      position: MALLOY_EXTENSION_STATE.getActivePosition(),
+    });
+    // Not sure if this is the most accurate approach, but pick the most nested
+    // lens to execute.
+    const deepest = lenses.reduce<CodeLens | null>((deepest, current) => {
+      if (
+        ['malloy.runQuery', 'malloy.runNamedQuery'].includes(
+          current.command?.command || ''
+        )
+      ) {
+        if (deepest) {
+          if (current.range.start.character > deepest.range.start.character) {
+            deepest = current;
+          }
+        } else {
+          deepest = current;
+        }
+      }
+      return deepest;
+    }, null);
+    if (deepest?.command?.arguments) {
+      return await vscode.commands.executeCommand(
+        deepest.command.command,
+        ...deepest.command.arguments
+      );
+    }
   }
 }

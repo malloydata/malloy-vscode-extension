@@ -61,6 +61,7 @@ import {
 import {runMalloySQLStatement} from './commands/run_msql_statement';
 import {BaseLanguageClient} from 'vscode-languageclient';
 import {WorkerConnection} from './worker_connection';
+import {runQueryAtCursorCommand} from './commands/run_query_at_cursor';
 
 function getNewClientId(): string {
   return uuid();
@@ -93,6 +94,13 @@ export const setupSubscriptions = (
   context.subscriptions.push(
     vscode.commands.registerCommand('malloy.runNamedQuery', (name: string) =>
       runNamedQuery(worker, name)
+    )
+  );
+
+  // Run query at cursor
+  context.subscriptions.push(
+    vscode.commands.registerCommand('malloy.runQueryAtCursor', () =>
+      runQueryAtCursorCommand(worker, client)
     )
   );
 
@@ -267,6 +275,12 @@ export const setupFileMessaging = (
     client.onRequest('malloy/fetch', async (message: WorkerFetchMessage) => {
       malloyLog.appendLine(`reading file ${message.uri}`);
       return await fileHandler.fetchFile(message.uri);
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.window.onDidChangeTextEditorSelection(e => {
+      MALLOY_EXTENSION_STATE.setActivePosition(e.selections[0].start);
     })
   );
 };

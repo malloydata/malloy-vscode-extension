@@ -31,6 +31,7 @@ import {
   HoverParams,
   Hover,
   Connection,
+  Position,
 } from 'vscode-languageserver';
 import debounce from 'lodash/debounce';
 
@@ -47,6 +48,7 @@ import {getHover} from './hover/hover';
 import {getMalloyDefinitionReference} from './definitions/definitions';
 import {TranslateCache} from './translate_cache';
 import {ConnectionManager} from '../common/connection_manager';
+import {findMalloyLensesAt} from './lenses/lenses';
 
 export const initServer = (
   documents: TextDocuments<TextDocument>,
@@ -152,6 +154,18 @@ export const initServer = (
       }
     }
   });
+
+  connection.onRequest(
+    'malloy/findLensesAt',
+    ({uri, position}: {uri: string; position: Position}) => {
+      const document = documents.get(uri);
+      if (document) {
+        return findMalloyLensesAt(document, position);
+      } else {
+        return [];
+      }
+    }
+  );
 
   connection.onDefinition(handler => {
     const document = documents.get(handler.textDocument.uri);

@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {CodeLens} from 'vscode-languageserver/node';
+import {CodeLens, Position, Range} from 'vscode-languageserver/node';
 import {TextDocument} from 'vscode-languageserver-textdocument';
 import {parseWithCache} from '../parse_cache';
 
@@ -174,4 +174,24 @@ export function getMalloyLenses(document: TextDocument): CodeLens[] {
   });
 
   return lenses;
+}
+
+function inRange(range: Range, position: Position): boolean {
+  const {start, end} = range;
+  const afterStart =
+    position.line > start.line ||
+    (position.line === start.line && position.character >= start.character);
+  const beforeEnd =
+    position.line < end.line ||
+    (position.line === end.line && position.character <= end.character);
+  return afterStart && beforeEnd;
+}
+
+export function findMalloyLensesAt(
+  document: TextDocument,
+  position: Position
+): CodeLens[] {
+  const lenses = getMalloyLenses(document);
+
+  return lenses.filter(lens => inRange(lens.range, position));
 }
