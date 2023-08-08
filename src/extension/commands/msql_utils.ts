@@ -26,6 +26,7 @@ import * as vscode from 'vscode';
 import {malloyLog} from '../logger';
 import {
   createOrReuseWebviewPanel,
+  disposeWebviewPanel,
   loadWebview,
   showSchemaTreeViewWhenFocused,
 } from './vscode_utils';
@@ -74,13 +75,7 @@ export function runMSQLQuery(
         const onCancel = () => {
           cancellationTokenSource.cancel();
           if (current) {
-            const actuallyCurrent = MALLOY_EXTENSION_STATE.getRunState(
-              current.panelId
-            );
-            if (actuallyCurrent === current) {
-              current.panel.dispose();
-              MALLOY_EXTENSION_STATE.setRunState(current.panelId, undefined);
-            }
+            disposeWebviewPanel(current);
           }
         };
 
