@@ -94,7 +94,7 @@ export function editConnectionsCommand(): void {
         }
         messageManager.postMessage({
           type: ConnectionMessageType.SetConnections,
-          connections,
+          connections: message.connections,
           availableBackends,
         });
         break;
