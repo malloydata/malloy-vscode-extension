@@ -70,6 +70,7 @@ export const ConnectionEditorList: React.FC<ConnectionEditorListProps> = ({
 
   const setConfig = (config: ConnectionConfig, index: number) => {
     const copy = [...connections];
+    config.isGenerated = false;
     copy[index] = config;
     setConnections(copy);
     setDirty(true);
