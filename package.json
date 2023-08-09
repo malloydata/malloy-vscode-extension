@@ -246,6 +246,13 @@
         }
       ]
     },
+    "keybindings": [
+      {
+        "command": "malloy.runQueryAtCursor",
+        "key": "shift+enter",
+        "when": "editorTextFocus && editorLangId == malloy && !findInputFocussed && !replaceInputFocussed"
+      }
+    ],
     "languages": [
       {
         "id": "malloy",
