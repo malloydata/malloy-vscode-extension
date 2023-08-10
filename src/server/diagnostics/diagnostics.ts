@@ -51,6 +51,7 @@ export async function getMalloyDiagnostics(
     const {errors} = parseMalloySQLSQLWithCache(document);
     if (errors) errors.forEach(e => problems.push(...e.problems));
   } else if (document.languageId === 'malloy-notebook') {
+    // TODO(whscullin): Delete with malloy-sql text editor
     const {errors} = parseMalloySQLWithCache(document);
     if (errors) errors.forEach(e => problems.push(...e.problems));
   }

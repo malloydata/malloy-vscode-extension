@@ -151,6 +151,7 @@ export const initServer = (
     const document = documents.get(handler.textDocument.uri);
     if (document) {
       if (document.languageId === 'malloy') return getMalloyLenses(document);
+      // TODO(whscullin): Delete with malloy-sql text editor
       if (document.languageId === 'malloy-notebook') {
         return getMalloySQLLenses(document);
       }
