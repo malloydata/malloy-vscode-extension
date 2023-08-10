@@ -249,7 +249,7 @@
     "keybindings": [
       {
         "command": "malloy.runQueryAtCursor",
-        "key": "shift+enter",
+        "key": "ctrl+enter",
         "when": "editorTextFocus && editorLangId == malloy && !findInputFocussed && !replaceInputFocussed"
       }
     ],

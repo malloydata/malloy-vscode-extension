@@ -159,7 +159,7 @@ export const initServer = (
     'malloy/findLensesAt',
     ({uri, position}: {uri: string; position: Position}) => {
       const document = documents.get(uri);
-      if (document) {
+      if (document && position) {
         return findMalloyLensesAt(document, position);
       } else {
         return [];
