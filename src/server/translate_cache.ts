@@ -159,7 +159,8 @@ export class TranslateCache implements TranslateCache {
           // some errors come from Runtime stuff
           if (e instanceof MalloyError) {
             e.problems.forEach(log => {
-              fixLogRange(uri, malloyQuery, log);
+              // "query:\n" adds a line, so we subtract the line here
+              fixLogRange(uri, malloyQuery, log, -1);
             });
           }
 
@@ -212,7 +213,7 @@ export class TranslateCache implements TranslateCache {
           } catch (e) {
             if (e instanceof MalloyError) {
               e.problems.forEach(log => {
-                fixLogRange(uri, malloyQuery, log);
+                fixLogRange(uri, malloyQuery, log, -1);
               });
             }
             throw e;

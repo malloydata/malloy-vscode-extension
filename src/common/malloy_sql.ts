@@ -27,7 +27,8 @@ import {EmbeddedMalloyQuery} from '@malloydata/malloy-sql/dist/types';
 export const fixLogRange = (
   uri: string,
   malloyQuery: EmbeddedMalloyQuery,
-  log: LogMessage
+  log: LogMessage,
+  adjustment = 0
 ): string => {
   if (log.at) {
     if (log.at.url === 'internal://internal.malloy') {
@@ -36,7 +37,8 @@ export const fixLogRange = (
       return '';
     }
 
-    const embeddedStart: number = log.at.range.start.line - 1;
+    const embeddedStart: number = log.at.range.start.line + adjustment;
+    // if the embedded malloy is on the same line as SQL, pad character start (and maybe end)
     if (embeddedStart === 0) {
       log.at.range.start.character += malloyQuery.malloyRange.start.character;
       if (log.at.range.start.line === log.at.range.end.line)
