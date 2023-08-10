@@ -44,9 +44,13 @@ export async function runQueryAtCursorCommand(
     // lens to execute.
     const deepest = lenses.reduce<CodeLens | null>((deepest, current) => {
       if (
-        ['malloy.runQuery', 'malloy.runNamedQuery'].includes(
-          current.command?.command || ''
-        )
+        [
+          'malloy.runQuery',
+          'malloy.runQueryFile',
+          'malloy.runNamedQuery',
+          'malloy.runNamedSQLBlock',
+          'malloy.runUnnamedSQLBlock',
+        ].includes(current.command?.command || '')
       ) {
         if (deepest) {
           if (current.range.start.character > deepest.range.start.character) {
