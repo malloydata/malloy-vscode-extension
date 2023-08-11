@@ -191,10 +191,7 @@
         "command": "malloy.refreshSchema",
         "title": "Refresh Schema",
         "category": "Malloy",
-        "icon": {
-          "light": "img/refresh.svg",
-          "dark": "img/refresh.svg"
-        }
+        "icon": "$(refresh)"
       },
       {
         "command": "malloy.editConnections",
