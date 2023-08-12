@@ -26,6 +26,7 @@ export enum ConnectionBackend {
   Postgres = 'postgres',
   DuckDB = 'duckdb',
   DuckDBWASM_DEPRECATED = 'duckdb_wasm',
+  MySql = 'mysql',
 }
 
 export const ConnectionBackendNames: Record<ConnectionBackend, string> = {
@@ -33,6 +34,7 @@ export const ConnectionBackendNames: Record<ConnectionBackend, string> = {
   [ConnectionBackend.Postgres]: 'Postgres',
   [ConnectionBackend.DuckDB]: 'DuckDB',
   [ConnectionBackend.DuckDBWASM_DEPRECATED]: 'duckdDuckDBb_wasm',
+  [ConnectionBackend.MySql]: 'MySql',
 };
 
 /*
@@ -71,6 +73,15 @@ export interface DuckDBConnectionConfig extends BaseConnectionConfig {
   workingDirectory?: string;
 }
 
+export interface MySqlConnectionConfig extends BaseConnectionConfig {
+  backend: ConnectionBackend.MySql;
+  host?: string;
+  port?: number;
+  user?: string;
+  password?: string;
+  database?: string;
+}
+
 export interface DuckDBWASMConnectionConfigDeprecated
   extends BaseConnectionConfig {
   backend: ConnectionBackend.DuckDBWASM_DEPRECATED;
@@ -81,7 +92,8 @@ export type ConnectionConfig =
   | BigQueryConnectionConfig
   | PostgresConnectionConfig
   | DuckDBConnectionConfig
-  | DuckDBWASMConnectionConfigDeprecated;
+  | DuckDBWASMConnectionConfigDeprecated
+  | MySqlConnectionConfig;
 
 export interface ConfigOptions {
   workingDirectory: string;

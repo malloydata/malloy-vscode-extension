@@ -556,6 +556,7 @@
     "@malloydata/db-duckdb": "0.0.67",
     "@malloydata/db-postgres": "0.0.67",
     "@malloydata/malloy": "0.0.67",
+    "@malloydata/malloy-mysql-connection": "^0.0.9",
     "@malloydata/malloy-sql": "0.0.67",
     "@malloydata/render": "0.0.67",
     "@popperjs/core": "^2.11.6",

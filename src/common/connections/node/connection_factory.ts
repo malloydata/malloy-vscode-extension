@@ -34,6 +34,7 @@ import {createPostgresConnection} from '../postgres_connection';
 import {isDuckDBAvailable} from '../../duckdb_availability';
 
 import {fileURLToPath} from 'url';
+import {createMySqlConnection} from '../mysql_connection';
 
 export class DesktopConnectionFactory implements ConnectionFactory {
   connectionCache: Record<string, TestableConnection> = {};
@@ -46,7 +47,11 @@ export class DesktopConnectionFactory implements ConnectionFactory {
   }
 
   getAvailableBackends(): ConnectionBackend[] {
-    const available = [ConnectionBackend.BigQuery, ConnectionBackend.Postgres];
+    const available = [
+      ConnectionBackend.BigQuery,
+      ConnectionBackend.Postgres,
+      ConnectionBackend.MySql,
+    ];
     if (isDuckDBAvailable) {
       available.push(ConnectionBackend.DuckDB);
     }
@@ -85,6 +90,10 @@ export class DesktopConnectionFactory implements ConnectionFactory {
           connectionConfig,
           configOptions
         );
+        break;
+      }
+      case ConnectionBackend.MySql: {
+        connection = await createMySqlConnection();
         break;
       }
     }
@@ -132,6 +141,20 @@ export class DesktopConnectionFactory implements ConnectionFactory {
         id: 'duckdb-default',
         isDefault: false,
         isGenerated: true,
+      });
+    }
+
+    if (!configs.find(config => config.name === 'mysql')) {
+      configs.push({
+        name: 'mysql',
+        backend: ConnectionBackend.MySql,
+        id: 'mysql-default',
+        isDefault: false,
+        isGenerated: true,
+        user: 'root',
+        password: 'Malloydev123',
+        host: '127.0.0.1',
+        database: 'Appointments',
       });
     }
     return configs;
