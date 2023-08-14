@@ -26,6 +26,7 @@ import {Utils} from 'vscode-uri';
 import {getWebviewHtml} from '../webviews';
 import {HelpMessageType, HelpPanelMessage} from '../../common/message_types';
 import {WebviewMessageManager} from '../webview_message_manager';
+import {MALLOY_EXTENSION_STATE} from '../state';
 
 export class HelpViewProvider implements vscode.WebviewViewProvider {
   private _view?: vscode.WebviewView;

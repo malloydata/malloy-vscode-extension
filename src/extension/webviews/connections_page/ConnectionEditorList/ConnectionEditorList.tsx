@@ -37,10 +37,14 @@ import {
 import {VSCodeButton} from '../../components';
 import {ButtonGroup} from '../ButtonGroup';
 import {ConnectionEditor} from '../ConnectionEditor';
+import {
+  ConnectionEditorBox,
+  ConnectionTitle,
+} from '../ConnectionEditor/ConnectionTitle';
 
 interface ConnectionEditorListProps {
   connections: ConnectionConfig[];
-  setConnections: (connections: ConnectionConfig[]) => void;
+  setConnections: (connections: ConnectionConfig[], isNew?: boolean) => void;
   saveConnections: () => void;
   testConnection: (connection: ConnectionConfig) => void;
   testStatuses: ConnectionMessageTest[];
@@ -48,6 +52,8 @@ interface ConnectionEditorListProps {
   availableBackends: ConnectionBackend[];
   installExternalConnection: (config: ExternalConnectionConfig) => void;
   installExternalConnectionStatuses: ConnectionMessageInstallExternalConnection[];
+  selectedId: string | null;
+  setSelectedId: (selectedId: string | null) => void;
 }
 
 export const ConnectionEditorList: React.FC<ConnectionEditorListProps> = ({
@@ -60,20 +66,24 @@ export const ConnectionEditorList: React.FC<ConnectionEditorListProps> = ({
   availableBackends,
   installExternalConnection,
   installExternalConnectionStatuses,
+  selectedId,
+  setSelectedId,
 }) => {
   const [dirty, setDirty] = useState(false);
   const defaultConnectionIndex = getDefaultIndex(connections);
 
   const addConnection = () => {
+    const id = uuidv4();
     setConnections([
       ...connections,
       {
         name: '',
         backend: availableBackends[0],
-        id: uuidv4(),
+        id,
         isDefault: connections.length === 0,
       },
     ]);
+    setSelectedId(id);
   };
 
   const setConfig = (config: ConnectionConfig, index: number) => {
@@ -97,35 +107,45 @@ export const ConnectionEditorList: React.FC<ConnectionEditorListProps> = ({
       <ButtonGroup style={{margin: '10px'}}>
         <VSCodeButton onClick={addConnection}>New Connection</VSCodeButton>
       </ButtonGroup>
-      {connections.map((config, index) => (
-        <ConnectionEditor
-          key={index}
-          config={config}
-          setConfig={newConfig => setConfig(newConfig, index)}
-          deleteConfig={() => {
-            const copy = [...connections];
-            copy.splice(index, 1);
-            setConnections(copy);
-            setDirty(true);
-          }}
-          testConfig={() => {
-            testConnection(connections[index]);
-          }}
-          testStatus={[...testStatuses]
-            .reverse()
-            .find(message => message.connection.id === config.id)}
-          requestServiceAccountKeyPath={requestServiceAccountKeyPath}
-          isDefault={index === defaultConnectionIndex}
-          makeDefault={() => makeDefault(index)}
-          availableBackends={availableBackends}
-          installExternalConnection={installExternalConnection}
-          installExternalConnectionStatus={[
-            ...installExternalConnectionStatuses,
-          ]
-            .reverse()
-            .find(message => message.connection.id === config.id)}
-        />
-      ))}
+      {connections.map((config, index) =>
+        selectedId === config.id ? (
+          <ConnectionEditor
+            key={index}
+            config={config}
+            setConfig={newConfig => setConfig(newConfig, index)}
+            deleteConfig={() => {
+              const copy = [...connections];
+              copy.splice(index, 1);
+              setConnections(copy);
+              setDirty(true);
+            }}
+            testConfig={() => {
+              testConnection(connections[index]);
+            }}
+            testStatus={[...testStatuses]
+              .reverse()
+              .find(message => message.connection.id === config.id)}
+            requestServiceAccountKeyPath={requestServiceAccountKeyPath}
+            isDefault={index === defaultConnectionIndex}
+            makeDefault={() => makeDefault(index)}
+            availableBackends={availableBackends}
+            installExternalConnection={installExternalConnection}
+            installExternalConnectionStatus={[
+              ...installExternalConnectionStatuses,
+            ]
+              .reverse()
+              .find(message => message.connection.id === config.id)}
+            setSelectedId={setSelectedId}
+          />
+        ) : (
+          <ConnectionEditorBox key={index}>
+            <ConnectionTitle onClick={() => setSelectedId(config.id)}>
+              <i className="codicon codicon-chevron-right" /> CONNECTION:{' '}
+              {config.name || 'Untitled'}
+            </ConnectionTitle>
+          </ConnectionEditorBox>
+        )
+      )}
       {connections.length === 0 && (
         <EmptyStateBox>NO CONNECTIONS</EmptyStateBox>
       )}

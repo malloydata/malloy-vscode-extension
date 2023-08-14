@@ -22,14 +22,12 @@
  */
 
 import * as vscode from 'vscode';
-import {Utils} from 'vscode-uri';
 
 import {
   ConnectionBackendNames,
   ConnectionConfig,
   getDefaultIndex,
 } from '../../common/connection_manager_types';
-import connectionIcon from '../../media/database.svg';
 import {VSCodeConnectionManager} from '../connection_manager';
 
 export class ConnectionsProvider
@@ -75,7 +73,7 @@ export class ConnectionsProvider
   }
 }
 
-class ConnectionItem extends vscode.TreeItem {
+export class ConnectionItem extends vscode.TreeItem {
   constructor(
     private context: vscode.ExtensionContext,
     config: ConnectionConfig,
@@ -83,15 +81,21 @@ class ConnectionItem extends vscode.TreeItem {
     isAvailable: boolean
   ) {
     super(config.name, vscode.TreeItemCollapsibleState.None);
+
     const backendName = ConnectionBackendNames[config.backend];
+    this.id = config.id;
     this.description = `(${backendName}${isDefault ? ', default' : ''}${
       config.isGenerated ? ', automatically generated' : ''
     }) ${isAvailable ? '' : '(Not available)'}`;
-
-    const uri = this.context.extensionUri;
-    this.iconPath = {
-      light: Utils.joinPath(uri, 'dist', connectionIcon),
-      dark: Utils.joinPath(uri, 'dist', connectionIcon),
-    };
   }
+
+  contextValue = 'connection';
+
+  command = {
+    title: 'Edit connection',
+    command: 'malloy.editConnections',
+    arguments: [this],
+  };
+
+  iconPath = new vscode.ThemeIcon('database');
 }

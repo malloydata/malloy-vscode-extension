@@ -21,4 +21,18 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-export {ConnectionEditor} from './ConnectionEditor';
+import styled from 'styled-components';
+
+export const ConnectionTitle = styled.b`
+  color: var(--foreground);
+  font-family: var(--font-family);
+  display: flex;
+  align-items: center;
+`;
+
+export const ConnectionEditorBox = styled.div`
+  margin: 10px;
+  background-color: var(--vscode-list-hoverBackground);
+  padding: 10px;
+  border: 1px solid var(--vscode-contrastBorder);
+`;

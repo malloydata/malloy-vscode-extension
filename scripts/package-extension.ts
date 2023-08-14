@@ -65,7 +65,6 @@ export async function doPackage(
       useYarn: false,
       target,
       packagePath,
-      dependencies: false,
     });
   } finally {
     fs.copyFileSync('package.json.original', 'package.json');

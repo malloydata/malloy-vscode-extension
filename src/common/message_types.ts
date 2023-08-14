@@ -228,11 +228,17 @@ export type QueryPanelMessage =
   | QueryMessageStartDownload;
 
 export enum ConnectionMessageType {
+  EditConnection = 'edit-connection',
   SetConnections = 'set-connections',
   AppReady = 'app-ready',
   TestConnection = 'test-connection',
   RequestBigQueryServiceAccountKeyFile = 'request-bigquery-service-account-key-file',
   InstallExternalConnection = 'install-external-connection',
+}
+
+interface ConnectionMessageEditConnection {
+  type: ConnectionMessageType.EditConnection;
+  id: string | null;
 }
 
 interface ConnectionMessageSetConnections {
@@ -329,6 +335,7 @@ export type ConnectionMessageInstallExternalConnection =
 
 export type ConnectionPanelMessage =
   | ConnectionMessageAppReady
+  | ConnectionMessageEditConnection
   | ConnectionMessageSetConnections
   | ConnectionMessageTest
   | ConnectionMessageServiceAccountKeyRequest
