@@ -89,8 +89,13 @@ export interface MessageRunMSQL {
   showSQLOnly?: boolean;
 }
 
+export interface CloudCodeConfig {
+  project: string;
+}
+
 export interface MessageConfig {
-  config: MalloyConfig;
+  malloy: MalloyConfig;
+  cloudcode: CloudCodeConfig;
 }
 
 export interface MessageFetch {

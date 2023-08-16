@@ -177,7 +177,7 @@ export const initServer = (
   connection.onDidChangeConfiguration(change => {
     connectionManager.setConnectionsConfig(change.settings.malloy.connections);
     haveConnectionsBeenSet = true;
-    documents.all().forEach(diagnoseDocument);
+    documents.all().forEach(debouncedDiagnoseDocument);
   });
 
   // This handler provides the initial list of the completion items.

@@ -38,13 +38,14 @@ import {fileHandler} from '../utils';
 import {MALLOY_EXTENSION_STATE} from '../state';
 import {WorkerConnectionNode} from './worker_connection_node';
 import {MalloyConfig} from '../../common/types';
+import {CloudCodeConfig} from '../../common/worker_message_types';
 
 let client: LanguageClient;
 
-const cloudshellEnv = () => {
-  const cloudShellProject = vscode.workspace
-    .getConfiguration('cloudcode')
-    .get('cloudshell.project');
+const cloudCodeEnv = () => {
+  const cloudCodeConfig = vscode.workspace.getConfiguration('cloudcode');
+  const cloudShellProject = cloudCodeConfig.get('project');
+
   if (cloudShellProject && typeof cloudShellProject === 'string') {
     process.env['DEVSHELL_PROJECT_ID'] = cloudShellProject;
     process.env['GOOGLE_CLOUD_PROJECT'] = cloudShellProject;
@@ -53,7 +54,7 @@ const cloudshellEnv = () => {
 };
 
 export function activate(context: vscode.ExtensionContext): void {
-  cloudshellEnv();
+  cloudCodeEnv();
   setupLanguageServer(context);
   const worker = new WorkerConnectionNode(context, fileHandler);
   sendWorkerConfig(worker);
@@ -80,8 +81,9 @@ export function activate(context: vscode.ExtensionContext): void {
         sendWorkerConfig(worker);
         connectionsTree.refresh();
       }
-      if (e.affectsConfiguration('cloudshell')) {
-        cloudshellEnv();
+      if (e.affectsConfiguration('cloudcode')) {
+        sendWorkerConfig(worker);
+        cloudCodeEnv();
       }
     })
   );
@@ -122,8 +124,7 @@ async function setupLanguageServer(
       {language: 'malloy-notebook'},
     ],
     synchronize: {
-      configurationSection: 'malloy',
-      fileEvents: vscode.workspace.createFileSystemWatcher('**/.clientrc'),
+      configurationSection: ['malloy', 'cloudcode'],
     },
     connectionOptions: {
       // If the server crashes X times in Y mins(e.g., 3 min), it won't get
@@ -147,8 +148,11 @@ async function setupLanguageServer(
 
 function sendWorkerConfig(worker: WorkerConnectionNode) {
   worker.sendRequest('malloy/config', {
-    config: vscode.workspace.getConfiguration(
+    malloy: vscode.workspace.getConfiguration(
       'malloy'
     ) as unknown as MalloyConfig,
+    cloudcode: vscode.workspace.getConfiguration(
+      'cloudcode'
+    ) as unknown as CloudCodeConfig,
   });
 }

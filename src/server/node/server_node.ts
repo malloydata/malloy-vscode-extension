@@ -27,5 +27,18 @@ import {connection, connectionManager} from './connections_node';
 import {initServer} from '../init';
 
 const documents = new TextDocuments(TextDocument);
+
+connection.onDidChangeConfiguration(change => {
+  const cloudCodeConfig = change.settings.cloudcode;
+  const cloudShellProject = cloudCodeConfig.project;
+
+  if (cloudShellProject && typeof cloudShellProject === 'string') {
+    process.env['DEVSHELL_PROJECT_ID'] = cloudShellProject;
+    process.env['GOOGLE_CLOUD_PROJECT'] = cloudShellProject;
+    process.env['GOOGLE_CLOUD_QUOTA_PROJECT'] = cloudShellProject;
+  }
+});
+
 initServer(documents, connection, connectionManager);
+
 connection.console.info('Server loaded');

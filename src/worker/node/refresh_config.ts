@@ -32,13 +32,21 @@ const DEFAULT_ROW_LIMIT = 50;
 export const refreshConfig = (
   messageHandler: WorkerMessageHandler,
   connectionManager: ConnectionManager,
-  {config}: MessageConfig
+  {malloy, cloudcode}: MessageConfig
 ): void => {
-  const {rowLimit: rowLimitRaw, connections} = config;
+  const {rowLimit: rowLimitRaw, connections} = malloy;
 
   messageHandler.log('Config updated');
 
   connectionManager.setConnectionsConfig(connections);
   const rowLimit = rowLimitRaw || DEFAULT_ROW_LIMIT;
   connectionManager.setCurrentRowLimit(+rowLimit);
+
+  const cloudShellProject = cloudcode.project;
+
+  if (cloudShellProject && typeof cloudShellProject === 'string') {
+    process.env['DEVSHELL_PROJECT_ID'] = cloudShellProject;
+    process.env['GOOGLE_CLOUD_PROJECT'] = cloudShellProject;
+    process.env['GOOGLE_CLOUD_QUOTA_PROJECT'] = cloudShellProject;
+  }
 };
