@@ -21,14 +21,17 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {TextDocuments} from 'vscode-languageserver/node';
+import {
+  DidChangeConfigurationParams,
+  TextDocuments,
+} from 'vscode-languageserver/node';
 import {TextDocument} from 'vscode-languageserver-textdocument';
 import {connection, connectionManager} from './connections_node';
 import {initServer} from '../init';
 
 const documents = new TextDocuments(TextDocument);
 
-connection.onDidChangeConfiguration(change => {
+const onDidChangeConfiguration = (change: DidChangeConfigurationParams) => {
   const cloudCodeConfig = change.settings.cloudcode;
   const cloudShellProject = cloudCodeConfig.project;
 
@@ -37,8 +40,8 @@ connection.onDidChangeConfiguration(change => {
     process.env['GOOGLE_CLOUD_PROJECT'] = cloudShellProject;
     process.env['GOOGLE_CLOUD_QUOTA_PROJECT'] = cloudShellProject;
   }
-});
+};
 
-initServer(documents, connection, connectionManager);
+initServer(documents, connection, connectionManager, onDidChangeConfiguration);
 
 connection.console.info('Server loaded');
