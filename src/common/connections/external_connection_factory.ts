@@ -7,15 +7,11 @@ import {registerDialect} from '@malloydata/malloy/dist/dialect';
 import {PluginManager} from 'live-plugin-manager';
 import {
   ExternalConnectionConfig,
+  ExternalConnectionPackageInfo,
   ExternalConnectionSource,
 } from '../connection_manager_types';
 
 // TODO(figutierrez): Can we check if package deps are in sync with these?
-
-export interface ExternalConnectionPackageInfo {
-  packageName: string;
-  version: string;
-}
 
 export class ExternalConnectionFactory {
   readonly pm = new PluginManager();

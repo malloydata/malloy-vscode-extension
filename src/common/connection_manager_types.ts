@@ -25,7 +25,6 @@ import {
   ConnectionConfigSchema,
   ConnectionConfig as MalloyConnectionConfig,
 } from '@malloydata/malloy';
-import {ExternalConnectionPackageInfo} from './connections/external_connection_factory';
 
 export enum ConnectionBackend {
   BigQuery = 'bigquery',
@@ -84,6 +83,11 @@ export interface DuckDBWASMConnectionConfigDeprecated
   extends BaseConnectionConfig {
   backend: ConnectionBackend.DuckDBWASM_DEPRECATED;
   workingDirectory?: string;
+}
+
+export interface ExternalConnectionPackageInfo {
+  packageName: string;
+  version: string;
 }
 
 export enum ExternalConnectionSource {
