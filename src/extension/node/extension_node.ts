@@ -44,12 +44,14 @@ let client: LanguageClient;
 
 const cloudCodeEnv = () => {
   const cloudCodeConfig = vscode.workspace.getConfiguration('cloudcode');
-  const cloudShellProject = cloudCodeConfig.get('project');
+  const cloudCodeProject = cloudCodeConfig.get('project');
+  const cloudShellProject = cloudCodeConfig.get('cloudshell.project');
+  const project = cloudCodeProject || cloudShellProject;
 
-  if (cloudShellProject && typeof cloudShellProject === 'string') {
-    process.env['DEVSHELL_PROJECT_ID'] = cloudShellProject;
-    process.env['GOOGLE_CLOUD_PROJECT'] = cloudShellProject;
-    process.env['GOOGLE_CLOUD_QUOTA_PROJECT'] = cloudShellProject;
+  if (project && typeof project === 'string') {
+    process.env['DEVSHELL_PROJECT_ID'] = project;
+    process.env['GOOGLE_CLOUD_PROJECT'] = project;
+    process.env['GOOGLE_CLOUD_QUOTA_PROJECT'] = project;
   }
 };
 

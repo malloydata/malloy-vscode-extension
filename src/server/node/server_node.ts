@@ -28,17 +28,21 @@ import {
 import {TextDocument} from 'vscode-languageserver-textdocument';
 import {connection, connectionManager} from './connections_node';
 import {initServer} from '../init';
+import {CloudCodeConfig} from '../../common/worker_message_types';
 
 const documents = new TextDocuments(TextDocument);
 
 const onDidChangeConfiguration = (change: DidChangeConfigurationParams) => {
-  const cloudCodeConfig = change.settings.cloudcode;
-  const cloudShellProject = cloudCodeConfig.project;
+  const cloudCodeConfig = change.settings.cloudcode as CloudCodeConfig;
+  const cloudCodeProject = cloudCodeConfig.project;
+  const cloudShellProject = cloudCodeConfig.cloudshell?.project;
 
-  if (cloudShellProject && typeof cloudShellProject === 'string') {
-    process.env['DEVSHELL_PROJECT_ID'] = cloudShellProject;
-    process.env['GOOGLE_CLOUD_PROJECT'] = cloudShellProject;
-    process.env['GOOGLE_CLOUD_QUOTA_PROJECT'] = cloudShellProject;
+  const project = cloudCodeProject || cloudShellProject;
+
+  if (project && typeof project === 'string') {
+    process.env['DEVSHELL_PROJECT_ID'] = project;
+    process.env['GOOGLE_CLOUD_PROJECT'] = project;
+    process.env['GOOGLE_CLOUD_QUOTA_PROJECT'] = project;
   }
 };
 

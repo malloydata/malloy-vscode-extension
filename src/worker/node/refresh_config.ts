@@ -42,11 +42,14 @@ export const refreshConfig = (
   const rowLimit = rowLimitRaw || DEFAULT_ROW_LIMIT;
   connectionManager.setCurrentRowLimit(+rowLimit);
 
-  const cloudShellProject = cloudcode.project;
+  const cloudCodeProject = cloudcode.project;
+  const cloudShellProject = cloudcode.cloudshell?.project;
 
-  if (cloudShellProject && typeof cloudShellProject === 'string') {
-    process.env['DEVSHELL_PROJECT_ID'] = cloudShellProject;
-    process.env['GOOGLE_CLOUD_PROJECT'] = cloudShellProject;
-    process.env['GOOGLE_CLOUD_QUOTA_PROJECT'] = cloudShellProject;
+  const project = cloudCodeProject || cloudShellProject;
+
+  if (project && typeof project === 'string') {
+    process.env['DEVSHELL_PROJECT_ID'] = project;
+    process.env['GOOGLE_CLOUD_PROJECT'] = project;
+    process.env['GOOGLE_CLOUD_QUOTA_PROJECT'] = project;
   }
 };

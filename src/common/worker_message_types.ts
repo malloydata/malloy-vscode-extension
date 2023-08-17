@@ -90,7 +90,10 @@ export interface MessageRunMSQL {
 }
 
 export interface CloudCodeConfig {
-  project: string;
+  project?: string;
+  cloudshell?: {
+    project?: string;
+  };
 }
 
 export interface MessageConfig {
