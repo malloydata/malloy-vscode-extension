@@ -30,6 +30,7 @@ import {
   ConnectionPanelMessage,
   ConnectionServiceAccountKeyRequestStatus,
   ConnectionTestStatus,
+  InstallExternalConnectionStatus,
 } from '../../../common/message_types';
 import {WebviewMessageManager} from '../../webview_message_manager';
 import {connectionManager} from '../connection_manager';
@@ -133,6 +134,27 @@ export function editConnectionsCommand(): void {
             status: ConnectionServiceAccountKeyRequestStatus.Success,
             connectionId: message.connectionId,
             serviceAccountKeyPath: result[0].fsPath,
+          });
+        }
+        break;
+      }
+      case ConnectionMessageType.InstallExternalConnection: {
+        try {
+          const installResult =
+            await connectionManager.installExternalConnectionPackage(
+              message.connection
+            );
+          messageManager.postMessage({
+            type: ConnectionMessageType.InstallExternalConnection,
+            status: InstallExternalConnectionStatus.Success,
+            connection: {...installResult},
+          });
+        } catch (error) {
+          messageManager.postMessage({
+            type: ConnectionMessageType.InstallExternalConnection,
+            status: InstallExternalConnectionStatus.Error,
+            connection: message.connection,
+            error: errorMessage(error),
           });
         }
         break;

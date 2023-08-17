@@ -21,11 +21,17 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import {
+  ConnectionConfigSchema,
+  ConnectionConfig as MalloyConnectionConfig,
+} from '@malloydata/malloy';
+
 export enum ConnectionBackend {
   BigQuery = 'bigquery',
   Postgres = 'postgres',
   DuckDB = 'duckdb',
   DuckDBWASM_DEPRECATED = 'duckdb_wasm',
+  External = 'external',
 }
 
 export const ConnectionBackendNames: Record<ConnectionBackend, string> = {
@@ -33,6 +39,8 @@ export const ConnectionBackendNames: Record<ConnectionBackend, string> = {
   [ConnectionBackend.Postgres]: 'Postgres',
   [ConnectionBackend.DuckDB]: 'DuckDB',
   [ConnectionBackend.DuckDBWASM_DEPRECATED]: 'duckdDuckDBb_wasm',
+  // TODO(figutierrez): Remove beta once ready.
+  [ConnectionBackend.External]: 'External (Beta)',
 };
 
 /*
@@ -77,11 +85,39 @@ export interface DuckDBWASMConnectionConfigDeprecated
   workingDirectory?: string;
 }
 
+export interface ExternalConnectionPackageInfo {
+  packageName: string;
+  version: string;
+}
+
+export enum ExternalConnectionSource {
+  NPM = 'npm',
+  LocalNPM = 'local_npm',
+}
+
+export const ExternalConnectionSourceNames: Record<
+  ExternalConnectionSource,
+  string
+> = {
+  [ExternalConnectionSource.NPM]: 'NPM package',
+  [ExternalConnectionSource.LocalNPM]: 'Local package',
+};
+
+export interface ExternalConnectionConfig extends BaseConnectionConfig {
+  backend: ConnectionBackend.External;
+  source?: ExternalConnectionSource;
+  path?: string;
+  packageInfo?: ExternalConnectionPackageInfo;
+  connectionSchema?: ConnectionConfigSchema;
+  configParameters?: MalloyConnectionConfig;
+}
+
 export type ConnectionConfig =
   | BigQueryConnectionConfig
   | PostgresConnectionConfig
   | DuckDBConnectionConfig
-  | DuckDBWASMConnectionConfigDeprecated;
+  | DuckDBWASMConnectionConfigDeprecated
+  | ExternalConnectionConfig;
 
 export interface ConfigOptions {
   workingDirectory: string;

@@ -27,6 +27,7 @@ import {
   ConfigOptions,
   ConnectionBackend,
   ConnectionConfig,
+  ExternalConnectionConfig,
 } from '../../connection_manager_types';
 import {createBigQueryConnection} from '../bigquery_connection';
 import {createDuckDbConnection} from '../duckdb_connection';
@@ -34,9 +35,12 @@ import {createPostgresConnection} from '../postgres_connection';
 import {isDuckDBAvailable} from '../../duckdb_availability';
 
 import {fileURLToPath} from 'url';
+import {ExternalConnectionFactory} from '../external_connection_factory';
+import {random} from 'lodash';
 
 export class DesktopConnectionFactory implements ConnectionFactory {
   connectionCache: Record<string, TestableConnection> = {};
+  externalConnectionFactory = new ExternalConnectionFactory();
 
   reset() {
     Object.values(this.connectionCache).forEach(connection =>
@@ -46,7 +50,11 @@ export class DesktopConnectionFactory implements ConnectionFactory {
   }
 
   getAvailableBackends(): ConnectionBackend[] {
-    const available = [ConnectionBackend.BigQuery, ConnectionBackend.Postgres];
+    const available = [
+      ConnectionBackend.BigQuery,
+      ConnectionBackend.Postgres,
+      ConnectionBackend.External,
+    ];
     if (isDuckDBAvailable) {
       available.push(ConnectionBackend.DuckDB);
     }
@@ -87,6 +95,12 @@ export class DesktopConnectionFactory implements ConnectionFactory {
         );
         break;
       }
+      case ConnectionBackend.External: {
+        connection = await this.externalConnectionFactory.createOtherConnection(
+          connectionConfig
+        );
+        break;
+      }
     }
     if (useCache && connection) {
       this.connectionCache[cacheKey] = connection;
@@ -98,6 +112,23 @@ export class DesktopConnectionFactory implements ConnectionFactory {
     }
 
     return connection;
+  }
+
+  async installExternalConnectionPackage(
+    connectionConfig: ExternalConnectionConfig
+  ): Promise<ExternalConnectionConfig> {
+    const packageInfo =
+      await this.externalConnectionFactory.installExternalConnectionPackage(
+        connectionConfig
+      );
+    const connectionSpec =
+      await this.externalConnectionFactory.fetchConnectionFactory(packageInfo);
+    return {
+      ...connectionConfig,
+      packageInfo: packageInfo,
+      name: connectionSpec.connectionName,
+      connectionSchema: connectionSpec.configSchema,
+    };
   }
 
   getWorkingDirectory(url: URL): string {

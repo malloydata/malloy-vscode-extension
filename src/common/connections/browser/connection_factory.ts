@@ -27,6 +27,7 @@ import {
   ConfigOptions,
   ConnectionBackend,
   ConnectionConfig,
+  ExternalConnectionConfig,
 } from '../../connection_manager_types';
 import {createDuckDbWasmConnection} from '../duckdb_wasm_connection';
 import {DuckDBWASMConnection} from '@malloydata/db-duckdb/wasm';
@@ -37,6 +38,14 @@ export class WebConnectionFactory implements ConnectionFactory {
   connectionCache: Record<string, TestableConnection> = {};
 
   constructor(private fetchBinaryFile?: FetchCallback) {}
+
+  installExternalConnectionPackage(
+    _connectionConfig: ExternalConnectionConfig
+  ): Promise<ExternalConnectionConfig> {
+    throw new Error(
+      'Can not install external packages in the browser for now.'
+    );
+  }
 
   async reset() {
     await Promise.all(

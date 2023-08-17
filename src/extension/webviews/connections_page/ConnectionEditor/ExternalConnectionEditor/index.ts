@@ -21,29 +21,4 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {
-  ConfigOptions,
-  ConnectionBackend,
-  ConnectionConfig,
-  ExternalConnectionConfig,
-} from '../connection_manager_types';
-import {TestableConnection} from '@malloydata/malloy';
-
-export interface ConnectionFactory {
-  reset(): void;
-
-  getAvailableBackends(): ConnectionBackend[];
-
-  getConnectionForConfig(
-    connectionConfig: ConnectionConfig,
-    configOptions: ConfigOptions
-  ): Promise<TestableConnection>;
-
-  getWorkingDirectory(url: URL): string;
-
-  addDefaults(configs: ConnectionConfig[]): ConnectionConfig[];
-
-  installExternalConnectionPackage(
-    connectionConfig: ExternalConnectionConfig
-  ): Promise<ExternalConnectionConfig>;
-}
+export {ExternalConnectionEditor} from './ExternalConnectionEditor';
