@@ -21,15 +21,4 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-export const errorMessage = (error: unknown): string => {
-  let message = `Something went wrong ${JSON.stringify(error)}`;
-  if (error instanceof Error) {
-    message = error.message;
-  } else if (typeof error === 'string') {
-    message = error;
-  } else {
-    // eslint-disable-next-line no-console
-    console.error(error);
-  }
-  return message;
-};
+export {ExternalConnectionEditor} from './ExternalConnectionEditor';

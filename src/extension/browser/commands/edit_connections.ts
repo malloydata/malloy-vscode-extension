@@ -74,6 +74,7 @@ export function editConnectionsCommand(): void {
   messageManager.onReceiveMessage(async message => {
     switch (message.type) {
       case ConnectionMessageType.SetConnections: {
+        console.log(`==== CONNS ${message.connections}`);
         const connections = await handleConnectionsPreSave(message.connections);
         const malloyConfig = vscode.workspace.getConfiguration('malloy');
         const hasWorkspaceConfig =

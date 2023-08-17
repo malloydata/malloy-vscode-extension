@@ -25,6 +25,7 @@ import React, {useEffect, useState} from 'react';
 import {
   ConnectionBackend,
   ConnectionConfig,
+  ExternalConnectionConfig,
 } from '../../../common/connection_manager_types';
 import {
   ConnectionMessageType,
@@ -32,6 +33,8 @@ import {
   ConnectionMessageTest,
   ConnectionTestStatus,
   ConnectionServiceAccountKeyRequestStatus,
+  InstallExternalConnectionStatus,
+  ConnectionMessageInstallExternalConnection,
 } from '../../../common/message_types';
 import {useConnectionsVSCodeContext} from './connections_vscode_context';
 import {ConnectionEditorList} from './ConnectionEditorList';
@@ -48,6 +51,10 @@ export const App: React.FC = () => {
     ConnectionConfig[] | undefined
   >();
   const [testStatuses, setTestStatuses] = useState<ConnectionMessageTest[]>([]);
+  const [
+    installExternalConnectionStatuses,
+    setInstallExternalConnectionStatuses,
+  ] = useState<ConnectionMessageInstallExternalConnection[]>([]);
   const [availableBackends, setAvailableBackends] = useState<
     ConnectionBackend[]
   >([]);
@@ -70,6 +77,19 @@ export const App: React.FC = () => {
     setTestStatuses([...testStatuses, message]);
   };
 
+  const installExternalConnection = (connection: ExternalConnectionConfig) => {
+    const message: ConnectionMessageInstallExternalConnection = {
+      type: ConnectionMessageType.InstallExternalConnection,
+      connection,
+      status: InstallExternalConnectionStatus.Waiting,
+    };
+    vscode.postMessage(message);
+    setInstallExternalConnectionStatuses([
+      ...installExternalConnectionStatuses,
+      message,
+    ]);
+  };
+
   const requestServiceAccountKeyPath = (connectionId: string) => {
     vscode.postMessage({
       type: ConnectionMessageType.RequestBigQueryServiceAccountKeyFile,
@@ -89,6 +109,12 @@ export const App: React.FC = () => {
           break;
         case ConnectionMessageType.TestConnection:
           setTestStatuses([...testStatuses, message]);
+          break;
+        case ConnectionMessageType.InstallExternalConnection:
+          setInstallExternalConnectionStatuses([
+            ...installExternalConnectionStatuses,
+            message,
+          ]);
           break;
         case ConnectionMessageType.RequestBigQueryServiceAccountKeyFile: {
           if (
@@ -130,6 +156,8 @@ export const App: React.FC = () => {
           testStatuses={testStatuses}
           requestServiceAccountKeyPath={requestServiceAccountKeyPath}
           availableBackends={availableBackends}
+          installExternalConnection={installExternalConnection}
+          installExternalConnectionStatuses={installExternalConnectionStatuses}
         />
       </div>
     </Scroll>

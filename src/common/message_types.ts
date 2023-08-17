@@ -23,7 +23,11 @@
 
 import {MalloyError, MalloyQueryData, ResultJSON} from '@malloydata/malloy';
 import {DataStyles} from '@malloydata/render';
-import {ConnectionBackend, ConnectionConfig} from './connection_manager_types';
+import {
+  ConnectionBackend,
+  ConnectionConfig,
+  ExternalConnectionConfig,
+} from './connection_manager_types';
 import {ProgressType} from 'vscode-jsonrpc';
 
 /*
@@ -228,6 +232,7 @@ export enum ConnectionMessageType {
   AppReady = 'app-ready',
   TestConnection = 'test-connection',
   RequestBigQueryServiceAccountKeyFile = 'request-bigquery-service-account-key-file',
+  InstallExternalConnection = 'install-external-connection',
 }
 
 interface ConnectionMessageSetConnections {
@@ -292,11 +297,42 @@ export type ConnectionMessageServiceAccountKeyRequest =
   | ConnectionMessageServiceAccountKeyRequestWaiting
   | ConnectionMessageServiceAccountKeyRequestSuccess;
 
+export enum InstallExternalConnectionStatus {
+  Waiting = 'waiting',
+  Success = 'success',
+  Error = 'error',
+}
+
+interface ConnectionMessageInstallExternalConnectionWaiting {
+  type: ConnectionMessageType.InstallExternalConnection;
+  status: InstallExternalConnectionStatus.Waiting;
+  connection: ExternalConnectionConfig;
+}
+
+interface ConnectionMessageInstallExternalConnectionSuccess {
+  type: ConnectionMessageType.InstallExternalConnection;
+  status: InstallExternalConnectionStatus.Success;
+  connection: ExternalConnectionConfig;
+}
+
+interface ConnectionMessageInstallExternalConnectionError {
+  type: ConnectionMessageType.InstallExternalConnection;
+  status: InstallExternalConnectionStatus.Error;
+  error: string;
+  connection: ExternalConnectionConfig;
+}
+
+export type ConnectionMessageInstallExternalConnection =
+  | ConnectionMessageInstallExternalConnectionWaiting
+  | ConnectionMessageInstallExternalConnectionSuccess
+  | ConnectionMessageInstallExternalConnectionError;
+
 export type ConnectionPanelMessage =
   | ConnectionMessageAppReady
   | ConnectionMessageSetConnections
   | ConnectionMessageTest
-  | ConnectionMessageServiceAccountKeyRequest;
+  | ConnectionMessageServiceAccountKeyRequest
+  | ConnectionMessageInstallExternalConnection;
 
 export enum HelpMessageType {
   AppReady = 'app-ready',

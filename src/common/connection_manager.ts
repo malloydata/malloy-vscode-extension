@@ -26,7 +26,11 @@ import {
   LookupConnection,
   TestableConnection,
 } from '@malloydata/malloy';
-import {ConfigOptions, ConnectionConfig} from './connection_manager_types';
+import {
+  ConfigOptions,
+  ConnectionConfig,
+  ExternalConnectionConfig,
+} from './connection_manager_types';
 import {ConnectionFactory} from './connections/types';
 
 const DEFAULT_CONFIG = Symbol('default-config');
@@ -53,7 +57,11 @@ export class DynamicConnectionLookup implements LookupConnection<Connection> {
             ...this.options,
           });
       } else {
-        throw new Error(`No connection found with name ${connectionName}`);
+        throw new Error(
+          `No connection found with name ${connectionName} ${
+            new Error('abc').stack
+          }`
+        );
       }
     }
     return this.connections[connectionKey];
@@ -119,6 +127,14 @@ export class ConnectionManager {
 
   public getConnectionConfigs() {
     return this.filterUnavailableConnectionBackends(this.configList);
+  }
+
+  public async installExternalConnectionPackage(
+    connectionConfig: ExternalConnectionConfig
+  ): Promise<ExternalConnectionConfig> {
+    return this.connectionFactory.installExternalConnectionPackage(
+      connectionConfig
+    );
   }
 
   public getAvailableBackends() {

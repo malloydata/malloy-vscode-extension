@@ -27,8 +27,12 @@ import {
   ConnectionBackend,
   ConnectionBackendNames,
   ConnectionConfig,
+  ExternalConnectionConfig,
 } from '../../../../common/connection_manager_types';
-import {ConnectionMessageTest} from '../../../../common/message_types';
+import {
+  ConnectionMessageInstallExternalConnection,
+  ConnectionMessageTest,
+} from '../../../../common/message_types';
 import {Dropdown} from '../../components';
 import {
   VSCodeButton,
@@ -41,6 +45,7 @@ import {Label} from './Label';
 import {LabelCell} from './LabelCell';
 import {PostgresConnectionEditor} from './PostgresConnectionEditor';
 import {DuckDBConnectionEditor} from './DuckDBConnectionEditor';
+import {ExternalConnectionEditor} from './ExternalConnectionEditor';
 
 interface ConnectionEditorProps {
   config: ConnectionConfig;
@@ -52,6 +57,10 @@ interface ConnectionEditorProps {
   isDefault: boolean;
   makeDefault: () => void;
   availableBackends: ConnectionBackend[];
+  installExternalConnection: (config: ExternalConnectionConfig) => void;
+  installExternalConnectionStatus:
+    | ConnectionMessageInstallExternalConnection
+    | undefined;
 }
 
 export const ConnectionEditor: React.FC<ConnectionEditorProps> = ({
@@ -64,11 +73,14 @@ export const ConnectionEditor: React.FC<ConnectionEditorProps> = ({
   isDefault,
   makeDefault,
   availableBackends,
+  installExternalConnection,
+  installExternalConnectionStatus,
 }) => {
   const allBackendOptions: ConnectionBackend[] = [
     ConnectionBackend.BigQuery,
     ConnectionBackend.Postgres,
     ConnectionBackend.DuckDB,
+    ConnectionBackend.External,
   ];
 
   const backendOptions = allBackendOptions
@@ -128,6 +140,13 @@ export const ConnectionEditor: React.FC<ConnectionEditorProps> = ({
         <PostgresConnectionEditor config={config} setConfig={setConfig} />
       ) : config.backend === ConnectionBackend.DuckDB ? (
         <DuckDBConnectionEditor config={config} setConfig={setConfig} />
+      ) : config.backend === ConnectionBackend.External ? (
+        <ExternalConnectionEditor
+          config={config}
+          setConfig={setConfig}
+          installExternalConnection={installExternalConnection}
+          installExternalConnectionStatus={installExternalConnectionStatus}
+        />
       ) : (
         <div>Unknown Connection Type</div>
       )}

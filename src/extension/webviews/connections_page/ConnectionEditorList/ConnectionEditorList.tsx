@@ -27,9 +27,13 @@ import {v4 as uuidv4} from 'uuid';
 import {
   ConnectionBackend,
   ConnectionConfig,
+  ExternalConnectionConfig,
   getDefaultIndex,
 } from '../../../../common/connection_manager_types';
-import {ConnectionMessageTest} from '../../../../common/message_types';
+import {
+  ConnectionMessageInstallExternalConnection,
+  ConnectionMessageTest,
+} from '../../../../common/message_types';
 import {VSCodeButton} from '../../components';
 import {ButtonGroup} from '../ButtonGroup';
 import {ConnectionEditor} from '../ConnectionEditor';
@@ -42,6 +46,8 @@ interface ConnectionEditorListProps {
   testStatuses: ConnectionMessageTest[];
   requestServiceAccountKeyPath: (connectionId: string) => void;
   availableBackends: ConnectionBackend[];
+  installExternalConnection: (config: ExternalConnectionConfig) => void;
+  installExternalConnectionStatuses: ConnectionMessageInstallExternalConnection[];
 }
 
 export const ConnectionEditorList: React.FC<ConnectionEditorListProps> = ({
@@ -52,6 +58,8 @@ export const ConnectionEditorList: React.FC<ConnectionEditorListProps> = ({
   testStatuses,
   requestServiceAccountKeyPath,
   availableBackends,
+  installExternalConnection,
+  installExternalConnectionStatuses,
 }) => {
   const [dirty, setDirty] = useState(false);
   const defaultConnectionIndex = getDefaultIndex(connections);
@@ -110,6 +118,12 @@ export const ConnectionEditorList: React.FC<ConnectionEditorListProps> = ({
           isDefault={index === defaultConnectionIndex}
           makeDefault={() => makeDefault(index)}
           availableBackends={availableBackends}
+          installExternalConnection={installExternalConnection}
+          installExternalConnectionStatus={[
+            ...installExternalConnectionStatuses,
+          ]
+            .reverse()
+            .find(message => message.connection.id === config.id)}
         />
       ))}
       {connections.length === 0 && (
