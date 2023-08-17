@@ -32,6 +32,7 @@ import {
   Hover,
   Connection,
   Position,
+  DidChangeConfigurationParams,
 } from 'vscode-languageserver';
 import debounce from 'lodash/debounce';
 
@@ -53,7 +54,8 @@ import {findMalloyLensesAt} from './lenses/lenses';
 export const initServer = (
   documents: TextDocuments<TextDocument>,
   connection: Connection,
-  connectionManager: ConnectionManager
+  connectionManager: ConnectionManager,
+  onDidChangeConfiguration?: (params: DidChangeConfigurationParams) => void
 ) => {
   let haveConnectionsBeenSet = false;
   connection.onInitialize((params: InitializeParams) => {
@@ -175,9 +177,10 @@ export const initServer = (
   });
 
   connection.onDidChangeConfiguration(change => {
+    onDidChangeConfiguration?.(change);
     connectionManager.setConnectionsConfig(change.settings.malloy.connections);
     haveConnectionsBeenSet = true;
-    documents.all().forEach(diagnoseDocument);
+    documents.all().forEach(debouncedDiagnoseDocument);
   });
 
   // This handler provides the initial list of the completion items.
