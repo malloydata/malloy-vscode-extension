@@ -10,7 +10,6 @@ import {
   ExternalConnectionSource,
 } from '../connection_manager_types';
 
-// TODO(figutierrez): This could be a class instead of static consts, have a common plugin manager.
 // TODO(figutierrez): Can we check if package deps are in sync with these?
 
 export interface ExternalConnectionPackageInfo {
@@ -39,7 +38,8 @@ export class ExternalConnectionFactory {
       );
     }
 
-    const connection = externalConnection.connectionFactory.createConnection(
+    const factory = externalConnection.connectionFactory as ConnectionFactory;
+    const connection = factory.createConnection(
       config.configParameters ?? {},
       registerDialect
     ) as Connection & TestableConnection;
@@ -90,7 +90,6 @@ export class ExternalConnectionFactory {
     }
 
     switch (connectionConfig.source) {
-      // TODO(figutierrez): Test this path.
       case ExternalConnectionSource.NPM: {
         try {
           const pi = await this.pm.installFromNpm(connectionConfig.path);

@@ -57,11 +57,7 @@ export class DynamicConnectionLookup implements LookupConnection<Connection> {
             ...this.options,
           });
       } else {
-        throw new Error(
-          `No connection found with name ${connectionName} ${
-            new Error('abc').stack
-          }`
-        );
+        throw new Error(`No connection found with name ${connectionName}`);
       }
     }
     return this.connections[connectionKey];

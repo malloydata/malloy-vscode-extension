@@ -107,9 +107,7 @@ export class DesktopConnectionFactory implements ConnectionFactory {
     }
     if (!connection) {
       throw new Error(
-        `Unsupported connection back end "${connectionConfig.backend}" ${
-          new Error('abc').stack
-        }`
+        `Unsupported connection back end "${connectionConfig.backend}"`
       );
     }
 
@@ -144,9 +142,6 @@ export class DesktopConnectionFactory implements ConnectionFactory {
   }
 
   addDefaults(configs: ConnectionConfig[]): ConnectionConfig[] {
-    // Create a default bigquery connection if one isn't configured
-    // TODO(figutierrez): remove.
-
     // Create a default bigquery connection if one isn't configured
     if (
       !configs.find(config => config.backend === ConnectionBackend.BigQuery)

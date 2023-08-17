@@ -22,7 +22,7 @@
  */
 
 export const errorMessage = (error: unknown): string => {
-  let message = `Something went wrong ${JSON.stringify(error)}`;
+  let message = 'Something went wrong';
   if (error instanceof Error) {
     message = error.message;
   } else if (typeof error === 'string') {
