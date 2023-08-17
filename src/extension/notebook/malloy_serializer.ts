@@ -139,12 +139,18 @@ class MalloySerializer implements vscode.NotebookSerializer {
   }
 
   async serializeNotebook(
-    data: vscode.NotebookData,
+    {metadata, cells}: vscode.NotebookData,
     _token: vscode.CancellationToken
   ): Promise<Uint8Array> {
-    let malloySql = (data.metadata as NotebookMetadata).initialComments || '';
+    let malloySql = '';
+    if (metadata) {
+      const {initialComments} = metadata as NotebookMetadata;
+      if (initialComments) {
+        malloySql = initialComments;
+      }
+    }
 
-    for (const cell of data.cells) {
+    for (const cell of cells) {
       if (malloySql.length && !malloySql.endsWith('\n')) {
         malloySql += '\n';
       }
