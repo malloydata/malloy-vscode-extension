@@ -21,123 +21,26 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as vscode from 'vscode';
-import {Utils} from 'vscode-uri';
-import {getWebviewHtml} from '../../webviews';
-import {
-  ConnectionMessageType,
-  ConnectionPanelMessage,
-  ConnectionServiceAccountKeyRequestStatus,
-  ConnectionTestStatus,
-} from '../../../common/message_types';
-import {WebviewMessageManager} from '../../webview_message_manager';
 import {
   ConnectionConfig,
   getDefaultIndex,
 } from '../../../common/connection_manager_types';
-
+import {EditConnectionPanel} from '../../connection_editor';
+import {ConnectionItem} from '../../tree_views/connections_view';
 import {connectionManager} from '../connection_manager';
-import {MALLOY_EXTENSION_STATE} from '../../state';
-import {errorMessage} from '../../../common/errors';
 
-export function editConnectionsCommand(): void {
-  const panel = vscode.window.createWebviewPanel(
-    'malloyConnections',
-    'Edit Connections',
-    vscode.ViewColumn.One,
-    {enableScripts: true, retainContextWhenHidden: true}
-  );
+let panel: EditConnectionPanel | null = null;
 
-  const onDiskPath = Utils.joinPath(
-    MALLOY_EXTENSION_STATE.getExtensionUri(),
-    'dist',
-    'connections_page.js'
-  );
-
-  const entrySrc = panel.webview.asWebviewUri(onDiskPath);
-
-  panel.webview.html = getWebviewHtml(entrySrc.toString(), panel.webview);
-
-  const messageManager = new WebviewMessageManager<ConnectionPanelMessage>(
-    panel
-  );
-
-  const connections = connectionManager.getConnectionConfigs();
-  const availableBackends = connectionManager.getAvailableBackends();
-
-  messageManager.postMessage({
-    type: ConnectionMessageType.SetConnections,
-    connections,
-    availableBackends,
-  });
-
-  messageManager.onReceiveMessage(async message => {
-    switch (message.type) {
-      case ConnectionMessageType.SetConnections: {
-        console.log(`==== CONNS ${message.connections}`);
-        const connections = await handleConnectionsPreSave(message.connections);
-        const malloyConfig = vscode.workspace.getConfiguration('malloy');
-        const hasWorkspaceConfig =
-          malloyConfig.inspect('connections')?.workspaceValue !== undefined;
-        malloyConfig.update(
-          'connections',
-          connections,
-          vscode.ConfigurationTarget.Global
-        );
-        if (hasWorkspaceConfig) {
-          malloyConfig.update(
-            'connections',
-            connections,
-            vscode.ConfigurationTarget.Workspace
-          );
-        }
-        messageManager.postMessage({
-          type: ConnectionMessageType.SetConnections,
-          connections: message.connections,
-          availableBackends,
-        });
-        break;
-      }
-      case ConnectionMessageType.TestConnection: {
-        try {
-          const connection = await connectionManager.connectionForConfig(
-            message.connection
-          );
-          await connection.test();
-          messageManager.postMessage({
-            type: ConnectionMessageType.TestConnection,
-            status: ConnectionTestStatus.Success,
-            connection: message.connection,
-          });
-        } catch (error) {
-          messageManager.postMessage({
-            type: ConnectionMessageType.TestConnection,
-            status: ConnectionTestStatus.Error,
-            connection: message.connection,
-            error: errorMessage(error),
-          });
-        }
-        break;
-      }
-      case ConnectionMessageType.RequestBigQueryServiceAccountKeyFile: {
-        const result = await vscode.window.showOpenDialog({
-          canSelectMany: false,
-          filters: {
-            JSON: ['json'],
-          },
-        });
-        if (result) {
-          messageManager.postMessage({
-            type: ConnectionMessageType.RequestBigQueryServiceAccountKeyFile,
-            status: ConnectionServiceAccountKeyRequestStatus.Success,
-            connectionId: message.connectionId,
-            serviceAccountKeyPath: result[0].fsPath,
-          });
-        }
-        break;
-      }
-    }
-  });
+export function editConnectionsCommand({id}: ConnectionItem): void {
+  if (!panel) {
+    panel = new EditConnectionPanel(
+      connectionManager,
+      handleConnectionsPreSave
+    );
+    panel.onDidDispose(() => (panel = null));
+  } else {
+    panel.reveal(id);
+  }
 }
 
 /**

@@ -23,20 +23,32 @@
 
 import * as vscode from 'vscode';
 import {v1 as uuid} from 'uuid';
+import {MALLOY_EXTENSION_STATE} from '../state';
 
 export function getWebviewHtml(
   entrySrc: string,
   webview: vscode.Webview
 ): string {
+  const extensionUri = MALLOY_EXTENSION_STATE.getExtensionUri();
   const cspSrc = webview.cspSource;
+  const codiconsUri = webview.asWebviewUri(
+    vscode.Uri.joinPath(
+      extensionUri,
+      'node_modules',
+      '@vscode/codicons',
+      'dist',
+      'codicon.css'
+    )
+  );
 
   const nonce = getNonce();
   return /* html */ `<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="base-uri 'none'; default-src 'none'; style-src 'unsafe-inline'; img-src ${cspSrc} https:; script-src 'nonce-${nonce}' 'unsafe-eval';">
+    <meta http-equiv="Content-Security-Policy" content="base-uri 'none'; default-src 'none'; style-src 'unsafe-inline' ${cspSrc}; font-src ${cspSrc}; img-src ${cspSrc} https:; script-src 'nonce-${nonce}' 'unsafe-eval';">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="${codiconsUri}" rel="stylesheet" />
     <title>Malloy Query Results</title>
   </head>
   <style>

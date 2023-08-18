@@ -21,146 +21,26 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as vscode from 'vscode';
-import {Utils} from 'vscode-uri';
-
-import {getWebviewHtml} from '../../webviews';
-import {
-  ConnectionMessageType,
-  ConnectionPanelMessage,
-  ConnectionServiceAccountKeyRequestStatus,
-  ConnectionTestStatus,
-  InstallExternalConnectionStatus,
-} from '../../../common/message_types';
-import {WebviewMessageManager} from '../../webview_message_manager';
 import {connectionManager} from '../connection_manager';
 import {
-  ConnectionBackend,
   ConnectionConfig,
   getDefaultIndex,
 } from '../../../common/connection_manager_types';
 import {deletePassword, setPassword} from 'keytar';
-import {MALLOY_EXTENSION_STATE} from '../../state';
-import {errorMessage} from '../../../common/errors';
+import {EditConnectionPanel} from '../../connection_editor';
+import {ConnectionItem} from '../../tree_views/connections_view';
 
-export function editConnectionsCommand(): void {
-  const panel = vscode.window.createWebviewPanel(
-    'malloyConnections',
-    'Edit Connections',
-    vscode.ViewColumn.One,
-    {enableScripts: true, retainContextWhenHidden: true}
-  );
+let panel: EditConnectionPanel | null = null;
 
-  const onDiskPath = Utils.joinPath(
-    MALLOY_EXTENSION_STATE.getExtensionUri(),
-    'dist',
-    'connections_page.js'
-  );
-
-  const entrySrc = panel.webview.asWebviewUri(onDiskPath);
-
-  panel.webview.html = getWebviewHtml(entrySrc.toString(), panel.webview);
-
-  const messageManager = new WebviewMessageManager<ConnectionPanelMessage>(
-    panel
-  );
-
-  const connections = connectionManager.getConnectionConfigs();
-  const availableBackends = connectionManager.getAvailableBackends();
-
-  messageManager.postMessage({
-    type: ConnectionMessageType.SetConnections,
-    connections,
-    availableBackends,
-  });
-
-  messageManager.onReceiveMessage(async message => {
-    switch (message.type) {
-      case ConnectionMessageType.SetConnections: {
-        const connections = await handleConnectionsPreSave(message.connections);
-        const malloyConfig = vscode.workspace.getConfiguration('malloy');
-        const hasWorkspaceConfig =
-          malloyConfig.inspect('connections')?.workspaceValue !== undefined;
-        malloyConfig.update(
-          'connections',
-          connections,
-          vscode.ConfigurationTarget.Global
-        );
-        if (hasWorkspaceConfig) {
-          malloyConfig.update(
-            'connections',
-            connections,
-            vscode.ConfigurationTarget.Workspace
-          );
-        }
-        messageManager.postMessage({
-          type: ConnectionMessageType.SetConnections,
-          connections: message.connections,
-          availableBackends,
-        });
-        break;
-      }
-      case ConnectionMessageType.TestConnection: {
-        try {
-          const connection = await connectionManager.connectionForConfig(
-            message.connection
-          );
-          await connection.test();
-          messageManager.postMessage({
-            type: ConnectionMessageType.TestConnection,
-            status: ConnectionTestStatus.Success,
-            connection: message.connection,
-          });
-        } catch (error) {
-          messageManager.postMessage({
-            type: ConnectionMessageType.TestConnection,
-            status: ConnectionTestStatus.Error,
-            connection: message.connection,
-            error: errorMessage(error),
-          });
-        }
-        break;
-      }
-      case ConnectionMessageType.RequestBigQueryServiceAccountKeyFile: {
-        const result = await vscode.window.showOpenDialog({
-          canSelectMany: false,
-          filters: {
-            JSON: ['json'],
-          },
-        });
-        if (result) {
-          messageManager.postMessage({
-            type: ConnectionMessageType.RequestBigQueryServiceAccountKeyFile,
-            status: ConnectionServiceAccountKeyRequestStatus.Success,
-            connectionId: message.connectionId,
-            serviceAccountKeyPath: result[0].fsPath,
-          });
-        }
-        break;
-      }
-      case ConnectionMessageType.InstallExternalConnection: {
-        try {
-          const installResult =
-            await connectionManager.installExternalConnectionPackage(
-              message.connection
-            );
-          messageManager.postMessage({
-            type: ConnectionMessageType.InstallExternalConnection,
-            status: InstallExternalConnectionStatus.Success,
-            connection: {...installResult},
-          });
-        } catch (error) {
-          messageManager.postMessage({
-            type: ConnectionMessageType.InstallExternalConnection,
-            status: InstallExternalConnectionStatus.Error,
-            connection: message.connection,
-            error: errorMessage(error),
-          });
-        }
-        break;
-      }
-    }
-  });
+export function editConnectionsCommand(item?: ConnectionItem): void {
+  if (!panel) {
+    panel = new EditConnectionPanel(
+      connectionManager,
+      handleConnectionsPreSave
+    );
+    panel.onDidDispose(() => (panel = null));
+  }
+  panel.reveal(item?.id);
 }
 
 /**
@@ -181,7 +61,7 @@ async function handleConnectionsPreSave(
   for (let index = 0; index < connections.length; index++) {
     const connection = connections[index];
     connection.isDefault = index === defaultIndex;
-    if (connection.backend === ConnectionBackend.Postgres) {
+    if ('password' in connection) {
       if (connection.useKeychainPassword === false) {
         connection.useKeychainPassword = undefined;
         await deletePassword(
@@ -189,22 +69,18 @@ async function handleConnectionsPreSave(
           `connections.${connection.id}.password`
         );
       }
-    }
-    if (
-      connection.backend === ConnectionBackend.Postgres &&
-      connection.password !== undefined &&
-      connection.password !== ''
-    ) {
-      modifiedConnections.push({
-        ...connection,
-        password: undefined,
-        useKeychainPassword: true,
-      });
-      await setPassword(
-        'com.malloy-lang.vscode-extension',
-        `connections.${connection.id}.password`,
-        connection.password
-      );
+      if (connection.password) {
+        modifiedConnections.push({
+          ...connection,
+          password: undefined,
+          useKeychainPassword: true,
+        });
+        await setPassword(
+          'com.malloy-lang.vscode-extension',
+          `connections.${connection.id}.password`,
+          connection.password
+        );
+      }
     } else if (!connection.isGenerated) {
       modifiedConnections.push(connection);
     }

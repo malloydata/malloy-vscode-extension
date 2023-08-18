@@ -46,6 +46,7 @@ import {LabelCell} from './LabelCell';
 import {PostgresConnectionEditor} from './PostgresConnectionEditor';
 import {DuckDBConnectionEditor} from './DuckDBConnectionEditor';
 import {ExternalConnectionEditor} from './ExternalConnectionEditor';
+import {ConnectionEditorBox, ConnectionTitle} from './ConnectionTitle';
 
 interface ConnectionEditorProps {
   config: ConnectionConfig;
@@ -61,6 +62,7 @@ interface ConnectionEditorProps {
   installExternalConnectionStatus:
     | ConnectionMessageInstallExternalConnection
     | undefined;
+  setSelectedId: (id: string | null) => void;
 }
 
 export const ConnectionEditor: React.FC<ConnectionEditorProps> = ({
@@ -75,6 +77,7 @@ export const ConnectionEditor: React.FC<ConnectionEditorProps> = ({
   availableBackends,
   installExternalConnection,
   installExternalConnectionStatus,
+  setSelectedId,
 }) => {
   const allBackendOptions: ConnectionBackend[] = [
     ConnectionBackend.BigQuery,
@@ -97,7 +100,10 @@ export const ConnectionEditor: React.FC<ConnectionEditorProps> = ({
           justifyContent: 'space-between',
         }}
       >
-        <ConnectionTitle>CONNECTION</ConnectionTitle>
+        <ConnectionTitle onClick={() => setSelectedId(null)}>
+          <i className="codicon codicon-chevron-down" />
+          CONNECTION: {config.name || 'Untitled'}
+        </ConnectionTitle>
         {isDefault && <VSCodeTag>Default</VSCodeTag>}
         {!isDefault && (
           <VSCodeButton onClick={makeDefault} style={{height: '25px'}}>
@@ -171,15 +177,3 @@ export const ConnectionEditor: React.FC<ConnectionEditorProps> = ({
     </ConnectionEditorBox>
   );
 };
-
-const ConnectionEditorBox = styled.div`
-  margin: 10px;
-  background-color: var(--vscode-list-hoverBackground);
-  padding: 10px;
-  border: 1px solid var(--vscode-contrastBorder);
-`;
-
-const ConnectionTitle = styled.b`
-  color: var(--foreground);
-  font-family: var(--font-family);
-`;

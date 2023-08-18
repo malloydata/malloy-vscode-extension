@@ -46,6 +46,7 @@ export const App: React.FC = () => {
   useEffect(() => {
     vscode.postMessage({type: ConnectionMessageType.AppReady});
   });
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const [connections, setConnections] = useState<
     ConnectionConfig[] | undefined
@@ -103,6 +104,9 @@ export const App: React.FC = () => {
       const message = event.data;
 
       switch (message.type) {
+        case ConnectionMessageType.EditConnection:
+          setSelectedId(message.id);
+          break;
         case ConnectionMessageType.SetConnections:
           setConnections(message.connections);
           setAvailableBackends(message.availableBackends);
@@ -158,6 +162,8 @@ export const App: React.FC = () => {
           availableBackends={availableBackends}
           installExternalConnection={installExternalConnection}
           installExternalConnectionStatuses={installExternalConnectionStatuses}
+          selectedId={selectedId}
+          setSelectedId={setSelectedId}
         />
       </div>
     </Scroll>
