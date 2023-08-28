@@ -523,7 +523,7 @@
     ],
     "notebookRenderer": [
       {
-        "displayName": "Malloy",
+        "displayName": "Malloy Results",
         "entrypoint": "./dist/malloy_entry.js",
         "id": "malloy.notebook-renderer",
         "mimeTypes": [
@@ -544,6 +544,14 @@
         "id": "malloy.notebook-renderer-sql",
         "mimeTypes": [
           "x-application/malloy-results"
+        ]
+      },
+      {
+        "displayName": "Malloy Schema",
+        "entrypoint": "./dist/schema_entry.js",
+        "id": "malloy.notebook-renderer-schema",
+        "mimeTypes": [
+          "x-application/malloy-schema"
         ]
       }
     ]
