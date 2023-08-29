@@ -95,7 +95,10 @@ function getIconElement(fieldType: string, isAggregate: boolean) {
 
   return imageElement;
 }
-function buildTitle(field: Field, path: string) {
+function buildTitle(field: Field | Explore, path: string) {
+  if (field.isExplore()) {
+    return field.name;
+  }
   const type = fieldType(field);
   const fieldName = field.name;
   return `${fieldName}
@@ -159,7 +162,7 @@ export const SchemaRenderer: React.FC<ResultProps> = ({results}) => {
     );
 
     return (
-      <li className={`schema ${hidden}`} title={explore.name}>
+      <li className={`schema ${hidden}`} title={buildTitle(explore, path)}>
         <div onClick={toggleHidden}>
           <span>{hidden ? '▶' : '▼'}</span>{' '}
           {getIconElement(`struct_${subtype}`, false)}{' '}
@@ -253,21 +256,23 @@ const SchemaTree = styled.div`
     display: block;
     font-size: 10px;
     margin-left: 5px;
+    margin-top: 0.5em;
     text-transform: uppercase;
   }
 
   .explore_name {
     line-height: 2em;
+    font-weight: 600;
   }
 
   .field {
     white-space: nowrap;
     display: flex;
     vertical-align: middle;
-    border: 1px solid var(--vscode-widget-border);
-    border-radius: 20px;
-    padding: 0.5em 1em;
-    margin: 0.25em;
+    border: 1px solid var(--vscode-notebook-cellBorderColor);
+    border-radius: 8px;
+    padding: 0.25em 0.75em;
+    margin: 0.2em;
   }
 
   .field_list {
