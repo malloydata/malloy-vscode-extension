@@ -26,8 +26,10 @@ import {newUntitledNotebookCommand} from '../commands/new_untitled_notebook';
 import {runMalloyQuery} from '../commands/run_query_utils';
 import {WorkerConnection} from '../worker_connection';
 import {errorMessage} from '../../common/errors';
-import {CellMetadata, QueryCost} from '../../common/types';
+import {BuildModelRequest, CellMetadata, QueryCost} from '../../common/types';
 import {convertFromBytes} from '../../common/convert_to_bytes';
+import {BaseLanguageClient} from 'vscode-languageclient';
+import {SerializedExplore} from '@malloydata/malloy';
 
 const NO_QUERY = 'Model has no queries.';
 
@@ -83,6 +85,7 @@ class MalloyNotebookCellStatusBarItemProvider
 
 export function activateNotebookController(
   context: vscode.ExtensionContext,
+  client: BaseLanguageClient,
   worker: WorkerConnection
 ) {
   if (!vscode.notebooks) {
@@ -97,7 +100,9 @@ export function activateNotebookController(
     )
   );
 
-  context.subscriptions.push(new MalloyController(worker, statusBarProvider));
+  context.subscriptions.push(
+    new MalloyController(worker, client, statusBarProvider)
+  );
 
   context.subscriptions.push(
     vscode.commands.registerCommand(
@@ -118,6 +123,7 @@ class MalloyController {
 
   constructor(
     private worker: WorkerConnection,
+    private client: BaseLanguageClient,
     private statusBarProvider: MalloyNotebookCellStatusBarItemProvider
   ) {
     this._controller = vscode.notebooks.createNotebookController(
@@ -145,6 +151,7 @@ class MalloyController {
     _notebook: vscode.NotebookDocument,
     cell: vscode.NotebookCell
   ): Promise<void> {
+    const {document} = cell;
     const execution = this._controller.createNotebookCellExecution(cell);
     execution.executionOrder = ++this._executionOrder;
     execution.start(Date.now());
@@ -165,14 +172,14 @@ class MalloyController {
 
       const jsonResults = await runMalloyQuery(
         this.worker,
-        {type: 'file', index: -1, file: cell.document},
-        cell.document.uri.toString(),
-        cell.document.fileName.split('/').pop() || cell.document.fileName,
+        {type: 'file', index: -1, file: document},
+        document.uri.toString(),
+        document.fileName.split('/').pop() || document.fileName,
         {withWebview: false},
         execution.token
       );
 
-      const text = cell.document.getText();
+      const text = document.getText();
       const style = text.match(/(\/\/ |^)--! style ([a-z_]+)/m);
       if (style) {
         meta = {renderer: style[2]};
@@ -209,7 +216,7 @@ class MalloyController {
             vscode.NotebookEdit.updateCellMetadata(cell.index, newMeta),
           ];
           const edit = new vscode.WorkspaceEdit();
-          edit.set(cell.document.uri, edits);
+          edit.set(document.uri, edits);
           vscode.workspace.applyEdit(edit);
           this.statusBarProvider.update();
         }
@@ -218,12 +225,36 @@ class MalloyController {
       execution.replaceOutput(output);
       execution.end(true, Date.now());
     } catch (error) {
-      execution.replaceOutput([
-        new vscode.NotebookCellOutput([
-          vscode.NotebookCellOutputItem.text(errorMessage(error)),
-        ]),
-      ]);
-      execution.end(errorMessage(error) === NO_QUERY, Date.now());
+      if (errorMessage(error) === NO_QUERY) {
+        const request: BuildModelRequest = {
+          uri: document.uri.toString(),
+          version: document.version,
+          languageId: document.languageId,
+        };
+        execution.replaceOutput([
+          new vscode.NotebookCellOutput([
+            vscode.NotebookCellOutputItem.text('Loading Schema Information'),
+          ]),
+        ]);
+        const serializedExplores: SerializedExplore[] =
+          await this.client.sendRequest('malloy/fetchModel', request);
+        execution.replaceOutput([
+          new vscode.NotebookCellOutput([
+            vscode.NotebookCellOutputItem.json(
+              serializedExplores,
+              'x-application/malloy-schema'
+            ),
+          ]),
+        ]);
+        execution.end(true, Date.now());
+      } else {
+        execution.replaceOutput([
+          new vscode.NotebookCellOutput([
+            vscode.NotebookCellOutputItem.text(errorMessage(error)),
+          ]),
+        ]);
+        execution.end(false, Date.now());
+      }
     }
   }
 

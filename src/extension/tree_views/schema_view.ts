@@ -26,7 +26,6 @@ import {Utils} from 'vscode-uri';
 
 import {
   Explore,
-  JoinRelationship,
   Field,
   QueryField,
   AtomicField,
@@ -45,6 +44,7 @@ import oneToOneIcon from '../../media/one_to_one.svg';
 import {MALLOY_EXTENSION_STATE} from '../state';
 import {BaseLanguageClient} from 'vscode-languageclient/node';
 import {BuildModelRequest} from '../../common/types';
+import {exploreSubtype, fieldType, isFieldAggregate} from '../common/schema';
 
 export class SchemaProvider
   implements vscode.TreeDataProvider<ExploreItem | FieldItem>
@@ -175,20 +175,7 @@ class ExploreItem extends vscode.TreeItem {
     );
     this.tooltip = explore.name;
 
-    let subtype;
-    if (explore.hasParentExplore()) {
-      const relationship = explore.joinRelationship;
-      subtype =
-        relationship === JoinRelationship.ManyToOne
-          ? 'many_to_one'
-          : relationship === JoinRelationship.OneToMany
-          ? 'one_to_many'
-          : JoinRelationship.OneToOne
-          ? 'one_to_one'
-          : 'base';
-    } else {
-      subtype = 'base';
-    }
+    const subtype = exploreSubtype(explore);
 
     this.iconPath = {
       light: getIconPath(this.context, `struct_${subtype}`, false),
@@ -205,14 +192,14 @@ class FieldItem extends vscode.TreeItem {
     public accessPath: string[]
   ) {
     super(field.name, vscode.TreeItemCollapsibleState.None);
-    this.contextValue = this.type();
+    this.contextValue = fieldType(this.field);
     this.tooltip = new vscode.MarkdownString(
       `
 $(symbol-field) \`${field.name}\`
 
 **Path**: \`${this.accessPath.join('.')}\`
 
-**Type**: \`${this.type()}\`
+**Type**: \`${fieldType(this.field)}\`
     `,
       true
     );
@@ -225,17 +212,17 @@ $(symbol-field) \`${field.name}\`
   };
 
   iconPath = {
-    light: getIconPath(this.context, this.type(), this.isAggregate()),
-    dark: getIconPath(this.context, this.type(), this.isAggregate()),
+    light: getIconPath(
+      this.context,
+      fieldType(this.field),
+      isFieldAggregate(this.field)
+    ),
+    dark: getIconPath(
+      this.context,
+      fieldType(this.field),
+      isFieldAggregate(this.field)
+    ),
   };
-
-  isAggregate() {
-    return this.field.isAtomicField() && this.field.isCalculation();
-  }
-
-  type() {
-    return this.field.isAtomicField() ? this.field.type.toString() : 'query';
-  }
 }
 
 function getIconPath(
