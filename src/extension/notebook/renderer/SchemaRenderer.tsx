@@ -23,7 +23,7 @@
 
 import * as React from 'react';
 import styled from 'styled-components';
-import {Explore, Field, SerializedExplore} from '@malloydata/malloy';
+import {Explore, Field} from '@malloydata/malloy';
 import {exploreSubtype, fieldType, isFieldAggregate} from '../../common/schema';
 import NumberIcon from '../../../media/number.svg';
 import NumberAggregateIcon from '../../../media/number-aggregate.svg';
@@ -39,7 +39,7 @@ import OneToOneIcon from '../../../media/one_to_one.svg';
  * Props for the SchemaRenderer component
  */
 export interface SchemaRendererProps {
-  results: SerializedExplore[];
+  explores: Explore[];
 }
 
 /**
@@ -177,17 +177,8 @@ function bucketFields(fields: Field[]) {
  * SchemaRenderer component. Generates a schema tree with collapsible
  * field lists.
  */
-export const SchemaRenderer: React.FC<SchemaRendererProps> = ({results}) => {
-  const [explores, setExplores] = React.useState<Explore[]>();
-
-  React.useEffect(() => {
-    if (results) {
-      const explores = results.map(explore => Explore.fromJSON(explore));
-      setExplores(explores);
-    }
-  }, [results]);
-
-  if (!explores) {
+export const SchemaRenderer: React.FC<SchemaRendererProps> = ({explores}) => {
+  if (!explores || !explores.length) {
     return <b>No Schema Information</b>;
   }
 

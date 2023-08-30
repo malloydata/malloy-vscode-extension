@@ -26,6 +26,7 @@ import React from 'react';
 import {StyleSheetManager} from 'styled-components';
 import {ActivationFunction} from 'vscode-notebook-renderer';
 import {SchemaRenderer} from './SchemaRenderer';
+import {Explore, SerializedExplore} from '@malloydata/malloy';
 
 export const activate: ActivationFunction = () => {
   return {
@@ -41,12 +42,40 @@ export const activate: ActivationFunction = () => {
       if (!root) {
         throw new Error('Element #root not found');
       }
+
       ReactDOM.render(
         <StyleSheetManager target={root}>
-          <SchemaRenderer results={info.json()} />
+          <SchemaRendererWrapper results={info.json()} />
         </StyleSheetManager>,
         root
       );
     },
   };
+};
+
+interface SchemaRendererWrapperProps {
+  results: SerializedExplore[];
+}
+
+/**
+ * SchemaRendererWrapper exists as a buffer for StyleSheetManager, which
+ * needs our element to exist before we render any styled content, so
+ * we use useEffect() to delay rendering the actual contents until
+ * it's ready.
+ */
+const SchemaRendererWrapper = ({results}: SchemaRendererWrapperProps) => {
+  const [explores, setExplores] = React.useState<Explore[]>();
+
+  React.useEffect(() => {
+    if (results) {
+      const explores = results.map(json => Explore.fromJSON(json));
+      setExplores(explores);
+    }
+  }, [results]);
+
+  if (!explores) {
+    return null;
+  }
+
+  return <SchemaRenderer explores={explores} />;
 };
