@@ -35,25 +35,44 @@ import OneToManyIcon from '../../../media/one_to_many.svg';
 import ManyToOneIcon from '../../../media/many_to_one.svg';
 import OneToOneIcon from '../../../media/one_to_one.svg';
 
-export interface ResultProps {
+/**
+ * Props for the SchemaRenderer component
+ */
+export interface SchemaRendererProps {
   results: SerializedExplore[];
 }
 
+/**
+ * Properties for the Field component
+ */
 interface FieldProps {
   field: Field;
   path: string;
 }
 
+/**
+ * Properties for the FieldList component
+ */
 interface FieldListProps {
   fields: Field[];
   path: string;
 }
 
+/**
+ * Properties for the Explore component
+ */
 interface ExploreProps {
   explore: Explore;
   path: string;
 }
 
+/**
+ * Returns the corresponding icon for fields and relationships.
+ *
+ * @param fieldType Field type and returned by fieldType()
+ * @param isAggregate Field aggregate status as returned from isFieldAggregate()
+ * @returns A React wrapped svg of the icon.
+ */
 function getIconElement(fieldType: string, isAggregate: boolean) {
   let imageElement;
   if (isAggregate) {
@@ -95,6 +114,15 @@ function getIconElement(fieldType: string, isAggregate: boolean) {
 
   return imageElement;
 }
+
+/**
+ * Generate some information for the tooltip over Field components.
+ * Typically includes name, type and path
+ *
+ * @param field Field or explore to generate tooltip for
+ * @param path Path to this field
+ * @returns Tooltip text
+ */
 function buildTitle(field: Field | Explore, path: string) {
   if (field.isExplore()) {
     return field.name;
@@ -106,11 +134,22 @@ Path: ${path}${path ? '.' : ''}${fieldName}
 Type: ${type}`;
 }
 
+/**
+ * Bucket fields by type and sort by name.
+ *
+ * @param fields Source fields
+ * @returns An objects with four arrays, one for each of queries, dimensions,
+ *   measures and explores/sources, sorted by name
+ */
+
 function bucketFields(fields: Field[]) {
   const queries: Field[] = [];
   const dimensions: Field[] = [];
   const measures: Field[] = [];
   const explores: Explore[] = [];
+
+  const sortByName = (a: Field | Explore, b: Field | Explore) =>
+    a.name.localeCompare(b.name);
 
   for (const field of fields) {
     const type = fieldType(field);
@@ -126,17 +165,24 @@ function bucketFields(fields: Field[]) {
     }
   }
 
-  return {queries, dimensions, measures, explores};
+  return {
+    queries: queries.sort(sortByName),
+    dimensions: dimensions.sort(sortByName),
+    measures: measures.sort(sortByName),
+    explores: explores.sort(sortByName),
+  };
 }
 
-export const SchemaRenderer: React.FC<ResultProps> = ({results}) => {
+/**
+ * SchemaRenderer component. Generates a schema tree with collapsible
+ * field lists.
+ */
+export const SchemaRenderer: React.FC<SchemaRendererProps> = ({results}) => {
   const [explores, setExplores] = React.useState<Explore[]>();
 
   React.useEffect(() => {
     if (results) {
-      const explores = results.map(explore =>
-        Explore.fromJSON(explore as SerializedExplore)
-      );
+      const explores = results.map(explore => Explore.fromJSON(explore));
       setExplores(explores);
     }
   }, [results]);
@@ -144,6 +190,12 @@ export const SchemaRenderer: React.FC<ResultProps> = ({results}) => {
   if (!explores) {
     return <b>No Schema Information</b>;
   }
+
+  /**
+   * StructItem component, handles hiding and showing of contents, and
+   * separate lists for queries, dimensions and measures. Is
+   * used recursively to support structures.
+   */
 
   const StructItem = ({explore, path}: ExploreProps) => {
     const [hidden, setHidden] = React.useState<string>('hidden');
@@ -201,6 +253,10 @@ export const SchemaRenderer: React.FC<ResultProps> = ({results}) => {
     );
   };
 
+  /**
+   * Individual field, consisting of icon and name, with a tooltip
+   */
+
   const FieldItem = ({field, path}: FieldProps) => {
     return (
       <div className="field" title={buildTitle(field, path)}>
@@ -209,6 +265,10 @@ export const SchemaRenderer: React.FC<ResultProps> = ({results}) => {
       </div>
     );
   };
+
+  /**
+   * A list of fields, for use with queries, dimensions and measures.
+   */
 
   const FieldList = ({fields, path}: FieldListProps) => {
     return (
@@ -231,6 +291,11 @@ export const SchemaRenderer: React.FC<ResultProps> = ({results}) => {
   );
 };
 
+/**
+ * Styled SchemaTree component. Rather than have multiple styled components,
+ * uses element types and class names for easier translation to the
+ * IPython magic version.
+ */
 const SchemaTree = styled.div`
   color: var(--vscode-foreground);
 
@@ -282,7 +347,12 @@ const SchemaTree = styled.div`
   }
 
   .field_name {
-    padding-left: 3px;
+    padding-left: 0.5em;
+  }
+
+  svg {
+    position: relative;
+    left: -2px;
   }
 
   .field_name,
