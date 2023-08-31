@@ -457,10 +457,10 @@ const Error = styled.div<ErrorProps>`
 
 const ResultControlsBar = styled.div`
   display: flex;
-  border-bottom: 1px solid #efefef;
+  border-bottom: 1px solid var(--vscode-panel-border);
   justify-content: space-between;
   align-items: center;
-  color: #b1b1b1;
+  color: var(--vscode-foreground);
   padding: 0 10px;
   user-select: none;
 `;
