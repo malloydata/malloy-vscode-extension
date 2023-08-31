@@ -81,7 +81,7 @@ export const ResultKindToggle: React.FC<ResultKindToggleProps> = ({
 const ResultControls = styled.div`
   display: flex;
   justify-content: end;
-  padding: 5px 5px 0 5px;
+  padding: 5px 5px 3px 5px;
   font-size: 12px;
   gap: 3px;
 `;
@@ -90,16 +90,11 @@ interface ResultControlProps {
   selected: boolean;
 }
 
-const ResultControl = styled.button<ResultControlProps>`
+const ResultControl = styled.div<ResultControlProps>`
   border: 0;
-  border-bottom: 1px solid ${props => (props.selected ? '#4285f4' : 'white')};
+  border-bottom: ${props =>
+    props.selected ? '1px solid var(--panel-tab-active-border)' : 'none'};
   cursor: pointer;
-  background-color: white;
   padding: 3px 5px;
-  color: ${props => (props.selected ? '#4285f4' : '#b1b1b1')};
-
-  &:hover {
-    border-bottom: 1px solid;
-    color: #4285f4;
-  }
+  color: var(--panel-tab-active-foreground);
 `;

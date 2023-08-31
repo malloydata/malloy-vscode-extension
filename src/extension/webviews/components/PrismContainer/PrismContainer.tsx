@@ -32,8 +32,9 @@ interface PrismContainerProps {
 }
 
 export const PrismContainer = styled.pre<PrismContainerProps>`
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family: var(--vscode-editor-font-family);
+  font-size: var(--vscode-editor-font-size);
+
   color: ${props => (props.darkMode ? '#9cdcfe' : '#333388')};
 
   span.token.keyword {

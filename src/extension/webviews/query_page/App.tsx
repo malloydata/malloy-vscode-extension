@@ -432,13 +432,14 @@ const Tooltip = styled.div`
 const Warning = styled.div`
   color: var(--vscode-statusBarItem-warningForeground);
   background-color: var(--vscode-statusBarItem-warningBackground);
+  font-size: 12px;
   padding: 5px;
 `;
 
 const StatsBar = styled.div`
-  background-color: #505050;
-  color: white;
-  box-shadow: rgb(144 144 144) 0px 1px 5px 0px;
+  color: var(--vscode-editorWidget-Foreground);
+  background-color: var(--vscode-editorWidget-background);
+  font-size: 12px;
   padding: 5px;
 `;
 
@@ -456,10 +457,10 @@ const Error = styled.div<ErrorProps>`
 
 const ResultControlsBar = styled.div`
   display: flex;
-  border-bottom: 1px solid #efefef;
+  border-bottom: 1px solid var(--vscode-panel-border);
   justify-content: space-between;
   align-items: center;
-  color: #b1b1b1;
+  color: var(--vscode-foreground);
   padding: 0 10px;
   user-select: none;
 `;

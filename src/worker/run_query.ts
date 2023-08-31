@@ -22,7 +22,6 @@
  */
 
 import {
-  Explore,
   MalloyError,
   MalloyQueryData,
   QueryMaterializer,
