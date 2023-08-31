@@ -28,34 +28,47 @@ export enum ResultKind {
   HTML = 'html',
   JSON = 'json',
   SQL = 'sql',
+  SCHEMA = 'schema',
 }
 
 interface ResultKindToggleProps {
   kind: ResultKind;
   setKind: (kind: ResultKind) => void;
+  showOnlySQL: boolean;
 }
 
 export const ResultKindToggle: React.FC<ResultKindToggleProps> = ({
   kind,
   setKind,
+  showOnlySQL,
 }) => {
   return (
     <div>
       <ResultControls>
+        {!showOnlySQL && (
+          <ResultControl
+            selected={kind === ResultKind.HTML}
+            onClick={() => setKind(ResultKind.HTML)}
+          >
+            HTML
+          </ResultControl>
+        )}
+        {!showOnlySQL && (
+          <ResultControl
+            selected={kind === ResultKind.JSON}
+            onClick={() => setKind(ResultKind.JSON)}
+          >
+            JSON
+          </ResultControl>
+        )}
         <ResultControl
-          data-selected={kind === ResultKind.HTML}
-          onClick={() => setKind(ResultKind.HTML)}
+          selected={kind === ResultKind.SCHEMA}
+          onClick={() => setKind(ResultKind.SCHEMA)}
         >
-          HTML
+          SCHEMA
         </ResultControl>
         <ResultControl
-          data-selected={kind === ResultKind.JSON}
-          onClick={() => setKind(ResultKind.JSON)}
-        >
-          JSON
-        </ResultControl>
-        <ResultControl
-          data-selected={kind === ResultKind.SQL}
+          selected={kind === ResultKind.SQL}
           onClick={() => setKind(ResultKind.SQL)}
         >
           SQL
@@ -73,17 +86,20 @@ const ResultControls = styled.div`
   gap: 3px;
 `;
 
-const ResultControl = styled.button`
+interface ResultControlProps {
+  selected: boolean;
+}
+
+const ResultControl = styled.button<ResultControlProps>`
   border: 0;
-  border-bottom: 1px solid white;
+  border-bottom: 1px solid ${props => (props.selected ? '#4285f4' : 'white')};
   cursor: pointer;
   background-color: white;
   padding: 3px 5px;
-  color: #b1b1b1;
+  color: ${props => (props.selected ? '#4285f4' : '#b1b1b1')};
 
-  &:hover,
-  &[data-selected='true'] {
-    border-bottom: 1px solid #4285f4;
+  &:hover {
+    border-bottom: 1px solid;
     color: #4285f4;
   }
 `;

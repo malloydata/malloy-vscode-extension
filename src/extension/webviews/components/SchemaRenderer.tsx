@@ -23,7 +23,7 @@
 
 import * as React from 'react';
 import styled from 'styled-components';
-import {Explore, Field, SerializedExplore} from '@malloydata/malloy';
+import {Explore, Field} from '@malloydata/malloy';
 import {exploreSubtype, fieldType, isFieldAggregate} from '../../common/schema';
 import NumberIcon from '../../../media/number.svg';
 import NumberAggregateIcon from '../../../media/number-aggregate.svg';
@@ -35,25 +35,45 @@ import OneToManyIcon from '../../../media/one_to_many.svg';
 import ManyToOneIcon from '../../../media/many_to_one.svg';
 import OneToOneIcon from '../../../media/one_to_one.svg';
 
-export interface ResultProps {
-  results: SerializedExplore[];
+/**
+ * Props for the SchemaRenderer component
+ */
+export interface SchemaRendererProps {
+  explores: Explore[];
+  defaultShow?: boolean;
 }
 
+/**
+ * Properties for the Field component
+ */
 interface FieldProps {
   field: Field;
   path: string;
 }
 
+/**
+ * Properties for the FieldList component
+ */
 interface FieldListProps {
   fields: Field[];
   path: string;
 }
 
+/**
+ * Properties for the Explore component
+ */
 interface ExploreProps {
   explore: Explore;
   path: string;
 }
 
+/**
+ * Returns the corresponding icon for fields and relationships.
+ *
+ * @param fieldType Field type and returned by fieldType()
+ * @param isAggregate Field aggregate status as returned from isFieldAggregate()
+ * @returns A React wrapped svg of the icon.
+ */
 function getIconElement(fieldType: string, isAggregate: boolean) {
   let imageElement;
   if (isAggregate) {
@@ -95,6 +115,27 @@ function getIconElement(fieldType: string, isAggregate: boolean) {
 
   return imageElement;
 }
+
+/**
+ * Output schema have non-friendly names like '__stage0', give them
+ * something friendlier.
+ */
+
+function getExploreName(name: string, path: string) {
+  if (name.startsWith('__stage')) {
+    return 'Results';
+  }
+  return path ? path : name;
+}
+
+/**
+ * Generate some information for the tooltip over Field components.
+ * Typically includes name, type and path
+ *
+ * @param field Field or explore to generate tooltip for
+ * @param path Path to this field
+ * @returns Tooltip text
+ */
 function buildTitle(field: Field | Explore, path: string) {
   if (field.isExplore()) {
     return field.name;
@@ -106,11 +147,22 @@ Path: ${path}${path ? '.' : ''}${fieldName}
 Type: ${type}`;
 }
 
+/**
+ * Bucket fields by type and sort by name.
+ *
+ * @param fields Source fields
+ * @returns An objects with four arrays, one for each of queries, dimensions,
+ *   measures and explores/sources, sorted by name
+ */
+
 function bucketFields(fields: Field[]) {
   const queries: Field[] = [];
   const dimensions: Field[] = [];
   const measures: Field[] = [];
   const explores: Explore[] = [];
+
+  const sortByName = (a: Field | Explore, b: Field | Explore) =>
+    a.name.localeCompare(b.name);
 
   for (const field of fields) {
     const type = fieldType(field);
@@ -126,27 +178,36 @@ function bucketFields(fields: Field[]) {
     }
   }
 
-  return {queries, dimensions, measures, explores};
+  return {
+    queries: queries.sort(sortByName),
+    dimensions: dimensions.sort(sortByName),
+    measures: measures.sort(sortByName),
+    explores: explores.sort(sortByName),
+  };
 }
 
-export const SchemaRenderer: React.FC<ResultProps> = ({results}) => {
-  const [explores, setExplores] = React.useState<Explore[]>();
-
-  React.useEffect(() => {
-    if (results) {
-      const explores = results.map(explore =>
-        Explore.fromJSON(explore as SerializedExplore)
-      );
-      setExplores(explores);
-    }
-  }, [results]);
-
-  if (!explores) {
+/**
+ * SchemaRenderer component. Generates a schema tree with collapsible
+ * field lists.
+ */
+export const SchemaRenderer: React.FC<SchemaRendererProps> = ({
+  explores,
+  defaultShow = false,
+}) => {
+  if (!explores || !explores.length) {
     return <b>No Schema Information</b>;
   }
 
+  /**
+   * StructItem component, handles hiding and showing of contents, and
+   * separate lists for queries, dimensions and measures. Is
+   * used recursively to support structures.
+   */
+
   const StructItem = ({explore, path}: ExploreProps) => {
-    const [hidden, setHidden] = React.useState<string>('hidden');
+    const [hidden, setHidden] = React.useState<string>(
+      defaultShow ? '' : 'hidden'
+    );
     const subtype = exploreSubtype(explore);
     const {queries, dimensions, measures, explores} = bucketFields(
       explore.allFields
@@ -166,7 +227,7 @@ export const SchemaRenderer: React.FC<ResultProps> = ({results}) => {
         <div onClick={toggleHidden}>
           <span>{hidden ? '▶' : '▼'}</span>{' '}
           {getIconElement(`struct_${subtype}`, false)}{' '}
-          <b className="explore_name">{explore.name}</b>
+          <b className="explore_name">{getExploreName(explore.name, path)}</b>
         </div>
         <ul>
           {queries.length ? (
@@ -201,14 +262,30 @@ export const SchemaRenderer: React.FC<ResultProps> = ({results}) => {
     );
   };
 
+  /**
+   * Individual field, consisting of icon and name, with a tooltip
+   */
+
   const FieldItem = ({field, path}: FieldProps) => {
+    const onClick = () => {
+      const type = fieldType(field);
+      const fieldName = field.name;
+      if (type !== 'query') {
+        navigator.clipboard.writeText(`${path}${path ? '.' : ''}${fieldName}`);
+      }
+    };
+
     return (
-      <div className="field" title={buildTitle(field, path)}>
+      <div className="field" title={buildTitle(field, path)} onClick={onClick}>
         {getIconElement(fieldType(field), isFieldAggregate(field))}
         <span className="field_name">{field.name}</span>
       </div>
     );
   };
+
+  /**
+   * A list of fields, for use with queries, dimensions and measures.
+   */
 
   const FieldList = ({fields, path}: FieldListProps) => {
     return (
@@ -231,6 +308,11 @@ export const SchemaRenderer: React.FC<ResultProps> = ({results}) => {
   );
 };
 
+/**
+ * Styled SchemaTree component. Rather than have multiple styled components,
+ * uses element types and class names for easier translation to the
+ * IPython magic version.
+ */
 const SchemaTree = styled.div`
   color: var(--vscode-foreground);
 
@@ -282,7 +364,12 @@ const SchemaTree = styled.div`
   }
 
   .field_name {
-    padding-left: 3px;
+    padding-left: 0.5em;
+  }
+
+  svg {
+    position: relative;
+    left: -2px;
   }
 
   .field_name,

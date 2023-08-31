@@ -22,11 +22,13 @@
  */
 
 import {
+  Explore,
   MalloyError,
   MalloyQueryData,
   QueryMaterializer,
   Result,
   Runtime,
+  SerializedExplore,
 } from '@malloydata/malloy';
 import {MalloySQLSQLParser} from '@malloydata/malloy-sql';
 import {DataStyles} from '@malloydata/render';
@@ -189,6 +191,7 @@ const runMSQLCell = async (
     sendMessage({
       status: QueryRunStatus.EstimatedCost,
       queryCostBytes: undefined,
+      schema: [],
     });
     return;
   }
@@ -329,10 +332,16 @@ export const runQuery = async (
       });
 
       if (showSQLOnly) {
+        const schema: SerializedExplore[] = [];
+        if ('getPreparedQuery' in runnable) {
+          const query = await runnable.getPreparedQuery();
+          schema.push(query.preparedResult.resultExplore.toJSON());
+        }
         const estimatedRunStats = await runnable.estimateQueryCost();
         sendMessage({
           status: QueryRunStatus.EstimatedCost,
           queryCostBytes: estimatedRunStats?.queryCostBytes,
+          schema,
         });
         return;
       }
