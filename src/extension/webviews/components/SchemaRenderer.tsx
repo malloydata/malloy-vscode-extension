@@ -117,6 +117,18 @@ function getIconElement(fieldType: string, isAggregate: boolean) {
 }
 
 /**
+ * Output schema have non-friendly names like '__stage0', give them
+ * something friendlier.
+ */
+
+function getExploreName(name: string) {
+  if (name.startsWith('__stage')) {
+    return 'Results';
+  }
+  return name;
+}
+
+/**
  * Generate some information for the tooltip over Field components.
  * Typically includes name, type and path
  *
@@ -215,7 +227,7 @@ export const SchemaRenderer: React.FC<SchemaRendererProps> = ({
         <div onClick={toggleHidden}>
           <span>{hidden ? '▶' : '▼'}</span>{' '}
           {getIconElement(`struct_${subtype}`, false)}{' '}
-          <b className="explore_name">{explore.name}</b>
+          <b className="explore_name">{getExploreName(explore.name)}</b>
         </div>
         <ul>
           {queries.length ? (
