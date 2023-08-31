@@ -117,13 +117,13 @@ function getIconElement(fieldType: string, isAggregate: boolean) {
 }
 
 /**
- * Output schema have non-friendly names like '__stage0', give them
+ * Preview schema have non-friendly names like '__stage0', give them
  * something friendlier.
  */
 
 function getExploreName(name: string, path: string) {
   if (name.startsWith('__stage')) {
-    return 'Results';
+    return 'Preview';
   }
   return path ? path : name;
 }
