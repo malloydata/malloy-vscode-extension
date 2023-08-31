@@ -90,13 +90,13 @@ interface ResultControlProps {
   selected: boolean;
 }
 
-const ResultControl = styled.button<ResultControlProps>`
+const ResultControl = styled.div<ResultControlProps>`
   border: 0;
   border-bottom: 1px solid ${props => (props.selected ? '#4285f4' : 'white')};
   cursor: pointer;
-  background-color: white;
   padding: 3px 5px;
   color: ${props => (props.selected ? '#4285f4' : '#b1b1b1')};
+  margin-bottom: -1px;
 
   &:hover {
     border-bottom: 1px solid;

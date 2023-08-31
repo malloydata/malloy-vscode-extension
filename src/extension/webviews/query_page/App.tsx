@@ -432,13 +432,14 @@ const Tooltip = styled.div`
 const Warning = styled.div`
   color: var(--vscode-statusBarItem-warningForeground);
   background-color: var(--vscode-statusBarItem-warningBackground);
+  font-size: 12px;
   padding: 5px;
 `;
 
 const StatsBar = styled.div`
-  background-color: #505050;
-  color: white;
-  box-shadow: rgb(144 144 144) 0px 1px 5px 0px;
+  color: var(--vscode-editorWidget-Foreground);
+  background-color: var(--vscode-editorWidget-background);
+  font-size: 12px;
   padding: 5px;
 `;
 
