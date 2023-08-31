@@ -121,11 +121,11 @@ function getIconElement(fieldType: string, isAggregate: boolean) {
  * something friendlier.
  */
 
-function getExploreName(name: string) {
+function getExploreName(name: string, path: string) {
   if (name.startsWith('__stage')) {
     return 'Results';
   }
-  return name;
+  return path ? path : name;
 }
 
 /**
@@ -227,7 +227,7 @@ export const SchemaRenderer: React.FC<SchemaRendererProps> = ({
         <div onClick={toggleHidden}>
           <span>{hidden ? '▶' : '▼'}</span>{' '}
           {getIconElement(`struct_${subtype}`, false)}{' '}
-          <b className="explore_name">{getExploreName(explore.name)}</b>
+          <b className="explore_name">{getExploreName(explore.name, path)}</b>
         </div>
         <ul>
           {queries.length ? (
@@ -267,8 +267,16 @@ export const SchemaRenderer: React.FC<SchemaRendererProps> = ({
    */
 
   const FieldItem = ({field, path}: FieldProps) => {
+    const onClick = () => {
+      const type = fieldType(field);
+      const fieldName = field.name;
+      if (type !== 'query') {
+        navigator.clipboard.writeText(`${path}${path ? '.' : ''}${fieldName}`);
+      }
+    };
+
     return (
-      <div className="field" title={buildTitle(field, path)}>
+      <div className="field" title={buildTitle(field, path)} onClick={onClick}>
         {getIconElement(fieldType(field), isFieldAggregate(field))}
         <span className="field_name">{field.name}</span>
       </div>
