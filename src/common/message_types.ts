@@ -21,7 +21,12 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {MalloyError, MalloyQueryData, ResultJSON} from '@malloydata/malloy';
+import {
+  MalloyError,
+  MalloyQueryData,
+  ResultJSON,
+  SerializedExplore,
+} from '@malloydata/malloy';
 import {DataStyles} from '@malloydata/render';
 import {
   ConnectionBackend,
@@ -76,6 +81,7 @@ interface QueryMessageStatusCompiled {
 interface QueryMessageStatusEstimatedCost {
   status: QueryRunStatus.EstimatedCost;
   queryCostBytes: number | undefined;
+  schema: SerializedExplore[];
 }
 
 interface QueryMessageStatusRunning {

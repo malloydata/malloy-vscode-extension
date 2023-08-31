@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {Result} from '@malloydata/malloy';
+import {Explore, Result} from '@malloydata/malloy';
 import {HTMLView} from '@malloydata/render';
 import React, {
   DOMElement,
@@ -46,6 +46,7 @@ import {DownloadButton} from './DownloadButton';
 import {CopyButton} from './CopyButton';
 import {Scroll} from '../components/Scroll';
 import {PrismContainer} from '../components/PrismContainer';
+import {SchemaRenderer} from '../components/SchemaRenderer';
 
 enum Status {
   Ready = 'ready',
@@ -57,21 +58,34 @@ enum Status {
   Done = 'done',
 }
 
+interface Results {
+  stats?: string;
+  html?: HTMLElement;
+  sql?: string;
+  json?: string;
+  schema?: Explore[];
+}
+
+interface CurrentStatus {
+  status: Status;
+  warning?: string;
+  error?: string;
+}
+
 export const App: React.FC = () => {
-  const [status, setStatus] = useState<Status>(Status.Ready);
-  const [html, setHTML] = useState<HTMLElement>(document.createElement('span'));
-  const [json, setJSON] = useState('');
-  const [sql, setSQL] = useState('');
-  const [error, setError] = useState<string | undefined>(undefined);
-  const [warning, setWarning] = useState<string | undefined>(undefined);
+  const [status, setStatus] = useState<CurrentStatus>({status: Status.Ready});
+  const [results, setResults] = useState<Results>({});
   const [resultKind, setResultKind] = useState<ResultKind>(ResultKind.HTML);
-  const [tooltipVisible, setTooltipVisible] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
+
   const [showOnlySQL, setShowOnlySQL] = useState(false);
+
+  const [darkMode, setDarkMode] = useState(false);
   const [observer, setObserver] = useState<MutationObserver>();
+
   const [canDownload, setCanDownload] = useState(false);
   const [canDownloadStream, setCanDownloadStream] = useState(false);
-  const [stats, setStats] = useState<string | undefined>(undefined);
+
+  const [tooltipVisible, setTooltipVisible] = useState(false);
   const tooltipId = useRef(0);
   const {setTooltipRef, setTriggerRef, getTooltipProps} = usePopperTooltip({
     visible: tooltipVisible,
@@ -112,77 +126,74 @@ export const App: React.FC = () => {
       const message = event.data;
 
       if (message.status === QueryRunStatus.Error) {
-        setStatus(Status.Error);
-        setError(message.error);
-      } else {
-        setError(undefined);
+        setStatus({...status, status: Status.Error, error: message.error});
       }
+
       if (message.status === QueryRunStatus.Compiled && message.showSQLOnly) {
+        const {sql} = message;
         setShowOnlySQL(true);
-        setWarning(undefined);
-        setStats(undefined);
-        setStatus(Status.Done);
-        setSQL(message.sql);
+        if (resultKind === ResultKind.HTML) {
+          setResultKind(ResultKind.SQL);
+        }
+        setStatus({status: Status.Done, error: status.error});
+        setResults({sql});
         setResultKind(ResultKind.SQL);
       } else if (message.status === QueryRunStatus.EstimatedCost) {
-        setStats(getQueryCostStats(message.queryCostBytes, true));
+        setResults({
+          ...results,
+          stats: getQueryCostStats(message.queryCostBytes, true),
+          schema: message.schema.map(json => Explore.fromJSON(json)),
+        });
       } else if (message.status === QueryRunStatus.Done) {
-        const {resultJson, dataStyles, canDownloadStream} = message;
-        setWarning(undefined);
-        setShowOnlySQL(false);
-        setStats(undefined);
+        const {
+          resultJson,
+          dataStyles,
+          canDownloadStream,
+          stats: runStats,
+        } = message;
+        if (resultKind === ResultKind.SQL) {
+          setResultKind(ResultKind.HTML);
+        }
         // TODO(web) Figure out some way to download current result set
         setCanDownload(canDownloadStream);
         setCanDownloadStream(canDownloadStream);
-        setStatus(Status.Rendering);
+        setStatus({status: Status.Rendering});
         setTimeout(async () => {
           const result = Result.fromJSON(resultJson);
-          // eslint-disable-next-line no-console
-          const data = result.data;
-          setJSON(JSON.stringify(data.toObject(), null, 2));
-          setSQL(result.sql);
-          if (message.stats) {
-            setStats(getStats(message.stats, result.runStats?.queryCostBytes));
-          }
-          const rendered = await new HTMLView(document).render(result, {
+          const {data, sql} = result;
+          const json = JSON.stringify(data.toObject(), null, 2);
+          const schema = [result.resultExplore];
+          const stats = runStats
+            ? getStats(runStats, result.runStats?.queryCostBytes)
+            : '';
+          const html = await new HTMLView(document).render(result, {
             dataStyles,
-            isDrillingEnabled: false,
-            onDrill: (drillQuery, target) => {
-              navigator.clipboard.writeText(drillQuery);
-              setTriggerRef(target);
-              setTooltipVisible(true);
-              const currentTooltipId = ++tooltipId.current;
-              setTimeout(() => {
-                if (currentTooltipId === tooltipId.current) {
-                  setTooltipVisible(false);
-                }
-              }, 1000);
-            },
           });
-          setStatus(Status.Displaying);
+          setStatus({status: Status.Displaying});
           setTimeout(() => {
-            setHTML(rendered);
+            setResults({json, html, schema, sql, stats});
             if (data.rowCount < result.totalRows) {
               const rowCount = data.rowCount.toLocaleString();
               const totalRows = result.totalRows.toLocaleString();
-              setWarning(
-                `Row limit hit. Viewing ${rowCount} of ${totalRows} results.`
-              );
+              setStatus({
+                ...status,
+                warning: `Row limit hit. Viewing ${rowCount} of ${totalRows} results.`,
+                status: Status.Done,
+              });
+            } else {
+              setStatus({...status, status: Status.Done});
             }
-            setStatus(Status.Done);
           }, 0);
         }, 0);
       } else {
-        setHTML(document.createElement('span'));
-        setJSON('');
-        setSQL('');
+        setResults({html: document.createElement('span')});
         setShowOnlySQL(false);
         switch (message.status) {
           case QueryRunStatus.Compiling:
-            setStatus(Status.Compiling);
+            setStatus({status: Status.Compiling});
             break;
           case QueryRunStatus.Running:
-            setStatus(Status.Running);
+            setStatus({status: Status.Running});
             break;
         }
       }
@@ -193,15 +204,25 @@ export const App: React.FC = () => {
 
   const copyToClipboard = useCallback(
     ({target}: MouseEvent) => {
+      if (!results) {
+        return;
+      }
+      const {html, json, sql} = results;
       switch (resultKind) {
         case ResultKind.HTML:
-          navigator.clipboard.writeText(getStyledHTML(html));
+          if (html) {
+            navigator.clipboard.writeText(getStyledHTML(html));
+          }
           break;
         case ResultKind.JSON:
-          navigator.clipboard.writeText(json);
+          if (json) {
+            navigator.clipboard.writeText(json);
+          }
           break;
         case ResultKind.SQL:
-          navigator.clipboard.writeText(sql);
+          if (sql) {
+            navigator.clipboard.writeText(sql);
+          }
           break;
       }
       setTriggerRef(target as HTMLElement);
@@ -213,7 +234,7 @@ export const App: React.FC = () => {
         }
       }, 1000);
     },
-    [resultKind, html, json, sql]
+    [resultKind, results]
   );
 
   return (
@@ -230,17 +251,21 @@ export const App: React.FC = () => {
         Status.Running,
         Status.Rendering,
         Status.Displaying,
-      ].includes(status) ? (
-        <Spinner text={getStatusLabel(status) || ''} />
+      ].includes(status.status) ? (
+        <Spinner text={getStatusLabel(status.status) || ''} />
       ) : (
         ''
       )}
-      {!error && [Status.Displaying, Status.Done].includes(status) && (
-        <ResultControlsBar>
-          <ResultLabel>{showOnlySQL ? 'SQL' : 'QUERY RESULTS'}</ResultLabel>
-          {!showOnlySQL && (
+      {!status.error &&
+        [Status.Displaying, Status.Done].includes(status.status) && (
+          <ResultControlsBar>
+            <ResultLabel>{showOnlySQL ? 'SQL' : 'QUERY RESULTS'}</ResultLabel>
             <ResultControlsItems>
-              <ResultKindToggle kind={resultKind} setKind={setResultKind} />
+              <ResultKindToggle
+                kind={resultKind}
+                setKind={setResultKind}
+                showOnlySQL={showOnlySQL}
+              />
               {canDownload && (
                 <DownloadButton
                   canStream={canDownloadStream}
@@ -253,46 +278,60 @@ export const App: React.FC = () => {
                 />
               )}
             </ResultControlsItems>
-          )}
-        </ResultControlsBar>
-      )}
-      {!error && resultKind === ResultKind.HTML && (
+          </ResultControlsBar>
+        )}
+      {!status.error && results.html && resultKind === ResultKind.HTML && (
         <Scroll>
           <div style={{margin: '10px'}}>
             <CopyButton onClick={copyToClipboard} />
-            <DOMElement element={html} />
+            <DOMElement element={results.html} />
           </div>
         </Scroll>
       )}
-      {!error && resultKind === ResultKind.JSON && (
+      {!status.error && results.json && resultKind === ResultKind.JSON && (
         <Scroll>
           <CopyButton onClick={copyToClipboard} />
           <PrismContainer darkMode={darkMode} style={{margin: '10px'}}>
             <div
               dangerouslySetInnerHTML={{
-                __html: Prism.highlight(json, Prism.languages['json'], 'json'),
+                __html: Prism.highlight(
+                  results.json,
+                  Prism.languages['json'],
+                  'json'
+                ),
               }}
               style={{margin: '10px'}}
             />
           </PrismContainer>
         </Scroll>
       )}
-      {!error && resultKind === ResultKind.SQL && (
+      {!status.error && results.sql && resultKind === ResultKind.SQL && (
         <Scroll>
           <CopyButton onClick={copyToClipboard} />
           <PrismContainer darkMode={darkMode} style={{margin: '10px'}}>
             <div
               dangerouslySetInnerHTML={{
-                __html: Prism.highlight(sql, Prism.languages['sql'], 'sql'),
+                __html: Prism.highlight(
+                  results.sql,
+                  Prism.languages['sql'],
+                  'sql'
+                ),
               }}
               style={{margin: '10px', whiteSpace: 'break-spaces'}}
             />
           </PrismContainer>
         </Scroll>
       )}
-      {error && <Error multiline={error.includes('\n')}>{error}</Error>}
-      {warning && <Warning>{warning}</Warning>}
-      {stats && <StatsBar>{stats}</StatsBar>}
+      {!status.error && results.schema && resultKind === ResultKind.SCHEMA && (
+        <Scroll>
+          <SchemaRenderer explores={results.schema} defaultShow={true} />
+        </Scroll>
+      )}
+      {status.error && (
+        <Error multiline={status.error.includes('\n')}>{status.error}</Error>
+      )}
+      {status.warning && <Warning>{status.warning}</Warning>}
+      {results.stats && <StatsBar>{results.stats}</StatsBar>}
       {tooltipVisible && (
         <Tooltip ref={setTooltipRef} {...getTooltipProps()}>
           Copied!

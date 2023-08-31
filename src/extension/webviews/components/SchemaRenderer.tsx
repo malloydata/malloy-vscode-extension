@@ -40,6 +40,7 @@ import OneToOneIcon from '../../../media/one_to_one.svg';
  */
 export interface SchemaRendererProps {
   explores: Explore[];
+  defaultShow?: boolean;
 }
 
 /**
@@ -177,7 +178,10 @@ function bucketFields(fields: Field[]) {
  * SchemaRenderer component. Generates a schema tree with collapsible
  * field lists.
  */
-export const SchemaRenderer: React.FC<SchemaRendererProps> = ({explores}) => {
+export const SchemaRenderer: React.FC<SchemaRendererProps> = ({
+  explores,
+  defaultShow = false,
+}) => {
   if (!explores || !explores.length) {
     return <b>No Schema Information</b>;
   }
@@ -189,7 +193,9 @@ export const SchemaRenderer: React.FC<SchemaRendererProps> = ({explores}) => {
    */
 
   const StructItem = ({explore, path}: ExploreProps) => {
-    const [hidden, setHidden] = React.useState<string>('hidden');
+    const [hidden, setHidden] = React.useState<string>(
+      defaultShow ? '' : 'hidden'
+    );
     const subtype = exploreSubtype(explore);
     const {queries, dimensions, measures, explores} = bucketFields(
       explore.allFields
