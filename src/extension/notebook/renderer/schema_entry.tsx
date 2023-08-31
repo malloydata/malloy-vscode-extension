@@ -25,7 +25,7 @@ import ReactDOM from 'react-dom';
 import React from 'react';
 import {StyleSheetManager} from 'styled-components';
 import {ActivationFunction} from 'vscode-notebook-renderer';
-import {SchemaRenderer} from './SchemaRenderer';
+import {SchemaRenderer} from '../../webviews/components/SchemaRenderer';
 import {Explore, SerializedExplore} from '@malloydata/malloy';
 
 export const activate: ActivationFunction = () => {
