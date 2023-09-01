@@ -29,7 +29,7 @@ import {errorMessage} from '../../common/errors';
 import {BuildModelRequest, CellMetadata, QueryCost} from '../../common/types';
 import {convertFromBytes} from '../../common/convert_to_bytes';
 import {BaseLanguageClient} from 'vscode-languageclient';
-import {SerializedExplore} from '@malloydata/malloy';
+import {FetchModelMessage} from '../../common/message_types';
 
 const NO_QUERY = 'Model has no queries.';
 
@@ -244,12 +244,14 @@ class MalloyController {
             vscode.NotebookCellOutputItem.text('Loading Schema Information'),
           ]),
         ]);
-        const serializedExplores: SerializedExplore[] =
-          await this.client.sendRequest('malloy/fetchModel', request);
+        const model: FetchModelMessage = await this.client.sendRequest(
+          'malloy/fetchModel',
+          request
+        );
         execution.replaceOutput([
           new vscode.NotebookCellOutput([
             vscode.NotebookCellOutputItem.json(
-              serializedExplores,
+              model,
               'x-application/malloy-schema'
             ),
           ]),

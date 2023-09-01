@@ -26,8 +26,9 @@ import {
   MalloyError,
   Model,
   ModelMaterializer,
+  NamedModelObject,
+  NamedQuery,
   Runtime,
-  SerializedExplore,
 } from '@malloydata/malloy';
 import {TextDocument} from 'vscode-languageserver-textdocument';
 
@@ -39,6 +40,10 @@ import {
   MalloySQLSQLStatement,
   MalloySQLStatementType,
 } from '@malloydata/malloy-sql';
+import {FetchModelMessage} from '../common/message_types';
+
+const isNamedQuery = (object: NamedModelObject): object is NamedQuery =>
+  object.type === 'query';
 
 export class TranslateCache implements TranslateCache {
   cache = new Map<string, {model: Model; version: number}>();
@@ -50,13 +55,26 @@ export class TranslateCache implements TranslateCache {
   ) {
     connection.onRequest(
       'malloy/fetchModel',
-      async (event: BuildModelRequest): Promise<SerializedExplore[]> => {
+      async (event: BuildModelRequest): Promise<FetchModelMessage> => {
         const model = await this.translateWithCache(
           event.uri,
           event.version,
           event.languageId
         );
-        return model?.explores.map(explore => explore.toJSON()) || [];
+        if (model) {
+          return {
+            explores: model.explores.map(explore => explore.toJSON()) || [],
+            // TODO(whscullin) - Create non-backdoor access method
+            queries: Object.values(model._modelDef.contents).filter(
+              isNamedQuery
+            ),
+          };
+        } else {
+          return {
+            explores: [],
+            queries: [],
+          };
+        }
       }
     );
   }

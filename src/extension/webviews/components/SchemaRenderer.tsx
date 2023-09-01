@@ -23,7 +23,7 @@
 
 import * as React from 'react';
 import styled from 'styled-components';
-import {Explore, Field} from '@malloydata/malloy';
+import {Explore, Field, NamedQuery} from '@malloydata/malloy';
 import {exploreSubtype, fieldType, isFieldAggregate} from '../../common/schema';
 import NumberIcon from '../../../media/number.svg';
 import NumberAggregateIcon from '../../../media/number-aggregate.svg';
@@ -40,8 +40,10 @@ import OneToOneIcon from '../../../media/one_to_one.svg';
  */
 export interface SchemaRendererProps {
   explores: Explore[];
+  queries: NamedQuery[];
   defaultShow?: boolean;
   onFieldClick?: (field: Field) => void;
+  onQueryClick?: (query: NamedQuery) => void;
 }
 
 /**
@@ -148,7 +150,7 @@ Path: ${path}${path ? '.' : ''}${fieldName}
 Type: ${type}`;
 }
 
-const sortByName = (a: Field | Explore, b: Field | Explore) =>
+const sortByName = (a: {name: string}, b: {name: string}) =>
   a.name.localeCompare(b.name);
 
 /**
@@ -193,8 +195,10 @@ function bucketFields(fields: Field[]) {
  */
 export const SchemaRenderer: React.FC<SchemaRendererProps> = ({
   explores,
+  queries,
   defaultShow = false,
   onFieldClick,
+  onQueryClick,
 }) => {
   if (!explores || !explores.length) {
     return <b>No Schema Information</b>;
@@ -300,9 +304,30 @@ export const SchemaRenderer: React.FC<SchemaRendererProps> = ({
     );
   };
 
+  const QueryItem = ({query}: {query: NamedQuery}) => {
+    const onClick = () => {
+      onQueryClick?.(query);
+    };
+    const clickable = onQueryClick ? 'clickable' : '';
+
+    return (
+      <div className={`field ${clickable}`} onClick={onClick}>
+        {getIconElement('query', false)}
+        <span className="field_name">{query.name}</span>
+      </div>
+    );
+  };
+
   return (
     <SchemaTree>
       <ul>
+        <li>
+          <div className="field_list">
+            {queries.sort(sortByName).map(query => (
+              <QueryItem key={query.name} query={query} />
+            ))}
+          </div>
+        </li>
         {explores.sort(sortByName).map(explore => (
           <StructItem key={explore.name} explore={explore} path={''} />
         ))}

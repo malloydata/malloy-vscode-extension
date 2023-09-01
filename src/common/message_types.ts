@@ -24,6 +24,7 @@
 import {
   MalloyError,
   MalloyQueryData,
+  NamedQuery,
   ResultJSON,
   SerializedExplore,
 } from '@malloydata/malloy';
@@ -365,3 +366,8 @@ export type HelpPanelMessage = HelpMessageAppReady | HelpMessageEditConnections;
 export const queryPanelProgress = new ProgressType<QueryMessageStatus>();
 
 export const msqlPanelProgress = new ProgressType<MSQLMessageStatus>();
+
+export interface FetchModelMessage {
+  explores: SerializedExplore[];
+  queries: NamedQuery[];
+}

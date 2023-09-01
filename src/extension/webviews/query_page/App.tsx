@@ -341,6 +341,7 @@ export const App: React.FC = () => {
         <Scroll>
           <SchemaRenderer
             explores={results.schema}
+            queries={[]}
             defaultShow={true}
             onFieldClick={onFieldClick}
           />
