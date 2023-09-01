@@ -41,6 +41,7 @@ import OneToOneIcon from '../../../media/one_to_one.svg';
 export interface SchemaRendererProps {
   explores: Explore[];
   defaultShow?: boolean;
+  onFieldClick?: (field: Field) => void;
 }
 
 /**
@@ -147,6 +148,9 @@ Path: ${path}${path ? '.' : ''}${fieldName}
 Type: ${type}`;
 }
 
+const sortByName = (a: Field | Explore, b: Field | Explore) =>
+  a.name.localeCompare(b.name);
+
 /**
  * Bucket fields by type and sort by name.
  *
@@ -160,9 +164,6 @@ function bucketFields(fields: Field[]) {
   const dimensions: Field[] = [];
   const measures: Field[] = [];
   const explores: Explore[] = [];
-
-  const sortByName = (a: Field | Explore, b: Field | Explore) =>
-    a.name.localeCompare(b.name);
 
   for (const field of fields) {
     const type = fieldType(field);
@@ -193,6 +194,7 @@ function bucketFields(fields: Field[]) {
 export const SchemaRenderer: React.FC<SchemaRendererProps> = ({
   explores,
   defaultShow = false,
+  onFieldClick,
 }) => {
   if (!explores || !explores.length) {
     return <b>No Schema Information</b>;
@@ -268,15 +270,16 @@ export const SchemaRenderer: React.FC<SchemaRendererProps> = ({
 
   const FieldItem = ({field, path}: FieldProps) => {
     const onClick = () => {
-      const type = fieldType(field);
-      const fieldName = field.name;
-      if (type !== 'query') {
-        navigator.clipboard.writeText(`${path}${path ? '.' : ''}${fieldName}`);
-      }
+      onFieldClick?.(field);
     };
+    const clickable = onFieldClick ? 'clickable' : '';
 
     return (
-      <div className="field" title={buildTitle(field, path)} onClick={onClick}>
+      <div
+        className={`field ${clickable}`}
+        title={buildTitle(field, path)}
+        onClick={onClick}
+      >
         {getIconElement(fieldType(field), isFieldAggregate(field))}
         <span className="field_name">{field.name}</span>
       </div>
@@ -300,7 +303,7 @@ export const SchemaRenderer: React.FC<SchemaRendererProps> = ({
   return (
     <SchemaTree>
       <ul>
-        {explores.map(explore => (
+        {explores.sort(sortByName).map(explore => (
           <StructItem key={explore.name} explore={explore} path={''} />
         ))}
       </ul>
@@ -355,6 +358,10 @@ const SchemaTree = styled.div`
     border-radius: 8px;
     padding: 0.25em 0.75em;
     margin: 0.2em;
+
+    &.clickable {
+      cursor: pointer;
+    }
   }
 
   .field_list {

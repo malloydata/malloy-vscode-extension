@@ -26,9 +26,10 @@ import React from 'react';
 import {StyleSheetManager} from 'styled-components';
 import {ActivationFunction} from 'vscode-notebook-renderer';
 import {SchemaRenderer} from '../../webviews/components/SchemaRenderer';
-import {Explore, SerializedExplore} from '@malloydata/malloy';
+import {Explore, Field, SerializedExplore} from '@malloydata/malloy';
+import {fieldType} from '../../common/schema';
 
-export const activate: ActivationFunction = () => {
+export const activate: ActivationFunction = ({postMessage}) => {
   return {
     renderOutputItem(info, element) {
       let shadow = element.shadowRoot;
@@ -45,7 +46,10 @@ export const activate: ActivationFunction = () => {
 
       ReactDOM.render(
         <StyleSheetManager target={root}>
-          <SchemaRendererWrapper results={info.json()} />
+          <SchemaRendererWrapper
+            results={info.json()}
+            postMessage={postMessage}
+          />
         </StyleSheetManager>,
         root
       );
@@ -55,6 +59,7 @@ export const activate: ActivationFunction = () => {
 
 interface SchemaRendererWrapperProps {
   results: SerializedExplore[];
+  postMessage?: (message: unknown) => void;
 }
 
 /**
@@ -63,7 +68,10 @@ interface SchemaRendererWrapperProps {
  * we use useEffect() to delay rendering the actual contents until
  * it's ready.
  */
-const SchemaRendererWrapper = ({results}: SchemaRendererWrapperProps) => {
+const SchemaRendererWrapper = ({
+  results,
+  postMessage,
+}: SchemaRendererWrapperProps) => {
   const [explores, setExplores] = React.useState<Explore[]>();
 
   React.useEffect(() => {
@@ -77,5 +85,34 @@ const SchemaRendererWrapper = ({results}: SchemaRendererWrapperProps) => {
     return null;
   }
 
-  return <SchemaRenderer explores={explores} />;
+  const onFieldClick = (field: Field) => {
+    const type = fieldType(field);
+
+    let path = field.name;
+    let current: Explore = field.parentExplore;
+    while (current.parentExplore) {
+      path = `${current.name}.${path}`;
+      current = current.parentExplore;
+    }
+    const topLevelExplore = current;
+
+    if (type === 'query') {
+      const type = 'malloy.runQuery';
+      const args = [
+        `query: ${topLevelExplore.name}->${path}`,
+        `${topLevelExplore.name}->${path}`,
+      ];
+      postMessage?.({type, args});
+    } else {
+      let path = field.name;
+      let current: Explore = field.parentExplore;
+      while (current.parentExplore) {
+        path = `${current.name}.${path}`;
+        current = current.parentExplore;
+      }
+      navigator.clipboard.writeText(path);
+    }
+  };
+
+  return <SchemaRenderer explores={explores} onFieldClick={onFieldClick} />;
 };

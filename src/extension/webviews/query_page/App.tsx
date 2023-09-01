@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {Explore, Result} from '@malloydata/malloy';
+import {Explore, Field, Result} from '@malloydata/malloy';
 import {HTMLView} from '@malloydata/render';
 import React, {
   DOMElement,
@@ -47,6 +47,7 @@ import {CopyButton} from './CopyButton';
 import {Scroll} from '../components/Scroll';
 import {PrismContainer} from '../components/PrismContainer';
 import {SchemaRenderer} from '../components/SchemaRenderer';
+import {fieldType} from '../../common/schema';
 
 enum Status {
   Ready = 'ready',
@@ -237,6 +238,20 @@ export const App: React.FC = () => {
     [resultKind, results]
   );
 
+  const onFieldClick = (field: Field) => {
+    const type = fieldType(field);
+
+    if (type !== 'query') {
+      let path = field.name;
+      let current: Explore = field.parentExplore;
+      while (current.parentExplore) {
+        path = `${current.name}.${path}`;
+        current = current.parentExplore;
+      }
+      navigator.clipboard.writeText(path);
+    }
+  };
+
   return (
     <div
       style={{
@@ -324,7 +339,11 @@ export const App: React.FC = () => {
       )}
       {!status.error && results.schema && resultKind === ResultKind.SCHEMA && (
         <Scroll>
-          <SchemaRenderer explores={results.schema} defaultShow={true} />
+          <SchemaRenderer
+            explores={results.schema}
+            defaultShow={true}
+            onFieldClick={onFieldClick}
+          />
         </Scroll>
       )}
       {status.error && (
