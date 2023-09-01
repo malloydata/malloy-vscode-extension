@@ -552,7 +552,8 @@
         "id": "malloy.notebook-renderer-schema",
         "mimeTypes": [
           "x-application/malloy-schema"
-        ]
+        ],
+        "requiresMessaging": "optional"
       }
     ]
   },

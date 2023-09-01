@@ -110,6 +110,14 @@ export function activateNotebookController(
       newUntitledNotebookCommand
     )
   );
+
+  const messageChannel = vscode.notebooks.createRendererMessaging(
+    'malloy.notebook-renderer-schema'
+  );
+  messageChannel.onDidReceiveMessage(event => {
+    const {type, args} = event.message;
+    vscode.commands.executeCommand(type, ...args);
+  });
 }
 
 class MalloyController {
