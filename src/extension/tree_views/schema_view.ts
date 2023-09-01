@@ -24,13 +24,7 @@
 import * as vscode from 'vscode';
 import {Utils} from 'vscode-uri';
 
-import {
-  Explore,
-  Field,
-  QueryField,
-  AtomicField,
-  SerializedExplore,
-} from '@malloydata/malloy';
+import {Explore, Field, QueryField, AtomicField} from '@malloydata/malloy';
 import numberIcon from '../../media/number.svg';
 import numberAggregateIcon from '../../media/number-aggregate.svg';
 import booleanIcon from '../../media/boolean.svg';
@@ -45,6 +39,7 @@ import {MALLOY_EXTENSION_STATE} from '../state';
 import {BaseLanguageClient} from 'vscode-languageclient/node';
 import {BuildModelRequest} from '../../common/types';
 import {exploreSubtype, fieldType, isFieldAggregate} from '../common/schema';
+import {FetchModelMessage} from '../../common/message_types';
 
 export class SchemaProvider
   implements vscode.TreeDataProvider<ExploreItem | FieldItem>
@@ -146,14 +141,12 @@ async function getStructs(
       version: document.version,
       languageId: document.languageId,
     };
-    const serialized_explores: SerializedExplore[] = await client.sendRequest(
+    const model: FetchModelMessage = await client.sendRequest(
       'malloy/fetchModel',
       request
     );
-    const explores = serialized_explores.map(explore =>
-      Explore.fromJSON(explore)
-    );
-    return Object.values(explores).sort(exploresByName);
+    const explores = model.explores.map(explore => Explore.fromJSON(explore));
+    return explores.sort(exploresByName);
   } catch (error) {
     return undefined;
   }

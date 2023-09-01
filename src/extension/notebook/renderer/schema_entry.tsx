@@ -26,8 +26,9 @@ import React from 'react';
 import {StyleSheetManager} from 'styled-components';
 import {ActivationFunction} from 'vscode-notebook-renderer';
 import {SchemaRenderer} from '../../webviews/components/SchemaRenderer';
-import {Explore, Field, SerializedExplore} from '@malloydata/malloy';
+import {Explore, Field, NamedQuery} from '@malloydata/malloy';
 import {fieldType} from '../../common/schema';
+import {FetchModelMessage} from '../../../common/message_types';
 
 export const activate: ActivationFunction = ({postMessage}) => {
   return {
@@ -58,7 +59,7 @@ export const activate: ActivationFunction = ({postMessage}) => {
 };
 
 interface SchemaRendererWrapperProps {
-  results: SerializedExplore[];
+  results: FetchModelMessage;
   postMessage?: (message: unknown) => void;
 }
 
@@ -73,15 +74,16 @@ const SchemaRendererWrapper = ({
   postMessage,
 }: SchemaRendererWrapperProps) => {
   const [explores, setExplores] = React.useState<Explore[]>();
+  const [queries, setQueries] = React.useState<NamedQuery[]>();
 
   React.useEffect(() => {
     if (results) {
-      const explores = results.map(json => Explore.fromJSON(json));
-      setExplores(explores);
+      setExplores(results.explores.map(json => Explore.fromJSON(json)));
+      setQueries(results.queries);
     }
   }, [results]);
 
-  if (!explores) {
+  if (!explores || !queries) {
     return null;
   }
 
@@ -114,5 +116,18 @@ const SchemaRendererWrapper = ({
     }
   };
 
-  return <SchemaRenderer explores={explores} onFieldClick={onFieldClick} />;
+  const onQueryClick = (query: NamedQuery) => {
+    const type = 'malloy.runNamedQuery';
+    const args = [query.name];
+    postMessage?.({type, args});
+  };
+
+  return (
+    <SchemaRenderer
+      explores={explores}
+      queries={queries}
+      onFieldClick={onFieldClick}
+      onQueryClick={onQueryClick}
+    />
+  );
 };
