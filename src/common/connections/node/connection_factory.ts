@@ -36,7 +36,6 @@ import {isDuckDBAvailable} from '../../duckdb_availability';
 
 import {fileURLToPath} from 'url';
 import {ExternalConnectionFactory} from '../external_connection_factory';
-import {random} from 'lodash';
 
 export class DesktopConnectionFactory implements ConnectionFactory {
   connectionCache: Record<string, TestableConnection> = {};
