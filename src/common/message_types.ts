@@ -49,6 +49,7 @@ export enum QueryRunStatus {
   Error = 'error',
   Done = 'done',
   StartDownload = 'start-download',
+  RunCommand = 'run-command',
 }
 
 export enum MSQLQueryRunStatus {
@@ -66,6 +67,12 @@ export enum QueryMessageType {
 export interface QueryMessageStartDownload {
   status: QueryRunStatus.StartDownload;
   downloadOptions: QueryDownloadOptions;
+}
+
+export interface QueryMessageRunCommand {
+  status: QueryRunStatus.RunCommand;
+  command: string;
+  args: string[];
 }
 
 interface QueryMessageStatusCompiling {
@@ -111,6 +118,7 @@ export interface QueryRunStats {
 }
 
 export type QueryMessageStatus =
+  | QueryMessageRunCommand
   | QueryMessageStartDownload
   | QueryMessageStatusCompiling
   | QueryMessageStatusCompiled

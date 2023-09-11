@@ -196,6 +196,11 @@ https://github.com/malloydata/malloy-vscode-extension/issues.`;
                   panelId,
                   name
                 );
+              } else if (message.status === QueryRunStatus.RunCommand) {
+                vscode.commands.executeCommand(
+                  message.command,
+                  ...message.args
+                );
               }
             });
 

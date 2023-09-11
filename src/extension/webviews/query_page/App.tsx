@@ -21,7 +21,13 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {Explore, Field, Result} from '@malloydata/malloy';
+import {
+  Explore,
+  Field,
+  NamedQuery,
+  QueryField,
+  Result,
+} from '@malloydata/malloy';
 import {HTMLView} from '@malloydata/render';
 import React, {
   DOMElement,
@@ -163,7 +169,11 @@ export const App: React.FC = () => {
           const result = Result.fromJSON(resultJson);
           const {data, sql} = result;
           const json = JSON.stringify(data.toObject(), null, 2);
-          const schema = [result.resultExplore];
+          const schema =
+            result.resultExplore.name.startsWith('__stage') &&
+            result.resultExplore.parentExplore
+              ? [result.resultExplore.parentExplore]
+              : [result.resultExplore];
           const stats = runStats
             ? getStats(runStats, result.runStats?.queryCostBytes)
             : '';
@@ -249,6 +259,17 @@ export const App: React.FC = () => {
         current = current.parentExplore;
       }
       navigator.clipboard.writeText(path);
+    }
+  };
+
+  const onQueryClick = (query: NamedQuery | QueryField) => {
+    if ('parentExplore' in query) {
+      const status = QueryRunStatus.RunCommand;
+      const command = 'malloy.runQuery';
+      const arg1 = `query: ${query.parentExplore.name}->${query.name}`;
+      const arg2 = `${query.parentExplore.name}->${query.name}`;
+      const args = [arg1, arg2];
+      vscode.postMessage({status, command, args});
     }
   };
 
@@ -344,6 +365,7 @@ export const App: React.FC = () => {
             queries={[]}
             defaultShow={true}
             onFieldClick={onFieldClick}
+            onQueryClick={onQueryClick}
           />
         </Scroll>
       )}
