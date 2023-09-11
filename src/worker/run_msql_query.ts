@@ -59,13 +59,10 @@ import {errorMessage} from '../common/errors';
 // The actual URI we want to use is a .malloysql file that we don't want the compiler to load,
 // so wrap the fileHandler to pretend the on-the-fly models have a URI
 class VirtualURIFileHandler implements URLReader {
-  private uriReader: URLReader;
   private url: URL | null = null;
   private contents: string | null = null;
 
-  constructor(uriReader: URLReader) {
-    this.uriReader = uriReader;
-  }
+  constructor(private uriReader: URLReader) {}
 
   public setVirtualFile(url: URL, contents: string): void {
     this.url = url;
