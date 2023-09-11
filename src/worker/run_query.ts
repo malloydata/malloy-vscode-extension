@@ -45,23 +45,24 @@ import {ConnectionManager} from '../common/connection_manager';
 import {CellData, FileHandler, StructDefResult} from '../common/types';
 import {CancellationToken, ProgressType} from 'vscode-jsonrpc';
 import {errorMessage} from '../common/errors';
+import {fixLogRange} from '../common/malloy_sql';
 
 const fakeMalloyResult = (
-  structDefResult: StructDefResult,
+  {structDef}: StructDefResult,
   sql: string,
-  sqlResult: MalloyQueryData,
+  {rows: result, totalRows, runStats}: MalloyQueryData,
   connectionName: string
 ): Result => {
   return new Result(
     {
-      structs: structDefResult.structDef ? [structDefResult.structDef] : [],
+      structs: structDef ? [structDef] : [],
       sql,
-      result: sqlResult.rows,
-      totalRows: sqlResult.totalRows,
+      result,
+      totalRows,
       lastStageName: sql,
       malloy: '',
       connectionName,
-      runStats: sqlResult.runStats ? {...sqlResult.runStats} : undefined,
+      runStats,
       sourceExplore: '',
       sourceFilters: [],
     },
@@ -142,31 +143,9 @@ const runMSQLCell = async (
       );
     } catch (e) {
       if (e instanceof MalloyError) {
-        let message = 'Error:';
+        let message = 'Error: ';
         e.problems.forEach(log => {
-          if (log.at) {
-            if (log.at.url === 'internal://internal.malloy') {
-              log.at.url = query.uri;
-            } else if (log.at.url !== query.uri) {
-              return;
-            }
-            const embeddedStart: number = log.at.range.start.line;
-            if (embeddedStart === 0) {
-              log.at.range.start.character +=
-                malloyQuery.malloyRange.start.character;
-              if (log.at.range.start.line === log.at.range.end.line)
-                log.at.range.end.character +=
-                  malloyQuery.malloyRange.start.character;
-            }
-
-            const lineDifference =
-              log.at.range.end.line - log.at.range.start.line;
-            log.at.range.start.line =
-              malloyQuery.range.start.line + embeddedStart;
-            log.at.range.end.line =
-              malloyQuery.range.start.line + embeddedStart + lineDifference;
-          }
-          message += `\n${log.message} at line ${log.at?.range.start.line}`;
+          message += fixLogRange(query.uri, malloyQuery, log);
         });
         throw new MalloyError(message, e.problems);
       }

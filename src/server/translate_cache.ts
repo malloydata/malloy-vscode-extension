@@ -41,6 +41,7 @@ import {
   MalloySQLStatementType,
 } from '@malloydata/malloy-sql';
 import {FetchModelMessage} from '../common/message_types';
+import {fixLogRange} from '../common/malloy_sql';
 
 const isNamedQuery = (object: NamedModelObject): object is NamedQuery =>
   object.type === 'query';
@@ -156,36 +157,12 @@ export class TranslateCache implements TranslateCache {
           await mm.getQuery(`query:\n${malloyQuery.query}`);
         } catch (e) {
           // some errors come from Runtime stuff
-          if (!(e instanceof MalloyError)) {
-            throw e;
-          }
-
-          e.problems.forEach(log => {
-            if (log.at) {
-              if (log.at.url === 'internal://internal.malloy') {
-                log.at.url = uri;
-              } else if (log.at.url !== uri) {
-                return;
-              }
-              // if the embedded malloy is on the same line as SQL, pad character start (and maybe end)
+          if (e instanceof MalloyError) {
+            e.problems.forEach(log => {
               // "query:\n" adds a line, so we subtract the line here
-              const embeddedStart: number = log.at.range.start.line - 1;
-              if (embeddedStart === 0) {
-                log.at.range.start.character +=
-                  malloyQuery.malloyRange.start.character;
-                if (log.at.range.start.line === log.at.range.end.line)
-                  log.at.range.end.character +=
-                    malloyQuery.malloyRange.start.character;
-              }
-
-              const lineDifference =
-                log.at.range.end.line - log.at.range.start.line;
-              log.at.range.start.line =
-                malloyQuery.range.start.line + embeddedStart;
-              log.at.range.end.line =
-                malloyQuery.range.start.line + embeddedStart + lineDifference;
-            }
-          });
+              fixLogRange(uri, malloyQuery, log, -1);
+            });
+          }
 
           throw e;
         }
@@ -197,6 +174,7 @@ export class TranslateCache implements TranslateCache {
       }
       return model;
     } else if (languageId === 'malloy-notebook') {
+      // TODO(whscullin): Delete with malloy-sql text editor
       const parse = MalloySQLParser.parse(text, uri);
 
       let malloyStatements = '\n'.repeat(parse.initialCommentsLineCount || 0);
@@ -233,35 +211,11 @@ export class TranslateCache implements TranslateCache {
           try {
             await mm.getQuery(`query:\n${malloyQuery.query}`);
           } catch (e) {
-            // some errors come from Runtime stuff
-            if (!(e instanceof MalloyError)) {
-              throw e;
+            if (e instanceof MalloyError) {
+              e.problems.forEach(log => {
+                fixLogRange(uri, malloyQuery, log, -1);
+              });
             }
-
-            e.problems.forEach(log => {
-              if (log.at) {
-                log.at.url = uri;
-
-                // if the embedded malloy is on the same line as SQL, pad character start (and maybe end)
-                // "query:\n" adds a line, so we subtract the line here
-                const embeddedStart: number = log.at.range.start.line - 1;
-                if (embeddedStart === 0) {
-                  log.at.range.start.character +=
-                    malloyQuery.malloyRange.start.character;
-                  if (log.at.range.start.line === log.at.range.end.line)
-                    log.at.range.end.character +=
-                      malloyQuery.malloyRange.start.character;
-                }
-
-                const lineDifference =
-                  log.at.range.end.line - log.at.range.start.line;
-                log.at.range.start.line =
-                  malloyQuery.range.start.line + embeddedStart;
-                log.at.range.end.line =
-                  malloyQuery.range.start.line + embeddedStart + lineDifference;
-              }
-            });
-
             throw e;
           }
         }
