@@ -117,9 +117,17 @@ const SchemaRendererWrapper = ({
   };
 
   const onQueryClick = (query: NamedQuery | QueryField) => {
-    const type = 'malloy.runNamedQuery';
-    const args = [query.name];
-    postMessage?.({type, args});
+    if ('parentExplore' in query) {
+      const type = 'malloy.runQuery';
+      const arg1 = `query: ${query.parentExplore.name}->${query.name}`;
+      const arg2 = `${query.parentExplore.name}->${query.name}`;
+      const args = [arg1, arg2];
+      postMessage?.({type, args});
+    } else {
+      const type = 'malloy.runNamedQuery';
+      const args = [query.name];
+      postMessage?.({type, args});
+    }
   };
 
   return (
