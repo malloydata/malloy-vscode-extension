@@ -33,12 +33,12 @@ import {CellData} from '../common/types';
 export const createModelMaterializer = async (
   query: WorkerQuerySpec,
   runtime: Runtime,
-  allCells: CellData[]
+  cellData: CellData | null
 ): Promise<ModelMaterializer | null> => {
   let mm: ModelMaterializer | null = null;
   const queryFileURL = new URL(query.uri);
-  if (queryFileURL.protocol === 'vscode-notebook-cell:') {
-    for (const cell of allCells) {
+  if (cellData) {
+    for (const cell of cellData.cells) {
       if (cell.languageId === 'malloy') {
         const url = new URL(cell.uri);
         if (mm) {
@@ -57,10 +57,10 @@ export const createModelMaterializer = async (
 export const createRunnable = async (
   query: WorkerQuerySpec,
   runtime: Runtime,
-  allCells: CellData[]
+  cellData: CellData | null
 ): Promise<SQLBlockMaterializer | QueryMaterializer> => {
   let runnable: QueryMaterializer | SQLBlockMaterializer;
-  const mm = await createModelMaterializer(query, runtime, allCells);
+  const mm = await createModelMaterializer(query, runtime, cellData);
   if (!mm) {
     throw new Error('Missing model definition');
   }

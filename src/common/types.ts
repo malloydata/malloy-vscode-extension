@@ -61,11 +61,15 @@ export interface CellMetadata {
   cost?: QueryCost;
 }
 
-export interface CellData {
+export interface Cell {
   uri: string;
   text: string;
   languageId: string;
   metadata?: CellMetadata;
+}
+export interface CellData {
+  baseUri: string;
+  cells: Cell[];
 }
 
 export interface BuildModelRequest {
@@ -100,7 +104,7 @@ export interface FileHandler extends URLReader {
    * @param uri URI to resolve
    * @returns File contents
    */
-  fetchCellData(uri: string): Promise<CellData[]>;
+  fetchCellData(uri: string): Promise<CellData>;
 }
 
 export interface StructDefSuccess {

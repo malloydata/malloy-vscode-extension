@@ -60,11 +60,11 @@ export async function downloadQuery(
       connectionManager.getConnectionLookup(url)
     );
 
-    let allCells: CellData[] = [];
+    let cellData: CellData | null = null;
     if (query.uri.startsWith('vscode-notebook-cell:')) {
-      allCells = await fileHandler.fetchCellData(query.uri);
+      cellData = await fileHandler.fetchCellData(query.uri);
     }
-    const runnable = await createRunnable(query, runtime, allCells);
+    const runnable = await createRunnable(query, runtime, cellData);
 
     const writeStream = fs.createWriteStream(fileURLToPath(uri));
     const writer =

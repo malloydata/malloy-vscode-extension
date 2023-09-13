@@ -61,7 +61,7 @@ export class RpcFileHandler implements FileHandler {
    * @param uri URI to resolve
    * @returns File contents
    */
-  async fetchCellData(uri: string): Promise<CellData[]> {
+  async fetchCellData(uri: string): Promise<CellData> {
     return this.connection.sendRequest('malloy/fetchCellData', {
       uri,
     });
