@@ -118,7 +118,7 @@ export interface MessageFetchBinary {
 export interface MessageFetchCellData {
   id: string;
   uri: string;
-  data?: CellData[];
+  data?: CellData;
   error?: string;
 }
 

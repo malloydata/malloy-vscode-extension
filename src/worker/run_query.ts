@@ -42,7 +42,7 @@ import {
 } from '../common/message_types';
 import {createModelMaterializer, createRunnable} from './create_runnable';
 import {ConnectionManager} from '../common/connection_manager';
-import {CellData, FileHandler, StructDefResult} from '../common/types';
+import {Cell, CellData, FileHandler, StructDefResult} from '../common/types';
 import {CancellationToken, ProgressType} from 'vscode-jsonrpc';
 import {errorMessage} from '../common/errors';
 import {fixLogRange} from '../common/malloy_sql';
@@ -77,9 +77,9 @@ const fakeMalloyResult = (
 // Cell metadata doesn't get updated when editing yet so re-parse
 // each preceding cell to see if a connection has been defined
 
-const computeConnectionName = (allCells: CellData[]) => {
+const computeConnectionName = (cellData: CellData | null) => {
   let connectionName = 'unknown';
-  for (const cell of allCells) {
+  for (const cell of cellData?.cells || []) {
     if (cell.languageId !== 'malloy-sql') {
       continue;
     }
@@ -96,8 +96,8 @@ const runMSQLCell = async (
   files: FileHandler,
   connectionManager: ConnectionManager,
   {query, panelId, showSQLOnly}: MessageRun,
-  allCells: CellData[],
-  currentCell: CellData,
+  cellData: CellData | null,
+  currentCell: Cell,
   cancellationToken: CancellationToken
 ) => {
   const sendMessage = (message: QueryPanelMessage) => {
@@ -118,10 +118,10 @@ const runMSQLCell = async (
   const modelMaterializer = await createModelMaterializer(
     query,
     runtime,
-    allCells
+    cellData
   );
 
-  const connectionName = computeConnectionName(allCells);
+  const connectionName = computeConnectionName(cellData);
   const parsed = MalloySQLSQLParser.parse(currentCell.text, currentCell.uri);
 
   let compiledStatement = currentCell.text;
@@ -248,13 +248,13 @@ export const runQuery = async (
 
   try {
     const queryFileURL = new URL(query.uri);
-    let allCells: CellData[] = [];
-    let currentCell: CellData | null = null;
+    let cellData: CellData | null = null;
+    let currentCell: Cell | null = null;
     let isMalloySql = false;
 
     if (queryFileURL.protocol === 'vscode-notebook-cell:') {
-      allCells = await fileHandler.fetchCellData(query.uri);
-      currentCell = allCells[allCells.length - 1];
+      cellData = await fileHandler.fetchCellData(query.uri);
+      currentCell = cellData.cells[cellData.cells.length - 1];
       isMalloySql = currentCell.languageId === 'malloy-sql';
     }
 
@@ -265,7 +265,7 @@ export const runQuery = async (
           fileHandler,
           connectionManager,
           messageRun,
-          allCells,
+          cellData,
           currentCell,
           cancellationToken
         );
@@ -284,7 +284,7 @@ export const runQuery = async (
 
     let dataStyles: DataStyles = {};
     let sql: string;
-    const runnable = await createRunnable(query, runtime, allCells);
+    const runnable = await createRunnable(query, runtime, cellData);
 
     // Set the row limit to the limit provided in the final stage of the query, if present
     const rowLimit =

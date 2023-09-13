@@ -24,6 +24,7 @@
 
 import * as vscode from 'vscode';
 import {CellData, FileHandler} from '../common/types';
+import {Utils} from 'vscode-uri';
 
 /**
  * Transforms vscode-notebook-cell: Uris to file: or vscode-vfs: URLS
@@ -86,16 +87,19 @@ export async function fetchBinaryFile(uriString: string): Promise<Uint8Array> {
   throw new Error(`fetchBinaryFile: Unable to fetch '${uriString}'`);
 }
 
-export async function fetchCellData(uriString: string): Promise<CellData[]> {
+export async function fetchCellData(uriString: string): Promise<CellData> {
   const uri = vscode.Uri.parse(uriString);
   const notebook = vscode.workspace.notebookDocuments.find(
     notebook => notebook.uri.path === uri.path
   );
-  const result: CellData[] = [];
+  const result: CellData = {
+    baseUri: Utils.dirname(fixNotebookUri(uri)).toString(),
+    cells: [],
+  };
   if (notebook) {
     for (const cell of notebook.getCells()) {
       if (cell.kind === vscode.NotebookCellKind.Code) {
-        result.push({
+        result.cells.push({
           uri: cell.document.uri.toString(),
           text: cell.document.getText(),
           languageId: cell.document.languageId,
@@ -141,7 +145,7 @@ export class ClientFileHandler implements FileHandler {
    * @param uri URI to resolve
    * @returns File contents
    */
-  async fetchCellData(uri: string): Promise<CellData[]> {
+  async fetchCellData(uri: string): Promise<CellData> {
     return fetchCellData(uri);
   }
 
