@@ -184,11 +184,21 @@ export const initServer = (
   });
 
   // This handler provides the initial list of the completion items.
-  connection.onCompletion((params): CompletionItem[] => {
+  connection.onCompletion(async (params): Promise<CompletionItem[]> => {
     const document = documents.get(params.textDocument.uri);
-    return document && document.languageId === 'malloy'
-      ? getCompletionItems(document, params)
-      : [];
+    if (document && document.languageId === 'malloy') {
+      const completionItems = await getCompletionItems(
+        document,
+        params,
+        translateCache
+      );
+      return completionItems;
+    } else {
+      return Promise.resolve([]);
+    }
+    // return document && document.languageId === 'malloy'
+    //   ? getCompletionItems(document, params, translateCache)
+    //   : [];
   });
 
   // This handler resolves additional information for the item selected in

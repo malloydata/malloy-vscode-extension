@@ -41,12 +41,18 @@ import {
   MalloySQLStatementType,
 } from '@malloydata/malloy-sql';
 import {FetchModelMessage} from '../common/message_types';
+import {DocumentTextParse} from './completions/completions';
 
 const isNamedQuery = (object: NamedModelObject): object is NamedQuery =>
   object.type === 'query';
 
 export class TranslateCache implements TranslateCache {
   cache = new Map<string, {model: Model; version: number}>();
+  truncatedCache = new Map<
+    string,
+    {model: Model; exploreCount: number, version: number}
+  >();
+  truncatedVersion: number = 0;
 
   constructor(
     private documents: TextDocuments<TextDocument>,
@@ -123,6 +129,46 @@ export class TranslateCache implements TranslateCache {
     return await this.connection.sendRequest('malloy/fetchCellData', {
       uri: uri.toString(),
     });
+  }
+
+  async translateWithTruncatedCache(
+    document: TextDocument,
+    text: string,
+    exploreCount: number,
+    queriedSource: string
+  ): Promise<Model | undefined> {
+    const {uri, languageId} = document;
+    if (languageId === 'malloy') {
+      const entry = this.truncatedCache.get(uri);
+      if (
+        entry &&
+        entry.exploreCount === exploreCount
+      ) {
+        return entry.model;
+      }
+      const files = {
+        readURL: (url: URL) => {
+          if (url.toString() === uri) {
+            return Promise.resolve(text);
+          } else {
+            return this.getDocumentText(this.documents, url);
+          }
+        },
+      };
+      // TODO: Look into having remaining statements run "in the background" and having new runs
+      //       preempt the current fetch
+      const runtime = new Runtime(
+        files,
+        this.connectionManager.getConnectionLookup(new URL(uri))
+      );
+      const mm = await this.createModelMaterializer(uri, runtime);
+      const model = await mm?.getModel();
+      if (model) {
+        this.truncatedCache.set(uri, {model, exploreCount, version: this.truncatedVersion++});
+      }
+      return model;
+    }
+    return undefined;
   }
 
   async translateWithCache(
