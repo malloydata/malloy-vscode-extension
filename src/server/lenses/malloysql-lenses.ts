@@ -21,6 +21,8 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+// TODO(whscullin): Delete with malloy-sql text editor
+
 import {CodeLens, Command, Range, Position} from 'vscode-languageserver/node';
 import {TextDocument} from 'vscode-languageserver-textdocument';
 import {parseMalloySQLWithCache} from '../parse_cache';

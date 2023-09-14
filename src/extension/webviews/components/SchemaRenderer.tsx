@@ -23,7 +23,7 @@
 
 import * as React from 'react';
 import styled from 'styled-components';
-import {Explore, Field, NamedQuery} from '@malloydata/malloy';
+import {Explore, Field, NamedQuery, QueryField} from '@malloydata/malloy';
 import {exploreSubtype, fieldType, isFieldAggregate} from '../../common/schema';
 import NumberIcon from '../../../media/number.svg';
 import NumberAggregateIcon from '../../../media/number-aggregate.svg';
@@ -43,7 +43,7 @@ export interface SchemaRendererProps {
   queries: NamedQuery[];
   defaultShow?: boolean;
   onFieldClick?: (field: Field) => void;
-  onQueryClick?: (query: NamedQuery) => void;
+  onQueryClick?: (query: NamedQuery | QueryField) => void;
 }
 
 /**
@@ -124,11 +124,14 @@ function getIconElement(fieldType: string, isAggregate: boolean) {
  * something friendlier.
  */
 
-function getExploreName(name: string, path: string) {
-  if (name.startsWith('__stage')) {
+function getExploreName(explore: Explore, path: string) {
+  if (explore.name.startsWith('__stage')) {
+    if (explore.parentExplore) {
+      return explore.parentExplore.name;
+    }
     return 'Preview';
   }
-  return path ? path : name;
+  return path ? path : explore.name;
 }
 
 /**
@@ -233,7 +236,7 @@ export const SchemaRenderer: React.FC<SchemaRendererProps> = ({
         <div onClick={toggleHidden}>
           <span>{hidden ? '▶' : '▼'}</span>{' '}
           {getIconElement(`struct_${subtype}`, false)}{' '}
-          <b className="explore_name">{getExploreName(explore.name, path)}</b>
+          <b className="explore_name">{getExploreName(explore, path)}</b>
         </div>
         <ul>
           {queries.length ? (
@@ -297,14 +300,18 @@ export const SchemaRenderer: React.FC<SchemaRendererProps> = ({
   const FieldList = ({fields, path}: FieldListProps) => {
     return (
       <div className="field_list">
-        {fields.map(field => (
-          <FieldItem key={field.name} field={field} path={path} />
-        ))}
+        {fields.map(field =>
+          field.isQuery() ? (
+            <QueryItem key={field.name} query={field} />
+          ) : (
+            <FieldItem key={field.name} field={field} path={path} />
+          )
+        )}
       </div>
     );
   };
 
-  const QueryItem = ({query}: {query: NamedQuery}) => {
+  const QueryItem = ({query}: {query: NamedQuery | QueryField}) => {
     const onClick = () => {
       onQueryClick?.(query);
     };

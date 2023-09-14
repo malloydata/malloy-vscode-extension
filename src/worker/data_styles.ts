@@ -67,12 +67,9 @@ export async function dataStylesForFile(
 //      we abuse the `URLReader` API to keep track of requested URLs
 //      and accumulate data styles for those files.
 export class HackyDataStylesAccumulator implements URLReader {
-  private uriReader: URLReader;
   private dataStyles: DataStyles = {};
 
-  constructor(uriReader: URLReader) {
-    this.uriReader = uriReader;
-  }
+  constructor(private uriReader: URLReader) {}
 
   async readURL(uri: URL): Promise<string> {
     const contents = await this.uriReader.readURL(uri);

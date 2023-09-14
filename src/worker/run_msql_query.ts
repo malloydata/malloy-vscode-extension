@@ -52,18 +52,17 @@ import {MalloySQLStatementType, MalloySQLParser} from '@malloydata/malloy-sql';
 import {CancellationToken, ProgressType} from 'vscode-jsonrpc';
 import {errorMessage} from '../common/errors';
 
+// TODO(whscullin): Delete with malloy-sql text editor
+
 // Malloy needs to load model via a URI to know how to import relative model files, but we
 // don't have a real URI because we're constructing the model from only parts of a real document.
 // The actual URI we want to use is a .malloysql file that we don't want the compiler to load,
 // so wrap the fileHandler to pretend the on-the-fly models have a URI
 class VirtualURIFileHandler implements URLReader {
-  private uriReader: URLReader;
   private url: URL | null = null;
   private contents: string | null = null;
 
-  constructor(uriReader: URLReader) {
-    this.uriReader = uriReader;
-  }
+  constructor(private uriReader: URLReader) {}
 
   public setVirtualFile(url: URL, contents: string): void {
     this.url = url;

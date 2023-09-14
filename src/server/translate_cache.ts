@@ -42,17 +42,18 @@ import {
 } from '@malloydata/malloy-sql';
 import {FetchModelMessage} from '../common/message_types';
 import {DocumentTextParse} from './completions/completions';
+import {fixLogRange} from '../common/malloy_sql';
 
 const isNamedQuery = (object: NamedModelObject): object is NamedQuery =>
   object.type === 'query';
 
 export class TranslateCache implements TranslateCache {
-  cache = new Map<string, {model: Model; version: number}>();
   truncatedCache = new Map<
     string,
     {model: Model; exploreCount: number, version: number}
   >();
   truncatedVersion: number = 0;
+  cache = new Map<string, {model: Model; version: number; baseUri: string}>();
 
   constructor(
     private documents: TextDocuments<TextDocument>,
@@ -62,7 +63,7 @@ export class TranslateCache implements TranslateCache {
     connection.onRequest(
       'malloy/fetchModel',
       async (event: BuildModelRequest): Promise<FetchModelMessage> => {
-        const model = await this.translateWithCache(
+        const {model} = await this.translateWithCache(
           event.uri,
           event.version,
           event.languageId
@@ -104,28 +105,30 @@ export class TranslateCache implements TranslateCache {
   async createModelMaterializer(
     uri: string,
     runtime: Runtime
-  ): Promise<ModelMaterializer | null> {
-    let mm: ModelMaterializer | null = null;
+  ): Promise<{modelMaterializer: ModelMaterializer | null; baseUri: string}> {
+    let modelMaterializer: ModelMaterializer | null = null;
+    let baseUri = uri;
     const queryFileURL = new URL(uri);
     if (queryFileURL.protocol === 'vscode-notebook-cell:') {
-      const allCells = await this.getCellData(new URL(uri));
-      for (const cell of allCells) {
+      const cellData = await this.getCellData(new URL(uri));
+      baseUri = cellData.baseUri;
+      for (const cell of cellData.cells) {
         if (cell.languageId === 'malloy') {
           const url = new URL(cell.uri);
-          if (mm) {
-            mm = mm.extendModel(url);
+          if (modelMaterializer) {
+            modelMaterializer = modelMaterializer.extendModel(url);
           } else {
-            mm = runtime.loadModel(url);
+            modelMaterializer = runtime.loadModel(url);
           }
         }
       }
     } else {
-      mm = runtime.loadModel(queryFileURL);
+      modelMaterializer = runtime.loadModel(queryFileURL);
     }
-    return mm;
+    return {modelMaterializer, baseUri};
   }
 
-  async getCellData(uri: URL): Promise<CellData[]> {
+  async getCellData(uri: URL): Promise<CellData> {
     return await this.connection.sendRequest('malloy/fetchCellData', {
       uri: uri.toString(),
     });
@@ -175,10 +178,11 @@ export class TranslateCache implements TranslateCache {
     uri: string,
     currentVersion: number,
     languageId: string
-  ): Promise<Model | undefined> {
+  ): Promise<{model: Model | undefined; baseUri: string}> {
     const entry = this.cache.get(uri);
     if (entry && entry.version === currentVersion) {
-      return entry.model;
+      const {model, baseUri} = entry;
+      return {model, baseUri};
     }
 
     const text = await this.getDocumentText(this.documents, new URL(uri));
@@ -192,57 +196,37 @@ export class TranslateCache implements TranslateCache {
         this.connectionManager.getConnectionLookup(new URL(uri))
       );
 
-      const mm = await this.createModelMaterializer(uri, runtime);
+      const {modelMaterializer, baseUri} = await this.createModelMaterializer(
+        uri,
+        runtime
+      );
 
       for (const malloyQuery of parse.embeddedMalloyQueries) {
-        if (!mm) {
+        if (!modelMaterializer) {
           throw new Error('Missing model definition');
         }
         try {
-          await mm.getQuery(`query:\n${malloyQuery.query}`);
+          await modelMaterializer.getQuery(`query:\n${malloyQuery.query}`);
         } catch (e) {
           // some errors come from Runtime stuff
-          if (!(e instanceof MalloyError)) {
-            throw e;
-          }
-
-          e.problems.forEach(log => {
-            if (log.at) {
-              if (log.at.url === 'internal://internal.malloy') {
-                log.at.url = uri;
-              } else if (log.at.url !== uri) {
-                return;
-              }
-              // if the embedded malloy is on the same line as SQL, pad character start (and maybe end)
+          if (e instanceof MalloyError) {
+            e.problems.forEach(log => {
               // "query:\n" adds a line, so we subtract the line here
-              const embeddedStart: number = log.at.range.start.line - 1;
-              if (embeddedStart === 0) {
-                log.at.range.start.character +=
-                  malloyQuery.malloyRange.start.character;
-                if (log.at.range.start.line === log.at.range.end.line)
-                  log.at.range.end.character +=
-                    malloyQuery.malloyRange.start.character;
-              }
-
-              const lineDifference =
-                log.at.range.end.line - log.at.range.start.line;
-              log.at.range.start.line =
-                malloyQuery.range.start.line + embeddedStart;
-              log.at.range.end.line =
-                malloyQuery.range.start.line + embeddedStart + lineDifference;
-            }
-          });
+              fixLogRange(uri, malloyQuery, log, -1);
+            });
+          }
 
           throw e;
         }
       }
 
-      const model = await mm?.getModel();
+      const model = await modelMaterializer?.getModel();
       if (model) {
-        this.cache.set(uri, {version: currentVersion, model});
+        this.cache.set(uri, {version: currentVersion, model, baseUri});
       }
-      return model;
+      return {model, baseUri};
     } else if (languageId === 'malloy-notebook') {
+      // TODO(whscullin): Delete with malloy-sql text editor
       const parse = MalloySQLParser.parse(text, uri);
 
       let malloyStatements = '\n'.repeat(parse.initialCommentsLineCount || 0);
@@ -271,6 +255,7 @@ export class TranslateCache implements TranslateCache {
 
       const mm = runtime.loadModel(new URL(uri));
       const model = await mm.getModel();
+      const baseUri = uri;
 
       for (const statement of parse.statements.filter(
         (s): s is MalloySQLSQLStatement => s.type === MalloySQLStatementType.SQL
@@ -279,42 +264,18 @@ export class TranslateCache implements TranslateCache {
           try {
             await mm.getQuery(`query:\n${malloyQuery.query}`);
           } catch (e) {
-            // some errors come from Runtime stuff
-            if (!(e instanceof MalloyError)) {
-              throw e;
+            if (e instanceof MalloyError) {
+              e.problems.forEach(log => {
+                fixLogRange(uri, malloyQuery, log, -1);
+              });
             }
-
-            e.problems.forEach(log => {
-              if (log.at) {
-                log.at.url = uri;
-
-                // if the embedded malloy is on the same line as SQL, pad character start (and maybe end)
-                // "query:\n" adds a line, so we subtract the line here
-                const embeddedStart: number = log.at.range.start.line - 1;
-                if (embeddedStart === 0) {
-                  log.at.range.start.character +=
-                    malloyQuery.malloyRange.start.character;
-                  if (log.at.range.start.line === log.at.range.end.line)
-                    log.at.range.end.character +=
-                      malloyQuery.malloyRange.start.character;
-                }
-
-                const lineDifference =
-                  log.at.range.end.line - log.at.range.start.line;
-                log.at.range.start.line =
-                  malloyQuery.range.start.line + embeddedStart;
-                log.at.range.end.line =
-                  malloyQuery.range.start.line + embeddedStart + lineDifference;
-              }
-            });
-
             throw e;
           }
         }
       }
 
-      this.cache.set(uri, {version: currentVersion, model});
-      return model;
+      this.cache.set(uri, {version: currentVersion, model, baseUri});
+      return {model, baseUri};
     } else {
       const files = {
         readURL: (url: URL) => this.getDocumentText(this.documents, url),
@@ -324,12 +285,15 @@ export class TranslateCache implements TranslateCache {
         this.connectionManager.getConnectionLookup(new URL(uri))
       );
 
-      const mm = await this.createModelMaterializer(uri, runtime);
-      const model = await mm?.getModel();
+      const {modelMaterializer, baseUri} = await this.createModelMaterializer(
+        uri,
+        runtime
+      );
+      const model = await modelMaterializer?.getModel();
       if (model) {
-        this.cache.set(uri, {version: currentVersion, model});
+        this.cache.set(uri, {version: currentVersion, model, baseUri});
       }
-      return model;
+      return {model, baseUri};
     }
   }
 }
