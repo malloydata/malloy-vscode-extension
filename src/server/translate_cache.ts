@@ -21,7 +21,11 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {Connection, TextDocuments} from 'vscode-languageserver';
+import {
+  Connection,
+  LogMessageNotification,
+  TextDocuments,
+} from 'vscode-languageserver';
 import {
   MalloyError,
   Model,
@@ -161,7 +165,10 @@ export class TranslateCache implements TranslateCache {
         files,
         this.connectionManager.getConnectionLookup(new URL(uri))
       );
-      const mm = await this.createModelMaterializer(uri, runtime);
+      const {modelMaterializer: mm} = await this.createModelMaterializer(
+        uri,
+        runtime
+      );
       const model = await mm?.getModel();
       if (model) {
         this.truncatedCache.set(uri, {

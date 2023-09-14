@@ -62,7 +62,7 @@ export interface WebviewApi<StateType, MessageType> {
  */
 export function getVSCodeAPI<
   StateType = unknown,
-  MessageType = unknown,
+  MessageType = unknown
 >(): WebviewApi<StateType, MessageType> {
   return acquireVsCodeApi();
 }

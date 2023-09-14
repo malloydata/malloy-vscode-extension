@@ -195,7 +195,7 @@ export const initServer = (
       );
       return completionItems;
     } else {
-      return Promise.resolve([]);
+      return [];
     }
     // return document && document.languageId === 'malloy'
     //   ? getCompletionItems(document, params, translateCache)

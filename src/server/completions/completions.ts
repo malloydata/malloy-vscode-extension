@@ -26,6 +26,7 @@ import {
   CompletionItem,
   CompletionItemKind,
   MarkupKind,
+  LogMessageNotification,
 } from 'vscode-languageserver/node';
 import {Position, TextDocument} from 'vscode-languageserver-textdocument';
 import {COMPLETION_DOCS} from '../../common/completion_docs';
@@ -115,25 +116,25 @@ async function getSchemaCompletions(
 
 function getQueriedExploreName(text: string[]): string | null {
   const unnamedQuery =
-    /\b(run|query)\s*:\s*([A-Za-z_][A-Za-z_0-9]*)\s*->\s*{/gi;
+    /\b(?:run|query)\s*:\s*([A-Za-z_][A-Za-z_0-9]*)\s*->\s*{/gi;
   const unnamedQueryMatch = unnamedQuery.exec(text[0]);
   if (unnamedQueryMatch) {
-    return unnamedQueryMatch[2];
+    return unnamedQueryMatch[1];
   }
   const namedQuery =
-    /\bquery\s*:\s*([A-Za-z_][A-Za-z_0-9]*)\s+is\s+([A-Za-z_][A-Za-z_0-9]*)\s+->\s*{/gi;
+    /\bquery\s*:\s*(?:[A-Za-z_][A-Za-z_0-9]*)\s+is\s+([A-Za-z_][A-Za-z_0-9]*)\s+->\s*{/gi;
   const namedQueryMatch = namedQuery.exec(text[0]);
-  return namedQueryMatch ? namedQueryMatch[2] : null;
+  return namedQueryMatch ? namedQueryMatch[1] : null;
 }
 
 function getQueryContext(lines: string[], cursor: Position) {
   lines[cursor.line] = lines[cursor.line].slice(0, cursor.character);
   const chainRegex =
-    /\s+(([a-zA-z_][A-Za-z_0-9]*)(\.([a-zA-z_][A-Za-z_0-9]*)*)*)?$/g;
+    /\s(?:(?:[a-zA-Z_][A-Za-z_0-9]*)(?:\.(?:[a-zA-Z_][A-Za-z_0-9]*)*)*)?$/g;
   const chainMatch = chainRegex.exec(lines[cursor.line]);
   const chain: string | null = chainMatch ? chainMatch[0].trim() : null;
   const simpleKeywords =
-    /\b(aggregate|calculate|group_by|having|index|limit|nest|order_by|project|sample|top|where|timezone):/gi;
+    /\b(?:aggregate|calculate|group_by|having|index|limit|nest|order_by|project|sample|top|where|timezone):/gi;
   let i = cursor.line;
   let keyword: string | null = null;
 
