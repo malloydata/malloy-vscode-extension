@@ -64,9 +64,7 @@ export async function getCompletionItems(
       },
     };
   });
-  return new Promise(resolve =>
-    setTimeout(() => resolve(cleanedCompletions), 0)
-  );
+  return cleanedCompletions;
 }
 
 async function getSchemaCompletions(
@@ -116,12 +114,14 @@ async function getSchemaCompletions(
 }
 
 function getQueriedExploreName(text: string[]): string | null {
-  const unnamedQuery = /\b(run|query)\s*:\s*([A-Za-z_][A-Za-z_0-9]*)\s*->\s*{/gi;
+  const unnamedQuery =
+    /\b(run|query)\s*:\s*([A-Za-z_][A-Za-z_0-9]*)\s*->\s*{/gi;
   const unnamedQueryMatch = unnamedQuery.exec(text[0]);
   if (unnamedQueryMatch) {
     return unnamedQueryMatch[2];
   }
-  const namedQuery = /\bquery\s*:\s*([A-Za-z_][A-Za-z_0-9]*)\s+is\s+([A-Za-z_][A-Za-z_0-9]*)\s+->\s*{/gi
+  const namedQuery =
+    /\bquery\s*:\s*([A-Za-z_][A-Za-z_0-9]*)\s+is\s+([A-Za-z_][A-Za-z_0-9]*)\s+->\s*{/gi;
   const namedQueryMatch = namedQuery.exec(text[0]);
   return namedQueryMatch ? namedQueryMatch[2] : null;
 }

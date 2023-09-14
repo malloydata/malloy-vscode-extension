@@ -50,7 +50,7 @@ const isNamedQuery = (object: NamedModelObject): object is NamedQuery =>
 export class TranslateCache implements TranslateCache {
   truncatedCache = new Map<
     string,
-    {model: Model; exploreCount: number, version: number}
+    {model: Model; exploreCount: number; version: number}
   >();
   truncatedVersion: number = 0;
   cache = new Map<string, {model: Model; version: number; baseUri: string}>();
@@ -143,10 +143,7 @@ export class TranslateCache implements TranslateCache {
     const {uri, languageId} = document;
     if (languageId === 'malloy') {
       const entry = this.truncatedCache.get(uri);
-      if (
-        entry &&
-        entry.exploreCount === exploreCount
-      ) {
+      if (entry && entry.exploreCount === exploreCount) {
         return entry.model;
       }
       const files = {
@@ -167,7 +164,11 @@ export class TranslateCache implements TranslateCache {
       const mm = await this.createModelMaterializer(uri, runtime);
       const model = await mm?.getModel();
       if (model) {
-        this.truncatedCache.set(uri, {model, exploreCount, version: this.truncatedVersion++});
+        this.truncatedCache.set(uri, {
+          model,
+          exploreCount,
+          version: this.truncatedVersion++,
+        });
       }
       return model;
     }
