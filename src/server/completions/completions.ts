@@ -85,7 +85,6 @@ async function getSchemaCompletions(
           document,
           parse.truncatedText,
           parse.exploreCount,
-          exploreName
         );
       } catch (error: unknown) {
         // eslint-disable-next-line no-console
