@@ -45,21 +45,33 @@ const QUERY_KEYWORDS = [
   'timezone',
 ];
 
-/**
- * A regex used to identify the nearest keywords followed by a colon found within
- * queries, used to identify which field types to suggest
- */
-const KEYWORDS = new RegExp(`\\b(?:${QUERY_KEYWORDS.join('|')}):`, 'gi');
+const DIMENSION_KEYWORDS = [
+  'project',
+  'group_by',
+  'order_by',
+  // aggregates can be defined in-line using dimensions
+  'aggregate',
+  'having',
+  'order_by',
+];
 
-/**
- * A regex to determine if the current line contains
- */
+const MEASURE_KEYWORDS = ['aggregate', 'having'];
+
+const EXPLORE_KEYWORDS = [
+  'project',
+  'group_by',
+  'order_by',
+  'aggregate',
+  'having',
+  'order_by',
+];
+
 const UNNAMED_QUERY =
-  /\b(?:run|query)\s*:\s*([A-Za-z_][A-Za-z_0-9]*)\s*->\s*{/gi;
+  /\b(?:run|query)\s*:\s*([A-Za-z_][A-Za-z_0-9]*)\s*->\s*{/i;
 const NAMED_QUERY =
-  /\bquery\s*:\s*(?:[A-Za-z_][A-Za-z_0-9]*)\s+is\s+([A-Za-z_][A-Za-z_0-9]*)\s+->\s*{/gi;
-const FIELD_CHAIN = /\s(?:[a-zA-Z_][.A-Za-z_0-9]*)?$/g;
-const TOP_LEVEL_SYMBOLS = /\s*((?:source|query|run|sql)\s*:|import)\s*/gi;
+  /\bquery\s*:\s*(?:[A-Za-z_][A-Za-z_0-9]*)\s+is\s+([A-Za-z_][A-Za-z_0-9]*)\s+->\s*{/i;
+const FIELD_CHAIN = /\s(?:[a-zA-Z_][.A-Za-z_0-9]*)?$/;
+const TOP_LEVEL_SYMBOLS = /\s*((?:source|query|run|sql)\s*:|import)\s*/i;
 const LINE_COMMENTS = /\s*(--|\/\/)/g;
 
 export async function getSchemaCompletions(
@@ -127,7 +139,15 @@ function getQueryContext(lines: string[], cursor: Position) {
 
   while (i >= 0) {
     const currentLine = lines[i];
-    const matches = currentLine.match(KEYWORDS);
+    /**
+     * A regex used to identify the nearest keywords followed by a colon found within
+     * queries, used to identify which field types to suggest
+     */
+    const queryKeywords = new RegExp(
+      `\\b(?:${QUERY_KEYWORDS.join('|')}):`,
+      'gi'
+    );
+    const matches = currentLine.match(queryKeywords);
     if (matches) {
       keyword = matches[matches.length - 1]
         .slice(0, matches[matches.length - 1].length - 1)
@@ -171,17 +191,23 @@ function filterCompletions(
   keyword: string,
   fieldChain: string
 ) {
+  let completions: string[] = [];
   const fieldTree = fieldChain.split('.');
   const eligibleFieldsPrefix = fieldTree[fieldTree.length - 1];
-  const {dimensions, explores} = bucketMatchingFieldNames(
+  const {dimensions, measures, explores} = bucketMatchingFieldNames(
     fields,
     eligibleFieldsPrefix
   );
-  if (keyword === 'group_by') {
-    return [...dimensions, ...explores];
-  } else {
-    return [];
+  if (DIMENSION_KEYWORDS.includes(keyword)) {
+    completions = [...completions, ...dimensions];
   }
+  if (MEASURE_KEYWORDS.includes(keyword)) {
+    completions = [...completions, ...measures];
+  }
+  if (EXPLORE_KEYWORDS.includes(keyword)) {
+    completions = [...completions, ...explores];
+  }
+  return completions;
 }
 
 function bucketMatchingFieldNames(fields: Field[], fieldToMatch: string) {
