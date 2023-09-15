@@ -47,6 +47,7 @@ const isNamedQuery = (object: NamedModelObject): object is NamedQuery =>
   object.type === 'query';
 
 export class TranslateCache implements TranslateCache {
+  // Cache for truncated documents used for providing schema suggestions
   truncatedCache = new Map<
     string,
     {model: Model; exploreCount: number; version: number}
@@ -141,6 +142,7 @@ export class TranslateCache implements TranslateCache {
     const {uri, languageId} = document;
     if (languageId === 'malloy') {
       const entry = this.truncatedCache.get(uri);
+      // Only re-compile the model if the number of explores has changed
       if (entry && entry.exploreCount === exploreCount) {
         return entry.model;
       }
@@ -153,8 +155,8 @@ export class TranslateCache implements TranslateCache {
           }
         },
       };
-      // TODO: Look into having remaining statements run "in the background" and having new runs
-      //       preempt the current fetch
+      // TODO: Possibly look into having remaining statements run "in the background" and having
+      // new runs preempt the current fetch
       const runtime = new Runtime(
         files,
         this.connectionManager.getConnectionLookup(new URL(uri))

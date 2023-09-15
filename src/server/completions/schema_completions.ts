@@ -45,18 +45,37 @@ const QUERY_KEYWORDS = [
   'timezone',
 ];
 
+/**
+ * When the nearest keyword is one of these, dimensions are suggested
+ *
+ * Note the inclusion of 'aggregate' and 'having' which should only apply
+ * to measures, however aggregates can be defined in-line from dimensions
+ *
+ * In the future, an easy way to determine whether a user is in the middle of
+ * defining an aggregate is to look for the 'is' keyword between the cursor
+ * and the 'aggregate' or 'having' keyword
+ */
 const DIMENSION_KEYWORDS = [
   'project',
   'group_by',
   'order_by',
-  // aggregates can be defined in-line using dimensions
   'aggregate',
   'having',
   'order_by',
 ];
 
+/**
+ * When the nearest keyword is on these, measures are suggested
+ */
 const MEASURE_KEYWORDS = ['aggregate', 'having'];
 
+/**
+ * When the nearest keyword is one of these, explores are suggested
+ *
+ * For now, We do not walk the entire chain for each explore to
+ * determine if it defines any measures later on in the chain, thus this
+ * applies in all contexts where dimensions or measures could be used
+ */
 const EXPLORE_KEYWORDS = [
   'project',
   'group_by',
@@ -66,12 +85,41 @@ const EXPLORE_KEYWORDS = [
   'order_by',
 ];
 
+/**
+ * Regex for the beginning of a named query on a pre-defined source that is not extended
+ */
 const UNNAMED_QUERY =
   /\b(?:run|query)\s*:\s*([A-Za-z_][A-Za-z_0-9]*)\s*->\s*{/i;
+
+/**
+ * Regex for the beginning of a unnamed query on a pre-defined source that is not extended
+ */
 const NAMED_QUERY =
   /\bquery\s*:\s*(?:[A-Za-z_][A-Za-z_0-9]*)\s+is\s+([A-Za-z_][A-Za-z_0-9]*)\s+->\s*{/i;
+
+/**
+ * Regex to roughly identify a "chain" of dot-separated identifiers that users write in order
+ * to access joined sources and fields from those joined sources
+ *
+ * For example, 'aircraft.aircraft_models.se' and 'aircraft.' would be considered
+ * field chains
+ *
+ * For performance reasons, this regex is a rough approximation of what can parse as an
+ * identifier, but `getEligibleFields` safely handles this approximation more efficiently
+ */
 const FIELD_CHAIN = /\s(?:[a-zA-Z_][.A-Za-z_0-9]*)?$/;
+
+/**
+ * Regex for the starting line of a query or explore
+ */
 const TOP_LEVEL_SYMBOLS = /\s*((?:source|query|run|sql)\s*:|import)\s*/i;
+
+/**
+ * Regex for the beginning of a line comment that can be ignored when fetching the model
+ *
+ * Could refactor `parseDocumentText` treat the line as empty instead and eliminate cursor
+ * adjustment
+ */
 const LINE_COMMENTS = /\s*(--|\/\/)/g;
 
 export async function getSchemaCompletions(
@@ -129,26 +177,31 @@ function getQueriedExploreName(text: string[]): string | null {
 }
 
 function getQueryContext(lines: string[], cursor: Position) {
+  // Treat the cursor as the end of line to use the regex end-of-line $ anchor
   lines[cursor.line] = lines[cursor.line].slice(0, cursor.character);
   const fieldChainMatch = FIELD_CHAIN.exec(lines[cursor.line]);
   const fieldChain: string | null = fieldChainMatch
-    ? fieldChainMatch[0].trim()
+    ? // avoid using capture group for performance, fieldChainMatch[0] will always include a leading space
+      fieldChainMatch[0].trim()
     : null;
   let i = cursor.line;
   let keyword: string | null = null;
 
+  if (fieldChain === null) {
+    return {keyword, fieldChain};
+  }
+
+  // Find the nearest keyword followed by a colon in front of the cursor by looking backwards from the cursor
   while (i >= 0) {
     const currentLine = lines[i];
-    /**
-     * A regex used to identify the nearest keywords followed by a colon found within
-     * queries, used to identify which field types to suggest
-     */
+    // A regex for the nearest keywords followed by a colon found within a query body
     const queryKeywords = new RegExp(
       `\\b(?:${QUERY_KEYWORDS.join('|')}):`,
       'gi'
     );
     const matches = currentLine.match(queryKeywords);
     if (matches) {
+      // The right-most keyword is always the closest
       keyword = matches[matches.length - 1]
         .slice(0, matches[matches.length - 1].length - 1)
         .toLowerCase();
@@ -165,12 +218,14 @@ function getEligibleFields(
   exploreMap: Record<string, Explore>
 ): Field[] {
   const fieldTree = fieldChain.split('.');
+  // Discard the last identifier in the fieldChain
   fieldTree.pop();
   let currentExplore = explore;
   for (const fieldName of fieldTree) {
     if (fieldName.length === 0) {
       return [];
     }
+    // Check if a valid chain of explore fields are the prefix for the last field
     let validField = false;
     for (const field of currentExplore.allFields) {
       if (fieldName === field.name && field.isExploreField()) {
@@ -193,6 +248,7 @@ function filterCompletions(
 ) {
   let completions: string[] = [];
   const fieldTree = fieldChain.split('.');
+  // Only consider last identifier in the fieldChain for filtering
   const eligibleFieldsPrefix = fieldTree[fieldTree.length - 1];
   const {dimensions, measures, explores} = bucketMatchingFieldNames(
     fields,
@@ -235,17 +291,19 @@ function bucketMatchingFieldNames(fields: Field[], fieldToMatch: string) {
 export interface DocumentTextParse {
   /**
    * Document text containing `Explore`s except for anonymous query-level source definitions
-   *  - includes all unaltered imports
-   *  - includes all unaltered source definitions
+   * with most line comments removed
+   *  - includes all unextended sources that are not imported
+   *  - includes all unextended sources defined in the active document
    */
   truncatedText: string;
   /**
-   * Number of top-level imports and source definitions
+   * Number of top-level import statements and source definitions
    */
   exploreCount: number;
   /**
-   * Document text for only the top-level definition that the cursor currently resides in
-   * or nearest to, undefined if cursor is definitely not within a top-level definition
+   * Document text without most line comments for only the top-level definition that the cursor
+   * currently resides in or nearest to, undefined if cursor is definitely not within a top-level
+   * definition
    */
   nearestDefinitionText?: string[];
   /**
@@ -266,7 +324,9 @@ export function parseDocumentText(
   const truncatedLines: string[] = [];
 
   let lastSymbolStart: Position | undefined = undefined;
+  // Safe to set to -1 as we only ever access this if it has been updated in a previous loop
   let lastNonemptyLine = -1;
+  // Set to true only when the line is an import statement or part of a source definition
   let includeLines = false;
 
   const lines = text.split('\n');
@@ -324,6 +384,7 @@ function parseCurrentDefinition(
     cursor.line >= lastSymbolStart.line &&
     cursor.line <= lastNonemptyLine
   ) {
+    // Populate optional parse fields with current top-level definition
     parse.nearestDefinitionText = lines.slice(
       lastSymbolStart.line,
       lastNonemptyLine + 1
