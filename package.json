@@ -12,7 +12,8 @@
       "@malloydata/db-duckdb",
       "@malloydata/db-postgres",
       "@malloydata/render",
-      "@malloydata/malloy-sql"
+      "@malloydata/malloy-sql",
+      "@malloydata/syntax-highlight"
     ]
   },
   "engines": {
@@ -261,7 +262,7 @@
           "malloy"
         ],
         "filenames": [],
-        "configuration": "malloy-language.json",
+        "configuration": "./node_modules/@malloydata/syntax-highlight/grammars/malloy/malloy-language.json",
         "icon": {
           "dark": "./img/icon.svg",
           "light": "./img/icon.svg"
@@ -274,7 +275,7 @@
           "malloy SQL"
         ],
         "filenames": [],
-        "configuration": "malloy-sql-language.json",
+        "configuration": "./node_modules/@malloydata/syntax-highlight/grammars/malloy-sql/malloy-sql-language.json",
         "icon": {
           "dark": "./img/icon.svg",
           "light": "./img/icon.svg"
@@ -291,7 +292,7 @@
           "malloy notebook"
         ],
         "filenames": [],
-        "configuration": "malloy-notebook-language.json",
+        "configuration": "./node_modules/@malloydata/syntax-highlight/grammars/malloy-notebook/malloy-notebook-language.json",
         "icon": {
           "dark": "./img/icon.svg",
           "light": "./img/icon.svg"
@@ -302,17 +303,17 @@
       {
         "language": "malloy",
         "scopeName": "source.malloy",
-        "path": "./malloy.tmGrammar.json"
+        "path": "./node_modules/@malloydata/syntax-highlight/grammars/malloy/malloy.tmGrammar.json"
       },
       {
         "language": "malloy-sql",
         "scopeName": "source.malloy-sql",
-        "path": "./malloy-sql.tmGrammar.json"
+        "path": "./node_modules/@malloydata/syntax-highlight/grammars/malloy-sql/malloy-sql.tmGrammar.json"
       },
       {
         "language": "malloy-notebook",
         "scopeName": "source.malloy-notebook",
-        "path": "./malloy-notebook.tmGrammar.json"
+        "path": "./node_modules/@malloydata/syntax-highlight/grammars/malloy-notebook/malloy-notebook.tmGrammar.json"
       }
     ],
     "views": {
@@ -588,6 +589,7 @@
   },
   "devDependencies": {
     "@jest/globals": "^26.6.2",
+    "@malloydata/syntax-highlight": "^0.0.82",
     "@types/jest": "^29.2.1",
     "@types/jsdom": "^16.2.11",
     "@types/lodash": "^4.14.191",
