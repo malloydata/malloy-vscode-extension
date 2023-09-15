@@ -53,7 +53,7 @@ import {CopyButton} from './CopyButton';
 import {Scroll} from '../components/Scroll';
 import {PrismContainer} from '../components/PrismContainer';
 import {SchemaRenderer} from '../components/SchemaRenderer';
-import {fieldType} from '../../common/schema';
+import {fieldType} from '../../../common/schema';
 
 enum Status {
   Ready = 'ready',

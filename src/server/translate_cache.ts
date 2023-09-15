@@ -47,6 +47,12 @@ const isNamedQuery = (object: NamedModelObject): object is NamedQuery =>
   object.type === 'query';
 
 export class TranslateCache implements TranslateCache {
+  // Cache for truncated documents used for providing schema suggestions
+  truncatedCache = new Map<
+    string,
+    {model: Model; exploreCount: number; version: number}
+  >();
+  truncatedVersion = 0;
   cache = new Map<string, {model: Model; version: number; baseUri: string}>();
 
   constructor(
@@ -126,6 +132,50 @@ export class TranslateCache implements TranslateCache {
     return await this.connection.sendRequest('malloy/fetchCellData', {
       uri: uri.toString(),
     });
+  }
+
+  async translateWithTruncatedCache(
+    document: TextDocument,
+    text: string,
+    exploreCount: number
+  ): Promise<Model | undefined> {
+    const {uri, languageId} = document;
+    if (languageId === 'malloy') {
+      const entry = this.truncatedCache.get(uri);
+      // Only re-compile the model if the number of explores has changed
+      if (entry && entry.exploreCount === exploreCount) {
+        return entry.model;
+      }
+      const files = {
+        readURL: (url: URL) => {
+          if (url.toString() === uri) {
+            return Promise.resolve(text);
+          } else {
+            return this.getDocumentText(this.documents, url);
+          }
+        },
+      };
+      // TODO: Possibly look into having remaining statements run "in the background" and having
+      // new runs preempt the current fetch
+      const runtime = new Runtime(
+        files,
+        this.connectionManager.getConnectionLookup(new URL(uri))
+      );
+      const {modelMaterializer: mm} = await this.createModelMaterializer(
+        uri,
+        runtime
+      );
+      const model = await mm?.getModel();
+      if (model) {
+        this.truncatedCache.set(uri, {
+          model,
+          exploreCount,
+          version: this.truncatedVersion++,
+        });
+      }
+      return model;
+    }
+    return undefined;
   }
 
   async translateWithCache(

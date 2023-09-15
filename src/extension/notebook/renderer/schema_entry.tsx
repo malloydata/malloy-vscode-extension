@@ -27,7 +27,7 @@ import {StyleSheetManager} from 'styled-components';
 import {ActivationFunction} from 'vscode-notebook-renderer';
 import {SchemaRenderer} from '../../webviews/components/SchemaRenderer';
 import {Explore, Field, NamedQuery, QueryField} from '@malloydata/malloy';
-import {fieldType} from '../../common/schema';
+import {fieldType} from '../../../common/schema';
 import {FetchModelMessage} from '../../../common/message_types';
 
 export const activate: ActivationFunction = ({postMessage}) => {

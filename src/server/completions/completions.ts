@@ -30,13 +30,29 @@ import {
 import {TextDocument} from 'vscode-languageserver-textdocument';
 import {COMPLETION_DOCS} from '../../common/completion_docs';
 import {parseWithCache} from '../parse_cache';
+import {TranslateCache} from '../translate_cache';
+import {getSchemaCompletions} from './schema_completions';
 
-export function getCompletionItems(
+export async function getCompletionItems(
   document: TextDocument,
-  context: CompletionParams
-): CompletionItem[] {
+  context: CompletionParams,
+  translateCache: TranslateCache
+): Promise<CompletionItem[]> {
+  const schemaCompletions = await getSchemaCompletions(
+    document,
+    context,
+    translateCache
+  );
+  if (schemaCompletions) {
+    return schemaCompletions.map(completion => {
+      return {
+        kind: CompletionItemKind.Field,
+        label: completion,
+      };
+    });
+  }
   const completions = parseWithCache(document).completions(context.position);
-  return completions.map(completion => {
+  const cleanedCompletions: CompletionItem[] = completions.map(completion => {
     return {
       kind: CompletionItemKind.Property,
       label: completion.text,
@@ -46,16 +62,19 @@ export function getCompletionItems(
       },
     };
   });
+  return cleanedCompletions;
 }
 
 export function resolveCompletionItem(item: CompletionItem): CompletionItem {
-  item.detail = item.data.property;
-  const docs = (COMPLETION_DOCS[item.data.type] || {})[item.data.property];
-  if (docs) {
-    item.documentation = {
-      kind: MarkupKind.Markdown,
-      value: docs,
-    };
+  if (item.data) {
+    item.detail = item.data.property;
+    const docs = (COMPLETION_DOCS[item.data.type] || {})[item.data.property];
+    if (docs) {
+      item.documentation = {
+        kind: MarkupKind.Markdown,
+        value: docs,
+      };
+    }
   }
   return item;
 }
