@@ -129,8 +129,7 @@ function getQueriedExploreName(text: string[]): string | null {
 
 function getQueryContext(lines: string[], cursor: Position) {
   lines[cursor.line] = lines[cursor.line].slice(0, cursor.character);
-  const chainRegex =
-    /\s(?:(?:[a-zA-Z_][A-Za-z_0-9]*)(?:\.(?:[a-zA-Z_][A-Za-z_0-9]*)*)*)?$/g;
+  const chainRegex = /\s(?:[a-zA-Z_][\.A-Za-z_0-9]*)?$/g;
   const chainMatch = chainRegex.exec(lines[cursor.line]);
   const chain: string | null = chainMatch ? chainMatch[0].trim() : null;
   const simpleKeywords =
@@ -161,6 +160,9 @@ function getFieldsFromChain(
   fieldTree.pop();
   let currentExplore = explore;
   for (const fieldName of fieldTree) {
+    if (fieldName.length === 0) {
+      return [];
+    }
     let validField = false;
     for (const field of currentExplore.allFields) {
       if (fieldName === field.name && field.isExploreField()) {

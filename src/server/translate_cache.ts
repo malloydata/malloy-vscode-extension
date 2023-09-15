@@ -45,7 +45,6 @@ import {
   MalloySQLStatementType,
 } from '@malloydata/malloy-sql';
 import {FetchModelMessage} from '../common/message_types';
-import {DocumentTextParse} from './completions/completions';
 import {fixLogRange} from '../common/malloy_sql';
 
 const isNamedQuery = (object: NamedModelObject): object is NamedQuery =>
