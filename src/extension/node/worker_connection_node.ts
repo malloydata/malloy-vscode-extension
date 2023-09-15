@@ -43,7 +43,8 @@ export class WorkerConnectionNode extends WorkerConnection {
       execArgv.push(
         '--inspect=6010',
         '--preserve-symlinks',
-        '--enable-source-maps'
+        '--enable-source-maps',
+        '--max-old-space-size=40096'
       );
     }
 
@@ -52,28 +53,47 @@ export class WorkerConnectionNode extends WorkerConnection {
     const startWorker = () => {
       let connection: rpc.MessageConnection | null = null;
 
+      console.log('Creating worker');
       const stdoutStream = new stream.Writable({
         write: data => {
-          console.log(data.toString());
+          console.log(`Message from worker: ${data.toString()}`);
         },
       });
       const stderrStream = new stream.Writable({
         write: data => {
-          console.error(data.toString());
+          console.error(`Error Message from worker: ${data.toString()}`);
         },
       });
 
+      const spwn = child_process.spawn(
+        '/usr/local/google/home/figutierrez/Dev/malloy/duckdb',
+        {detached: true }
+      );
+      
+
       this.worker = child_process
         // .spawn('node', [workerModule, ...execArgv], {stdio: ['ipc'], cwd})
-        .fork(workerModule, {
+        .exec(workerModule, {
           execArgv,
           cwd,
           stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
+          detached: true,
         })
-        .on('error', console.error)
-        .on('exit', status => {
+        .on('error', error => console.error(`An Error: ${error}`))
+        .on('message', message =>
+          console.log(
+            `Received message from worker: ${JSON.stringify(message)}`
+          )
+        )
+        .on('disconnect', () => console.log('disconnected!'))
+        .on('close', (code, signal) =>
+          console.log(`-----> closed ${code} ${signal}`)
+        )
+        .on('exit', (status, signal) => {
           connection.dispose();
-          console.error(`Worker exited with ${status}`);
+          console.error(
+            `Worker exited with ${status} ${JSON.stringify(signal)}`
+          );
           if (status !== 0) {
             console.info(`Restarting in ${DEFAULT_RESTART_SECONDS} seconds`);
             // Maybe exponential backoff? Not sure what our failure

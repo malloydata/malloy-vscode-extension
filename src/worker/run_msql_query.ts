@@ -89,6 +89,8 @@ export const runMSQLQuery = async (
   connectionManager: ConnectionManager,
   {panelId, malloySQLQuery, statementIndex, showSQLOnly}: MessageRunMSQL
 ): Promise<void> => {
+  // eslint-disable-next-line no-console
+  console.log('Msql');
   const sendMessage = (message: MSQLQueryPanelMessage) => {
     const msg: WorkerMSQLQueryPanelMessage = {
       panelId,
@@ -193,7 +195,7 @@ export const runMSQLQuery = async (
               } catch (error) {
                 evaluatedStatements.push({
                   type: EvaluatedMSQLStatementType.ExecutionError,
-                  error: error.message,
+                  error: JSON.stringify(error),
                   compiledStatement,
                   statementIndex: i,
                   statementFirstLine: statement.range.start.line,
@@ -273,6 +275,7 @@ export const runMSQLQuery = async (
             const connection = await connectionLookup.lookupConnection(
               statement.config.connection
             );
+
             const sqlResults = await connection.runSQL(compiledStatement);
 
             if (runningQueries[panelId].canceled) return;

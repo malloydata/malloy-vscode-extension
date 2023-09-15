@@ -44,6 +44,12 @@ export class DynamicConnectionLookup implements LookupConnection<Connection> {
     connectionName?: string | undefined
   ): Promise<Connection> {
     const connectionKey = connectionName || DEFAULT_CONFIG;
+    // eslint-disable-next-line no-console
+    console.log(
+      `-----> Conneciton name: ${connectionKey.toString()} ${JSON.stringify(
+        this.configs
+      )}`
+    );
     if (!this.connections[connectionKey]) {
       const connectionConfig = this.configs[connectionKey];
       if (connectionConfig) {
@@ -91,6 +97,8 @@ export class ConnectionManager {
   public getConnectionLookup(fileURL: URL): LookupConnection<Connection> {
     const workingDirectory =
       this.connectionFactory.getWorkingDirectory(fileURL);
+    // eslint-disable-next-line no-console
+    console.log(`-----> The connection: ${workingDirectory}`);
 
     if (!this.connectionLookups[workingDirectory]) {
       this.connectionLookups[workingDirectory] = new DynamicConnectionLookup(
