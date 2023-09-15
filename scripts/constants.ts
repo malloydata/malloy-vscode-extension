@@ -33,6 +33,6 @@ export const Targets = [
   'web',
 ] as const;
 
-export type Target = typeof Targets[number];
+export type Target = (typeof Targets)[number];
 
 export const outDir = 'dist/';

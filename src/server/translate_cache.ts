@@ -55,7 +55,7 @@ export class TranslateCache implements TranslateCache {
     string,
     {model: Model; exploreCount: number; version: number}
   >();
-  truncatedVersion: number = 0;
+  truncatedVersion = 0;
   cache = new Map<string, {model: Model; version: number; baseUri: string}>();
 
   constructor(
@@ -141,7 +141,6 @@ export class TranslateCache implements TranslateCache {
     document: TextDocument,
     text: string,
     exploreCount: number,
-    queriedSource: string
   ): Promise<Model | undefined> {
     const {uri, languageId} = document;
     if (languageId === 'malloy') {

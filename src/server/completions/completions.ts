@@ -26,15 +26,13 @@ import {
   CompletionItem,
   CompletionItemKind,
   MarkupKind,
-  LogMessageNotification,
 } from 'vscode-languageserver/node';
 import {Position, TextDocument} from 'vscode-languageserver-textdocument';
 import {COMPLETION_DOCS} from '../../common/completion_docs';
 import {parseWithCache} from '../parse_cache';
 import {TranslateCache} from '../translate_cache';
 import {Explore, Field, Model} from '@malloydata/malloy';
-import {isFieldAggregate} from '../../extension/common/schema';
-import {fieldType} from '../../extension/common/schema';
+import {isFieldAggregate, fieldType} from '../../extension/common/schema';
 
 export async function getCompletionItems(
   document: TextDocument,
@@ -80,7 +78,7 @@ async function getSchemaCompletions(
       parse.nearestDefinitionText,
       parse.adjustedCursor
     );
-    if (exploreName !== null && keyword != null && chain !== null) {
+    if (exploreName !== null && keyword !== null && chain !== null) {
       let model: Model | undefined = undefined;
       try {
         model = await translateCache.translateWithTruncatedCache(
@@ -129,7 +127,7 @@ function getQueriedExploreName(text: string[]): string | null {
 
 function getQueryContext(lines: string[], cursor: Position) {
   lines[cursor.line] = lines[cursor.line].slice(0, cursor.character);
-  const chainRegex = /\s(?:[a-zA-Z_][\.A-Za-z_0-9]*)?$/g;
+  const chainRegex = /\s(?:[a-zA-Z_][.A-Za-z_0-9]*)?$/g;
   const chainMatch = chainRegex.exec(lines[cursor.line]);
   const chain: string | null = chainMatch ? chainMatch[0].trim() : null;
   const simpleKeywords =
@@ -181,7 +179,7 @@ function getFieldsFromChain(
 function filterCompletions(fields: Field[], keyword: string, chain: string) {
   const fieldTree = chain.split('.');
   const fieldToMatch = fieldTree[fieldTree.length - 1];
-  const {queries, dimensions, measures, explores} = bucketMatchingFieldNames(
+  const {dimensions, explores} = bucketMatchingFieldNames(
     fields,
     fieldToMatch
   );
@@ -257,7 +255,7 @@ function parseDocumentText(text: string, cursor: Position): DocumentTextParse {
   const lines = text.split('\n');
   for (const [i, line] of lines.entries()) {
     const symbolMatches = topLevelSymbols.exec(line);
-    if (symbolMatches != null && symbolMatches.index === 0) {
+    if (symbolMatches !== null && symbolMatches.index === 0) {
       if (
         symbolMatches[1].toLowerCase().startsWith('source') ||
         symbolMatches[1].toLowerCase().startsWith('import')
