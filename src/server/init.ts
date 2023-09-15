@@ -197,9 +197,6 @@ export const initServer = (
     } else {
       return [];
     }
-    // return document && document.languageId === 'malloy'
-    //   ? getCompletionItems(document, params, translateCache)
-    //   : [];
   });
 
   // This handler resolves additional information for the item selected in
