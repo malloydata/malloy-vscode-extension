@@ -21,11 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {
-  Connection,
-  LogMessageNotification,
-  TextDocuments,
-} from 'vscode-languageserver';
+import {Connection, TextDocuments} from 'vscode-languageserver';
 import {
   MalloyError,
   Model,
@@ -140,7 +136,7 @@ export class TranslateCache implements TranslateCache {
   async translateWithTruncatedCache(
     document: TextDocument,
     text: string,
-    exploreCount: number,
+    exploreCount: number
   ): Promise<Model | undefined> {
     const {uri, languageId} = document;
     if (languageId === 'malloy') {

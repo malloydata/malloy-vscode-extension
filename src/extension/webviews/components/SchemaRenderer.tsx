@@ -24,7 +24,11 @@
 import * as React from 'react';
 import styled from 'styled-components';
 import {Explore, Field, NamedQuery, QueryField} from '@malloydata/malloy';
-import {exploreSubtype, fieldType, isFieldAggregate} from '../../common/schema';
+import {
+  exploreSubtype,
+  fieldType,
+  isFieldAggregate,
+} from '../../../common/schema';
 import NumberIcon from '../../../media/number.svg';
 import NumberAggregateIcon from '../../../media/number-aggregate.svg';
 import BooleanIcon from '../../../media/boolean.svg';

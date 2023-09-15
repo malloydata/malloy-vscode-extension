@@ -38,7 +38,7 @@ import oneToOneIcon from '../../media/one_to_one.svg';
 import {MALLOY_EXTENSION_STATE} from '../state';
 import {BaseLanguageClient} from 'vscode-languageclient/node';
 import {BuildModelRequest} from '../../common/types';
-import {exploreSubtype, fieldType, isFieldAggregate} from '../common/schema';
+import {exploreSubtype, fieldType, isFieldAggregate} from '../../common/schema';
 import {FetchModelMessage} from '../../common/message_types';
 
 export class SchemaProvider
