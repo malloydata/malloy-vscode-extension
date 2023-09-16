@@ -44,7 +44,11 @@ import {
   QueryMessageType,
 } from '../../../common/message_types';
 import {Spinner} from '../components';
-import {ResultKind, ResultKindToggle} from './ResultKindToggle';
+import {
+  ResultKind,
+  ResultKindToggle,
+  resultKindFromString,
+} from './ResultKindToggle';
 import Prism from 'prismjs';
 import {usePopperTooltip} from 'react-popper-tooltip';
 import {useQueryVSCodeContext} from './query_vscode_context';
@@ -156,9 +160,13 @@ export const App: React.FC = () => {
           resultJson,
           dataStyles,
           canDownloadStream,
+          defaultTab,
           stats: runStats,
         } = message;
-        if (resultKind === ResultKind.SQL) {
+        const defaultKind = resultKindFromString(defaultTab);
+        if (defaultKind) {
+          setResultKind(defaultKind);
+        } else if (resultKind === ResultKind.SQL) {
           setResultKind(ResultKind.HTML);
         }
         // TODO(web) Figure out some way to download current result set

@@ -80,6 +80,7 @@ export interface MessageRun {
   panelId: string;
   name: string;
   showSQLOnly: boolean;
+  defaultTab?: string;
 }
 
 export interface MessageRunMSQL {

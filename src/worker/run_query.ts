@@ -235,7 +235,7 @@ export const runQuery = async (
   messageRun: MessageRun,
   cancellationToken: CancellationToken
 ): Promise<void> => {
-  const {query, panelId, showSQLOnly} = messageRun;
+  const {query, panelId, showSQLOnly, defaultTab} = messageRun;
 
   const sendMessage = (message: QueryPanelMessage) => {
     const progress = new ProgressType<QueryMessageStatus>();
@@ -353,6 +353,7 @@ export const runQuery = async (
       resultJson: queryResult.toJSON(),
       dataStyles,
       canDownloadStream: !isBrowser,
+      defaultTab,
       stats: {
         compileTime,
         runTime,
