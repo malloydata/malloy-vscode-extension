@@ -200,6 +200,7 @@ https://github.com/malloydata/malloy-vscode-extension/issues.`;
                   name
                 );
               } else if (message.status === QueryRunStatus.RunCommand) {
+                MALLOY_EXTENSION_STATE.setActiveWebviewPanelId(panelId);
                 vscode.commands.executeCommand(
                   message.command,
                   ...message.args
