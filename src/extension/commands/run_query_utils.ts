@@ -47,6 +47,7 @@ import {WorkerConnection} from '../worker_connection';
 export interface RunMalloyQueryOptions {
   showSQLOnly?: boolean;
   withWebview?: boolean;
+  defaultTab?: string;
 }
 
 export function runMalloyQuery(
@@ -60,6 +61,7 @@ export function runMalloyQuery(
 ): Thenable<ResultJSON | undefined> {
   const showSQLOnly = options.showSQLOnly ?? false;
   const withWebview = options.withWebview ?? true;
+  const {defaultTab} = options;
 
   return new Promise((resolve, reject) => {
     const cancellationTokenSource = new CancellationTokenSource();
@@ -120,6 +122,7 @@ export function runMalloyQuery(
           panelId,
           name,
           showSQLOnly,
+          defaultTab,
         },
         cancellationTokenSource.token
       )

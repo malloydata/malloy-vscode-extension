@@ -30,7 +30,8 @@ import {ResultJSON} from '@malloydata/malloy';
 export async function runQueryCommand(
   worker: WorkerConnection,
   query: string,
-  name?: string
+  name?: string,
+  defaultTab?: string
 ): Promise<ResultJSON | undefined> {
   const document =
     vscode.window.activeTextEditor?.document ||
@@ -40,7 +41,8 @@ export async function runQueryCommand(
       worker,
       {type: 'string', text: query, file: document},
       `${document.uri.toString()} ${name}`,
-      name || document.uri.toString()
+      name || document.uri.toString(),
+      {defaultTab}
     );
   }
 }

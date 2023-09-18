@@ -86,7 +86,8 @@ export const setupSubscriptions = (
   context.subscriptions.push(
     vscode.commands.registerCommand(
       'malloy.runQuery',
-      (query: string, name?: string) => runQueryCommand(worker, query, name)
+      (query: string, name?: string, defaultTab?: string) =>
+        runQueryCommand(worker, query, name, defaultTab)
     )
   );
 

@@ -31,6 +31,19 @@ export enum ResultKind {
   SCHEMA = 'schema',
 }
 
+export const resultKindFromString = (kind?: string) => {
+  switch (kind) {
+    case 'html':
+      return ResultKind.HTML;
+    case 'json':
+      return ResultKind.JSON;
+    case 'sql':
+      return ResultKind.SQL;
+    case 'schema':
+      return ResultKind.SCHEMA;
+  }
+};
+
 interface ResultKindToggleProps {
   kind: ResultKind;
   setKind: (kind: ResultKind) => void;
