@@ -166,24 +166,6 @@
         "enablement": "false"
       },
       {
-        "command": "malloy.runMalloySQLFile",
-        "title": "Run MalloySQL File",
-        "category": "Malloy",
-        "enablement": "editorLangId == malloy-sql"
-      },
-      {
-        "command": "malloy.runMalloySQLStatement",
-        "title": "Run MalloySQL Statement",
-        "category": "Malloy",
-        "enablement": "editorLangId == malloy-sql"
-      },
-      {
-        "command": "malloy.showSQLMalloySQLFile",
-        "title": "Show MalloySQL Compiled SQL",
-        "category": "Malloy",
-        "enablement": "editorLangId == malloy-sql"
-      },
-      {
         "command": "malloy.copyFieldPath",
         "title": "Copy Field Path",
         "category": "Malloy"

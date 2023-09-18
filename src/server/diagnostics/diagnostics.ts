@@ -25,10 +25,7 @@ import {Diagnostic, DiagnosticSeverity} from 'vscode-languageserver';
 import {LogMessage, MalloyError} from '@malloydata/malloy';
 import {TextDocument} from 'vscode-languageserver-textdocument';
 import {TranslateCache} from '../translate_cache';
-import {
-  parseMalloySQLWithCache,
-  parseMalloySQLSQLWithCache,
-} from '../parse_cache';
+import {parseMalloySQLSQLWithCache} from '../parse_cache';
 import {errorMessage} from '../../common/errors';
 
 const DEFAULT_RANGE = {
@@ -49,10 +46,6 @@ export async function getMalloyDiagnostics(
 
   if (document.languageId === 'malloy-sql') {
     const {errors} = parseMalloySQLSQLWithCache(document);
-    if (errors) errors.forEach(e => problems.push(...e.problems));
-  } else if (document.languageId === 'malloy-notebook') {
-    // TODO(whscullin): Delete with malloy-sql text editor
-    const {errors} = parseMalloySQLWithCache(document);
     if (errors) errors.forEach(e => problems.push(...e.problems));
   }
 

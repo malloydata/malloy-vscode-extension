@@ -52,13 +52,10 @@ import {
 import {showSQLCommand} from './commands/show_sql';
 import {showSQLFileCommand} from './commands/show_sql_file';
 import {showSQLNamedQueryCommand} from './commands/show_sql_named_query';
-import {runMalloySQLFile} from './commands/run_msql_file';
-import {showSQLMalloySQLFile} from './commands/show_sql_msql_file';
 import {
   GenericConnection,
   WorkerFetchMessage,
 } from '../common/worker_message_types';
-import {runMalloySQLStatement} from './commands/run_msql_statement';
 import {BaseLanguageClient} from 'vscode-languageclient';
 import {WorkerConnection} from './worker_connection';
 import {runQueryAtCursorCommand} from './commands/run_query_at_cursor';
@@ -141,28 +138,6 @@ export const setupSubscriptions = (
     vscode.commands.registerCommand(
       'malloy.runUnnamedSQLBlock',
       (index: number) => runUnnamedSQLBlock(worker, index)
-    )
-  );
-
-  // Run Malloy SQL File
-  context.subscriptions.push(
-    vscode.commands.registerCommand('malloy.runMalloySQLFile', () =>
-      runMalloySQLFile(worker)
-    )
-  );
-
-  // Run Malloy SQL Statement
-  context.subscriptions.push(
-    vscode.commands.registerCommand(
-      'malloy.runMalloySQLStatement',
-      (statementIndex: number) => runMalloySQLStatement(worker, statementIndex)
-    )
-  );
-
-  // Show SQL Malloy SQL File
-  context.subscriptions.push(
-    vscode.commands.registerCommand('malloy.showSQLMalloySQLFile', () =>
-      showSQLMalloySQLFile(worker)
     )
   );
 
