@@ -387,6 +387,10 @@ const SchemaTree = styled.div`
     text-transform: uppercase;
   }
 
+  i.codicon {
+    color: var(--vscode-icon-foreground);
+  }
+
   .explore_name {
     line-height: 2em;
     font-weight: 600;
