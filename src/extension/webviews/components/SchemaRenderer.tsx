@@ -238,7 +238,13 @@ export const SchemaRenderer: React.FC<SchemaRendererProps> = ({
     return (
       <li className={`schema ${hidden}`} title={buildTitle(explore, path)}>
         <div onClick={toggleHidden}>
-          <span>{hidden ? '▶' : '▼'}</span>{' '}
+          <span>
+            {hidden ? (
+              <i className="codicon codicon-chevron-right" />
+            ) : (
+              <i className="codicon codicon-chevron-down" />
+            )}
+          </span>{' '}
           {getIconElement(`struct_${subtype}`, false)}{' '}
           <b className="explore_name">{getExploreName(explore, path)}</b>
         </div>
