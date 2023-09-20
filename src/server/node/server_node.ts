@@ -33,9 +33,11 @@ import {CloudCodeConfig} from '../../common/worker_message_types';
 const documents = new TextDocuments(TextDocument);
 
 const onDidChangeConfiguration = (change: DidChangeConfigurationParams) => {
-  const cloudCodeConfig = change.settings.cloudcode as CloudCodeConfig;
-  const cloudCodeProject = cloudCodeConfig.project;
-  const cloudShellProject = cloudCodeConfig.cloudshell?.project;
+  const cloudCodeConfig = change.settings.cloudcode as
+    | CloudCodeConfig
+    | undefined;
+  const cloudCodeProject = cloudCodeConfig?.project;
+  const cloudShellProject = cloudCodeConfig?.cloudshell?.project;
 
   const project = cloudCodeProject || cloudShellProject;
 
