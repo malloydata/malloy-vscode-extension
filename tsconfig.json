@@ -13,6 +13,6 @@
     "noImplicitAny": true,
     "strict": true
   },
-  "include": ["./src", "./node_modules/@malloydata/syntax-highlight/grammars"],
+  "include": ["./src"],
   "exclude": ["node_modules", ".vscode-test", ".vscode-test-web", "dist"]
 }
