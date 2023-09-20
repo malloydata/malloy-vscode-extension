@@ -3,6 +3,7 @@ cloudbuild
 integration
 node_modules
 !node_modules/@vscode/codicons/dist
+!node_modules/@malloydata/syntax-highlight/grammars
 out/
 src/
 scripts/
