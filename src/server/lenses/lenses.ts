@@ -97,6 +97,18 @@ export function getMalloyLenses(document: TextDocument): CodeLens[] {
       lenses.push({
         range: symbol.lensRange.toJSON(),
         command: {
+          title: 'Schema',
+          command: 'malloy.runQuery',
+          arguments: [
+            `query: ${exploreName}->{ project: *; limit: 20 }`,
+            `preview ${exploreName}`,
+            'schema',
+          ],
+        },
+      });
+      lenses.push({
+        range: symbol.lensRange.toJSON(),
+        command: {
           title: 'Preview',
           command: 'malloy.runQuery',
           arguments: [

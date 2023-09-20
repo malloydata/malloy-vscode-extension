@@ -108,6 +108,7 @@ interface QueryMessageStatusDone {
   resultJson: ResultJSON;
   dataStyles: DataStyles;
   canDownloadStream: boolean;
+  defaultTab?: string;
   stats: QueryRunStats;
 }
 
