@@ -304,19 +304,27 @@ export const SchemaRenderer: React.FC<SchemaRendererProps> = ({
   };
 
   /**
+   * A field that is either a query or regular field
+   */
+
+  const FieldListItem = ({field, path}: {field: Field; path: string}) => {
+    return field.isQuery() ? (
+      <QueryItem query={field} />
+    ) : (
+      <FieldItem field={field} path={path} />
+    );
+  };
+
+  /**
    * A list of fields, for use with queries, dimensions and measures.
    */
 
   const FieldList = ({fields, path}: FieldListProps) => {
     return (
       <div className="field_list">
-        {fields.map(field =>
-          field.isQuery() ? (
-            <QueryItem key={field.name} query={field} />
-          ) : (
-            <FieldItem key={field.name} field={field} path={path} />
-          )
-        )}
+        {fields.map((field, idx) => (
+          <FieldListItem key={idx} field={field} path={path} />
+        ))}
       </div>
     );
   };
@@ -340,8 +348,8 @@ export const SchemaRenderer: React.FC<SchemaRendererProps> = ({
       <ul>
         <li>
           <div className="field_list">
-            {queries.sort(sortByName).map(query => (
-              <QueryItem key={query.name} query={query} />
+            {queries.sort(sortByName).map((query, idx) => (
+              <QueryItem key={idx} query={query} />
             ))}
           </div>
         </li>
