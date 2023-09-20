@@ -1,5 +1,10 @@
 {
-  "extends": "./node_modules/gts/",
+  "extends": ["./node_modules/gts/", "plugin:react/recommended"],
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  },
   "parserOptions": {
     "warnOnUnsupportedTypeScriptVersion": false
   },

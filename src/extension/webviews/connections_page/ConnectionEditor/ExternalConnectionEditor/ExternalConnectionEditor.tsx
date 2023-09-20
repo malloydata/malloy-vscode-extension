@@ -157,7 +157,7 @@ export const ExternalConnectionEditor: React.FC<
         {config.connectionSchema?.map(parameter => {
           // TODO(figutierrez): Move this to its own component.
           return (
-            <tr>
+            <tr key={parameter.label}>
               <LabelCell>
                 <Label>{parameter.label}:</Label>
               </LabelCell>
