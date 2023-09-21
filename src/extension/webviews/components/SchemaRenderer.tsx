@@ -238,13 +238,7 @@ export const SchemaRenderer: React.FC<SchemaRendererProps> = ({
     return (
       <li className={`schema ${hidden}`} title={buildTitle(explore, path)}>
         <div onClick={toggleHidden}>
-          <span>
-            {hidden ? (
-              <i className="codicon codicon-chevron-right" />
-            ) : (
-              <i className="codicon codicon-chevron-down" />
-            )}
-          </span>{' '}
+          <span>{hidden ? '▶' : '▼'}</span>{' '}
           {getIconElement(`struct_${subtype}`, false)}{' '}
           <b className="explore_name">{getExploreName(explore, path)}</b>
         </div>
@@ -393,10 +387,6 @@ const SchemaTree = styled.div`
     margin-left: 5px;
     margin-top: 0.5em;
     text-transform: uppercase;
-  }
-
-  i.codicon {
-    color: var(--vscode-icon-foreground);
   }
 
   .explore_name {
