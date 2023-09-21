@@ -15,7 +15,7 @@ To write your own Malloy models, use the VS Code Extension, currently available 
 
 2. **Add the Malloy (pre-release) extension from the Visual Studio Code Marketplace**: Open VS Code and click the Extensions button on the far left (it looks like 4 blocks with one flying away). This will open the Extension Marketplace. Search for "Malloy" and, once found, click "Install"
 
-3. **Download and unzip the [Sample Models](https://github.com/malloydata/malloy-samples/releases/latest)** (models + data).
+3. **Download and unzip the [Sample Models](https://github.com/malloydata/malloy-samples/archive/refs/heads/main.zip)** (models + data).
 
 4. **Open the samples folder in VS Code**. In VS Code, go to File > **Open Folder**... select malloy-samples/duckdb > Open. DuckDB is built into the extension so you're ready to run these.
 
