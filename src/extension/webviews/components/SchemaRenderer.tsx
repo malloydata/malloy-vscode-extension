@@ -48,6 +48,7 @@ export interface SchemaRendererProps {
   defaultShow?: boolean;
   onFieldClick?: (field: Field) => void;
   onQueryClick?: (query: NamedQuery | QueryField) => void;
+  onPreviewClick?: (explore: Explore) => void;
 }
 
 /**
@@ -206,6 +207,7 @@ export const SchemaRenderer: React.FC<SchemaRendererProps> = ({
   defaultShow = false,
   onFieldClick,
   onQueryClick,
+  onPreviewClick,
 }) => {
   if (!explores || !explores.length) {
     return <b>No Schema Information</b>;
@@ -235,12 +237,23 @@ export const SchemaRenderer: React.FC<SchemaRendererProps> = ({
       [setHidden]
     );
 
+    const onClick = (event: React.MouseEvent) => {
+      onPreviewClick?.(explore);
+      event.stopPropagation();
+      event.preventDefault();
+    };
+
     return (
       <li className={`schema ${hidden}`} title={buildTitle(explore, path)}>
         <div onClick={toggleHidden}>
           <span>{hidden ? '▶' : '▼'}</span>{' '}
           {getIconElement(`struct_${subtype}`, false)}{' '}
-          <b className="explore_name">{getExploreName(explore, path)}</b>
+          <b className="explore_name">{getExploreName(explore, path)}</b>{' '}
+          {onPreviewClick && !explore.hasParentExplore() && (
+            <span className="preview" onClick={onClick}>
+              Preview
+            </span>
+          )}
         </div>
         <ul>
           {queries.length ? (
@@ -429,5 +442,16 @@ const SchemaTree = styled.div`
   b {
     vertical-align: middle;
     display: inline-block;
+  }
+
+  .preview {
+    color: var(--vscode-editorCodeLens-foreground);
+    font-size: 0.8em;
+    padding-left: 5px;
+    cursor: pointer;
+
+    &:hover {
+      color: var(--vscode-editorLink-activeForeground);
+    }
   }
 `;

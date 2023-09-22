@@ -130,12 +130,23 @@ const SchemaRendererWrapper = ({
     }
   };
 
+  const onPreviewClick = (explore: Explore) => {
+    const type = 'malloy.runQuery';
+    const args = [
+      `query: ${explore.name}->{ project: *; limit: 20 }`,
+      `preview ${explore.name}`,
+      'html',
+    ];
+    postMessage?.({type, args});
+  };
+
   return (
     <SchemaRenderer
       explores={explores}
       queries={queries}
       onFieldClick={onFieldClick}
       onQueryClick={onQueryClick}
+      onPreviewClick={onPreviewClick}
     />
   );
 };
