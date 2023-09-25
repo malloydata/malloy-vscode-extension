@@ -25,24 +25,13 @@ import {Location, Position, DefinitionLink} from 'vscode-languageserver/node';
 import {TextDocument} from 'vscode-languageserver-textdocument';
 import {TranslateCache} from '../translate_cache';
 
-const fixNotebookUri = (uriString: string, baseUriString: string) => {
-  const uri = new URL(uriString);
-  const baseUri = new URL(baseUriString);
-
-  if (uri.protocol === 'vscode-notebook-cell:' && !uri.hash) {
-    uriString = uriString.replace('vscode-notebook-cell:', baseUri.protocol);
-  }
-
-  return uriString;
-};
-
 export async function getMalloyDefinitionReference(
   translateCache: TranslateCache,
   document: TextDocument,
   position: Position
 ): Promise<Location[] | DefinitionLink[]> {
   try {
-    const {model, baseUri} = await translateCache.translateWithCache(
+    const model = await translateCache.translateWithCache(
       document.uri,
       document.version,
       document.languageId
@@ -55,7 +44,7 @@ export async function getMalloyDefinitionReference(
     if (location) {
       return [
         {
-          uri: fixNotebookUri(location.url, baseUri),
+          uri: location.url,
           range: location.range,
         },
       ];
@@ -69,7 +58,7 @@ export async function getMalloyDefinitionReference(
         return [
           {
             originSelectionRange: importLocation.location.range,
-            targetUri: fixNotebookUri(importLocation.importURL, baseUri),
+            targetUri: importLocation.importURL,
             targetRange: documentStart,
             targetSelectionRange: documentStart,
           },
