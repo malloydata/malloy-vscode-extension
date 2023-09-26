@@ -24,11 +24,11 @@
 export const errorMessage = (error: unknown): string => {
   let message = 'Something went wrong';
   if (error instanceof Error) {
-    message = `${error.message} ${error.stack}`;
+    message = error.message;
   } else if (typeof error === 'string') {
     message = error;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     // Handle case when its an instance of Error but it is not detecting it as such.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } else if ((error as any).message) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     message = (error as any).message;
