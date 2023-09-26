@@ -120,11 +120,7 @@ async function setupLanguageServer(
   };
 
   const clientOptions: LanguageClientOptions = {
-    documentSelector: [
-      {language: 'malloy'},
-      {language: 'malloy-sql'},
-      {language: 'malloy-notebook'},
-    ],
+    documentSelector: [{language: 'malloy'}, {language: 'malloy-sql'}],
     synchronize: {
       configurationSection: ['malloy', 'cloudcode'],
     },
