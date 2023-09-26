@@ -137,107 +137,6 @@ export interface QueryDownloadOptions {
   amount: 'current' | 'all' | number;
 }
 
-export enum MSQLMessageType {
-  AppReady = 'app-ready',
-}
-
-interface MSQLMessageAppReady {
-  type: QueryMessageType.AppReady;
-}
-
-export enum EvaluatedMSQLStatementType {
-  CompileError = 'compile-error',
-  ExecutionError = 'execution-error',
-  Executed = 'executed',
-  Compiled = 'compiled',
-}
-
-export interface MSQLStatementCompileError {
-  type: EvaluatedMSQLStatementType.CompileError;
-  errors: MalloyError[];
-  statementIndex: number;
-}
-
-export interface MSQLStatmentWasCompiled {
-  compiledStatement: string;
-  statementIndex: number;
-}
-
-export interface MSQLStatementExecutionError extends MSQLStatmentWasCompiled {
-  type: EvaluatedMSQLStatementType.ExecutionError;
-  error: string;
-  statementFirstLine: number;
-  prettyError?: string;
-}
-
-export enum ExecutedMSQLStatementResultType {
-  WithStructdef = 'with-structdef',
-  WithoutStructdef = 'without-structdef',
-}
-
-export interface ExecutedMSQLStatementWithStructdef
-  extends MSQLStatmentWasCompiled {
-  type: EvaluatedMSQLStatementType.Executed;
-  resultType: ExecutedMSQLStatementResultType.WithStructdef;
-  results: ResultJSON;
-  renderedHTML?: HTMLElement;
-}
-
-export interface ExecutedMSQLStatementWithoutStructdef
-  extends MSQLStatmentWasCompiled {
-  type: EvaluatedMSQLStatementType.Executed;
-  resultType: ExecutedMSQLStatementResultType.WithoutStructdef;
-  results: MalloyQueryData;
-  renderedHTML?: HTMLElement;
-}
-
-export interface CompiledMSQLStatement extends MSQLStatmentWasCompiled {
-  renderedHTML?: HTMLSpanElement;
-  type: EvaluatedMSQLStatementType.Compiled;
-}
-
-export type ExecutedMSQLStatement =
-  | ExecutedMSQLStatementWithStructdef
-  | ExecutedMSQLStatementWithoutStructdef;
-
-export type EvaluatedMSQLStatement =
-  | ExecutedMSQLStatement
-  | MSQLStatementCompileError
-  | MSQLStatementExecutionError
-  | CompiledMSQLStatement;
-
-interface MSQLMessageStatusDone {
-  status: MSQLQueryRunStatus.Done;
-  results: EvaluatedMSQLStatement[];
-  showSQLOnly?: boolean;
-}
-
-interface MSQLMessageStatusCompiling {
-  status: MSQLQueryRunStatus.Compiling;
-  totalStatements: number;
-  statementIndex: number;
-}
-
-interface MSQLMessageStatusRunning {
-  status: MSQLQueryRunStatus.Running;
-  totalStatements: number;
-  statementIndex: number;
-}
-
-interface MSQLMessageStatusError {
-  status: MSQLQueryRunStatus.Error;
-  error: string;
-  sql?: string;
-}
-
-export type MSQLMessageStatus =
-  | MSQLMessageStatusError
-  | MSQLMessageStatusCompiling
-  | MSQLMessageStatusRunning
-  | MSQLMessageStatusDone;
-
-export type MSQLQueryPanelMessage = MSQLMessageStatus | MSQLMessageAppReady;
-
 export type QueryPanelMessage =
   | QueryMessageStatus
   | QueryMessageAppReady
@@ -373,8 +272,6 @@ interface HelpMessageEditConnections {
 export type HelpPanelMessage = HelpMessageAppReady | HelpMessageEditConnections;
 
 export const queryPanelProgress = new ProgressType<QueryMessageStatus>();
-
-export const msqlPanelProgress = new ProgressType<MSQLMessageStatus>();
 
 export interface FetchModelMessage {
   explores: SerializedExplore[];

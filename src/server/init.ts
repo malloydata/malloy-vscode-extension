@@ -40,7 +40,7 @@ import {TextDocument} from 'vscode-languageserver-textdocument';
 import {getMalloyDiagnostics} from './diagnostics';
 import {getMalloySymbols} from './symbols';
 import {TOKEN_TYPES, TOKEN_MODIFIERS, stubMalloyHighlights} from './highlights';
-import {getMalloyLenses, getMalloySQLLenses} from './lenses';
+import {getMalloyLenses} from './lenses';
 import {
   getCompletionItems,
   resolveCompletionItem,
@@ -149,12 +149,8 @@ export const initServer = (
 
   connection.onCodeLens(handler => {
     const document = documents.get(handler.textDocument.uri);
-    if (document) {
-      if (document.languageId === 'malloy') return getMalloyLenses(document);
-      // TODO(whscullin): Delete with malloy-sql text editor
-      if (document.languageId === 'malloy-notebook') {
-        return getMalloySQLLenses(document);
-      }
+    if (document && document.languageId === 'malloy') {
+      return getMalloyLenses(document);
     }
   });
 
