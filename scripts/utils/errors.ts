@@ -28,6 +28,7 @@ export const errorMessage = (error: unknown): string => {
   } else if (typeof error === 'string') {
     message = error;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // Handle case when its an instance of Error but it is not detecting it as such.
   } else if ((error as any).message) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     message = (error as any).message;
