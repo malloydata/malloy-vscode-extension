@@ -230,53 +230,6 @@ export class TranslateCache implements TranslateCache {
         this.cache.set(uri, {version: currentVersion, model});
       }
       return model;
-    } else if (languageId === 'malloy-notebook') {
-      // TODO(whscullin): Delete with malloy-sql text editor
-      const parse = MalloySQLParser.parse(text, uri);
-
-      let malloyStatements = '\n'.repeat(parse.initialCommentsLineCount || 0);
-      for (const statement of parse.statements) {
-        malloyStatements += '\n';
-        if (statement.type === MalloySQLStatementType.MALLOY) {
-          malloyStatements += statement.text;
-        } else
-          malloyStatements += `${'\n'.repeat(
-            statement.text.split(/\r\n|\r|\n/).length - 1
-          )}`;
-      }
-
-      const files = {
-        readURL: async (url: URL) => this.getDocumentText(this.documents, url),
-      };
-      const runtime = new Runtime(
-        files,
-        this.connectionManager.getConnectionLookup(new URL(uri))
-      );
-
-      const mm = runtime.loadModel(malloyStatements, {
-        importBaseURL: new URL(uri),
-      });
-      const model = await mm.getModel();
-
-      for (const statement of parse.statements.filter(
-        (s): s is MalloySQLSQLStatement => s.type === MalloySQLStatementType.SQL
-      )) {
-        for (const malloyQuery of statement.embeddedMalloyQueries) {
-          try {
-            await mm.getQuery(`query:\n${malloyQuery.query}`);
-          } catch (e) {
-            if (e instanceof MalloyError) {
-              e.problems.forEach(log => {
-                fixLogRange(uri, malloyQuery, log, -1);
-              });
-            }
-            throw e;
-          }
-        }
-      }
-
-      this.cache.set(uri, {version: currentVersion, model});
-      return model;
     } else {
       const files = {
         readURL: (url: URL) => this.getDocumentText(this.documents, url),

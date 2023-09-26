@@ -30,7 +30,6 @@ import {
   WorkerMessageMap,
 } from '../common/worker_message_types';
 import {ConnectionManager} from '../common/connection_manager';
-import {runMSQLQuery} from './run_msql_query';
 import {RpcFileHandler} from './file_handler';
 import {FileHandler} from '../common/types';
 import {ProgressType} from 'vscode-jsonrpc';
@@ -49,16 +48,6 @@ export class MessageHandler implements WorkerMessageHandler {
         this.fileHandler,
         connectionManager,
         false,
-        message,
-        cancellationToken
-      )
-    );
-
-    this.onRequest('malloy/run-msql', (message, cancellationToken) =>
-      runMSQLQuery(
-        this,
-        this.fileHandler,
-        connectionManager,
         message,
         cancellationToken
       )
