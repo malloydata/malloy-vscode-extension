@@ -28,7 +28,7 @@ import {
   NotificationHandler,
   ProgressType,
 } from 'vscode-jsonrpc';
-import {QueryDownloadOptions, MSQLQueryPanelMessage} from './message_types';
+import {QueryDownloadOptions} from './message_types';
 import {CellData, MalloyConfig} from './types';
 
 interface NamedQuerySpec {
@@ -163,11 +163,6 @@ export interface WorkerLogMessage {
   message: string;
 }
 
-export interface WorkerSQLQueryPanelMessage {
-  panelId: string;
-  message: MSQLQueryPanelMessage;
-}
-
 export interface WorkerFetchBinaryMessage {
   uri: string;
 }
@@ -189,7 +184,6 @@ export interface WorkerMessageMap {
   'malloy/fetchBinary': WorkerFetchBinaryMessage;
   'malloy/fetch': WorkerFetchMessage;
   'malloy/fetchCellData': WorkerFetchCellDataMessage;
-  'malloy/MSQLQueryPanel': WorkerSQLQueryPanelMessage;
 }
 
 /**
