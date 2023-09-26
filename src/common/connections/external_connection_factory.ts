@@ -54,7 +54,9 @@ export class ExternalConnectionFactory {
       }
     } catch (error) {
       throw new Error(
-        `Could not load connection factory for external connection package ${packageInfo.packageName}. Error: ${error}`
+        `Could not load connection factory for external connection package ${
+          packageInfo.packageName
+        }. Error: ${error} ${(error as Error).stack}`
       );
     }
 

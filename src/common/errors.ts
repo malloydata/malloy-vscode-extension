@@ -24,9 +24,13 @@
 export const errorMessage = (error: unknown): string => {
   let message = 'Something went wrong';
   if (error instanceof Error) {
-    message = error.message;
+    message = `${error.message} ${error.stack}`;
   } else if (typeof error === 'string') {
     message = error;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } else if ((error as any).message) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    message = (error as any).message;
   } else {
     // eslint-disable-next-line no-console
     console.error(error);
