@@ -38,14 +38,13 @@ export const createModelMaterializer = async (
   let mm: ModelMaterializer | null = null;
   const queryFileURL = new URL(query.uri);
   if (cellData) {
-    const importBaseURL = new URL(cellData.baseUri);
     for (const cell of cellData.cells) {
       if (cell.languageId === 'malloy') {
         const url = new URL(cell.uri);
         if (mm) {
-          mm = mm.extendModel(url, {importBaseURL});
+          mm = mm.extendModel(url);
         } else {
-          mm = runtime.loadModel(url, {importBaseURL});
+          mm = runtime.loadModel(url);
         }
       }
     }

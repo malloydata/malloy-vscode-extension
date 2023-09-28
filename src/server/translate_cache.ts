@@ -53,7 +53,7 @@ export class TranslateCache implements TranslateCache {
     {model: Model; exploreCount: number; version: number}
   >();
   truncatedVersion = 0;
-  cache = new Map<string, {model: Model; version: number}>();
+  cache = new Map<string, {model: Model; version: number; baseUri: string}>();
 
   constructor(
     private documents: TextDocuments<TextDocument>,
@@ -63,7 +63,7 @@ export class TranslateCache implements TranslateCache {
     connection.onRequest(
       'malloy/fetchModel',
       async (event: BuildModelRequest): Promise<FetchModelMessage> => {
-        const model = await this.translateWithCache(
+        const {model} = await this.translateWithCache(
           event.uri,
           event.version,
           event.languageId
@@ -105,28 +105,27 @@ export class TranslateCache implements TranslateCache {
   async createModelMaterializer(
     uri: string,
     runtime: Runtime
-  ): Promise<ModelMaterializer | null> {
+  ): Promise<{modelMaterializer: ModelMaterializer | null; baseUri: string}> {
     let modelMaterializer: ModelMaterializer | null = null;
+    let baseUri = uri;
     const queryFileURL = new URL(uri);
     if (queryFileURL.protocol === 'vscode-notebook-cell:') {
       const cellData = await this.getCellData(new URL(uri));
-      const importBaseURL = new URL(cellData.baseUri);
+      baseUri = cellData.baseUri;
       for (const cell of cellData.cells) {
         if (cell.languageId === 'malloy') {
           const url = new URL(cell.uri);
           if (modelMaterializer) {
-            modelMaterializer = modelMaterializer.extendModel(url, {
-              importBaseURL,
-            });
+            modelMaterializer = modelMaterializer.extendModel(url);
           } else {
-            modelMaterializer = runtime.loadModel(url, {importBaseURL});
+            modelMaterializer = runtime.loadModel(url);
           }
         }
       }
     } else {
       modelMaterializer = runtime.loadModel(queryFileURL);
     }
-    return modelMaterializer;
+    return {modelMaterializer, baseUri};
   }
 
   async getCellData(uri: URL): Promise<CellData> {
@@ -162,11 +161,11 @@ export class TranslateCache implements TranslateCache {
         files,
         this.connectionManager.getConnectionLookup(new URL(uri))
       );
-      const modelMaterializer = await this.createModelMaterializer(
+      const {modelMaterializer: mm} = await this.createModelMaterializer(
         uri,
         runtime
       );
-      const model = await modelMaterializer?.getModel();
+      const model = await mm?.getModel();
       if (model) {
         this.truncatedCache.set(uri, {
           model,
@@ -183,11 +182,11 @@ export class TranslateCache implements TranslateCache {
     uri: string,
     currentVersion: number,
     languageId: string
-  ): Promise<Model | undefined> {
+  ): Promise<{model: Model | undefined; baseUri: string}> {
     const entry = this.cache.get(uri);
     if (entry && entry.version === currentVersion) {
-      const {model} = entry;
-      return model;
+      const {model, baseUri} = entry;
+      return {model, baseUri};
     }
 
     const text = await this.getDocumentText(this.documents, new URL(uri));
@@ -201,7 +200,7 @@ export class TranslateCache implements TranslateCache {
         this.connectionManager.getConnectionLookup(new URL(uri))
       );
 
-      const modelMaterializer = await this.createModelMaterializer(
+      const {modelMaterializer, baseUri} = await this.createModelMaterializer(
         uri,
         runtime
       );
@@ -227,9 +226,9 @@ export class TranslateCache implements TranslateCache {
 
       const model = await modelMaterializer?.getModel();
       if (model) {
-        this.cache.set(uri, {version: currentVersion, model});
+        this.cache.set(uri, {version: currentVersion, model, baseUri});
       }
-      return model;
+      return {model, baseUri};
     } else {
       const files = {
         readURL: (url: URL) => this.getDocumentText(this.documents, url),
@@ -239,15 +238,15 @@ export class TranslateCache implements TranslateCache {
         this.connectionManager.getConnectionLookup(new URL(uri))
       );
 
-      const modelMaterializer = await this.createModelMaterializer(
+      const {modelMaterializer, baseUri} = await this.createModelMaterializer(
         uri,
         runtime
       );
       const model = await modelMaterializer?.getModel();
       if (model) {
-        this.cache.set(uri, {version: currentVersion, model});
+        this.cache.set(uri, {version: currentVersion, model, baseUri});
       }
-      return model;
+      return {model, baseUri};
     }
   }
 }
