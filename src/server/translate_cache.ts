@@ -41,7 +41,7 @@ import {fixLogRange} from '../common/malloy_sql';
 const isNamedQuery = (object: NamedModelObject): object is NamedQuery =>
   object.type === 'query';
 
-export class TranslateCache implements TranslateCache {
+export class TranslateCache {
   // Cache for truncated documents used for providing schema suggestions
   truncatedCache = new Map<
     string,

@@ -125,14 +125,43 @@ export const initServer = (
           });
         }
       }
+
+      // Trigger diagnostics for all documents we know that import this one,
+      // too.
+      translateCache.cache.forEach((entry, key) => {
+        if (entry.model.imports.find(a => a.importURL === document.uri)) {
+          translateCache.cache.delete(key);
+          const document = documents.get(key);
+          if (document) {
+            debouncedDiagnoseDocuments[key](document);
+          }
+        }
+      });
       connection.console.info(`diagnoseDocument ${document.uri} end`);
     }
   }
 
-  const debouncedDiagnoseDocument = debounce(diagnoseDocument, 300);
+  const debouncedDiagnoseDocuments: Record<
+    string,
+    (document: TextDocument) => Promise<void> | undefined
+  > = {};
+
+  const debouncedDiagnoseDocument = (document: TextDocument) => {
+    const {uri} = document;
+    if (!debouncedDiagnoseDocuments[uri]) {
+      debouncedDiagnoseDocuments[uri] = debounce(diagnoseDocument, 300);
+    }
+    debouncedDiagnoseDocuments[uri](document);
+  };
 
   documents.onDidChangeContent(change => {
     debouncedDiagnoseDocument(change.document);
+  });
+
+  documents.onDidClose(event => {
+    const {uri} = event.document;
+    translateCache.cache.delete(uri);
+    delete debouncedDiagnoseDocuments[uri];
   });
 
   connection.onDocumentSymbol(handler => {
