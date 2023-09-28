@@ -24,6 +24,32 @@
 
 import * as vscode from 'vscode';
 import {CellData, FileHandler} from '../common/types';
+import {Utils} from 'vscode-uri';
+
+/**
+ * Transforms vscode-notebook-cell: Uris to file: or vscode-vfs: URLS
+ * based on the workspace, because VS Code can't use a vscode-notebook-cell:
+ * as a relative url for non-cells, like external Malloy files.
+ *
+ * @param uri Document uri
+ * @returns Uri with an appropriate protocol
+ */
+const fixNotebookUri = (uri: vscode.Uri) => {
+  if (uri.scheme === 'vscode-notebook-cell') {
+    const {scheme} = vscode.workspace.workspaceFolders?.[0].uri || {
+      scheme: 'file:',
+    };
+    const {authority, path, query} = uri;
+    uri = vscode.Uri.from({
+      scheme,
+      authority,
+      path,
+      query,
+    });
+  }
+
+  return uri;
+};
 
 /**
  * Fetches the text contents of a Uri for the Malloy compiler. For most Uri
@@ -46,13 +72,13 @@ export async function fetchFile(uriString: string): Promise<string> {
   if (openDocument !== undefined) {
     return openDocument.getText();
   } else {
-    const contents = await vscode.workspace.fs.readFile(uri);
+    const contents = await vscode.workspace.fs.readFile(fixNotebookUri(uri));
     return new TextDecoder('utf-8').decode(contents);
   }
 }
 
 export async function fetchBinaryFile(uriString: string): Promise<Uint8Array> {
-  const uri = vscode.Uri.parse(uriString);
+  const uri = fixNotebookUri(vscode.Uri.parse(uriString));
   try {
     return await vscode.workspace.fs.readFile(uri);
   } catch (error) {
@@ -67,11 +93,10 @@ export async function fetchCellData(uriString: string): Promise<CellData> {
     notebook => notebook.uri.path === uri.path
   );
   const result: CellData = {
-    baseUri: uriString,
+    baseUri: Utils.dirname(fixNotebookUri(uri)).toString(),
     cells: [],
   };
   if (notebook) {
-    result.baseUri = notebook.uri.toString();
     for (const cell of notebook.getCells()) {
       if (cell.kind === vscode.NotebookCellKind.Code) {
         result.cells.push({
