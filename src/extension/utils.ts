@@ -26,6 +26,31 @@ import * as vscode from 'vscode';
 import {CellData, FileHandler} from '../common/types';
 
 /**
+ * Transforms vscode-notebook-cell: Uris to file: or vscode-vfs: URLS
+ * based on the workspace, because VS Code can't use a vscode-notebook-cell:
+ * as a relative url for non-cells, like external Malloy files.
+ *
+ * @param uri Document uri
+ * @returns Uri with an appropriate protocol
+ */
+const fixNotebookUri = (uri: vscode.Uri) => {
+  if (uri.scheme === 'vscode-notebook-cell') {
+    const {scheme} = vscode.workspace.workspaceFolders?.[0].uri || {
+      scheme: 'file:',
+    };
+    const {authority, path, query} = uri;
+    uri = vscode.Uri.from({
+      scheme,
+      authority,
+      path,
+      query,
+    });
+  }
+
+  return uri;
+};
+
+/**
  * Fetches the text contents of a Uri for the Malloy compiler. For most Uri
  * types this means either from the open file cache, or from VS Code's
  * file system.
@@ -52,7 +77,7 @@ export async function fetchFile(uriString: string): Promise<string> {
 }
 
 export async function fetchBinaryFile(uriString: string): Promise<Uint8Array> {
-  const uri = vscode.Uri.parse(uriString);
+  const uri = fixNotebookUri(vscode.Uri.parse(uriString));
   try {
     return await vscode.workspace.fs.readFile(uri);
   } catch (error) {
