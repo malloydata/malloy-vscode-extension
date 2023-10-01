@@ -226,11 +226,11 @@ source: flights is table('malloy-data.faa.flights') {
 View [the full documentation](${DOCS_ROOT}/language/fields.html#measures).
 `;
 
-const SOURCE_QUERY_DOC = `Use \`query\` to define a named query which can be referenced and/or refined.
+const SOURCE_VIEW_DOC = `Use \`view\` to define a named view which can be referenced and/or refined.
 
 \`\`\`malloy
 source: flights is table('malloy-data.faa.flights') {
-  query: by_carrier is {
+  view: by_carrier is {
     group_by: carrier,
     aggregate: flight_count
   }
@@ -360,7 +360,7 @@ export const COMPLETION_DOCS: {
   explore_property: {
     dimension: SOURCE_DIMENSION_DOC,
     measure: SOURCE_MEASURE_DOC,
-    query: SOURCE_QUERY_DOC,
+    view: SOURCE_VIEW_DOC,
     join_one: SOURCE_JOIN_ONE_DOC,
     join_many: SOURCE_JOIN_MANY_DOC,
     join_cross: SOURCE_JOIN_CROSS_DOC,
