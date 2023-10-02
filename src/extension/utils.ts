@@ -24,7 +24,6 @@
 
 import * as vscode from 'vscode';
 import {CellData, FileHandler} from '../common/types';
-import {Utils} from 'vscode-uri';
 
 /**
  * Transforms vscode-notebook-cell: Uris to file: or vscode-vfs: URLS
@@ -72,7 +71,7 @@ export async function fetchFile(uriString: string): Promise<string> {
   if (openDocument !== undefined) {
     return openDocument.getText();
   } else {
-    const contents = await vscode.workspace.fs.readFile(fixNotebookUri(uri));
+    const contents = await vscode.workspace.fs.readFile(uri);
     return new TextDecoder('utf-8').decode(contents);
   }
 }
@@ -93,10 +92,11 @@ export async function fetchCellData(uriString: string): Promise<CellData> {
     notebook => notebook.uri.path === uri.path
   );
   const result: CellData = {
-    baseUri: Utils.dirname(fixNotebookUri(uri)).toString(),
+    baseUri: uriString,
     cells: [],
   };
   if (notebook) {
+    result.baseUri = notebook.uri.toString();
     for (const cell of notebook.getCells()) {
       if (cell.kind === vscode.NotebookCellKind.Code) {
         result.cells.push({
