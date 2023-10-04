@@ -145,7 +145,7 @@ export async function getSchemaCompletions(
       } catch (error: unknown) {
         // eslint-disable-next-line no-console
         console.error(
-          `Error fetching model for document sources and imports '${__filename}': ${error}`
+          `Error fetching model for document sources and imports '${document.uri}': ${error}`
         );
       }
       if (model) {
