@@ -131,6 +131,10 @@ export interface MessageDownload {
   downloadOptions: QueryDownloadOptions;
 }
 
+export interface MessageRefreshSchemaCache {
+  uri: string;
+}
+
 export type FetchMessage =
   | MessageFetch
   | MessageFetchBinary
@@ -147,7 +151,7 @@ export interface MessageMap {
   'malloy/fetchCellData': MessageFetchCellData;
   'malloy/run': MessageRun;
   'malloy/download': MessageDownload;
-  'malloy/run-msql': MessageRunMSQL;
+  'malloy/refreshSchemaCache': MessageRefreshSchemaCache;
 }
 
 /**

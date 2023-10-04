@@ -233,6 +233,7 @@ class MalloyController {
           uri: document.uri.toString(),
           version: document.version,
           languageId: document.languageId,
+          refreshSchemaCache: false,
         };
         execution.replaceOutput([
           new vscode.NotebookCellOutput([

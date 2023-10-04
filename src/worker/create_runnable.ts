@@ -31,28 +31,29 @@ import {WorkerQuerySpec} from '../common/worker_message_types';
 import {CellData} from '../common/types';
 
 export const createModelMaterializer = async (
-  query: WorkerQuerySpec,
+  uri: string,
   runtime: Runtime,
-  cellData: CellData | null
+  cellData: CellData | null,
+  refreshSchemaCache?: boolean
 ): Promise<ModelMaterializer | null> => {
   console.debug('createModelMaterializer', query.uri, 'begin');
 
   let mm: ModelMaterializer | null = null;
-  const queryFileURL = new URL(query.uri);
+  const queryFileURL = new URL(uri);
   if (cellData) {
     const importBaseURL = new URL(cellData.baseUri);
     for (const cell of cellData.cells) {
       if (cell.languageId === 'malloy') {
         const url = new URL(cell.uri);
         if (mm) {
-          mm = mm.extendModel(url, {importBaseURL});
+          mm = mm.extendModel(url, {importBaseURL, refreshSchemaCache});
         } else {
-          mm = runtime.loadModel(url, {importBaseURL});
+          mm = runtime.loadModel(url, {importBaseURL, refreshSchemaCache});
         }
       }
     }
   } else {
-    mm = runtime.loadModel(queryFileURL);
+    mm = runtime.loadModel(queryFileURL, {refreshSchemaCache});
   }
   console.debug('createModelMaterializer', query.uri, 'end');
   return mm;
@@ -65,7 +66,7 @@ export const createRunnable = async (
 ): Promise<SQLBlockMaterializer | QueryMaterializer> => {
   console.debug('createRunnable', query.uri, 'begin');
   let runnable: QueryMaterializer | SQLBlockMaterializer;
-  const mm = await createModelMaterializer(query, runtime, cellData);
+  const mm = await createModelMaterializer(query.uri, runtime, cellData);
   if (!mm) {
     throw new Error('Missing model definition');
   }

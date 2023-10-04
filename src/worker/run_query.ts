@@ -112,7 +112,7 @@ const runMSQLCell = async (
   });
 
   const modelMaterializer = await createModelMaterializer(
-    query,
+    query.uri,
     runtime,
     cellData
   );
@@ -185,13 +185,16 @@ const runMSQLCell = async (
 
   // rendering is nice if we can do it. try to get a structdef for the last query,
   // and if we get one, return Result object for rendering
-  const structDefAttempt = await connection.fetchSchemaForSQLBlock({
-    type: 'sqlBlock',
-    selectStr: compiledStatement
-      .replaceAll(/^--[^\n]*$/gm, '') // Remove comments
-      .replace(/;\s*$/, ''), // Remove trailing `;`
-    name: compiledStatement,
-  });
+  const structDefAttempt = await connection.fetchSchemaForSQLBlock(
+    {
+      type: 'sqlBlock',
+      selectStr: compiledStatement
+        .replaceAll(/^--[^\n]*$/gm, '') // Remove comments
+        .replace(/;\s*$/, ''), // Remove trailing `;`
+      name: compiledStatement,
+    },
+    {refreshSchemaCache: false}
+  );
 
   if (cancellationToken.isCancellationRequested) return;
 

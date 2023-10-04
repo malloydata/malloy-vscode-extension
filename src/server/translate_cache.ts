@@ -61,7 +61,8 @@ export class TranslateCache implements TranslateCache {
         const model = await this.translateWithCache(
           event.uri,
           event.version,
-          event.languageId
+          event.languageId,
+          event.refreshSchemaCache
         );
         if (model) {
           return {
@@ -98,7 +99,8 @@ export class TranslateCache implements TranslateCache {
 
   async createModelMaterializer(
     uri: string,
-    runtime: Runtime
+    runtime: Runtime,
+    refreshSchemaCache?: boolean
   ): Promise<ModelMaterializer | null> {
     this.connection.console.info(`createModelMaterializer ${uri} start`);
     let modelMaterializer: ModelMaterializer | null = null;
@@ -112,14 +114,18 @@ export class TranslateCache implements TranslateCache {
           if (modelMaterializer) {
             modelMaterializer = modelMaterializer.extendModel(url, {
               importBaseURL,
+              refreshSchemaCache,
             });
           } else {
-            modelMaterializer = runtime.loadModel(url, {importBaseURL});
+            modelMaterializer = runtime.loadModel(url, {
+              importBaseURL,
+              refreshSchemaCache,
+            });
           }
         }
       }
     } else {
-      modelMaterializer = runtime.loadModel(queryFileURL);
+      modelMaterializer = runtime.loadModel(queryFileURL, {refreshSchemaCache});
     }
     this.connection.console.info(`createModelMaterializer ${uri} end`);
     return modelMaterializer;
@@ -166,7 +172,8 @@ export class TranslateCache implements TranslateCache {
       );
       const modelMaterializer = await this.createModelMaterializer(
         uri,
-        runtime
+        runtime,
+        false
       );
       const model = await modelMaterializer?.getModel();
       if (model) {
@@ -187,13 +194,14 @@ export class TranslateCache implements TranslateCache {
   async translateWithCache(
     uri: string,
     currentVersion: number,
-    languageId: string
+    languageId: string,
+    refreshSchemaCache?: boolean
   ): Promise<Model | undefined> {
     this.connection.console.info(
       `translateWithCache ${uri} ${currentVersion} start`
     );
     const entry = this.cache.get(uri);
-    if (entry && entry.version === currentVersion) {
+    if (entry && entry.version === currentVersion && !refreshSchemaCache) {
       const {model} = entry;
       this.connection.console.info(
         `translateWithCache ${uri} ${currentVersion} hit`
@@ -214,7 +222,8 @@ export class TranslateCache implements TranslateCache {
 
       const modelMaterializer = await this.createModelMaterializer(
         uri,
-        runtime
+        runtime,
+        refreshSchemaCache
       );
 
       for (const malloyQuery of parse.embeddedMalloyQueries) {
@@ -255,7 +264,8 @@ export class TranslateCache implements TranslateCache {
 
       const modelMaterializer = await this.createModelMaterializer(
         uri,
-        runtime
+        runtime,
+        refreshSchemaCache
       );
       const model = await modelMaterializer?.getModel();
       if (model) {
