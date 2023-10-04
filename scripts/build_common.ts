@@ -31,6 +31,7 @@ import svgrPlugin from 'esbuild-plugin-svgr';
 import {fetchKeytar, targetKeytarMap} from './utils/fetch_keytar';
 import {fetchDuckDB, targetDuckDBMap} from './utils/fetch_duckdb';
 import {outDir, Target} from './constants';
+import {litCssPlugin} from 'esbuild-plugin-lit-css';
 
 import {generateDisclaimer} from './license_disclaimer';
 
@@ -280,6 +281,7 @@ export async function doBuild(
     svgrPlugin({
       typescript: true,
     }),
+    litCssPlugin(),
     ...nodeWebviewPlugins,
   ];
 
@@ -307,7 +309,7 @@ export async function doBuild(
     entryPoints: [
       './src/extension/notebook/renderer/malloy_entry.tsx',
       './src/extension/notebook/renderer/json_entry.tsx',
-      './src/extension/notebook/renderer/schema_entry.tsx',
+      './src/extension/notebook/renderer/schema_entry.ts',
       './src/extension/notebook/renderer/sql_entry.tsx',
     ],
     entryNames: '[name]',
