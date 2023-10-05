@@ -26,22 +26,38 @@ import {DocumentSymbol as MalloyDocumentSymbol} from '@malloydata/malloy';
 import {DocumentSymbol, SymbolKind} from 'vscode-languageserver/node';
 import {parseWithCache} from '../parse_cache';
 
-function mapSymbol(symbol: MalloyDocumentSymbol): DocumentSymbol {
-  const type = symbol.type;
+function mapSymbol({
+  name,
+  range,
+  type,
+  children,
+}: MalloyDocumentSymbol): DocumentSymbol {
+  let kind: SymbolKind;
+  let detail = type;
+  switch (type) {
+    case 'explore':
+      kind = SymbolKind.Namespace;
+      detail = 'source';
+      break;
+    case 'query':
+      kind = SymbolKind.Class;
+      break;
+    case 'join':
+      kind = SymbolKind.Interface;
+      break;
+    case 'unnamed_query':
+      kind = SymbolKind.Class;
+      break;
+    default:
+      kind = SymbolKind.Field;
+  }
   return {
-    name: symbol.name || 'unnamed',
-    range: symbol.range.toJSON(),
-    detail: symbol.type,
-    kind:
-      type === 'explore'
-        ? SymbolKind.Namespace
-        : type === 'query'
-        ? SymbolKind.Class
-        : type === 'join'
-        ? SymbolKind.Interface
-        : SymbolKind.Field,
-    selectionRange: symbol.range.toJSON(),
-    children: symbol.children.map(mapSymbol),
+    name: name || 'unnamed',
+    range: range.toJSON(),
+    detail,
+    kind,
+    selectionRange: range.toJSON(),
+    children: children.map(mapSymbol),
   };
 }
 

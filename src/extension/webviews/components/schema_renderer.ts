@@ -24,7 +24,7 @@
 import {LitElement, html} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
 
-import styles from './schema_renderer.css';
+import {styles} from './schema_renderer.css';
 import {Explore, Field, NamedQuery, QueryField} from '@malloydata/malloy';
 import {
   exploreSubtype,

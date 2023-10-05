@@ -31,7 +31,6 @@ import svgrPlugin from 'esbuild-plugin-svgr';
 import {fetchKeytar, targetKeytarMap} from './utils/fetch_keytar';
 import {fetchDuckDB, targetDuckDBMap} from './utils/fetch_duckdb';
 import {outDir, Target} from './constants';
-import {litCssPlugin} from 'esbuild-plugin-lit-css';
 
 import {generateDisclaimer} from './license_disclaimer';
 
@@ -281,7 +280,6 @@ export async function doBuild(
     svgrPlugin({
       typescript: true,
     }),
-    litCssPlugin(),
     ...nodeWebviewPlugins,
   ];
 
