@@ -21,24 +21,47 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import React, {useEffect} from 'react';
-import styled from 'styled-components';
+import {LitElement, css, html} from 'lit';
+import {customElement, property} from 'lit/decorators.js';
+import {
+  provideVSCodeDesignSystem,
+  vsCodeButton,
+} from '@vscode/webview-ui-toolkit';
 
-import {HelpMessageType} from '../../../common/message_types';
-import {VSCodeButton} from '@vscode/webview-ui-toolkit/react';
-import {useHelpVSCodeContext} from './help_vscode_context';
+provideVSCodeDesignSystem().register(vsCodeButton());
 
-export const App: React.FC = () => {
-  const vscode = useHelpVSCodeContext();
+const helpPageStyles = css`
+  :root {
+    display: block;
+  }
 
-  // TODO crs this might only be necessary because the MessageManager makes it necessary
-  useEffect(() => {
-    vscode.postMessage({type: HelpMessageType.AppReady});
-  });
+  .view {
+    padding: 1em 20px 1em;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
 
-  return (
-    <ViewDiv>
-      <Help>
+  .help {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  button-link {
+    width: 100%;
+    max-width: 300px;
+  }
+`;
+
+@customElement('help-page')
+export class HelpPage extends LitElement {
+  static override styles = [helpPageStyles];
+
+  override render() {
+    return html`<div class="view">
+      <div class="help">
         <h3 id="about-malloy">About Malloy</h3>
         <p>
           Malloy is an open source language for describing data relationships
@@ -51,58 +74,61 @@ export const App: React.FC = () => {
           data models, querying and transforming data, and creating simple
           visualizations and dashboards.
         </p>
-      </Help>
-      <Help>
+      </div>
+      <div class="help">
         <h3>Malloy Resources</h3>
-      </Help>
+      </div>
 
-      <ButtonLink href="https://malloydata.github.io/documentation/user_guides/basic.html">
+      <button-link
+        href="https://malloydata.github.io/documentation/user_guides/basic.html"
+      >
         Quick Start Guide
-      </ButtonLink>
-      <ButtonLink href="https://malloydata.github.io/documentation/language/sql_to_malloy.html">
+      </button-link>
+      <button-link
+        href="https://malloydata.github.io/documentation/language/sql_to_malloy.html"
+      >
         Language Reference
-      </ButtonLink>
-      <ButtonLink href="https://github.com/malloydata/malloy-samples/releases/latest">
+      </button-link>
+      <button-link
+        href="https://github.com/malloydata/malloy-samples/archive/refs/heads/main.zip"
+      >
         Download Sample Models
-      </ButtonLink>
-      <ButtonLink href="https://malloydata.github.io/documentation/index.html">
+      </button-link>
+      <button-link href="https://malloydata.github.io/documentation/index.html">
         View Documentation
-      </ButtonLink>
-    </ViewDiv>
-  );
-};
+      </button-link>
+    </div>`;
+  }
+}
 
-const ButtonLink: React.FC<{href: string; small?: boolean}> = ({
-  href,
-  children,
-  small = false,
-}) => {
-  return (
-    <a
-      href={href}
-      style={{
-        textDecoration: 'none',
-        width: small ? '100px' : '100%',
-        maxWidth: '300px',
-      }}
-    >
-      <VSCodeButton style={{height: '26px', width: '100%', maxWidth: '300px'}}>
-        {children}
-      </VSCodeButton>
-    </a>
-  );
-};
+const buttonLinkStyles = css`
+  :root {
+    display: block;
+    width: 100%;
+  }
 
-const ViewDiv = styled.div`
-  padding: 1em 20px 1em;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
+  a {
+    text-decoration: none;
+    width: 100%;
+  }
+
+  vscode-button {
+    height: 26px;
+    width: 100%;
+  }
 `;
 
-const Help = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-`;
+@customElement('button-link')
+export class ButtonLink extends LitElement {
+  static override styles = [buttonLinkStyles];
+
+  @property() href = '';
+
+  override render() {
+    return html`<a href=${this.href}>
+      <vscode-button>
+        <slot></slot>
+      </vscode-button>
+    </a>`;
+  }
+}

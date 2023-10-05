@@ -121,7 +121,7 @@ export function getWebviewHtml(
               </g>
             </svg>
           </div>
-        </HorizontalCenter>
+        </div>
       </div>
     </div>
   </body>

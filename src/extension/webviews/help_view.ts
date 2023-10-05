@@ -24,8 +24,6 @@
 import * as vscode from 'vscode';
 import {Utils} from 'vscode-uri';
 import {getWebviewHtml} from '../webviews';
-import {HelpMessageType, HelpPanelMessage} from '../../common/message_types';
-import {WebviewMessageManager} from '../webview_message_manager';
 
 export class HelpViewProvider implements vscode.WebviewViewProvider {
   private _view?: vscode.WebviewView;
@@ -55,19 +53,5 @@ export class HelpViewProvider implements vscode.WebviewViewProvider {
       entrySrc.toString(),
       webviewView.webview
     );
-
-    const messageManager = new WebviewMessageManager<HelpPanelMessage>(
-      webviewView
-    );
-
-    messageManager.onReceiveMessage(message => {
-      if (message.type === HelpMessageType.EditConnections) {
-        vscode.commands.executeCommand('malloy.editConnections');
-      }
-    });
-  }
-
-  public showHelpFor(keyword: string): void {
-    this._view?.webview.postMessage({command: 'keyword', keyword});
   }
 }
