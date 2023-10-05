@@ -41,7 +41,7 @@ export const App: React.FC = () => {
       <Help>
         <h3 id="about-malloy">About Malloy</h3>
         <p>
-          Malloy is an experimental language for describing data relationships
+          Malloy is an open source language for describing data relationships
           and transformations. It is both a semantic modeling language and a
           querying language that runs queries against a relational database.
           Malloy currently supports BigQuery, Postgres, and DuckDB.
