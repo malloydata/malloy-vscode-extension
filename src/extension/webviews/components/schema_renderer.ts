@@ -200,11 +200,9 @@ export class StructItem extends LitElement {
 
   @property({type: Object}) explore: Explore | null = null;
   @property({type: String}) path = '';
-  @property({type: Function}) onFieldClick?: (field: Field) => void;
-  @property({type: Function}) onQueryClick?: (
-    query: NamedQuery | QueryField
-  ) => void;
-  @property({type: Function}) onPreviewClick?: (explore: Explore) => void;
+  @property() onFieldClick?: (field: Field) => void;
+  @property() onQueryClick?: (query: NamedQuery | QueryField) => void;
+  @property() onPreviewClick?: (explore: Explore) => void;
   @property({type: Boolean}) hidden = false;
 
   toggleHidden = () => {
@@ -314,13 +312,11 @@ export class StructItem extends LitElement {
 export class SchemaRenderer extends LitElement {
   static override styles = [styles];
 
-  @property({type: Object}) explores: Explore[] = [];
-  @property({type: Object}) queries: NamedQuery[] = [];
-  @property({type: Function}) onFieldClick?: (field: Field) => void;
-  @property({type: Function}) onQueryClick?: (
-    query: NamedQuery | QueryField
-  ) => void;
-  @property({type: Function}) onPreviewClick?: (explore: Explore) => void;
+  @property({type: Array}) explores: Explore[] = [];
+  @property({type: Array}) queries: NamedQuery[] = [];
+  @property() onFieldClick?: (field: Field) => void;
+  @property() onQueryClick?: (query: NamedQuery | QueryField) => void;
+  @property() onPreviewClick?: (explore: Explore) => void;
   @property({type: Boolean}) defaultShow = false;
 
   render() {

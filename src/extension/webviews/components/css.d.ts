@@ -1,4 +1,6 @@
 declare module '*.css' {
-  const styles: any;
+  import type {CSSResultGroup} from 'lit';
+
+  const styles: CSSResultGroup;
   export default styles;
 }
