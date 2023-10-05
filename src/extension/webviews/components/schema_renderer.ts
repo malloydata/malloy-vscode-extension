@@ -171,89 +171,35 @@ Path: ${path}${path ? '.' : ''}${fieldName}
 Type: ${type}`;
 }
 
-@customElement('field-item')
-export class FieldItem extends LitElement {
-  static override styles = [styles];
-
-  @property({type: Object}) field!: Field;
-  @property({type: String}) path!: string;
-  @property({}) onFieldClick?: (field: Field) => void;
-
-  onClick = () => {
-    this.onFieldClick?.(this.field);
+/**
+ * Render a query item sub-element
+ *
+ * @param query Query item to render
+ * @param onQueryClick Callback for query click
+ * @returns Query item HTML fragment
+ */
+const queryItem = (
+  query: NamedQuery | QueryField,
+  onQueryClick?: (query: NamedQuery | QueryField) => void
+) => {
+  const onClick = () => {
+    onQueryClick?.(query);
   };
 
-  render() {
-    const clickable = this.onFieldClick ? 'clickable' : '';
+  const clickable = onQueryClick ? 'clickable' : '';
 
-    return html`<div
-      class=${`field ${clickable}`}
-      title=${buildTitle(this.field, this.path)}
-      @click=${this.onClick}
-    >
-      ${getIconElement(fieldType(this.field), isFieldAggregate(this.field))}
-      <span class="field_name">${this.field.name}</span>
-    </div>`;
-  }
-}
-
-@customElement('query-item')
-export class QueryItem extends LitElement {
-  static override styles = [styles];
-
-  @property({type: Object}) query!: NamedQuery | QueryField;
-  @property({type: String}) path!: string;
-  @property({}) onQueryClick?: (query: NamedQuery | QueryField) => void;
-
-  onClick = () => {
-    this.onQueryClick?.(this.query);
-  };
-
-  render() {
-    const clickable = this.onQueryClick ? 'clickable' : '';
-
-    return html`<div class=${`field ${clickable}`} @click=${this.onClick}>
-      ${getIconElement('query', false)}
-      <span class="field_name">${this.query.name}</span>
-    </div>`;
-  }
-}
-
-@customElement('field-list')
-export class FieldList extends LitElement {
-  static override styles = [styles];
-
-  @property({type: Object}) fields: Field[] = [];
-  @property({type: String}) path!: string;
-  @property({type: Function}) onFieldClick?: (field: Field) => void;
-  @property({type: Function}) onQueryClick?: (
-    query: NamedQuery | QueryField
-  ) => void;
-
-  render() {
-    return html`<div class="field_list">
-      ${this.fields.map(field =>
-        field.isQuery()
-          ? html`<query-item
-              .query=${field}
-              .onQueryClick=${this.onQueryClick}
-            />`
-          : html`<field-item
-              .field=${field}
-              .path=${this.path}
-              .onFieldClick=${this.onFieldClick}
-            />`
-      )}
-    </div>`;
-  }
-}
+  return html`<div class=${`field ${clickable}`} @click=${onClick}>
+    ${getIconElement('query', false)}
+    <span class="field_name">${query.name}</span>
+  </div>`;
+};
 
 @customElement('struct-item')
 export class StructItem extends LitElement {
   static override styles = [styles];
 
-  @property({type: Object}) explore!: Explore;
-  @property({type: String}) path!: string;
+  @property({type: Object}) explore: Explore | undefined;
+  @property({type: String}) path: string | undefined;
   @property({type: Function}) onFieldClick?: (field: Field) => void;
   @property({type: Function}) onQueryClick?: (
     query: NamedQuery | QueryField
@@ -266,15 +212,49 @@ export class StructItem extends LitElement {
   };
 
   onClick = (event: MouseEvent) => {
+    if (!this.explore) {
+      return;
+    }
     event.preventDefault();
     event.stopPropagation();
     this.onPreviewClick?.(this.explore);
   };
 
+  fieldItem(field: Field, path: string) {
+    const onClick = () => {
+      this.onFieldClick?.(field);
+    };
+
+    const clickable = this.onFieldClick ? 'clickable' : '';
+
+    return html`<div
+      class=${`field ${clickable}`}
+      title=${buildTitle(field, path)}
+      @click=${onClick}
+    >
+      ${getIconElement(fieldType(field), isFieldAggregate(field))}
+      <span class="field_name">${field.name}</span>
+    </div>`;
+  }
+
+  fieldList(fields: Field[], path: string) {
+    return html`<div class="field_list">
+      ${fields.map(field =>
+        field.isQuery()
+          ? queryItem(field, this.onQueryClick)
+          : this.fieldItem(field, path)
+      )}
+    </div>`;
+  }
+
   render() {
-    const subtype = exploreSubtype(this.explore);
+    const {explore, path} = this;
+    if (!explore || typeof path !== 'string') {
+      return;
+    }
+    const subtype = exploreSubtype(explore);
     const {queries, dimensions, measures, explores} = bucketFields(
-      this.explore.allFields
+      explore.allFields
     );
 
     const buildPath = (explore: Explore, path: string) => {
@@ -283,13 +263,13 @@ export class StructItem extends LitElement {
 
     return html`<li
       class="schema ${this.hidden ? 'hidden' : ''}"
-      title=${buildTitle(this.explore, this.path)}
+      title=${buildTitle(explore, path)}
     >
       <div @click=${this.toggleHidden}>
         <span>${this.hidden ? '▶' : '▼'}</span>
         ${getIconElement(`struct_${subtype}`, false)}
-        <b class="explore_name">${getExploreName(this.explore, this.path)}</b>
-        ${this.onPreviewClick && !this.explore.hasParentExplore()
+        <b class="explore_name">${getExploreName(explore, path)}</b>
+        ${this.onPreviewClick && !explore.hasParentExplore()
           ? html`<span class="preview" @click=${this.onClick}> Preview </span>`
           : null}
       </div>
@@ -297,31 +277,19 @@ export class StructItem extends LitElement {
         ${queries.length
           ? html`<li class="fields">
               <label>Queries</label>
-              <field-list
-                .fields=${queries}
-                .path=${this.path}
-                .onQueryClick=${this.onQueryClick}
-              />
+              ${this.fieldList(queries, path)}
             </li>`
           : null}
         ${dimensions.length
           ? html`<li class="fields">
               <label>Dimensions</label>
-              <field-list
-                .fields=${dimensions}
-                .path=${this.path}
-                .onFieldClick=${this.onFieldClick}
-              />
+              ${this.fieldList(dimensions, path)}
             </li>`
           : null}
         ${measures.length
           ? html`<li class="fields">
               <label>Measures</label>
-              <field-list
-                .fields=${measures}
-                .path=${this.path}
-                .onFieldClick=${this.onFieldClick}
-              />
+              ${this.fieldList(measures, path)}
             </li>`
           : null}
         ${explores.length
@@ -329,7 +297,7 @@ export class StructItem extends LitElement {
               explore =>
                 html`<struct-item
                   .explore=${explore}
-                  .path=${buildPath(explore, this.path)}
+                  .path=${buildPath(explore, path)}
                   .onFieldClick=${this.onFieldClick}
                   .onPreviewClick=${this.onPreviewClick}
                   .onQueryClick=${this.onQueryClick}
@@ -363,13 +331,7 @@ export class SchemaRenderer extends LitElement {
         <div class="field_list">
           ${this.queries
             .sort(sortByName)
-            .map(
-              query =>
-                html`<query-item
-                  .query=${query}
-                  .onQueryClick=${this.onQueryClick}
-                />`
-            )}
+            .map(query => queryItem(query, this.onQueryClick))}
         </div>
       </li>
       ${this.explores
