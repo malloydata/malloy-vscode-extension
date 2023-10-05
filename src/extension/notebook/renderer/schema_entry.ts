@@ -66,7 +66,7 @@ export const activate: ActivationFunction = ({postMessage}) => {
 @customElement('schema-renderer-wrapper')
 export class SchemaRendererWrapper extends LitElement {
   @property({type: Object}) results?: FetchModelMessage;
-  @property({type: Function}) postMessage?: (message: unknown) => void;
+  @property({type: Object}) postMessage?: (message: unknown) => void;
 
   onFieldClick = (field: Field) => {
     const type = fieldType(field);
