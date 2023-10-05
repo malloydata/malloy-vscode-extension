@@ -21,9 +21,9 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {html} from 'lit';
+import {svg} from 'lit';
 
-export const averageIcon = html`
+export const averageIcon = svg`
   <svg
     width="16px"
     height="16px"
@@ -50,7 +50,7 @@ export const averageIcon = html`
   </svg>
 `;
 
-export const booleanIcon = html`
+export const booleanIcon = svg`
   <svg
     width="16px"
     height="16px"
@@ -94,7 +94,7 @@ export const booleanIcon = html`
   </svg>
 `;
 
-export const databaseIcon = html`
+export const databaseIcon = svg`
   <svg
     width="78px"
     height="73px"
@@ -128,7 +128,7 @@ export const databaseIcon = html`
   </svg>
 `;
 
-export const distanceIcon = html`
+export const distanceIcon = svg`
   <svg
     width="16px"
     height="16px"
@@ -155,7 +155,7 @@ export const distanceIcon = html`
   </svg>
 `;
 
-export const locationIcon = html`
+export const locationIcon = svg`
   <svg
     width="16px"
     height="16px"
@@ -191,7 +191,7 @@ export const locationIcon = html`
   </svg>
 `;
 
-export const fieldInfoIcon = html` <svg
+export const fieldInfoIcon = svg` <svg
   width="16px"
   height="16px"
   viewBox="0 0 16 16"
@@ -227,7 +227,7 @@ export const fieldInfoIcon = html` <svg
   </g>
 </svg>`;
 
-export const percentIcon = html` <svg
+export const percentIcon = svg` <svg
   width="16px"
   height="16px"
   viewBox="3 3 10 10"
@@ -252,7 +252,7 @@ export const percentIcon = html` <svg
   </g>
 </svg>`;
 
-export const manyToOneIcon = html` <svg
+export const manyToOneIcon = svg` <svg
   width="16px"
   height="16px"
   viewBox="0 0 25 25"
@@ -321,7 +321,7 @@ export const manyToOneIcon = html` <svg
   </g>
 </svg>`;
 
-export const numberAggregateIcon = html`
+export const numberAggregateIcon = svg`
   <?xml version="1.0" encoding="UTF-8"?>
   <svg
     width="16px"
@@ -349,7 +349,7 @@ export const numberAggregateIcon = html`
   </svg>
 `;
 
-export const numberIcon = html`
+export const numberIcon = svg`
   <svg
     width="16px"
     height="16px"
@@ -376,7 +376,7 @@ export const numberIcon = html`
   </svg>
 `;
 
-export const oneToManyIcon = html`
+export const oneToManyIcon = svg`
   <svg
     width="16px"
     height="16px"
@@ -442,7 +442,7 @@ export const oneToManyIcon = html`
   </svg>
 `;
 
-export const oneToOneIcon = html` <svg
+export const oneToOneIcon = svg` <svg
   width="16px"
   height="16px"
   viewBox="0 0 25 25"
@@ -483,7 +483,7 @@ export const oneToOneIcon = html` <svg
   </g>
 </svg>`;
 
-export const stringIcon = html`
+export const stringIcon = svg`
   <svg
     width="16px"
     height="16px"
@@ -510,7 +510,7 @@ export const stringIcon = html`
   </svg>
 `;
 
-export const structIcon = html`
+export const structIcon = svg`
   <svg
     width="15px"
     height="14px"
@@ -556,7 +556,7 @@ export const structIcon = html`
   </svg>
 `;
 
-export const timeIcon = html`
+export const timeIcon = svg`
   <svg
     width="16px"
     height="16px"
@@ -587,7 +587,7 @@ export const timeIcon = html`
   </svg>
 `;
 
-export const timestampIcon = html`
+export const timestampIcon = svg`
   <svg
     width="16px"
     height="16px"
@@ -618,7 +618,7 @@ export const timestampIcon = html`
   </svg>
 `;
 
-export const queryIcon = html`
+export const queryIcon = svg`
   <svg
     width="16px"
     height="16px"
@@ -645,7 +645,7 @@ export const queryIcon = html`
   </svg>
 `;
 
-export const viewContainerIcon = html`
+export const viewContainerIcon = svg`
   <svg
     width="15px"
     height="14px"
