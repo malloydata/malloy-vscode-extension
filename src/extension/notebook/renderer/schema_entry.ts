@@ -21,14 +21,14 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import ReactDOM from 'react-dom';
-import React from 'react';
-import {StyleSheetManager} from 'styled-components';
-import {ActivationFunction} from 'vscode-notebook-renderer';
-import {SchemaRenderer} from '../../webviews/components/SchemaRenderer';
+import {LitElement, html, render} from 'lit';
+import {customElement, property} from 'lit/decorators.js';
+
 import {Explore, Field, NamedQuery, QueryField} from '@malloydata/malloy';
-import {fieldType} from '../../../common/schema';
+import {ActivationFunction} from 'vscode-notebook-renderer';
 import {FetchModelMessage} from '../../../common/message_types';
+import {fieldType} from '../../../common/schema';
+import '../../webviews/components/schema_renderer';
 
 export const activate: ActivationFunction = ({postMessage}) => {
   return {
@@ -45,23 +45,16 @@ export const activate: ActivationFunction = ({postMessage}) => {
         throw new Error('Element #root not found');
       }
 
-      ReactDOM.render(
-        <StyleSheetManager target={root}>
-          <SchemaRendererWrapper
-            results={info.json()}
-            postMessage={postMessage}
-          />
-        </StyleSheetManager>,
+      render(
+        html`<schema-renderer-wrapper
+          .results=${info.json()}
+          .postMessage=${postMessage}
+        />`,
         root
       );
     },
   };
 };
-
-interface SchemaRendererWrapperProps {
-  results: FetchModelMessage;
-  postMessage?: (message: unknown) => void;
-}
 
 /**
  * SchemaRendererWrapper exists as a buffer for StyleSheetManager, which
@@ -69,25 +62,13 @@ interface SchemaRendererWrapperProps {
  * we use useEffect() to delay rendering the actual contents until
  * it's ready.
  */
-const SchemaRendererWrapper = ({
-  results,
-  postMessage,
-}: SchemaRendererWrapperProps) => {
-  const [explores, setExplores] = React.useState<Explore[]>();
-  const [queries, setQueries] = React.useState<NamedQuery[]>();
 
-  React.useEffect(() => {
-    if (results) {
-      setExplores(results.explores.map(json => Explore.fromJSON(json)));
-      setQueries(results.queries);
-    }
-  }, [results]);
+@customElement('schema-renderer-wrapper')
+export class SchemaRendererWrapper extends LitElement {
+  @property({type: Object}) results?: FetchModelMessage;
+  @property({type: Function}) postMessage?: (message: unknown) => void;
 
-  if (!explores || !queries) {
-    return null;
-  }
-
-  const onFieldClick = (field: Field) => {
+  onFieldClick = (field: Field) => {
     const type = fieldType(field);
 
     let path = field.name;
@@ -104,7 +85,7 @@ const SchemaRendererWrapper = ({
         `query: ${topLevelExplore.name}->${path}`,
         `${topLevelExplore.name}->${path}`,
       ];
-      postMessage?.({type, args});
+      this.postMessage?.({type, args});
     } else {
       let path = field.name;
       let current: Explore = field.parentExplore;
@@ -116,37 +97,47 @@ const SchemaRendererWrapper = ({
     }
   };
 
-  const onQueryClick = (query: NamedQuery | QueryField) => {
+  onQueryClick = (query: NamedQuery | QueryField) => {
     if ('parentExplore' in query) {
       const type = 'malloy.runQuery';
       const arg1 = `query: ${query.parentExplore.name}->${query.name}`;
       const arg2 = `${query.parentExplore.name}->${query.name}`;
       const args = [arg1, arg2];
-      postMessage?.({type, args});
+      this.postMessage?.({type, args});
     } else {
       const type = 'malloy.runNamedQuery';
       const args = [query.name];
-      postMessage?.({type, args});
+      this.postMessage?.({type, args});
     }
   };
 
-  const onPreviewClick = (explore: Explore) => {
+  onPreviewClick = (explore: Explore) => {
     const type = 'malloy.runQuery';
     const args = [
       `query: ${explore.name}->{ project: *; limit: 20 }`,
       `preview ${explore.name}`,
       'html',
     ];
-    postMessage?.({type, args});
+    this.postMessage?.({type, args});
   };
 
-  return (
-    <SchemaRenderer
-      explores={explores}
-      queries={queries}
-      onFieldClick={onFieldClick}
-      onQueryClick={onQueryClick}
-      onPreviewClick={onPreviewClick}
-    />
-  );
-};
+  constructor() {
+    super();
+  }
+
+  override render() {
+    if (!this.results) {
+      return null;
+    }
+    const explores = this.results.explores.map(json => Explore.fromJSON(json));
+
+    return html`<schema-renderer
+      ?defaultShow=${false}
+      .explores=${explores}
+      .queries=${this.results.queries}
+      .onFieldClick=${this.onFieldClick}
+      .onQueryClick=${this.onQueryClick}
+      .onPreviewClick=${this.onPreviewClick}
+    />`;
+  }
+}
