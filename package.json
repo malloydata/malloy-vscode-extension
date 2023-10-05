@@ -541,6 +541,7 @@
     ]
   },
   "dependencies": {
+    "@lit-labs/react": "^2.1.0",
     "@malloydata/db-bigquery": "0.0.93",
     "@malloydata/db-duckdb": "0.0.93",
     "@malloydata/db-postgres": "0.0.93",
