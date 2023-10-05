@@ -21,13 +21,11 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import ReactDOM from 'react-dom';
-import React from 'react';
-import {StyleSheetManager} from 'styled-components';
+import {html, render} from 'lit';
 import {ActivationFunction} from 'vscode-notebook-renderer';
-import {MalloyRenderer} from './MalloyRenderer';
-// TODO: export RenderDef from @malloydata/render
+// TODO(whscullin): export RenderDef from @malloydata/render
 import {RenderDef} from '@malloydata/render/dist/data_styles';
+import './malloy_renderer';
 
 export const activate: ActivationFunction = () => {
   return {
@@ -43,14 +41,12 @@ export const activate: ActivationFunction = () => {
       if (!root) {
         throw new Error('Element #root not found');
       }
-      ReactDOM.render(
-        <StyleSheetManager target={root}>
-          <MalloyRenderer
-            results={info.json()}
-            meta={info.metadata as RenderDef}
-          />
-        </StyleSheetManager>,
-        shadow.querySelector('#root')
+      render(
+        html`<malloy-renderer
+          .results=${info.json()}
+          .meta=${info.metadata as RenderDef}
+        />`,
+        root
       );
     },
   };
