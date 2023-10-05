@@ -32,7 +32,6 @@ import {
 import {MalloySQLSQLParser} from '@malloydata/malloy-sql';
 import {DataStyles} from '@malloydata/render';
 
-import {HackyDataStylesAccumulator} from './data_styles';
 import {WorkerMessageHandler, MessageRun} from '../common/worker_message_types';
 
 import {
@@ -242,7 +241,6 @@ export const runQuery = async (
     messageHandler.sendProgress(progress, panelId, message);
   };
 
-  const files = new HackyDataStylesAccumulator(fileHandler);
   const url = new URL(query.uri);
   const connectionLookup = connectionManager.getConnectionLookup(url);
 
@@ -275,14 +273,13 @@ export const runQuery = async (
       return;
     }
 
-    const runtime = new Runtime(files, connectionLookup);
+    const runtime = new Runtime(fileHandler, connectionLookup);
     const allBegin = Date.now();
     const compileBegin = allBegin;
     sendMessage({
       status: QueryRunStatus.Compiling,
     });
 
-    let dataStyles: DataStyles = {};
     let sql: string;
     const runnable = await createRunnable(query, runtime, cellData);
 
@@ -323,8 +320,6 @@ export const runQuery = async (
         });
         return;
       }
-
-      dataStyles = {...dataStyles, ...files.getHackyAccumulatedDataStyles()};
     } catch (error) {
       sendMessage({
         status: QueryRunStatus.Error,
@@ -351,7 +346,7 @@ export const runQuery = async (
     sendMessage({
       status: QueryRunStatus.Done,
       resultJson: queryResult.toJSON(),
-      dataStyles,
+      dataStyles: {},
       canDownloadStream: !isBrowser,
       defaultTab,
       stats: {
