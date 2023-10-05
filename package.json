@@ -514,22 +514,6 @@
         ]
       },
       {
-        "displayName": "JSON",
-        "entrypoint": "./dist/json_entry.js",
-        "id": "malloy.notebook-renderer-json",
-        "mimeTypes": [
-          "x-application/malloy-results"
-        ]
-      },
-      {
-        "displayName": "SQL",
-        "entrypoint": "./dist/sql_entry.js",
-        "id": "malloy.notebook-renderer-sql",
-        "mimeTypes": [
-          "x-application/malloy-results"
-        ]
-      },
-      {
         "displayName": "Malloy Schema",
         "entrypoint": "./dist/schema_entry.js",
         "id": "malloy.notebook-renderer-schema",

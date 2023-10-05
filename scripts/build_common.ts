@@ -308,9 +308,7 @@ export async function doBuild(
     format: 'esm',
     entryPoints: [
       './src/extension/notebook/renderer/malloy_entry.ts',
-      './src/extension/notebook/renderer/json_entry.tsx',
       './src/extension/notebook/renderer/schema_entry.ts',
-      './src/extension/notebook/renderer/sql_entry.tsx',
     ],
     entryNames: '[name]',
     platform: 'browser',
