@@ -2,7 +2,7 @@
   "name": "malloy-vscode",
   "publisher": "malloydata",
   "displayName": "Malloy",
-  "description": "Malloy is an experimental language for describing data relationships and transformations",
+  "description": "Malloy is an open source language for describing data relationships and transformations",
   "version": "0.2.0",
   "private": true,
   "config": {
