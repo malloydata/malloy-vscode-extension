@@ -198,8 +198,8 @@ const queryItem = (
 export class StructItem extends LitElement {
   static override styles = [styles];
 
-  @property({type: Object}) explore: Explore | undefined;
-  @property({type: String}) path: string | undefined;
+  @property({type: Object}) explore: Explore | null = null;
+  @property({type: String}) path = '';
   @property({type: Function}) onFieldClick?: (field: Field) => void;
   @property({type: Function}) onQueryClick?: (
     query: NamedQuery | QueryField
@@ -249,7 +249,7 @@ export class StructItem extends LitElement {
 
   render() {
     const {explore, path} = this;
-    if (!explore || typeof path !== 'string') {
+    if (!explore) {
       return;
     }
     const subtype = exploreSubtype(explore);
