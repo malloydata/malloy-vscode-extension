@@ -165,7 +165,7 @@ class MalloyController {
     execution.start(Date.now());
 
     try {
-      let meta = cell.metadata ? {...cell.metadata} : {};
+      const meta = cell.metadata ? {...cell.metadata} : {};
       const newMeta: CellMetadata = {
         ...meta,
         cost: undefined,
@@ -187,11 +187,6 @@ class MalloyController {
         execution.token
       );
 
-      const text = document.getText();
-      const style = text.match(/(\/\/ |^)--! style ([a-z_]+)/m);
-      if (style) {
-        meta = {renderer: style[2]};
-      }
       const output: vscode.NotebookCellOutput[] = [];
       if (jsonResults) {
         const items: vscode.NotebookCellOutputItem[] = [];
