@@ -21,18 +21,12 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import ReactDOM from 'react-dom';
-import React from 'react';
-import {App} from './App';
-import {getVSCodeAPI, HelpVSCodeContext} from './help_vscode_context';
-import {HelpPanelMessage} from '../../../common/message_types';
+import {html, render} from 'lit';
+import './help_page';
 
-(() => {
-  const vscode = getVSCodeAPI<void, HelpPanelMessage>();
-  const el = React.createElement(
-    HelpVSCodeContext.Provider,
-    {value: vscode},
-    React.createElement(App, {key: 'app'}, null)
-  );
-  ReactDOM.render(el, document.getElementById('app'));
-})();
+const root = document.getElementById('app');
+
+if (root) {
+  root.innerHTML = '';
+  render(html`<help-page />`, root);
+}
