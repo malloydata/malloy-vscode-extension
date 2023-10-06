@@ -23,6 +23,7 @@
 
 import {LitElement, html} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
+import {classMap} from 'lit/directives/class-map.js';
 
 import {styles} from './schema_renderer.css';
 import {Explore, Field, NamedQuery, QueryField} from '@malloydata/malloy';
@@ -259,10 +260,9 @@ export class StructItem extends LitElement {
       return `${path}${path ? '.' : ''}${explore.name}`;
     };
 
-    return html`<li
-      class="schema ${this.hidden ? 'hidden' : ''}"
-      title=${buildTitle(explore, path)}
-    >
+    const classes = classMap({schema: true, hidden: this.hidden});
+
+    return html`<li class=${classes} title=${buildTitle(explore, path)}>
       <div @click=${this.toggleHidden}>
         <span>${this.hidden ? '▶' : '▼'}</span>
         ${getIconElement(`struct_${subtype}`, false)}
