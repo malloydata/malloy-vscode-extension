@@ -90,7 +90,7 @@ const QUERY_PROJECT_DOC = `Use \`project\` to retrieve dimensional values withou
 
 \`\`\`malloy
 query: flights -> {
-  project: id2, carrier, dep_time
+  select: id2, carrier, dep_time
   limit: 10
 }
 \`\`\`
@@ -140,7 +140,7 @@ const QUERY_LIMIT_DOC = `Use \`limit\` to restrict the number of results returne
 
 \`\`\`malloy
 query: flights -> {
-  project: *
+  select: *
   limit: 10
 }
 \`\`\`
@@ -347,7 +347,7 @@ export const COMPLETION_DOCS: {
   query_property: {
     group_by: QUERY_GROUP_BY_DOC,
     order_by: QUERY_ORDER_BY_DOC,
-    project: QUERY_PROJECT_DOC,
+    select: QUERY_PROJECT_DOC,
     index: QUERY_INDEX_DOC,
     aggregate: QUERY_AGGREGATE_DOC,
     top: QUERY_TOP_DOC,
