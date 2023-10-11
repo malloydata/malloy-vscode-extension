@@ -100,7 +100,7 @@ export function getMalloyLenses(document: TextDocument): CodeLens[] {
           title: 'Schema',
           command: 'malloy.runQuery',
           arguments: [
-            `query: ${exploreName}->{ project: *; limit: 20 }`,
+            `query: ${exploreName}->{ select: *; limit: 20 }`,
             `preview ${exploreName}`,
             'schema',
           ],
@@ -112,7 +112,7 @@ export function getMalloyLenses(document: TextDocument): CodeLens[] {
           title: 'Preview',
           command: 'malloy.runQuery',
           arguments: [
-            `query: ${exploreName}->{ project: *; limit: 20 }`,
+            `query: ${exploreName}->{ select: *; limit: 20 }`,
             `preview ${exploreName}`,
           ],
         },

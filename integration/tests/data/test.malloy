@@ -2,5 +2,5 @@ source: test is duckdb.sql("""SELECT 1 as one""") {
 }
 
 query: test -> {
-  project: *
+  select: *
 }
