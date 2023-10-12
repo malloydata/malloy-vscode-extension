@@ -267,7 +267,7 @@ export class StructItem extends LitElement {
         <span>${this.hidden ? '▶' : '▼'}</span>
         ${getIconElement(`struct_${subtype}`, false)}
         <b class="explore_name">${getExploreName(explore, path)}</b>
-        ${this.onPreviewClick && !explore.hasParentExplore()
+        ${this.onPreviewClick
           ? html`<span class="preview" @click=${this.onClick}> Preview </span>`
           : null}
       </div>

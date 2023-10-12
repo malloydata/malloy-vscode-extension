@@ -113,8 +113,17 @@ export class SchemaRendererWrapper extends LitElement {
 
   onPreviewClick = (explore: Explore) => {
     const type = 'malloy.runQuery';
+    const parts = [];
+    let current: Explore | undefined = explore;
+    while (current) {
+      parts.unshift(current.name);
+      current = current.parentExplore;
+    }
+    parts.push('*');
+    const exploreName = parts.shift();
+    const select = parts.join('.');
     const args = [
-      `run: ${explore.name}->{ select: *; limit: 20 }`,
+      `run: ${exploreName}->{ select: ${select}; limit: 20 }`,
       `preview ${explore.name}`,
       'html',
     ];
