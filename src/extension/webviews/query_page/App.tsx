@@ -274,7 +274,7 @@ export const App: React.FC = () => {
     if ('parentExplore' in query) {
       const status = QueryRunStatus.RunCommand;
       const command = 'malloy.runQuery';
-      const arg1 = `query: ${query.parentExplore.name}->${query.name}`;
+      const arg1 = `run: ${query.parentExplore.name}->${query.name}`;
       const arg2 = `${query.parentExplore.name}->${query.name}`;
       const args = [arg1, arg2];
       vscode.postMessage({status, command, args});

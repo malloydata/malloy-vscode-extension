@@ -100,7 +100,7 @@ export function getMalloyLenses(document: TextDocument): CodeLens[] {
           title: 'Schema',
           command: 'malloy.runQuery',
           arguments: [
-            `query: ${exploreName}->{ select: *; limit: 20 }`,
+            `run: ${exploreName}->{ select: *; limit: 20 }`,
             `preview ${exploreName}`,
             'schema',
           ],
@@ -112,7 +112,7 @@ export function getMalloyLenses(document: TextDocument): CodeLens[] {
           title: 'Preview',
           command: 'malloy.runQuery',
           arguments: [
-            `query: ${exploreName}->{ select: *; limit: 20 }`,
+            `run: ${exploreName}->{ select: *; limit: 20 }`,
             `preview ${exploreName}`,
           ],
         },
@@ -123,7 +123,7 @@ export function getMalloyLenses(document: TextDocument): CodeLens[] {
       //     title: "Explain",
       //     command: "malloy.runQuery",
       //     arguments: [
-      //       `query: ${exploreName}->${explain}`,
+      //       `run: ${exploreName}->${explain}`,
       //       `explain ${exploreName}`,
       //     ],
       //   },
@@ -138,7 +138,7 @@ export function getMalloyLenses(document: TextDocument): CodeLens[] {
                 title: 'Run Query',
                 command: 'malloy.runQuery',
                 arguments: [
-                  `query: ${exploreName}->${queryName}`,
+                  `run: ${exploreName}->${queryName}`,
                   `${exploreName}->${queryName}`,
                 ],
               },
@@ -149,7 +149,7 @@ export function getMalloyLenses(document: TextDocument): CodeLens[] {
                 title: 'Show SQL',
                 command: 'malloy.showSQL',
                 arguments: [
-                  `query: ${exploreName}->${queryName}`,
+                  `run: ${exploreName}->${queryName}`,
                   `${exploreName}->${queryName}`,
                 ],
               },
