@@ -269,7 +269,7 @@ function getIconPath(
 export function runTurtleFromSchemaCommand(fieldItem: FieldItem): void {
   vscode.commands.executeCommand(
     'malloy.runQuery',
-    `query: ${fieldItem.topLevelExplore}->${fieldItem.accessPath.join('.')}`,
+    `run: ${fieldItem.topLevelExplore}->${fieldItem.accessPath.join('.')}`,
     `${fieldItem.topLevelExplore}->${fieldItem.accessPath.join('.')}`
   );
 }

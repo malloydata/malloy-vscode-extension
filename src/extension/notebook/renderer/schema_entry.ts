@@ -82,7 +82,7 @@ export class SchemaRendererWrapper extends LitElement {
     if (type === 'query') {
       const type = 'malloy.runQuery';
       const args = [
-        `query: ${topLevelExplore.name}->${path}`,
+        `run: ${topLevelExplore.name}->${path}`,
         `${topLevelExplore.name}->${path}`,
       ];
       this.postMessage?.({type, args});
@@ -100,7 +100,7 @@ export class SchemaRendererWrapper extends LitElement {
   onQueryClick = (query: NamedQuery | QueryField) => {
     if ('parentExplore' in query) {
       const type = 'malloy.runQuery';
-      const arg1 = `query: ${query.parentExplore.name}->${query.name}`;
+      const arg1 = `run: ${query.parentExplore.name}->${query.name}`;
       const arg2 = `${query.parentExplore.name}->${query.name}`;
       const args = [arg1, arg2];
       this.postMessage?.({type, args});
@@ -114,7 +114,7 @@ export class SchemaRendererWrapper extends LitElement {
   onPreviewClick = (explore: Explore) => {
     const type = 'malloy.runQuery';
     const args = [
-      `query: ${explore.name}->{ select: *; limit: 20 }`,
+      `run: ${explore.name}->{ select: *; limit: 20 }`,
       `preview ${explore.name}`,
       'html',
     ];
