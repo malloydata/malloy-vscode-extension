@@ -149,16 +149,13 @@ export async function getSchemaCompletions(
         );
       }
       if (model) {
-        const exploreMap: Record<string, Explore> = {};
+        const exploreMap: Record<string, Explore | undefined> = {};
         model.explores.forEach(explore => {
           exploreMap[explore.name] = explore;
         });
-        if (exploreMap[exploreName]) {
-          const fields = getEligibleFields(
-            fieldChain,
-            exploreMap[exploreName],
-            exploreMap
-          );
+        const explore = exploreMap[exploreName];
+        if (explore) {
+          const fields = getEligibleFields(fieldChain, explore, exploreMap);
           return filterCompletions(fields, keyword, fieldChain);
         }
       }
@@ -215,30 +212,32 @@ function getQueryContext(lines: string[], cursor: Position) {
 function getEligibleFields(
   fieldChain: string,
   explore: Explore,
-  exploreMap: Record<string, Explore>
+  exploreMap: Record<string, Explore | undefined>
 ): Field[] {
   const fieldTree = fieldChain.split('.');
   // Discard the last identifier in the fieldChain
   fieldTree.pop();
-  let currentExplore = explore;
+  let currentExplore: Explore | undefined = explore;
   for (const fieldName of fieldTree) {
     if (fieldName.length === 0) {
       return [];
     }
     // Check if a valid chain of explore fields are the prefix for the last field
     let validField = false;
-    for (const field of currentExplore.allFields) {
-      if (fieldName === field.name && field.isExploreField()) {
-        validField = true;
-        currentExplore = exploreMap[field.name];
-        break;
+    if (currentExplore) {
+      for (const field of currentExplore.allFields) {
+        if (fieldName === field.name && field.isExploreField()) {
+          validField = true;
+          currentExplore = exploreMap[field.name];
+          break;
+        }
       }
     }
     if (!validField) {
       return [];
     }
   }
-  return currentExplore.allFields;
+  return currentExplore?.allFields || [];
 }
 
 function filterCompletions(
