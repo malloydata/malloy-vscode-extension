@@ -37,7 +37,7 @@ View [the full documentation](${DOCS_ROOT}/language/source.html).
 const MODEL_QUERY_DOC = `Use \`query\` to define a top-level query which can be run within this document.
 
 \`\`\`malloy
-query: flights -> {
+run: flights -> {
   group_by: carrier
   aggregate: flight_count
 }
@@ -86,11 +86,11 @@ query: flights -> {
 View [the full documentation](${DOCS_ROOT}/language/order_by.html#explicit-ordering).
 `;
 
-const QUERY_PROJECT_DOC = `Use \`project\` to retrieve dimensional values without grouping or aggregating.
+const QUERY_SELECT_DOC = `Use \`select\` to retrieve dimensional values without grouping or aggregating.
 
 \`\`\`malloy
-query: flights -> {
-  project: id2, carrier, dep_time
+run: flights -> {
+  select: id2, carrier, dep_time
   limit: 10
 }
 \`\`\`
@@ -140,7 +140,7 @@ const QUERY_LIMIT_DOC = `Use \`limit\` to restrict the number of results returne
 
 \`\`\`malloy
 query: flights -> {
-  project: *
+  select: *
   limit: 10
 }
 \`\`\`
@@ -347,7 +347,7 @@ export const COMPLETION_DOCS: {
   query_property: {
     group_by: QUERY_GROUP_BY_DOC,
     order_by: QUERY_ORDER_BY_DOC,
-    project: QUERY_PROJECT_DOC,
+    select: QUERY_SELECT_DOC,
     index: QUERY_INDEX_DOC,
     aggregate: QUERY_AGGREGATE_DOC,
     top: QUERY_TOP_DOC,
