@@ -25,4 +25,5 @@ import * as vscode from 'vscode';
 
 export function copyFieldPathCommand(fieldPath: string): void {
   vscode.env.clipboard.writeText(fieldPath);
+  vscode.window.showInformationMessage(`Copied '${fieldPath}' to clipboard`);
 }
