@@ -153,10 +153,7 @@
         "command": "malloy.runTurtleFromSchema",
         "title": "Run Query From Schema",
         "category": "Malloy",
-        "icon": {
-          "light": "img/play.svg",
-          "dark": "img/play.svg"
-        },
+        "icon": "$(play)",
         "enablement": "view == malloySchema && viewItem == query"
       },
       {
@@ -169,6 +166,13 @@
         "command": "malloy.copyFieldPath",
         "title": "Copy Field Path",
         "category": "Malloy"
+      },
+      {
+        "command": "malloy.previewFromSchema",
+        "title": "Preview Table Data",
+        "category": "Malloy",
+        "icon": "$(table)",
+        "enablement": "view == malloySchema && viewItem == explore"
       },
       {
         "command": "malloy.refreshSchema",
@@ -216,6 +220,11 @@
         {
           "command": "malloy.runTurtleFromSchema",
           "when": "view == malloySchema && viewItem == query",
+          "group": "inline"
+        },
+        {
+          "command": "malloy.previewFromSchema",
+          "when": "view == malloySchema && viewItem == explore",
           "group": "inline"
         }
       ],

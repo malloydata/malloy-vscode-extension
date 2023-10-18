@@ -166,6 +166,7 @@ class ExploreItem extends vscode.TreeItem {
         ? vscode.TreeItemCollapsibleState.Expanded
         : vscode.TreeItemCollapsibleState.Collapsed
     );
+    this.contextValue = 'explore';
     this.tooltip = explore.name;
 
     const subtype = exploreSubtype(explore);
@@ -271,6 +272,18 @@ export function runTurtleFromSchemaCommand(fieldItem: FieldItem): void {
     'malloy.runQuery',
     `run: ${fieldItem.topLevelExplore}->${fieldItem.accessPath.join('.')}`,
     `${fieldItem.topLevelExplore}->${fieldItem.accessPath.join('.')}`
+  );
+}
+
+export function previewFromSchemaCommand(fieldItem: FieldItem): void {
+  vscode.commands.executeCommand(
+    'malloy.runQuery',
+    `run: ${fieldItem.topLevelExplore}->{ select: ${[
+      ...fieldItem.accessPath,
+      '*',
+    ].join('.')}; limit: 20 }`,
+    `preview ${fieldItem.topLevelExplore} ${fieldItem.accessPath.join('.')}`,
+    'html'
   );
 }
 
