@@ -24,6 +24,7 @@
 import * as vscode from 'vscode';
 import {
   runTurtleFromSchemaCommand,
+  previewFromSchemaCommand,
   SchemaProvider,
 } from './tree_views/schema_view';
 import {
@@ -165,6 +166,13 @@ export const setupSubscriptions = (
     vscode.commands.registerCommand(
       'malloy.runTurtleFromSchema',
       runTurtleFromSchemaCommand
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      'malloy.previewFromSchema',
+      previewFromSchemaCommand
     )
   );
 

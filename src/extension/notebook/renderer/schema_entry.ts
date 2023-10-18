@@ -119,12 +119,13 @@ export class SchemaRendererWrapper extends LitElement {
       parts.unshift(current.name);
       current = current.parentExplore;
     }
-    parts.push('*');
     const exploreName = parts.shift();
+    const path = parts.join('.');
+    parts.push('*');
     const select = parts.join('.');
     const args = [
       `run: ${exploreName}->{ select: ${select}; limit: 20 }`,
-      `preview ${explore.name}`,
+      `preview ${explore.name} ${path}`,
       'html',
     ];
     this.postMessage?.({type, args});
