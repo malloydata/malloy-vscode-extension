@@ -22,7 +22,7 @@
  */
 
 import * as vscode from 'vscode';
-import {Utils} from 'vscode-uri';
+import {URI, Utils} from 'vscode-uri';
 
 import {Explore, Field, QueryField, AtomicField} from '@malloydata/malloy';
 import numberIcon from '../../media/number.svg';
@@ -35,6 +35,7 @@ import stringIcon from '../../media/string.svg';
 import oneToManyIcon from '../../media/one_to_many.svg';
 import manyToOneIcon from '../../media/many_to_one.svg';
 import oneToOneIcon from '../../media/one_to_one.svg';
+import unknownIcon from '../../media/unknown.svg';
 import {MALLOY_EXTENSION_STATE} from '../state';
 import {BaseLanguageClient} from 'vscode-languageclient/node';
 import {BuildModelRequest} from '../../common/types';
@@ -222,8 +223,8 @@ function getIconPath(
   context: vscode.ExtensionContext,
   fieldType: string,
   isAggregate: boolean
-) {
-  let imageFileName;
+): URI {
+  let imageFileName: string;
   if (isAggregate) {
     imageFileName = numberAggregateIcon;
   } else {
@@ -255,10 +256,9 @@ function getIconPath(
         break;
       case 'query':
         imageFileName = queryIcon;
-
         break;
       default:
-        imageFileName = 'unknown';
+        imageFileName = unknownIcon;
     }
   }
 

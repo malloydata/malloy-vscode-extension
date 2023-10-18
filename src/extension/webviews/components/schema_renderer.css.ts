@@ -107,4 +107,8 @@ export const styles = css`
       color: var(--vscode-editorLink-activeForeground);
     }
   }
+
+  .chevron {
+    color: var(--vscode-icon-foreground);
+  }
 `;

@@ -690,3 +690,7 @@ export const viewContainerIcon = svg`
     </g>
   </svg>
 `;
+
+export const chevronRightIcon = svg`<svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px"><path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z"/></svg>`;
+
+export const chevronDownIcon = svg`<svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px"><path d="M480-345 240-585l56-56 184 184 184-184 56 56-240 240Z"/></svg>`;
