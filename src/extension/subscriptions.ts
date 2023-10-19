@@ -26,6 +26,7 @@ import {
   runTurtleFromSchemaCommand,
   previewFromSchemaCommand,
   SchemaProvider,
+  goToDefinitionFromSchemaCommand,
 } from './tree_views/schema_view';
 import {
   copyFieldPathCommand,
@@ -166,6 +167,13 @@ export const setupSubscriptions = (
     vscode.commands.registerCommand(
       'malloy.runTurtleFromSchema',
       runTurtleFromSchemaCommand
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      'malloy.goToDefinitionFromSchema',
+      goToDefinitionFromSchemaCommand
     )
   );
 
