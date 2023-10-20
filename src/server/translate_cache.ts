@@ -34,12 +34,7 @@ import {TextDocument} from 'vscode-languageserver-textdocument';
 
 import {ConnectionManager} from '../common/connection_manager';
 import {BuildModelRequest, CellData} from '../common/types';
-import {
-  MalloySQLParser,
-  MalloySQLSQLParser,
-  MalloySQLSQLStatement,
-  MalloySQLStatementType,
-} from '@malloydata/malloy-sql';
+import {MalloySQLSQLParser} from '@malloydata/malloy-sql';
 import {FetchModelMessage} from '../common/message_types';
 import {fixLogRange} from '../common/malloy_sql';
 
@@ -94,7 +89,6 @@ export class TranslateCache implements TranslateCache {
     if (cached) {
       return cached.getText();
     } else {
-      /* eslint-disable-next-line no-console */
       console.info('fetchFile requesting', uri.toString());
       return await this.connection.sendRequest('malloy/fetchFile', {
         uri: uri.toString(),

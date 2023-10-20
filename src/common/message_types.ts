@@ -21,13 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {
-  MalloyError,
-  MalloyQueryData,
-  NamedQuery,
-  ResultJSON,
-  SerializedExplore,
-} from '@malloydata/malloy';
+import {NamedQuery, ResultJSON, SerializedExplore} from '@malloydata/malloy';
 import {DataStyles} from '@malloydata/render';
 import {
   ConnectionBackend,
