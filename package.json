@@ -59,14 +59,8 @@
     "onCommand:malloy.showSQLFile",
     "onCommand:malloy.showSQLNamedQuery",
     "onCommand:malloy.runNamedQuery",
-    "onCommand:malloy.runTurtleFromSchema",
-    "onCommand:malloy.runTurtleWithFilters",
-    "onCommand:malloy.copyFieldPath",
     "onCommand:malloy.refreshSchema",
     "onCommand:malloy.editConnections",
-    "onCommand:malloy.runMalloySQLFile",
-    "onCommand:malloy.runMalloySQLStatement",
-    "onCommand:malloy.showSQLMalloySQLFile",
     "onLanguage:malloy",
     "onLanguage:malloy-sql",
     "workspaceContains:**/.malloy",
@@ -106,12 +100,12 @@
       },
       {
         "command": "malloy.runQueryFile",
-        "title": "Run Query File",
+        "title": "Run File",
         "category": "Malloy"
       },
       {
         "command": "malloy.runQuery",
-        "title": "Run Query",
+        "title": "Run",
         "category": "Malloy",
         "enablement": "false"
       },
@@ -123,7 +117,7 @@
       },
       {
         "command": "malloy.runQueryAtCursor",
-        "title": "Run Query at Cursor",
+        "title": "Run at Cursor",
         "category": "Malloy",
         "enablement": "editorLangId == malloy",
         "icon": {
@@ -151,16 +145,10 @@
       },
       {
         "command": "malloy.runTurtleFromSchema",
-        "title": "Run Query From Schema",
+        "title": "Run From Schema",
         "category": "Malloy",
         "icon": "$(play)",
         "enablement": "view == malloySchema && viewItem == query"
-      },
-      {
-        "command": "malloy.runTurtleWithFilters",
-        "title": "Run Query With Filters",
-        "category": "Malloy",
-        "enablement": "false"
       },
       {
         "command": "malloy.copyFieldPath",

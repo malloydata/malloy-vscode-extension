@@ -57,7 +57,7 @@ export function getMalloyLenses(document: TextDocument): CodeLens[] {
         {
           range: symbol.lensRange.toJSON(),
           command: {
-            title: 'Run Query',
+            title: 'Run',
             command: 'malloy.runNamedQuery',
             arguments: [symbol.name],
           },
@@ -76,7 +76,7 @@ export function getMalloyLenses(document: TextDocument): CodeLens[] {
         {
           range: symbol.lensRange.toJSON(),
           command: {
-            title: 'Run Query',
+            title: 'Run',
             command: 'malloy.runQueryFile',
             arguments: [currentUnnamedQueryIndex],
           },
@@ -135,7 +135,7 @@ export function getMalloyLenses(document: TextDocument): CodeLens[] {
             {
               range: child.lensRange.toJSON(),
               command: {
-                title: 'Run Query',
+                title: 'Run',
                 command: 'malloy.runQuery',
                 arguments: [
                   `run: ${exploreName}->${queryName}`,
