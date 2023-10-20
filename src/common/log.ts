@@ -21,19 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {logPrefix} from '../../common/log';
-import {NodeMessageHandler} from './message_handler';
-
-export const messageHandler = new NodeMessageHandler();
-
-// eslint-disable-next-line no-console
-console.log = (...args: unknown[]) =>
-  messageHandler.log(logPrefix('Log'), ...args);
-console.debug = (...args: unknown[]) =>
-  messageHandler.log(logPrefix('Debug'), ...args);
-console.info = (...args: unknown[]) =>
-  messageHandler.log(logPrefix('Info'), ...args);
-console.warn = (...args: unknown[]) =>
-  messageHandler.log(logPrefix('Warn'), ...args);
-console.error = (...args: unknown[]) =>
-  messageHandler.log(logPrefix('Error'), ...args);
+export const logPrefix = (level: string) => {
+  const stamp = new Date().toLocaleTimeString();
+  return `[${level} - ${stamp}]`;
+};

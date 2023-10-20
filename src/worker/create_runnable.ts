@@ -35,6 +35,8 @@ export const createModelMaterializer = async (
   runtime: Runtime,
   cellData: CellData | null
 ): Promise<ModelMaterializer | null> => {
+  console.debug('createModelMaterializer', query.uri, 'begin');
+
   let mm: ModelMaterializer | null = null;
   const queryFileURL = new URL(query.uri);
   if (cellData) {
@@ -52,6 +54,7 @@ export const createModelMaterializer = async (
   } else {
     mm = runtime.loadModel(queryFileURL);
   }
+  console.debug('createModelMaterializer', query.uri, 'end');
   return mm;
 };
 
@@ -60,6 +63,7 @@ export const createRunnable = async (
   runtime: Runtime,
   cellData: CellData | null
 ): Promise<SQLBlockMaterializer | QueryMaterializer> => {
+  console.debug('createRunnable', query.uri, 'begin');
   let runnable: QueryMaterializer | SQLBlockMaterializer;
   const mm = await createModelMaterializer(query, runtime, cellData);
   if (!mm) {
@@ -88,5 +92,6 @@ export const createRunnable = async (
     default:
       throw new Error('Internal Error: Unexpected query type');
   }
+  console.debug('createRunnable', query.uri, 'end');
   return runnable;
 };
