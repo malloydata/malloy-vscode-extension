@@ -21,9 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable no-console */
-
 /*
  * This script produces a CSV useful for evaluating licenses for third-party software incuded in a binary, and
  * is a bit more complex than it might need to be because we need to satisfy lawyers with direct links to license files for packages
@@ -32,11 +29,9 @@
  */
 
 import {execSync} from 'child_process';
-// eslint-disable-next-line node/no-unpublished-import
 import axios from 'axios';
 import https from 'https';
 import fs from 'fs';
-// eslint-disable-next-line node/no-unpublished-import
 import stringify from 'csv-stringify';
 
 interface outputRow {
@@ -106,8 +101,8 @@ const getLicenses = async () => {
 
   // if specific versions are required they might be duped in list - de-deup here
   const dedupedDependencies = dependencyList.data.body.filter(
-    (arr: any, index: any, self: any) =>
-      self.findIndex((t: any) => t[0] === arr[0]) === index
+    (arr: unknown[], index: number, self: unknown[][]) =>
+      self.findIndex((t: unknown[]) => t[0] === arr[0]) === index
   );
 
   for (const dependency of dedupedDependencies) {
@@ -238,7 +233,7 @@ const getLicenses = async () => {
         'sourceCodeIncluded',
       ],
     },
-    (err: any, output: string) => {
+    (err: unknown, output: string) => {
       fs.writeFileSync(outputFile, output);
     }
   );

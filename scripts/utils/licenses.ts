@@ -21,7 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* eslint-disable no-console */
 import fs from 'fs';
 import {errorMessage} from './errors';
 

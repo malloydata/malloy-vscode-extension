@@ -155,7 +155,7 @@ const runMSQLCell = async (
   const dataStyles: DataStyles = {};
   if (cancellationToken.isCancellationRequested) return;
 
-  messageHandler.log(compiledStatement);
+  console.info(compiledStatement);
 
   sendMessage({
     status: QueryRunStatus.Compiled,
@@ -297,7 +297,7 @@ export const runQuery = async (
     try {
       sql = await runnable.getSQL();
       if (cancellationToken.isCancellationRequested) return;
-      messageHandler.log(sql);
+      console.info(sql);
 
       sendMessage({
         status: QueryRunStatus.Compiled,

@@ -21,7 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* eslint-disable no-console */
 import * as child_process from 'child_process';
 import stream from 'stream';
 import * as vscode from 'vscode';
@@ -56,7 +55,7 @@ export class WorkerConnectionNode extends WorkerConnection {
 
       const stdoutStream = new stream.Writable({
         write: data => {
-          console.log(data.toString());
+          console.info(data.toString());
         },
       });
       const stderrStream = new stream.Writable({

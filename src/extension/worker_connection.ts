@@ -21,7 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* eslint-disable no-console */
 import * as vscode from 'vscode';
 import {
   GenericConnection,
@@ -36,6 +35,11 @@ import {
 } from '../common/worker_message_types';
 import {FileHandler} from '../common/types';
 import {Disposable, NotificationHandler, ProgressType} from 'vscode-jsonrpc';
+
+const logPrefix = (level: string) => {
+  const stamp = new Date().toLocaleTimeString();
+  return `[${level} - ${stamp}]`;
+};
 
 const workerLog = vscode.window.createOutputChannel('Malloy Worker');
 export abstract class WorkerConnection implements ExtensionMessageHandler {
@@ -55,7 +59,9 @@ export abstract class WorkerConnection implements ExtensionMessageHandler {
 
     this.context.subscriptions.push(
       this.onRequest('malloy/fetch', async (message: WorkerFetchMessage) => {
-        workerLog.appendLine(`reading file ${message.uri}`);
+        workerLog.appendLine(
+          `${logPrefix('Debug')} reading file ${message.uri}`
+        );
         return await this.fileHandler.fetchFile(message.uri);
       })
     );
@@ -64,7 +70,9 @@ export abstract class WorkerConnection implements ExtensionMessageHandler {
       this.onRequest(
         'malloy/fetchBinary',
         async (message: WorkerFetchBinaryMessage) => {
-          workerLog.appendLine(`reading binary file ${message.uri}`);
+          workerLog.appendLine(
+            `${logPrefix('Debug')} reading binary file ${message.uri}`
+          );
           return await this.fileHandler.fetchBinaryFile(message.uri);
         }
       )
@@ -74,7 +82,9 @@ export abstract class WorkerConnection implements ExtensionMessageHandler {
       this.onRequest(
         'malloy/fetchCellData',
         async (message: WorkerFetchCellDataMessage) => {
-          workerLog.appendLine(`reading cell data for ${message.uri}`);
+          workerLog.appendLine(
+            `${logPrefix('Debug')} reading cell data for ${message.uri}`
+          );
           return await this.fileHandler.fetchCellData(message.uri);
         }
       )

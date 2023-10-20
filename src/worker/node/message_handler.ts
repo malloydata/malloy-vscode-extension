@@ -27,8 +27,11 @@ import {ConnectionManager} from '../../common/connection_manager';
 import {DesktopConnectionFactory} from '../../common/connections/node/connection_factory';
 import {MessageHandler} from '../message_handler';
 import {refreshConfig} from './refresh_config';
+import {inspect} from 'node:util';
 
 export class NodeMessageHandler {
+  messageHandler: MessageHandler;
+
   constructor() {
     const connection = rpc.createMessageConnection(
       new rpc.IPCMessageReader(process),
@@ -41,19 +44,25 @@ export class NodeMessageHandler {
       []
     );
 
-    const messageHandler = new MessageHandler(connection, connectionManager);
+    this.messageHandler = new MessageHandler(connection, connectionManager);
 
-    messageHandler.onRequest('malloy/download', message =>
+    this.messageHandler.onRequest('malloy/download', message =>
       downloadQuery(
-        messageHandler,
+        this.messageHandler,
         connectionManager,
         message,
-        messageHandler.fileHandler
+        this.messageHandler.fileHandler
       )
     );
-    messageHandler.onRequest('malloy/config', message =>
-      refreshConfig(messageHandler, connectionManager, message)
+    this.messageHandler.onRequest('malloy/config', message =>
+      refreshConfig(connectionManager, message)
     );
-    messageHandler.log('NodeMessageHandler initialized.');
+    this.messageHandler.log('NodeMessageHandler initialized.');
   }
+
+  log = (...args: unknown[]) => {
+    this.messageHandler.log(
+      args.map(arg => (typeof arg === 'string' ? arg : inspect(arg))).join(' ')
+    );
+  };
 }

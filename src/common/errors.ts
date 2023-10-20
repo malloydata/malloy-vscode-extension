@@ -33,7 +33,6 @@ export const errorMessage = (error: unknown): string => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     message = (error as any).message;
   } else {
-    // eslint-disable-next-line no-console
     console.error(error);
   }
   return message;

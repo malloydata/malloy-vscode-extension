@@ -22,12 +22,10 @@
  */
 
 import path from 'path';
-import {readPackageJson} from './utils/licenses';
+import {NpmPackage, readPackageJson} from './utils/licenses';
 import {errorMessage} from './utils/errors';
 import fs from 'fs';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable no-console */
 let filePath: string;
 let seen: {[id: string]: boolean} = {};
 
@@ -56,10 +54,16 @@ export function generateDisclaimer(
   console.log(`Wrote ${filePath}`);
 }
 
-function doDependencies(nodeModulesPath: string, packageJson: any): void {
+function doDependencies(
+  nodeModulesPath: string,
+  packageJson: NpmPackage
+): void {
   // eslint-disable-next-line no-prototype-builtins
   if (packageJson.hasOwnProperty('dependencies')) {
     const dependencies = packageJson.dependencies;
+    if (!dependencies) {
+      throw Error('package.json missing dependencies');
+    }
 
     for (const dependency of Object.keys(dependencies)) {
       if (seen[dependency] === true || !(typeof dependency === 'string')) {

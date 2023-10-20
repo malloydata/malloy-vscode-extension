@@ -26,7 +26,6 @@ import * as zlib from 'zlib';
 import fetch from 'node-fetch';
 import tar from 'tar-stream';
 
-/* eslint-disable no-console */
 export const fetchNode = async (
   filePath: string,
   url: string

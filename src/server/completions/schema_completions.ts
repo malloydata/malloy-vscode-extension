@@ -143,7 +143,6 @@ export async function getSchemaCompletions(
           parse.exploreCount
         );
       } catch (error: unknown) {
-        // eslint-disable-next-line no-console
         console.error(
           `Error fetching model for document sources and imports '${document.uri}': ${error}`
         );
