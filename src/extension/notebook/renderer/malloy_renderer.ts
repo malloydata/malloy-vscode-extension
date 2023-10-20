@@ -57,7 +57,7 @@ export class MalloyRenderer extends LitElement {
     const resultHtml = new HTMLView(document).render(result, {
       dataStyles: {},
     });
-    return html`${until(resultHtml, html`Rendering...`)}`;
+    return html`${until(resultHtml)}`;
   }
 }
 
