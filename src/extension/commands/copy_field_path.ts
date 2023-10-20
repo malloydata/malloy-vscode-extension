@@ -22,8 +22,10 @@
  */
 
 import * as vscode from 'vscode';
+import {FieldItem} from '../tree_views/schema_view';
 
-export function copyFieldPathCommand(fieldPath: string): void {
+export function copyFieldPathCommand(item: FieldItem): void {
+  const fieldPath = item.accessPath.join('.');
   vscode.env.clipboard.writeText(fieldPath);
   vscode.window.showInformationMessage(`Copied '${fieldPath}' to clipboard`);
 }

@@ -24,7 +24,13 @@
 import * as vscode from 'vscode';
 import {URI, Utils} from 'vscode-uri';
 
-import {Explore, Field, QueryField, AtomicField} from '@malloydata/malloy';
+import {
+  Explore,
+  Field,
+  QueryField,
+  AtomicField,
+  DocumentLocation,
+} from '@malloydata/malloy';
 import numberIcon from '../../media/number.svg';
 import numberAggregateIcon from '../../media/number-aggregate.svg';
 import booleanIcon from '../../media/boolean.svg';
@@ -83,6 +89,7 @@ export class SchemaProvider
             element.topLevelExplore,
             field,
             newPath,
+            element.explore.location,
             element.explore.allFields.length === 1
           );
         } else {
@@ -90,7 +97,8 @@ export class SchemaProvider
             this.context,
             element.topLevelExplore,
             field,
-            newPath
+            newPath,
+            field.location
           );
         }
       });
@@ -122,6 +130,7 @@ export class SchemaProvider
               explore.name,
               explore,
               [],
+              explore.location,
               explores.length === 1
             )
         );
@@ -159,6 +168,7 @@ class ExploreItem extends vscode.TreeItem {
     public topLevelExplore: string,
     public explore: Explore,
     public accessPath: string[],
+    public location: DocumentLocation | undefined,
     open: boolean
   ) {
     super(
@@ -179,12 +189,13 @@ class ExploreItem extends vscode.TreeItem {
   }
 }
 
-class FieldItem extends vscode.TreeItem {
+export class FieldItem extends vscode.TreeItem {
   constructor(
     private context: vscode.ExtensionContext,
     public topLevelExplore: string,
     public field: AtomicField | QueryField,
-    public accessPath: string[]
+    public accessPath: string[],
+    public location: DocumentLocation | undefined
   ) {
     super(field.name, vscode.TreeItemCollapsibleState.None);
     this.contextValue = fieldType(this.field);
@@ -199,12 +210,6 @@ $(symbol-field) \`${field.name}\`
       true
     );
   }
-
-  command = {
-    title: 'Copy Field path',
-    command: 'malloy.copyFieldPath',
-    arguments: [this.accessPath.join('.')],
-  };
 
   iconPath = {
     light: getIconPath(
@@ -267,24 +272,39 @@ function getIconPath(
   return Utils.joinPath(uri, 'dist', imageFileName);
 }
 
-export function runTurtleFromSchemaCommand(fieldItem: FieldItem): void {
+export function runTurtleFromSchemaCommand(
+  item: FieldItem | ExploreItem
+): void {
   vscode.commands.executeCommand(
     'malloy.runQuery',
-    `run: ${fieldItem.topLevelExplore}->${fieldItem.accessPath.join('.')}`,
-    `${fieldItem.topLevelExplore}->${fieldItem.accessPath.join('.')}`
+    `run: ${item.topLevelExplore}->${item.accessPath.join('.')}`,
+    `${item.topLevelExplore}->${item.accessPath.join('.')}`
   );
 }
 
-export function previewFromSchemaCommand(fieldItem: FieldItem): void {
+export function previewFromSchemaCommand(item: FieldItem | ExploreItem): void {
   vscode.commands.executeCommand(
     'malloy.runQuery',
-    `run: ${fieldItem.topLevelExplore}->{ select: ${[
-      ...fieldItem.accessPath,
-      '*',
-    ].join('.')}; limit: 20 }`,
-    `preview ${fieldItem.topLevelExplore} ${fieldItem.accessPath.join('.')}`,
+    `run: ${item.topLevelExplore}->{ select: ${[...item.accessPath, '*'].join(
+      '.'
+    )}; limit: 20 }`,
+    `preview ${item.topLevelExplore} ${item.accessPath.join('.')}`,
     'html'
   );
+}
+
+export function goToDefinitionFromSchemaCommand(
+  item: FieldItem | ExploreItem
+): void {
+  const location = item.location;
+  if (location) {
+    const pos = new vscode.Position(
+      location.range.start.line,
+      location.range.start.character
+    );
+    const uri = vscode.Uri.parse(location.url);
+    vscode.commands.executeCommand('editor.action.goToLocations', uri, pos, []);
+  }
 }
 
 function byKindThenName(field1: Field, field2: Field) {

@@ -165,7 +165,15 @@
       {
         "command": "malloy.copyFieldPath",
         "title": "Copy Field Path",
-        "category": "Malloy"
+        "category": "Malloy",
+        "icon": "$(copy)",
+        "enablement": "view == malloySchema"
+      },
+      {
+        "command": "malloy.goToDefinitionFromSchema",
+        "title": "Go to Definition",
+        "category": "Malloy",
+        "enablement": "view == malloySchema"
       },
       {
         "command": "malloy.previewFromSchema",
@@ -225,6 +233,16 @@
         {
           "command": "malloy.previewFromSchema",
           "when": "view == malloySchema && viewItem == explore",
+          "group": "inline"
+        },
+        {
+          "command": "malloy.goToDefinitionFromSchema",
+          "when": "view == malloySchema",
+          "group": "malloy"
+        },
+        {
+          "command": "malloy.copyFieldPath",
+          "when": "view == malloySchema  && viewItem != explore",
           "group": "inline"
         }
       ],
@@ -535,13 +553,13 @@
   },
   "dependencies": {
     "@lit-labs/react": "^2.1.0",
-    "@malloydata/db-bigquery": "0.0.93",
-    "@malloydata/db-duckdb": "0.0.93",
-    "@malloydata/db-postgres": "0.0.93",
-    "@malloydata/malloy": "0.0.93",
-    "@malloydata/malloy-sql": "0.0.93",
-    "@malloydata/render": "0.0.93",
-    "@malloydata/syntax-highlight": "0.0.93",
+    "@malloydata/db-bigquery": "0.0.94",
+    "@malloydata/db-duckdb": "0.0.94",
+    "@malloydata/db-postgres": "0.0.94",
+    "@malloydata/malloy": "0.0.94",
+    "@malloydata/malloy-sql": "0.0.94",
+    "@malloydata/render": "0.0.94",
+    "@malloydata/syntax-highlight": "0.0.94",
     "@popperjs/core": "^2.11.6",
     "@vscode/codicons": "^0.0.33",
     "@vscode/webview-ui-toolkit": "^1.2.1",
