@@ -35,11 +35,7 @@ import {
 } from '../common/worker_message_types';
 import {FileHandler} from '../common/types';
 import {Disposable, NotificationHandler, ProgressType} from 'vscode-jsonrpc';
-
-const logPrefix = (level: string) => {
-  const stamp = new Date().toLocaleTimeString();
-  return `[${level} - ${stamp}]`;
-};
+import {logPrefix} from '../common/log';
 
 const workerLog = vscode.window.createOutputChannel('Malloy Worker');
 export abstract class WorkerConnection implements ExtensionMessageHandler {

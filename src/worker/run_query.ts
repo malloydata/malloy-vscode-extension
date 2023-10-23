@@ -34,11 +34,7 @@ import {DataStyles} from '@malloydata/render';
 
 import {WorkerMessageHandler, MessageRun} from '../common/worker_message_types';
 
-import {
-  QueryMessageStatus,
-  QueryPanelMessage,
-  QueryRunStatus,
-} from '../common/message_types';
+import {QueryMessageStatus, QueryRunStatus} from '../common/message_types';
 import {createModelMaterializer, createRunnable} from './create_runnable';
 import {ConnectionManager} from '../common/connection_manager';
 import {Cell, CellData, FileHandler, StructDefResult} from '../common/types';
@@ -99,8 +95,9 @@ const runMSQLCell = async (
   currentCell: Cell,
   cancellationToken: CancellationToken
 ) => {
-  const sendMessage = (message: QueryPanelMessage) => {
+  const sendMessage = (message: QueryMessageStatus) => {
     const progress = new ProgressType<QueryMessageStatus>();
+    console.debug('sendMessage', panelId, message.status);
     messageHandler.sendProgress(progress, panelId, message);
   };
 
@@ -236,7 +233,8 @@ export const runQuery = async (
 ): Promise<void> => {
   const {query, panelId, showSQLOnly, defaultTab} = messageRun;
 
-  const sendMessage = (message: QueryPanelMessage) => {
+  const sendMessage = (message: QueryMessageStatus) => {
+    console.debug('sendMessage', panelId, message.status);
     const progress = new ProgressType<QueryMessageStatus>();
     messageHandler.sendProgress(progress, panelId, message);
   };

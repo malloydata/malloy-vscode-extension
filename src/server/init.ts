@@ -59,7 +59,7 @@ export const initServer = (
 ) => {
   let haveConnectionsBeenSet = false;
   connection.onInitialize((params: InitializeParams) => {
-    connection.console.info('Server onInitialize');
+    connection.console.info('onInitialize');
     const capabilities = params.capabilities;
 
     const result: InitializeResult = {
@@ -104,6 +104,7 @@ export const initServer = (
 
   async function diagnoseDocument(document: TextDocument) {
     if (haveConnectionsBeenSet) {
+      connection.console.info(`diagnoseDocument ${document.uri} start`);
       // Necessary to copy the versions, because they're mutated in the same document object
       const versionsAtRequestTime = new Map(
         documents.all().map(document => [document.uri, document.version])
@@ -124,6 +125,7 @@ export const initServer = (
           });
         }
       }
+      connection.console.info(`diagnoseDocument ${document.uri} end`);
     }
   }
 

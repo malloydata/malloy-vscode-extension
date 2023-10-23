@@ -89,7 +89,7 @@ export class TranslateCache implements TranslateCache {
     if (cached) {
       return cached.getText();
     } else {
-      console.info('fetchFile requesting', uri.toString());
+      this.connection.console.info('fetchFile requesting ' + uri.toString());
       return await this.connection.sendRequest('malloy/fetchFile', {
         uri: uri.toString(),
       });
@@ -100,6 +100,7 @@ export class TranslateCache implements TranslateCache {
     uri: string,
     runtime: Runtime
   ): Promise<ModelMaterializer | null> {
+    this.connection.console.info(`createModelMaterializer ${uri} start`);
     let modelMaterializer: ModelMaterializer | null = null;
     const queryFileURL = new URL(uri);
     if (queryFileURL.protocol === 'vscode-notebook-cell:') {
@@ -120,6 +121,7 @@ export class TranslateCache implements TranslateCache {
     } else {
       modelMaterializer = runtime.loadModel(queryFileURL);
     }
+    this.connection.console.info(`createModelMaterializer ${uri} end`);
     return modelMaterializer;
   }
 
@@ -134,11 +136,17 @@ export class TranslateCache implements TranslateCache {
     text: string,
     exploreCount: number
   ): Promise<Model | undefined> {
+    this.connection.console.info(
+      `translateWithTruncatedCache ${document.uri} start`
+    );
     const {uri, languageId} = document;
     if (languageId === 'malloy') {
       const entry = this.truncatedCache.get(uri);
       // Only re-compile the model if the number of explores has changed
       if (entry && entry.exploreCount === exploreCount) {
+        this.connection.console.info(
+          `translateWithTruncatedCache ${document.uri} hit`
+        );
         return entry.model;
       }
       const files = {
@@ -168,6 +176,9 @@ export class TranslateCache implements TranslateCache {
           version: this.truncatedVersion++,
         });
       }
+      this.connection.console.info(
+        `translateWithTruncatedCache ${document.uri} miss`
+      );
       return model;
     }
     return undefined;
@@ -178,9 +189,15 @@ export class TranslateCache implements TranslateCache {
     currentVersion: number,
     languageId: string
   ): Promise<Model | undefined> {
+    this.connection.console.info(
+      `translateWithCache ${uri} ${currentVersion} start`
+    );
     const entry = this.cache.get(uri);
     if (entry && entry.version === currentVersion) {
       const {model} = entry;
+      this.connection.console.info(
+        `translateWithCache ${uri} ${currentVersion} hit`
+      );
       return model;
     }
 
@@ -223,6 +240,9 @@ export class TranslateCache implements TranslateCache {
       if (model) {
         this.cache.set(uri, {version: currentVersion, model});
       }
+      this.connection.console.info(
+        `translateWithCache ${uri} ${currentVersion} miss`
+      );
       return model;
     } else {
       const files = {
@@ -241,6 +261,9 @@ export class TranslateCache implements TranslateCache {
       if (model) {
         this.cache.set(uri, {version: currentVersion, model});
       }
+      this.connection.console.info(
+        `translateWithCache ${uri} ${currentVersion} miss`
+      );
       return model;
     }
   }
