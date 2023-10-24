@@ -37,7 +37,7 @@ View [the full documentation](${DOCS_ROOT}/language/source.html).
 const MODEL_QUERY_DOC = `Use \`query\` to define a top-level query which can be run within this document.
 
 \`\`\`malloy
-query: flights -> {
+run: flights -> {
   group_by: carrier
   aggregate: flight_count
 }
@@ -67,7 +67,7 @@ View [the full documentation](${DOCS_ROOT}/language/sql_blocks.html).
 const QUERY_GROUP_BY_DOC = `Use the \`group_by\` clause to specify dimensions by which to group aggregate calculations.
 
 \`\`\`malloy
-query: flights -> {
+run: flights -> {
   group_by: carrier
   aggregate: flight_count
 }
@@ -77,7 +77,7 @@ query: flights -> {
 const QUERY_ORDER_BY_DOC = `Use \`order_by\` to control the ordering of results.
 
 \`\`\`malloy
-query: flights -> {
+run: flights -> {
   group_by: carrier
   order_by: carrier asc
 }
@@ -86,10 +86,10 @@ query: flights -> {
 View [the full documentation](${DOCS_ROOT}/language/order_by.html#explicit-ordering).
 `;
 
-const QUERY_PROJECT_DOC = `Use \`project\` to retrieve dimensional values without grouping or aggregating.
+const QUERY_SELECT_DOC = `Use \`select\` to retrieve dimensional values without grouping or aggregating.
 
 \`\`\`malloy
-query: flights -> {
+run: flights -> {
   select: id2, carrier, dep_time
   limit: 10
 }
@@ -101,7 +101,7 @@ View [the full documentation](${DOCS_ROOT}/user_guides/basic.html#project).
 const QUERY_INDEX_DOC = `Use \`index\` to produce a search index.
 
 \`\`\`malloy
-query: flights -> {
+run: flights -> {
   index: * on flight_count
 }
 \`\`\`
@@ -112,7 +112,7 @@ View [the full documentation](${DOCS_ROOT}).
 const QUERY_AGGREGATE_DOC = `Use \`aggregate\` to perform aggregate computations like \`count()\` or \`sum()\`.
 
 \`\`\`malloy
-query: flights -> {
+run: flights -> {
   group_by: carrier
   aggregate:
     flight_count is count()
@@ -126,7 +126,7 @@ View [the full documentation](${DOCS_ROOT}/language/aggregates.html).
 const QUERY_TOP_DOC = `Use \`top\` to restrict the number of results returned.
 
 \`\`\`malloy
-query: flights -> {
+run: flights -> {
   top: 10 by flight_count asc
   group_by: carrier
   aggregate: flight_count
@@ -139,7 +139,7 @@ View [the full documentation](${DOCS_ROOT}/language/order_by.html#limiting).
 const QUERY_LIMIT_DOC = `Use \`limit\` to restrict the number of results returned.
 
 \`\`\`malloy
-query: flights -> {
+run: flights -> {
   select: *
   limit: 10
 }
@@ -151,7 +151,7 @@ View [the full documentation](${DOCS_ROOT}/language/order_by.html#limiting).
 const QUERY_WHERE_DOC = `Use \`where\` to narrow down results.
 
 \`\`\`malloy
-query: flights -> {
+run: flights -> {
   where: origin.state = 'CA'
   aggregate: flight_count
 }
@@ -163,7 +163,7 @@ View [the full documentation](${DOCS_ROOT}/language/filters.html).
 const QUERY_HAVING_DOC = `Use \`having\` to narrow down results based on conditions of aggregate values.
 
 \`\`\`malloy
-query: flights -> {
+run: flights -> {
   group_by: carrier
   aggregate: total_distance
   having: total_distance > 1000
@@ -176,7 +176,7 @@ View [the full documentation](${DOCS_ROOT}/language/filters.html).
 const QUERY_NEST_DOC = `Use \`nest\` to include a nested query.
 
 \`\`\`malloy
-query: flights -> {
+run: flights -> {
   group_by: carrier
   nest: by_origin_state is {
     group_by: origin.state
@@ -191,7 +191,7 @@ View [the full documentation](${DOCS_ROOT}/language/nesting.html).
 const QUERY_DECLARE_DOC = `Use \`declare\` to introduce new reusable dimensions and measures within a query.
 
 \`\`\`malloy
-query: flights -> {
+run: flights -> {
   declare: flight_count is count()
   aggregate: flight_count
   nest: by_carrier is {
@@ -226,11 +226,11 @@ source: flights is table('malloy-data.faa.flights') {
 View [the full documentation](${DOCS_ROOT}/language/fields.html#measures).
 `;
 
-const SOURCE_QUERY_DOC = `Use \`query\` to define a named query which can be referenced and/or refined.
+const SOURCE_QUERY_DOC = `Use \`view\` to define a named view which can be referenced and/or refined.
 
 \`\`\`malloy
 source: flights is table('malloy-data.faa.flights') {
-  query: by_carrier is {
+  view: by_carrier is {
     group_by: carrier,
     aggregate: flight_count
   }
@@ -347,7 +347,7 @@ export const COMPLETION_DOCS: {
   query_property: {
     group_by: QUERY_GROUP_BY_DOC,
     order_by: QUERY_ORDER_BY_DOC,
-    select: QUERY_PROJECT_DOC,
+    select: QUERY_SELECT_DOC,
     index: QUERY_INDEX_DOC,
     aggregate: QUERY_AGGREGATE_DOC,
     top: QUERY_TOP_DOC,

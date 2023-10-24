@@ -38,7 +38,7 @@ const QUERY_KEYWORDS = [
   'index',
   'limit',
   'order_by',
-  'project',
+  'select',
   'sample',
   'top',
   'where',
@@ -56,7 +56,7 @@ const QUERY_KEYWORDS = [
  * and the 'aggregate' or 'having' keyword
  */
 const DIMENSION_KEYWORDS = [
-  'project',
+  'select',
   'group_by',
   'order_by',
   'aggregate',
@@ -77,7 +77,7 @@ const MEASURE_KEYWORDS = ['aggregate', 'having'];
  * applies in all contexts where dimensions or measures could be used
  */
 const EXPLORE_KEYWORDS = [
-  'project',
+  'select',
   'group_by',
   'order_by',
   'aggregate',
