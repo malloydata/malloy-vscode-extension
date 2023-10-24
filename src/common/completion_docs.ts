@@ -86,7 +86,7 @@ run: flights -> {
 View [the full documentation](${DOCS_ROOT}/language/order_by.html#explicit-ordering).
 `;
 
-const QUERY_PROJECT_DOC = `Use \`project\` to retrieve dimensional values without grouping or aggregating.
+const QUERY_SELECT_DOC = `Use \`select\` to retrieve dimensional values without grouping or aggregating.
 
 \`\`\`malloy
 run: flights -> {
@@ -347,7 +347,7 @@ export const COMPLETION_DOCS: {
   query_property: {
     group_by: QUERY_GROUP_BY_DOC,
     order_by: QUERY_ORDER_BY_DOC,
-    select: QUERY_PROJECT_DOC,
+    select: QUERY_SELECT_DOC,
     index: QUERY_INDEX_DOC,
     aggregate: QUERY_AGGREGATE_DOC,
     top: QUERY_TOP_DOC,
