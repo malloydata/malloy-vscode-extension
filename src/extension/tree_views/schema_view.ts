@@ -47,16 +47,19 @@ import {BaseLanguageClient} from 'vscode-languageclient/node';
 import {BuildModelRequest} from '../../common/types';
 import {exploreSubtype, fieldType, isFieldAggregate} from '../../common/schema';
 import {FetchModelMessage} from '../../common/message_types';
+import {WorkerConnection} from '../worker_connection';
 
 export class SchemaProvider
   implements vscode.TreeDataProvider<ExploreItem | FieldItem>
 {
   private readonly resultCache: Map<string, ExploreItem[]>;
   private previousKey: string | undefined;
+  private refreshSchemaCache = false;
 
   constructor(
     private context: vscode.ExtensionContext,
-    private client: BaseLanguageClient
+    private client: BaseLanguageClient,
+    private worker: WorkerConnection
   ) {
     this.resultCache = new Map();
   }
@@ -73,8 +76,30 @@ export class SchemaProvider
     (ExploreItem | FieldItem) | undefined
   > = this._onDidChangeTreeData.event;
 
-  refresh(): void {
+  async refresh(refreshSchemaCache?: boolean): Promise<void> {
+    this.refreshSchemaCache = refreshSchemaCache || false;
     this._onDidChangeTreeData.fire(undefined);
+  }
+
+  async getStructs(
+    document: vscode.TextDocument
+  ): Promise<Explore[] | undefined> {
+    try {
+      const request: BuildModelRequest = {
+        uri: document.uri.toString(),
+        version: document.version,
+        languageId: document.languageId,
+        refreshSchemaCache: this.refreshSchemaCache,
+      };
+      const model: FetchModelMessage = await this.client.sendRequest(
+        'malloy/fetchModel',
+        request
+      );
+      const explores = model.explores.map(explore => Explore.fromJSON(explore));
+      return explores.sort(exploresByName);
+    } catch (error) {
+      return undefined;
+    }
   }
 
   async getChildren(
@@ -119,7 +144,14 @@ export class SchemaProvider
         return this.resultCache.get(cacheKey) || [];
       }
 
-      const explores = await getStructs(document, this.client);
+      if (this.refreshSchemaCache) {
+        this.worker.sendRequest('malloy/refreshSchemaCache', {
+          uri: document.uri.toString(),
+        });
+      }
+
+      const explores = await this.getStructs(document);
+      this.refreshSchemaCache = false;
       if (explores === undefined) {
         return this.resultCache.get(cacheKey) || [];
       } else {
@@ -138,27 +170,6 @@ export class SchemaProvider
         return results;
       }
     }
-  }
-}
-
-async function getStructs(
-  document: vscode.TextDocument,
-  client: BaseLanguageClient
-): Promise<Explore[] | undefined> {
-  try {
-    const request: BuildModelRequest = {
-      uri: document.uri.toString(),
-      version: document.version,
-      languageId: document.languageId,
-    };
-    const model: FetchModelMessage = await client.sendRequest(
-      'malloy/fetchModel',
-      request
-    );
-    const explores = model.explores.map(explore => Explore.fromJSON(explore));
-    return explores.sort(exploresByName);
-  } catch (error) {
-    return undefined;
   }
 }
 

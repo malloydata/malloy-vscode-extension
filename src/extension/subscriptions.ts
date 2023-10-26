@@ -151,7 +151,7 @@ export const setupSubscriptions = (
     )
   );
 
-  const schemaTree = new SchemaProvider(context, client);
+  const schemaTree = new SchemaProvider(context, client, worker);
 
   context.subscriptions.push(
     vscode.window.registerTreeDataProvider('malloySchema', schemaTree)
@@ -159,7 +159,7 @@ export const setupSubscriptions = (
 
   context.subscriptions.push(
     vscode.commands.registerCommand('malloy.refreshSchema', () =>
-      schemaTree.refresh()
+      schemaTree.refresh(true)
     )
   );
 

@@ -76,6 +76,7 @@ export interface BuildModelRequest {
   uri: string;
   version: number;
   languageId: string;
+  refreshSchemaCache?: boolean;
 }
 
 export interface FileHandler extends URLReader {

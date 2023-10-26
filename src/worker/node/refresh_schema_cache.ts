@@ -21,24 +21,25 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {Connection} from 'vscode-languageserver';
+import {Runtime} from '@malloydata/malloy';
+import {MessageRefreshSchemaCache} from '../../common/worker_message_types';
+import {CellData, FileHandler} from '../../common/types';
 import {ConnectionManager} from '../../common/connection_manager';
-import {MessageHandler} from '../../worker/message_handler';
+import {createModelMaterializer} from '../create_runnable';
 
-export class BrowserMessageHandler {
-  constructor(
-    private connection: Connection,
-    private connectionManager: ConnectionManager
-  ) {
-    const messageHandler = new MessageHandler(
-      this.connection,
-      this.connectionManager
-    );
+export const refreshSchemaCache = async (
+  connectionManager: ConnectionManager,
+  fileHandler: FileHandler,
+  {uri}: MessageRefreshSchemaCache
+): Promise<void> => {
+  const url = new URL(uri);
+  const connectionLookup = connectionManager.getConnectionLookup(url);
+  const runtime = new Runtime(fileHandler, connectionLookup);
 
-    messageHandler.onRequest('malloy/refreshSchemaCache', _message => {
-      // noop since schema cache is shared with language server
-    });
-
-    messageHandler.log('BrowserMessageHandler initialized.');
+  let cellData: CellData | null = null;
+  if (url.protocol === 'vscode-notebook-cell:') {
+    cellData = await fileHandler.fetchCellData(uri);
   }
-}
+  const mm = await createModelMaterializer(uri, runtime, cellData, true);
+  await mm?.getModel();
+};

@@ -28,6 +28,7 @@ import {DesktopConnectionFactory} from '../../common/connections/node/connection
 import {MessageHandler} from '../message_handler';
 import {refreshConfig} from './refresh_config';
 import {inspect} from 'node:util';
+import {refreshSchemaCache} from './refresh_schema_cache';
 
 export class NodeMessageHandler {
   messageHandler: MessageHandler;
@@ -56,6 +57,13 @@ export class NodeMessageHandler {
     );
     this.messageHandler.onRequest('malloy/config', message =>
       refreshConfig(connectionManager, message)
+    );
+    this.messageHandler.onRequest('malloy/refreshSchemaCache', message =>
+      refreshSchemaCache(
+        connectionManager,
+        this.messageHandler.fileHandler,
+        message
+      )
     );
     this.messageHandler.log('NodeMessageHandler initialized.');
   }
