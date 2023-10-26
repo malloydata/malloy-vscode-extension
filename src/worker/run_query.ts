@@ -193,7 +193,7 @@ const runMSQLCell = async (
         .replace(/;\s*$/, ''), // Remove trailing `;`
       name: compiledStatement,
     },
-    {refreshSchemaCache: false}
+    {}
   );
 
   if (cancellationToken.isCancellationRequested) return;
