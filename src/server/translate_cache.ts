@@ -100,12 +100,15 @@ export class TranslateCache implements TranslateCache {
   async createModelMaterializer(
     uri: string,
     runtime: Runtime,
-    refreshSchemaCache?: boolean
+    refreshSchemaCache?: boolean | number
   ): Promise<ModelMaterializer | null> {
     this.connection.console.info(`createModelMaterializer ${uri} start`);
     let modelMaterializer: ModelMaterializer | null = null;
     const queryFileURL = new URL(uri);
     if (queryFileURL.protocol === 'vscode-notebook-cell:') {
+      if (refreshSchemaCache && typeof refreshSchemaCache !== 'number') {
+        refreshSchemaCache = Date.now();
+      }
       const cellData = await this.getCellData(new URL(uri));
       const importBaseURL = new URL(cellData.baseUri);
       for (const cell of cellData.cells) {

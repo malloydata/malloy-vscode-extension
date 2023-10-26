@@ -34,13 +34,16 @@ export const createModelMaterializer = async (
   uri: string,
   runtime: Runtime,
   cellData: CellData | null,
-  refreshSchemaCache?: boolean
+  refreshSchemaCache?: boolean | number
 ): Promise<ModelMaterializer | null> => {
-  console.debug('createModelMaterializer', query.uri, 'begin');
+  console.debug('createModelMaterializer', uri, 'begin');
 
   let mm: ModelMaterializer | null = null;
   const queryFileURL = new URL(uri);
   if (cellData) {
+    if (refreshSchemaCache && typeof refreshSchemaCache !== 'number') {
+      refreshSchemaCache = Date.now();
+    }
     const importBaseURL = new URL(cellData.baseUri);
     for (const cell of cellData.cells) {
       if (cell.languageId === 'malloy') {
@@ -55,7 +58,7 @@ export const createModelMaterializer = async (
   } else {
     mm = runtime.loadModel(queryFileURL, {refreshSchemaCache});
   }
-  console.debug('createModelMaterializer', query.uri, 'end');
+  console.debug('createModelMaterializer', uri, 'end');
   return mm;
 };
 
