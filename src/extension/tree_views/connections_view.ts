@@ -89,13 +89,13 @@ export class ConnectionItem extends vscode.TreeItem {
     }) ${isAvailable ? '' : '(Not available)'}`;
   }
 
-  contextValue = 'connection';
+  override contextValue = 'connection';
 
-  command = {
+  override command = {
     title: 'Edit connection',
     command: 'malloy.editConnections',
     arguments: [this],
   };
 
-  iconPath = new vscode.ThemeIcon('database');
+  override iconPath = new vscode.ThemeIcon('database');
 }

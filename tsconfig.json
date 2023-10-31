@@ -12,6 +12,7 @@
     "lib": ["es2021"],
     "noPropertyAccessFromIndexSignature": true,
     "noImplicitAny": true,
+    "noImplicitOverride": true,
     "strict": true
   },
   "include": ["./src"],

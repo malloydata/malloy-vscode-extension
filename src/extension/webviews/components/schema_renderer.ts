@@ -210,7 +210,7 @@ export class StructItem extends LitElement {
   @property() onFieldClick?: (field: Field) => void;
   @property() onQueryClick?: (query: NamedQuery | QueryField) => void;
   @property() onPreviewClick?: (explore: Explore) => void;
-  @property({type: Boolean}) hidden = false;
+  @property({type: Boolean}) override hidden = false;
 
   toggleHidden = () => {
     this.hidden = !this.hidden;
@@ -252,7 +252,7 @@ export class StructItem extends LitElement {
     </div>`;
   }
 
-  render() {
+  override render() {
     const {explore, path} = this;
     if (!explore) {
       return;
@@ -327,7 +327,7 @@ export class SchemaRenderer extends LitElement {
   @property() onPreviewClick?: (explore: Explore) => void;
   @property({type: Boolean}) defaultShow = false;
 
-  render() {
+  override render() {
     const hidden = !this.defaultShow;
 
     return html`<ul>
