@@ -25,7 +25,7 @@ import {LitElement, html} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
 import {classMap} from 'lit/directives/class-map.js';
 
-import {styles} from './schema_renderer.css';
+import {styles} from './schema_renderer_css';
 import {Explore, Field, NamedQuery, QueryField} from '@malloydata/malloy';
 import {
   exploreSubtype,
@@ -206,7 +206,7 @@ export class StructItem extends LitElement {
   @property() onFieldClick?: (field: Field) => void;
   @property() onQueryClick?: (query: NamedQuery | QueryField) => void;
   @property() onPreviewClick?: (explore: Explore) => void;
-  @property({type: Boolean}) hidden = false;
+  @property({type: Boolean}) override hidden = false;
 
   toggleHidden = () => {
     this.hidden = !this.hidden;
@@ -248,7 +248,7 @@ export class StructItem extends LitElement {
     </div>`;
   }
 
-  render() {
+  override render() {
     const {explore, path} = this;
     if (!explore) {
       return;
@@ -258,8 +258,12 @@ export class StructItem extends LitElement {
       explore.allFields
     );
 
-    const buildPath = (explore: Explore, path: string) => {
-      return `${path}${path ? '.' : ''}${explore.name}`;
+    const buildPath = (explore: Explore, path: string): string => {
+      if (path) {
+        return `${path}.${explore.name}`;
+      } else {
+        return explore.name;
+      }
     };
 
     const classes = classMap({schema: true, hidden: this.hidden});
@@ -323,7 +327,7 @@ export class SchemaRenderer extends LitElement {
   @property() onPreviewClick?: (explore: Explore) => void;
   @property({type: Boolean}) defaultShow = false;
 
-  render() {
+  override render() {
     const hidden = !this.defaultShow;
 
     return html`<ul>
