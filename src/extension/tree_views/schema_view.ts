@@ -210,13 +210,17 @@ export class FieldItem extends vscode.TreeItem {
   ) {
     super(field.name, vscode.TreeItemCollapsibleState.None);
     this.contextValue = fieldType(this.field);
+    let typeLabel = fieldType(this.field);
+    if (field.isAtomicField() && field.isUnsupported()) {
+      typeLabel = `${typeLabel} (${field.rawType})`;
+    }
     this.tooltip = new vscode.MarkdownString(
       `
 $(symbol-field) \`${field.name}\`
 
 **Path**: \`${this.accessPath.join('.')}\`
 
-**Type**: \`${fieldType(this.field)}\`
+**Type**: \`${typeLabel}\`
     `,
       true
     );
