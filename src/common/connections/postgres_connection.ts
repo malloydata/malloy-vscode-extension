@@ -22,7 +22,7 @@
  */
 
 import {getPassword} from 'keytar';
-import {PostgresConnection} from '@malloydata/db-postgres';
+import {PooledPostgresConnection} from '@malloydata/db-postgres';
 import {
   PostgresConnectionConfig,
   ConfigOptions,
@@ -31,7 +31,7 @@ import {
 export const createPostgresConnection = async (
   connectionConfig: PostgresConnectionConfig,
   {rowLimit}: ConfigOptions
-): Promise<PostgresConnection> => {
+): Promise<PooledPostgresConnection> => {
   const configReader = async () => {
     let password: string | undefined;
     if (connectionConfig.password !== undefined) {
@@ -51,7 +51,7 @@ export const createPostgresConnection = async (
       databaseName: connectionConfig.databaseName,
     };
   };
-  const connection = new PostgresConnection(
+  const connection = new PooledPostgresConnection(
     connectionConfig.name,
     () => ({rowLimit}),
     configReader

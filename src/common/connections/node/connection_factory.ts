@@ -110,6 +110,13 @@ export class DesktopConnectionFactory implements ConnectionFactory {
       );
     }
 
+    console.info(
+      'Created',
+      connectionConfig.backend,
+      'connection:',
+      connectionConfig.name
+    );
+
     return connection;
   }
 
