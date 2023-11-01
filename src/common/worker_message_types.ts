@@ -135,10 +135,15 @@ export interface MessageRefreshSchemaCache {
   uri: string;
 }
 
+export interface MessageFetchWorkspaceFolders {
+  workspaceFolders: string[];
+}
+
 export type FetchMessage =
   | MessageFetch
   | MessageFetchBinary
-  | MessageFetchCellData;
+  | MessageFetchCellData
+  | MessageFetchWorkspaceFolders;
 
 /**
  * Type map of extension message types to message interfaces.
@@ -149,6 +154,7 @@ export interface MessageMap {
   'malloy/fetch': MessageFetch;
   'malloy/fetchBinary': MessageFetchBinary;
   'malloy/fetchCellData': MessageFetchCellData;
+  'malloy/fetchWorkspaceFolders': MessageFetchCellData;
   'malloy/run': MessageRun;
   'malloy/download': MessageDownload;
   'malloy/refreshSchemaCache': MessageRefreshSchemaCache;
@@ -179,6 +185,10 @@ export interface WorkerFetchMessage {
   uri: string;
 }
 
+export interface WorkerFetchWorkspaceFoldersMessage {
+  uri: string;
+}
+
 /**
  * Map of worker message types to worker message interfaces.
  */
@@ -188,6 +198,7 @@ export interface WorkerMessageMap {
   'malloy/fetchBinary': WorkerFetchBinaryMessage;
   'malloy/fetch': WorkerFetchMessage;
   'malloy/fetchCellData': WorkerFetchCellDataMessage;
+  'malloy/fetchWorkspaceFolders': WorkerFetchWorkspaceFoldersMessage;
 }
 
 /**

@@ -64,7 +64,16 @@ export async function downloadQuery(
     if (query.uri.startsWith('vscode-notebook-cell:')) {
       cellData = await fileHandler.fetchCellData(query.uri);
     }
-    const runnable = await createRunnable(query, runtime, cellData);
+    let workspaceFolders: string[] = [];
+    if (query.uri.startsWith('untitled:')) {
+      workspaceFolders = await fileHandler.fetchWorkspaceFolders(query.uri);
+    }
+    const runnable = await createRunnable(
+      query,
+      runtime,
+      cellData,
+      workspaceFolders
+    );
 
     const writeStream = fs.createWriteStream(fileURLToPath(uri));
     const writer =

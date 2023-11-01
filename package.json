@@ -319,19 +319,19 @@
           "id": "malloyHelp",
           "name": "Help",
           "type": "webview",
-          "when": "malloy.extensionStatus == installed || resourceFilename =~ /\\.malloy(nb|sql)?$/"
+          "when": "resourceLangId == malloy || resourceLangId == malloy-notebook || resource =~ /malloy-notebook$/"
         },
         {
           "id": "malloyConnections",
           "name": "Malloy Connections",
-          "when": "malloy.extensionStatus == installed || resourceFilename =~ /\\.malloy(nb|sql)?$/"
+          "when": "resourceLangId == malloy || resourceLangId == malloy-notebook || resource =~ /malloy-notebook$/"
         }
       ],
       "explorer": [
         {
           "id": "malloySchema",
           "name": "Malloy Schema",
-          "when": "malloy.webviewPanelFocused == true || resourceFilename =~ /\\.malloy(nb|sql)?$/"
+          "when": "malloy.webviewPanelFocused == true || resourceLangId == malloy || resourceLangId == malloy-notebook || resource =~ /malloy-notebook$/"
         }
       ]
     },

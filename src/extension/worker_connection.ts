@@ -54,22 +54,20 @@ export abstract class WorkerConnection implements ExtensionMessageHandler {
     );
 
     this.context.subscriptions.push(
-      this.onRequest('malloy/fetch', async (message: WorkerFetchMessage) => {
-        workerLog.appendLine(
-          `${logPrefix('Debug')} reading file ${message.uri}`
-        );
-        return await this.fileHandler.fetchFile(message.uri);
+      this.onRequest('malloy/fetch', async ({uri}: WorkerFetchMessage) => {
+        workerLog.appendLine(`${logPrefix('Debug')} reading file ${uri}`);
+        return await this.fileHandler.fetchFile(uri);
       })
     );
 
     this.context.subscriptions.push(
       this.onRequest(
         'malloy/fetchBinary',
-        async (message: WorkerFetchBinaryMessage) => {
+        async ({uri}: WorkerFetchBinaryMessage) => {
           workerLog.appendLine(
-            `${logPrefix('Debug')} reading binary file ${message.uri}`
+            `${logPrefix('Debug')} reading binary file ${uri}`
           );
-          return await this.fileHandler.fetchBinaryFile(message.uri);
+          return await this.fileHandler.fetchBinaryFile(uri);
         }
       )
     );
@@ -77,11 +75,23 @@ export abstract class WorkerConnection implements ExtensionMessageHandler {
     this.context.subscriptions.push(
       this.onRequest(
         'malloy/fetchCellData',
-        async (message: WorkerFetchCellDataMessage) => {
+        async ({uri}: WorkerFetchCellDataMessage) => {
           workerLog.appendLine(
-            `${logPrefix('Debug')} reading cell data for ${message.uri}`
+            `${logPrefix('Debug')} reading cell data for ${uri}`
           );
-          return await this.fileHandler.fetchCellData(message.uri);
+          return await this.fileHandler.fetchCellData(uri);
+        }
+      )
+    );
+
+    this.context.subscriptions.push(
+      this.onRequest(
+        'malloy/fetchWorkspaceFolders',
+        async ({uri}: WorkerFetchCellDataMessage) => {
+          workerLog.appendLine(
+            `${logPrefix('Debug')} reading cell data for ${uri}`
+          );
+          return await this.fileHandler.fetchWorkspaceFolders(uri);
         }
       )
     );
