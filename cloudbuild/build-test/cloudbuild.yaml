@@ -1,4 +1,6 @@
 steps:
+  - name: gcr.io/cloud-builders/git
+    args: ['submodule', 'update', '--init', '--recursive']
   - name: 'gcr.io/malloy-303216/vscode-builder'
     entrypoint: 'bash'
     args:
