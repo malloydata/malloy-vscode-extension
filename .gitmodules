@@ -1,0 +1,3 @@
+[submodule "submodules/malloy"]
+	path = submodules/malloy
+	url = git@github.com:malloydata/malloy
