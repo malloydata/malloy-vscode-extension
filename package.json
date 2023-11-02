@@ -21,8 +21,7 @@
     "node": ">=12"
   },
   "scripts": {
-    "prebuild": "cd submodules/malloy && npm run build",
-    "build": "tsc --build && npm run build-extension",
+    "build": "npm run compile && npm run build-extension",
     "lint": "gts lint",
     "lint-fix": "gts fix",
     "test": "jest --runInBand",
@@ -31,7 +30,8 @@
     "package-extension": "ts-node scripts/package-extension package",
     "publish-extensions": "ts-node scripts/publish-extensions",
     "clean": "gts clean",
-    "compile": "tsc",
+    "precompile": "cd submodules/malloy && npm run build",
+    "compile": "tsc --build",
     "fix": "gts fix",
     "prepare": "npm run compile",
     "pretest": "npm run compile",
