@@ -1,6 +1,11 @@
 steps:
-  - name: gcr.io/cloud-builders/git
-    args: ['submodule', 'update', '--init', '--recursive']
+  - name: "gcr.io/cloud-builders/git"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        git submodule set-url submodules/malloy https://github.com/malloydata/malloy
+        git submodule update --init --recursive
   - name: 'gcr.io/malloy-303216/vscode-builder'
     entrypoint: 'bash'
     args:
