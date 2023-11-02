@@ -13,7 +13,8 @@
       "@malloydata/db-postgres",
       "@malloydata/render",
       "@malloydata/malloy-sql",
-      "@malloydata/syntax-highlight"
+      "@malloydata/syntax-highlight",
+      "@malloydata/malloy-tests"
     ]
   },
   "engines": {
@@ -570,6 +571,7 @@
   },
   "devDependencies": {
     "@jest/globals": "^26.6.2",
+    "@malloydata/malloy-tests": "file:submodules/malloy/test",
     "@types/jest": "^29.2.1",
     "@types/lodash": "^4.14.191",
     "@types/madge": "^5.0.0",
