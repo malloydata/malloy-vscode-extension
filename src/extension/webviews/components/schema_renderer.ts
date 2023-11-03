@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {LitElement, html} from 'lit';
+import {LitElement, TemplateResult, html} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
 import {classMap} from 'lit/directives/class-map.js';
 
@@ -44,6 +44,7 @@ import {
   queryIcon,
   stringIcon,
   timeIcon,
+  unknownIcon,
 } from './icons';
 
 const sortByName = (a: {name: string}, b: {name: string}) =>
@@ -100,7 +101,7 @@ function bucketFields(fields: Field[]) {
  * @returns A React wrapped svg of the icon.
  */
 function getIconElement(fieldType: string, isAggregate: boolean) {
-  let imageElement;
+  let imageElement: TemplateResult | null;
   if (isAggregate) {
     imageElement = numberAggregateIcon;
   } else {
@@ -134,7 +135,7 @@ function getIconElement(fieldType: string, isAggregate: boolean) {
         imageElement = queryIcon;
         break;
       default:
-        imageElement = null;
+        imageElement = unknownIcon;
     }
   }
 
@@ -167,11 +168,14 @@ function buildTitle(field: Field | Explore, path: string) {
   if (field.isExplore()) {
     return field.name;
   }
-  const type = fieldType(field);
+  let typeLabel = fieldType(field);
+  if (field.isAtomicField() && field.isUnsupported()) {
+    typeLabel = `${typeLabel} (${field.rawType})`;
+  }
   const fieldName = field.name;
   return `${fieldName}
 Path: ${path}${path ? '.' : ''}${fieldName}
-Type: ${type}`;
+Type: ${typeLabel}`;
 }
 
 /**
