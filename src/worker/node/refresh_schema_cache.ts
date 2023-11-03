@@ -40,6 +40,17 @@ export const refreshSchemaCache = async (
   if (url.protocol === 'vscode-notebook-cell:') {
     cellData = await fileHandler.fetchCellData(uri);
   }
-  const mm = await createModelMaterializer(uri, runtime, cellData, true);
+  let workspaceFolders: string[] = [];
+  if (url.protocol === 'untitled:') {
+    workspaceFolders = await fileHandler.fetchWorkspaceFolders(uri);
+  }
+
+  const mm = await createModelMaterializer(
+    uri,
+    runtime,
+    cellData,
+    workspaceFolders,
+    true
+  );
   await mm?.getModel();
 };

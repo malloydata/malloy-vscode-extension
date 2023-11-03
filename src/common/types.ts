@@ -106,6 +106,14 @@ export interface FileHandler extends URLReader {
    * @returns File contents
    */
   fetchCellData(uri: string): Promise<CellData>;
+
+  /**
+   * Requests workspace directories from the worker's controller.
+   *
+   * @param uri URI to resolve
+   * @returns workspace directories as an array of URI strings
+   */
+  fetchWorkspaceFolders(uri: string): Promise<string[]>;
 }
 
 export interface StructDefSuccess {

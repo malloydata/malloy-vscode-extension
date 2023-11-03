@@ -94,8 +94,15 @@ export async function fetchCellData(uriString: string): Promise<CellData> {
     baseUri: uriString,
     cells: [],
   };
+
   if (notebook) {
     result.baseUri = notebook.uri.toString();
+    if (notebook.uri.scheme === 'untitled') {
+      const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+      if (workspaceFolder) {
+        result.baseUri = workspaceFolder.uri.toString() + '/';
+      }
+    }
     for (const cell of notebook.getCells()) {
       if (cell.kind === vscode.NotebookCellKind.Code) {
         result.cells.push({
@@ -111,6 +118,13 @@ export async function fetchCellData(uriString: string): Promise<CellData> {
     }
   }
   return result;
+}
+
+export function fetchWorkspaceFolders(_uriString: string): string[] {
+  return (
+    vscode.workspace.workspaceFolders?.map(folder => folder.uri.toString()) ||
+    []
+  );
 }
 
 export class ClientFileHandler implements FileHandler {
@@ -146,6 +160,16 @@ export class ClientFileHandler implements FileHandler {
    */
   async fetchCellData(uri: string): Promise<CellData> {
     return fetchCellData(uri);
+  }
+
+  /**
+   * Requests workspace directories from the worker's controller.
+   *
+   * @param uri URI to resolve
+   * @returns workspace directories as an array of URI strings
+   */
+  async fetchWorkspaceFolders(uri: string): Promise<string[]> {
+    return fetchWorkspaceFolders(uri);
   }
 
   async readURL(url: URL): Promise<string> {

@@ -128,7 +128,18 @@ export class TranslateCache implements TranslateCache {
         }
       }
     } else {
-      modelMaterializer = runtime.loadModel(queryFileURL, {refreshSchemaCache});
+      let importBaseURL: URL | undefined;
+      if (queryFileURL.protocol === 'untitled:') {
+        const workspaceFolders =
+          await this.connection.workspace.getWorkspaceFolders();
+        if (workspaceFolders?.[0]) {
+          importBaseURL = new URL(workspaceFolders[0].uri + '/');
+        }
+      }
+      modelMaterializer = runtime.loadModel(queryFileURL, {
+        importBaseURL,
+        refreshSchemaCache,
+      });
     }
     this.connection.console.info(`createModelMaterializer ${uri} end`);
     return modelMaterializer;

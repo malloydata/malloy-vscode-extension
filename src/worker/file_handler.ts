@@ -70,4 +70,14 @@ export class RpcFileHandler implements FileHandler {
   async readURL(url: URL): Promise<string> {
     return this.fetchFile(url.toString());
   }
+
+  /**
+   * Requests workspace directories from the worker's controller.
+   *
+   * @param uri URI to resolve
+   * @returns workspace directories as an array of URI strings
+   */
+  async fetchWorkspaceFolders(uri: string): Promise<string[]> {
+    return this.connection.sendRequest('malloy/fetchWorkspaceFolders', {uri});
+  }
 }

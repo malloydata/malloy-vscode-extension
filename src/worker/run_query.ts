@@ -93,6 +93,7 @@ const runMSQLCell = async (
   {query, panelId, showSQLOnly}: MessageRun,
   cellData: CellData | null,
   currentCell: Cell,
+  workspaceFolders: string[],
   cancellationToken: CancellationToken
 ) => {
   const sendMessage = (message: QueryMessageStatus) => {
@@ -114,7 +115,8 @@ const runMSQLCell = async (
   const modelMaterializer = await createModelMaterializer(
     query.uri,
     runtime,
-    cellData
+    cellData,
+    workspaceFolders
   );
 
   const connectionName = computeConnectionName(cellData);
@@ -257,6 +259,11 @@ export const runQuery = async (
       isMalloySql = currentCell.languageId === 'malloy-sql';
     }
 
+    let workspaceFolders: string[] = [];
+    if (queryFileURL.protocol === 'untitled:') {
+      workspaceFolders = await fileHandler.fetchWorkspaceFolders(query.uri);
+    }
+
     if (isMalloySql) {
       if (currentCell) {
         await runMSQLCell(
@@ -266,6 +273,7 @@ export const runQuery = async (
           messageRun,
           cellData,
           currentCell,
+          workspaceFolders,
           cancellationToken
         );
       } else {
@@ -282,7 +290,12 @@ export const runQuery = async (
     });
 
     let sql: string;
-    const runnable = await createRunnable(query, runtime, cellData);
+    const runnable = await createRunnable(
+      query,
+      runtime,
+      cellData,
+      workspaceFolders
+    );
 
     // Set the row limit to the limit provided in the final stage of the query, if present
     const rowLimit =

@@ -34,6 +34,7 @@ export const createModelMaterializer = async (
   uri: string,
   runtime: Runtime,
   cellData: CellData | null,
+  workspaceFolders: string[],
   refreshSchemaCache?: boolean | number
 ): Promise<ModelMaterializer | null> => {
   console.debug('createModelMaterializer', uri, 'begin');
@@ -56,7 +57,13 @@ export const createModelMaterializer = async (
       }
     }
   } else {
-    mm = runtime.loadModel(queryFileURL, {refreshSchemaCache});
+    let importBaseURL: URL | undefined;
+    if (queryFileURL.protocol === 'untitled:') {
+      if (workspaceFolders[0]) {
+        importBaseURL = new URL(workspaceFolders[0] + '/');
+      }
+    }
+    mm = runtime.loadModel(queryFileURL, {importBaseURL, refreshSchemaCache});
   }
   console.debug('createModelMaterializer', uri, 'end');
   return mm;
@@ -65,11 +72,17 @@ export const createModelMaterializer = async (
 export const createRunnable = async (
   query: WorkerQuerySpec,
   runtime: Runtime,
-  cellData: CellData | null
+  cellData: CellData | null,
+  workspaceFolders: string[]
 ): Promise<SQLBlockMaterializer | QueryMaterializer> => {
   console.debug('createRunnable', query.uri, 'begin');
   let runnable: QueryMaterializer | SQLBlockMaterializer;
-  const mm = await createModelMaterializer(query.uri, runtime, cellData);
+  const mm = await createModelMaterializer(
+    query.uri,
+    runtime,
+    cellData,
+    workspaceFolders
+  );
   if (!mm) {
     throw new Error('Missing model definition');
   }
