@@ -289,7 +289,6 @@ export const runQuery = async (
       status: QueryRunStatus.Compiling,
     });
 
-    let sql: string;
     const runnable = await createRunnable(
       query,
       runtime,
@@ -308,36 +307,28 @@ export const runQuery = async (
         ? (await runnable.getPreparedQuery()).dialect
         : undefined) || 'unknown';
 
-    try {
-      sql = await runnable.getSQL();
-      if (cancellationToken.isCancellationRequested) return;
-      console.info(sql);
+    const sql = await runnable.getSQL();
+    if (cancellationToken.isCancellationRequested) return;
+    console.info(sql);
 
-      sendMessage({
-        status: QueryRunStatus.Compiled,
-        sql,
-        dialect,
-        showSQLOnly,
-      });
+    sendMessage({
+      status: QueryRunStatus.Compiled,
+      sql,
+      dialect,
+      showSQLOnly,
+    });
 
-      if (showSQLOnly) {
-        const schema: SerializedExplore[] = [];
-        if ('getPreparedQuery' in runnable) {
-          const query = await runnable.getPreparedQuery();
-          schema.push(query.preparedResult.resultExplore.toJSON());
-        }
-        const estimatedRunStats = await runnable.estimateQueryCost();
-        sendMessage({
-          status: QueryRunStatus.EstimatedCost,
-          queryCostBytes: estimatedRunStats?.queryCostBytes,
-          schema,
-        });
-        return;
+    if (showSQLOnly) {
+      const schema: SerializedExplore[] = [];
+      if ('getPreparedQuery' in runnable) {
+        const query = await runnable.getPreparedQuery();
+        schema.push(query.preparedResult.resultExplore.toJSON());
       }
-    } catch (error) {
+      const estimatedRunStats = await runnable.estimateQueryCost();
       sendMessage({
-        status: QueryRunStatus.Error,
-        error: errorMessage(error),
+        status: QueryRunStatus.EstimatedCost,
+        queryCostBytes: estimatedRunStats?.queryCostBytes,
+        schema,
       });
       return;
     }
