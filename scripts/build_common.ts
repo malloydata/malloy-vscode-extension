@@ -59,6 +59,23 @@ const keytarReplacerPlugin: Plugin = {
   },
 };
 
+const litCssImporter: Plugin = {
+  name: 'litCssImporter',
+  setup(build) {
+    build.onLoad({filter: /\.css$/}, async args => {
+      const css = await fs.promises.readFile(args.path, 'utf-8');
+      return {
+        contents: /* javascript */ `
+const css = require('lit').css;
+module.exports = {
+  styles: css\`${css}\`
+};
+`,
+      };
+    });
+  },
+};
+
 function makeDuckdbNoNodePreGypPlugin(target: Target | undefined): Plugin {
   const localPath = require.resolve('duckdb/lib/binding/duckdb.node');
   const posixPath = localPath.split(path.sep).join(path.posix.sep);
@@ -280,6 +297,7 @@ export async function doBuild(
     svgrPlugin({
       typescript: true,
     }),
+    litCssImporter,
     ...nodeWebviewPlugins,
   ];
 
