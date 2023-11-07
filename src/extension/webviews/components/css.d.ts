@@ -2,5 +2,5 @@ declare module '*.css' {
   import type {CSSResultGroup} from 'lit';
 
   const styles: CSSResultGroup;
-  export default styles;
+  export {styles};
 }
