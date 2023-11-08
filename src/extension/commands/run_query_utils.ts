@@ -245,7 +245,7 @@ export function runMalloyQueryWithProgress(
   return vscode.window.withProgress<ResultJSON | undefined>(
     {
       location: vscode.ProgressLocation.Notification,
-      title: `Malloy Query (${name})`,
+      title: `Running (${name})`,
       cancellable: true,
     },
     (progress, cancellationToken) => {

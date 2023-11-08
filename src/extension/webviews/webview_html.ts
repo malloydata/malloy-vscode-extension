@@ -49,7 +49,7 @@ export function getWebviewHtml(
     <meta http-equiv="Content-Security-Policy" content="base-uri 'none'; default-src 'none'; style-src 'unsafe-inline' ${cspSrc}; font-src ${cspSrc}; img-src ${cspSrc} https:; script-src 'nonce-${nonce}' 'unsafe-eval';">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="${codiconsUri}" rel="stylesheet" />
-    <title>Malloy Query Results</title>
+    <title>Malloy Results</title>
   </head>
   <style>
     :root {
