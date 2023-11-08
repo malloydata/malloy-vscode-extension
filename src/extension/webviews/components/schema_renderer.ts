@@ -282,7 +282,7 @@ export class StructItem extends LitElement {
       <ul>
         ${queries.length
           ? html`<li class="fields">
-              <label>Queries</label>
+              <label>Views</label>
               ${this.fieldList(queries, path)}
             </li>`
           : null}
