@@ -22,7 +22,7 @@
  */
 
 import {LogMessage} from '@malloydata/malloy';
-import {EmbeddedMalloyQuery} from '@malloydata/malloy-sql/dist/types';
+import {EmbeddedMalloyQuery} from '@malloydata/malloy-sql';
 
 export const fixLogRange = (
   uri: string,
