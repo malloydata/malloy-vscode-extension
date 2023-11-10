@@ -50,6 +50,21 @@ import {
 const sortByName = (a: {name: string}, b: {name: string}) =>
   a.name.localeCompare(b.name);
 
+const fieldContext = (field: Field) => {
+  const accessPath = [field.name];
+  let current: Explore | undefined = field.parentExplore;
+  while (current) {
+    accessPath.unshift(current.name);
+    current = current.parentExplore;
+  }
+  const topLevelExplore = accessPath.shift();
+
+  return {
+    location: field.location,
+    topLevelExplore,
+    accessPath,
+  };
+};
 /**
  * Bucket fields by type and sort by name.
  *
@@ -187,15 +202,39 @@ Type: ${typeLabel}`;
  */
 const queryItem = (
   query: NamedQuery | QueryField,
-  onQueryClick?: (query: NamedQuery | QueryField) => void
+  onQueryClick?: (query: NamedQuery | QueryField) => void,
+  onContextClick?: (event: MouseEvent, context: Record<string, unknown>) => void
 ) => {
   const onClick = () => {
     onQueryClick?.(query);
   };
 
   const clickable = onQueryClick ? 'clickable' : '';
+  let context: Record<string, unknown> = {
+    webviewSection: 'schemaQuery',
+  };
 
-  return html`<div class=${`field ${clickable}`} @click=${onClick}>
+  if ('parentExplore' in query) {
+    context = {
+      ...context,
+      ...fieldContext(query),
+    };
+  } else {
+    context = {
+      ...context,
+      location: query.location,
+    };
+  }
+
+  const onContextMenu = (e: MouseEvent) => {
+    onContextClick?.(e, context);
+  };
+
+  return html`<div
+    class=${`field ${clickable}`}
+    @click=${onClick}
+    @contextmenu=${onContextMenu}
+  >
     ${getIconElement('query', false)}
     <span class="field_name">${query.name}</span>
   </div>`;
@@ -210,6 +249,10 @@ export class StructItem extends LitElement {
   @property() onFieldClick?: (field: Field) => void;
   @property() onQueryClick?: (query: NamedQuery | QueryField) => void;
   @property() onPreviewClick?: (explore: Explore) => void;
+  @property() onContextClick?: (
+    event: MouseEvent,
+    context: Record<string, unknown>
+  ) => void;
   @property({type: Boolean}) override hidden = false;
 
   toggleHidden = () => {
@@ -226,6 +269,15 @@ export class StructItem extends LitElement {
   };
 
   fieldItem(field: Field, path: string) {
+    const context = {
+      webviewSection: 'schemaField',
+      ...fieldContext(field),
+    };
+
+    const onContextMenu = (e: MouseEvent) => {
+      this.onContextClick?.(e, context);
+    };
+
     const onClick = () => {
       this.onFieldClick?.(field);
     };
@@ -236,6 +288,7 @@ export class StructItem extends LitElement {
       class=${`field ${clickable}`}
       title=${buildTitle(field, path)}
       @click=${onClick}
+      @contextmenu=${onContextMenu}
     >
       ${getIconElement(fieldType(field), isFieldAggregate(field))}
       <span class="field_name">${field.name}</span>
@@ -246,7 +299,7 @@ export class StructItem extends LitElement {
     return html`<div class="field_list">
       ${fields.map(field =>
         field.isQuery()
-          ? queryItem(field, this.onQueryClick)
+          ? queryItem(field, this.onQueryClick, this.onContextClick)
           : this.fieldItem(field, path)
       )}
     </div>`;
@@ -307,6 +360,7 @@ export class StructItem extends LitElement {
                   .onFieldClick=${this.onFieldClick}
                   .onPreviewClick=${this.onPreviewClick}
                   .onQueryClick=${this.onQueryClick}
+                  .onContextClick=${this.onContextClick}
                   ?hidden=${true}
                 />`
             )
@@ -324,6 +378,10 @@ export class SchemaRenderer extends LitElement {
   @property({type: Array}) queries: NamedQuery[] = [];
   @property() onFieldClick?: (field: Field) => void;
   @property() onQueryClick?: (query: NamedQuery | QueryField) => void;
+  @property() onContextClick?: (
+    event: MouseEvent,
+    context: Record<string, unknown>
+  ) => void;
   @property() onPreviewClick?: (explore: Explore) => void;
   @property({type: Boolean}) defaultShow = false;
 
@@ -348,6 +406,7 @@ export class SchemaRenderer extends LitElement {
               .onFieldClick=${this.onFieldClick}
               .onPreviewClick=${this.onPreviewClick}
               .onQueryClick=${this.onQueryClick}
+              .onContextClick=${this.onContextClick}
               ?hidden=${hidden}
             />`
         )}

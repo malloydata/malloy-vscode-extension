@@ -145,23 +145,23 @@
       },
       {
         "command": "malloy.runTurtleFromSchema",
-        "title": "Run From Schema",
+        "title": "Run",
         "category": "Malloy",
         "icon": "$(play)",
-        "enablement": "view == malloySchema && viewItem == query"
+        "enablement": "(view == malloySchema && viewItem == query) || (webviewId == malloyQuery && webviewSection == schemaQuery)"
       },
       {
         "command": "malloy.copyFieldPath",
         "title": "Copy Field Path",
         "category": "Malloy",
         "icon": "$(copy)",
-        "enablement": "view == malloySchema"
+        "enablement": "view == malloySchema || webviewId == malloyQuery"
       },
       {
         "command": "malloy.goToDefinitionFromSchema",
         "title": "Go to Definition",
         "category": "Malloy",
-        "enablement": "view == malloySchema"
+        "enablement": "view == malloySchema || webviewId == malloyQuery"
       },
       {
         "command": "malloy.previewFromSchema",
@@ -238,6 +238,20 @@
         {
           "command": "malloy.newUntitledNotebook",
           "group": "notebook"
+        }
+      ],
+      "webview/context": [
+        {
+          "command": "malloy.goToDefinitionFromSchema",
+          "when": "webviewId == malloyQuery && (webviewSection == schemaField || webviewSection == schemaQuery)"
+        },
+        {
+          "command": "malloy.runTurtleFromSchema",
+          "when": "webviewId == malloyQuery && webviewSection == schemaQuery"
+        },
+        {
+          "command": "malloy.copyFieldPath",
+          "when": "webviewId == malloyQuery && (webviewSection == schemaField || webviewSection == schemaQuery)"
         }
       ]
     },
