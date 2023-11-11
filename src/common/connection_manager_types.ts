@@ -77,6 +77,7 @@ export interface PostgresConnectionConfig extends BaseConnectionConfig {
 export interface DuckDBConnectionConfig extends BaseConnectionConfig {
   backend: ConnectionBackend.DuckDB;
   workingDirectory?: string;
+  databasePath?: string;
 }
 
 export interface DuckDBWASMConnectionConfigDeprecated
@@ -120,7 +121,8 @@ export type ConnectionConfig =
   | ExternalConnectionConfig;
 
 export interface ConfigOptions {
-  workingDirectory: string;
+  workingDirectory?: string;
+  readOnly?: boolean;
   rowLimit?: number;
   useCache?: boolean;
 }

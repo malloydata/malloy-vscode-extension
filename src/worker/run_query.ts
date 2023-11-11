@@ -103,7 +103,7 @@ const runMSQLCell = async (
   };
 
   const url = new URL(query.uri);
-  const connectionLookup = connectionManager.getConnectionLookup(url);
+  const connectionLookup = connectionManager.getConnectionLookup(url, false);
 
   const runtime = new Runtime(files, connectionLookup);
   const allBegin = Date.now();
@@ -245,7 +245,7 @@ export const runQuery = async (
   };
 
   const url = new URL(query.uri);
-  const connectionLookup = connectionManager.getConnectionLookup(url);
+  const connectionLookup = connectionManager.getConnectionLookup(url, false);
 
   try {
     const queryFileURL = new URL(query.uri);

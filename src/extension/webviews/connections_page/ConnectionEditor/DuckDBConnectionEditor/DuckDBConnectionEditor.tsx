@@ -65,6 +65,19 @@ export const DuckDBConnectionEditor: React.FC<DuckDBConnectionEditorProps> = ({
             />
           </td>
         </tr>
+        <tr>
+          <LabelCell>
+            <Label>Database Path:</Label>
+          </LabelCell>
+          <td>
+            <TextField
+              value={config.databasePath || ''}
+              setValue={databasePath => {
+                setConfig({...config, databasePath});
+              }}
+            />
+          </td>
+        </tr>
       </tbody>
     </table>
   );

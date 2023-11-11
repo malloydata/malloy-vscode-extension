@@ -57,7 +57,7 @@ export async function downloadQuery(
   try {
     const runtime = new Runtime(
       fileHandler,
-      connectionManager.getConnectionLookup(url)
+      connectionManager.getConnectionLookup(url, false)
     );
 
     let cellData: CellData | null = null;

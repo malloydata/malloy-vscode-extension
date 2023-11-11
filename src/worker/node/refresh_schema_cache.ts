@@ -33,7 +33,7 @@ export const refreshSchemaCache = async (
   {uri}: MessageRefreshSchemaCache
 ): Promise<void> => {
   const url = new URL(uri);
-  const connectionLookup = connectionManager.getConnectionLookup(url);
+  const connectionLookup = connectionManager.getConnectionLookup(url, true);
   const runtime = new Runtime(fileHandler, connectionLookup);
 
   let cellData: CellData | null = null;

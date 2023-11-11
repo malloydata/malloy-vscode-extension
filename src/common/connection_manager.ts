@@ -45,9 +45,10 @@ export class DynamicConnectionLookup implements LookupConnection<Connection> {
   ) {}
 
   async lookupConnection(
-    connectionName?: string | undefined
+    connectionName: string,
+    readOnly = true
   ): Promise<Connection> {
-    const connectionKey = connectionName || DEFAULT_CONFIG;
+    const connectionKey = connectionName;
     if (!this.connections[connectionKey]) {
       const connectionConfig = this.configs[connectionKey];
       if (connectionConfig) {
@@ -55,6 +56,7 @@ export class DynamicConnectionLookup implements LookupConnection<Connection> {
           this.connectionFactory.getConnectionForConfig(connectionConfig, {
             useCache: true,
             ...this.options,
+            readOnly,
           });
       } else {
         throw new Error(`No connection found with name ${connectionName}`);
@@ -92,7 +94,10 @@ export class ConnectionManager {
     });
   }
 
-  public getConnectionLookup(fileURL: URL): LookupConnection<Connection> {
+  public getConnectionLookup(
+    fileURL: URL,
+    readOnly: boolean
+  ): LookupConnection<Connection> {
     const workingDirectory =
       this.connectionFactory.getWorkingDirectory(fileURL);
 
@@ -103,6 +108,7 @@ export class ConnectionManager {
         {
           workingDirectory,
           rowLimit: this.getCurrentRowLimit(),
+          readOnly,
         }
       );
     }

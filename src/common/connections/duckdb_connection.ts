@@ -30,19 +30,14 @@ import {isDuckDBAvailable} from '../../common/duckdb_availability';
 
 export const createDuckDbConnection = async (
   connectionConfig: DuckDBConnectionConfig,
-  {workingDirectory, rowLimit}: ConfigOptions
+  configOptions: ConfigOptions
 ) => {
   if (!isDuckDBAvailable) {
     throw new Error('DuckDB is not available.');
   }
+  const options = {...connectionConfig, ...configOptions};
   try {
-    const connection = new DuckDBConnection(
-      connectionConfig.name,
-      ':memory:',
-      connectionConfig.workingDirectory || workingDirectory,
-      () => ({rowLimit})
-    );
-    return connection;
+    return new DuckDBConnection(options);
   } catch (error) {
     console.error('Could not create DuckDB connection:', error);
     throw error;

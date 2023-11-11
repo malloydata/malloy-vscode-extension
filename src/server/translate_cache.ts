@@ -182,7 +182,7 @@ export class TranslateCache implements TranslateCache {
       // new runs preempt the current fetch
       const runtime = new Runtime(
         files,
-        this.connectionManager.getConnectionLookup(new URL(uri))
+        this.connectionManager.getConnectionLookup(new URL(uri), true)
       );
       const modelMaterializer = await this.createModelMaterializer(
         uri,
@@ -231,7 +231,7 @@ export class TranslateCache implements TranslateCache {
       };
       const runtime = new Runtime(
         files,
-        this.connectionManager.getConnectionLookup(new URL(uri))
+        this.connectionManager.getConnectionLookup(new URL(uri), true)
       );
 
       const modelMaterializer = await this.createModelMaterializer(
@@ -273,7 +273,7 @@ export class TranslateCache implements TranslateCache {
       };
       const runtime = new Runtime(
         files,
-        this.connectionManager.getConnectionLookup(new URL(uri))
+        this.connectionManager.getConnectionLookup(new URL(uri), true)
       );
 
       const modelMaterializer = await this.createModelMaterializer(

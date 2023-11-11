@@ -63,7 +63,7 @@ export class DesktopConnectionFactory implements ConnectionFactory {
   async getConnectionForConfig(
     connectionConfig: ConnectionConfig,
     configOptions: ConfigOptions = {
-      workingDirectory: '/',
+      readOnly: true,
     }
   ): Promise<TestableConnection> {
     const {useCache, workingDirectory} = configOptions;
