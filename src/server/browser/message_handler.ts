@@ -40,6 +40,6 @@ export class BrowserMessageHandler {
       // noop since schema cache is shared with language server
     });
 
-    messageHandler.log('BrowserMessageHandler initialized.');
+    console.info('BrowserMessageHandler initialized.');
   }
 }

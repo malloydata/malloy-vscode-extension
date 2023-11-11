@@ -29,6 +29,7 @@ import {TextDocument} from 'vscode-languageserver-textdocument';
 import {connection, connectionManager} from './connections_node';
 import {initServer} from '../init';
 import {CloudCodeConfig} from '../../common/types/worker_message_types';
+import {NodeMessageHandler} from '../../worker/node/message_handler';
 
 const documents = new TextDocuments(TextDocument);
 
@@ -49,5 +50,8 @@ const onDidChangeConfiguration = (change: DidChangeConfigurationParams) => {
 };
 
 initServer(documents, connection, connectionManager, onDidChangeConfiguration);
-
+export const messageHandler = new NodeMessageHandler(
+  connection,
+  connectionManager
+);
 connection.console.info('Server loaded');

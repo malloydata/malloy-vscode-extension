@@ -37,12 +37,9 @@ import {
 } from '../tree_views/connections_view';
 import {connectionManager} from './connection_manager';
 import {setupFileMessaging, setupSubscriptions} from '../subscriptions';
-import {getMalloyConfig} from '../utils/config';
 import {fileHandler} from '../utils/files';
 import {MALLOY_EXTENSION_STATE} from '../state';
 import {WorkerConnectionNode} from './worker_connection_node';
-import {MalloyConfig} from '../../common/types/malloy_config';
-import {CloudCodeConfig} from '../../common/types/worker_message_types';
 
 let client: LanguageClient;
 
@@ -62,8 +59,7 @@ const cloudCodeEnv = () => {
 export function activate(context: vscode.ExtensionContext): void {
   cloudCodeEnv();
   setupLanguageServer(context);
-  const worker = new WorkerConnectionNode(context, fileHandler);
-  sendWorkerConfig(worker);
+  const worker = new WorkerConnectionNode(context, client, fileHandler);
   setupSubscriptions(context, worker, client);
   const connectionsTree = new ConnectionsProvider(context, connectionManager);
 
@@ -84,11 +80,9 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.workspace.onDidChangeConfiguration(async e => {
       if (e.affectsConfiguration('malloy')) {
         await connectionManager.onConfigurationUpdated();
-        sendWorkerConfig(worker);
         connectionsTree.refresh();
       }
       if (e.affectsConfiguration('cloudcode')) {
-        sendWorkerConfig(worker);
         cloudCodeEnv();
       }
     })
@@ -146,13 +140,4 @@ async function setupLanguageServer(
   await client.start();
 
   setupFileMessaging(context, client, fileHandler);
-}
-
-function sendWorkerConfig(worker: WorkerConnectionNode) {
-  worker.sendRequest('malloy/config', {
-    malloy: getMalloyConfig() as unknown as MalloyConfig,
-    cloudcode: vscode.workspace.getConfiguration(
-      'cloudcode'
-    ) as unknown as CloudCodeConfig,
-  });
 }

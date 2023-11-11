@@ -44,10 +44,8 @@ export class DynamicConnectionLookup implements LookupConnection<Connection> {
     private options: ConfigOptions
   ) {}
 
-  async lookupConnection(
-    connectionName?: string | undefined
-  ): Promise<Connection> {
-    const connectionKey = connectionName || DEFAULT_CONFIG;
+  async lookupConnection(connectionName: string): Promise<Connection> {
+    const connectionKey = connectionName;
     if (!this.connections[connectionKey]) {
       const connectionConfig = this.configs[connectionKey];
       if (connectionConfig) {
