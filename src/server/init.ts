@@ -129,11 +129,19 @@ export const initServer = (
       // Trigger diagnostics for all documents we know that import this one,
       // too.
       translateCache.cache.forEach((entry, key) => {
-        if (entry.model.imports.find(a => a.importURL === document.uri)) {
-          translateCache.cache.delete(key);
-          const document = documents.get(key);
-          if (document) {
-            debouncedDiagnoseDocuments[key](document);
+        // Don't re-eject the current document
+        if (documents.get(key)?.uri === document.uri) {
+          return;
+        }
+        if (entry.model.fromSources.includes(document.uri)) {
+          if (translateCache.cache.delete(key)) {
+            const document = documents.get(key);
+            if (document) {
+              connection.console.info(
+                `diagnoseDocument ejecting ${document.uri}`
+              );
+              debouncedDiagnoseDocuments[key](document);
+            }
           }
         }
       });
