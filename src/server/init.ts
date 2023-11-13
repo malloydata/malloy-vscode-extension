@@ -154,6 +154,7 @@ export const initServer = (
     if (document && document.languageId === 'malloy') {
       return getMalloyLenses(document);
     }
+    return [];
   });
 
   connection.onRequest(
@@ -177,7 +178,7 @@ export const initServer = (
 
   connection.onDidChangeConfiguration(change => {
     onDidChangeConfiguration?.(change);
-    connectionManager.setConnectionsConfig(change.settings.malloy.connections);
+    connectionManager.setConnectionsConfig(change.settings?.malloy?.connections ?? []);
     haveConnectionsBeenSet = true;
     documents.all().forEach(debouncedDiagnoseDocument);
   });
