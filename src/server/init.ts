@@ -179,7 +179,7 @@ export const initServer = (
   connection.onDidChangeConfiguration(change => {
     onDidChangeConfiguration?.(change);
     connectionManager.setConnectionsConfig(
-      change.settings?.malloy?.connections ?? []
+      (change?.settings as any)?.malloy?.connections ?? []
     );
     haveConnectionsBeenSet = true;
     documents.all().forEach(debouncedDiagnoseDocument);
