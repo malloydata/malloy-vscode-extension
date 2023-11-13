@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {Location, Position, DefinitionLink} from 'vscode-languageserver/node';
+import {Location, Position, DefinitionLink} from 'vscode-languageserver';
 import {TextDocument} from 'vscode-languageserver-textdocument';
 import {TranslateCache} from '../translate_cache';
 
