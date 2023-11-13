@@ -30,8 +30,8 @@ import {ConnectionManager} from '../../common/connection_manager';
 import {WebConnectionFactory} from '../../common/connections/browser/connection_factory';
 import {errorMessage} from '../../common/errors';
 
-const messageReader = new BrowserMessageReader(self);
-const messageWriter = new BrowserMessageWriter(self);
+const messageReader = new BrowserMessageReader(self as unknown as Worker);
+const messageWriter = new BrowserMessageWriter(self as unknown as Worker);
 
 export const connection = createConnection(messageReader, messageWriter);
 
