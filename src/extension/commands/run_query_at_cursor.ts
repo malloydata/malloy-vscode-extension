@@ -69,4 +69,6 @@ export async function runQueryAtCursorCommand(
       );
     }
   }
+
+  return undefined;
 }

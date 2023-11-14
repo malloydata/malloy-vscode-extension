@@ -39,4 +39,6 @@ export async function runQueryFileCommand(
       document.fileName.split('/').pop() || document.fileName
     );
   }
+
+  return undefined;
 }
