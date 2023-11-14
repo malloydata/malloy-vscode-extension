@@ -42,4 +42,6 @@ export async function runUnnamedSQLBlock(
       document.fileName.split('/').pop() || document.fileName
     );
   }
+
+  return undefined;
 }
