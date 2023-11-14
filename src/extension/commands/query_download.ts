@@ -141,8 +141,10 @@ export async function queryDownload(
                 : new CSVWriter(writeStream);
             const rowStream = currentResults.data.inMemoryStream();
             await writer.process(rowStream);
-            vscode.window.showInformationMessage(
-              `Malloy Download (${name}): Complete`
+            noAwait(
+              vscode.window.showInformationMessage(
+                `Malloy Download (${name}): Complete`
+              )
             );
           } else {
             const {file, ...params} = query;
@@ -163,12 +165,16 @@ export async function queryDownload(
                 return;
               }
               if (error) {
-                vscode.window.showErrorMessage(
-                  `Malloy Download (${name}): Error\n${error}`
+                noAwait(
+                  vscode.window.showErrorMessage(
+                    `Malloy Download (${name}): Error\n${error}`
+                  )
                 );
               } else {
-                vscode.window.showInformationMessage(
-                  `Malloy Download (${name}): Complete`
+                noAwait(
+                  vscode.window.showInformationMessage(
+                    `Malloy Download (${name}): Complete`
+                  )
                 );
               }
               off?.dispose();
@@ -177,8 +183,10 @@ export async function queryDownload(
             off = worker.onRequest('malloy/download', listener);
           }
         } catch (error) {
-          vscode.window.showErrorMessage(
-            `Malloy Download (${name}): Error\n${errorMessage(error)}`
+          noAwait(
+            vscode.window.showErrorMessage(
+              `Malloy Download (${name}): Error\n${errorMessage(error)}`
+            )
           );
         }
       }
