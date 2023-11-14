@@ -123,71 +123,64 @@ export async function queryDownload(
 
   const fileExtension = downloadOptions.format === 'json' ? 'json' : 'csv';
   const fileUri = await dedupeFileName(downloadPathUri, name, fileExtension);
-  noAwait(    vscode.window.withProgress(
-      {
-        location: vscode.ProgressLocation.Notification,
-        title: `Malloy Download (${name})`,
-        cancellable: false,
-      },
-      async () => {
-        try {
-          let off: Disposable;
-          if (downloadOptions.amount === 'current') {
-            const writeStream = new VSCodeWriteStream(fileUri);
-            const writer =
-              downloadOptions.format === 'json'
-                ? new JSONWriter(writeStream)
-                : new CSVWriter(writeStream);
-            const rowStream = currentResults.data.inMemoryStream();
-            await writer.process(rowStream);
-            noAwait(
+  vscode.window.withProgress(
+    {
+      location: vscode.ProgressLocation.Notification,
+      title: `Malloy Download (${name})`,
+      cancellable: false,
+    },
+    async () => {
+      try {
+        let off: Disposable;
+        if (downloadOptions.amount === 'current') {
+          const writeStream = new VSCodeWriteStream(fileUri);
+          const writer =
+            downloadOptions.format === 'json'
+              ? new JSONWriter(writeStream)
+              : new CSVWriter(writeStream);
+          const rowStream = currentResults.data.inMemoryStream();
+          await writer.process(rowStream);
+          vscode.window.showInformationMessage(
+            `Malloy Download (${name}): Complete`
+          );
+        } else {
+          const {file, ...params} = query;
+          sendDownloadMessage(
+            worker,
+            {
+              uri: file.uri.toString(),
+              ...params,
+            },
+            panelId,
+            name,
+            fileUri.toString(),
+            downloadOptions
+          );
+          const listener = (msg: WorkerDownloadMessage) => {
+            const {name: msgName, error} = msg;
+            if (msgName !== name) {
+              return;
+            }
+            if (error) {
+              vscode.window.showErrorMessage(
+                `Malloy Download (${name}): Error\n${error}`
+              );
+            } else {
               vscode.window.showInformationMessage(
                 `Malloy Download (${name}): Complete`
-              )
-            );
-          } else {
-            const {file, ...params} = query;
-            sendDownloadMessage(
-              worker,
-              {
-                uri: file.uri.toString(),
-                ...params,
-              },
-              panelId,
-              name,
-              fileUri.toString(),
-              downloadOptions
-            );
-            const listener = (msg: WorkerDownloadMessage) => {
-              const {name: msgName, error} = msg;
-              if (msgName !== name) {
-                return;
-              }
-              if (error) {
-                noAwait(
-                  vscode.window.showErrorMessage(
-                    `Malloy Download (${name}): Error\n${error}`
-                  )
-                );
-              } else {
-                vscode.window.showInformationMessage(
-                  `Malloy Download (${name}): Complete`
-                );
-              }
-              off?.dispose();
-            };
+              );
+            }
+            off?.dispose();
+          };
 
-            off = worker.onRequest('malloy/download', listener);
-          }
-        } catch (error) {
-          noAwait(
-            vscode.window.showErrorMessage(
-              `Malloy Download (${name}): Error\n${errorMessage(error)}`
-            )
-          );
+          off = worker.onRequest('malloy/download', listener);
         }
+      } catch (error) {
+        vscode.window.showErrorMessage(
+          `Malloy Download (${name}): Error\n${errorMessage(error)}`
+        );
       }
-    )
+    }
   );
 }
 
