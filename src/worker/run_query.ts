@@ -131,8 +131,7 @@ const runMSQLCell = async (
     }
     try {
       const runnable = modelMaterializer.loadQuery(
-        `\nrun: ${malloyQuery.query}`,
-        {noThrowOnError: true}
+        `\nrun: ${malloyQuery.query}`
       );
       const generatedSQL = await runnable.getSQL();
 
