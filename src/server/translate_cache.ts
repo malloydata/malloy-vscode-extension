@@ -118,11 +118,13 @@ export class TranslateCache {
             modelMaterializer = modelMaterializer.extendModel(url, {
               importBaseURL,
               refreshSchemaCache,
+              noThrowOnError: true,
             });
           } else {
             modelMaterializer = runtime.loadModel(url, {
               importBaseURL,
               refreshSchemaCache,
+              noThrowOnError: true,
             });
           }
         }
@@ -139,6 +141,7 @@ export class TranslateCache {
       modelMaterializer = runtime.loadModel(queryFileURL, {
         importBaseURL,
         refreshSchemaCache,
+        noThrowOnError: true,
       });
     }
     this.connection.console.info(`createModelMaterializer ${uri} end`);
