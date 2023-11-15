@@ -355,7 +355,7 @@ export const runQuery = async (
       dataStyles: {},
       canDownloadStream: !isBrowser,
       defaultTab,
-      profilingUrl,
+      profilingUrl: queryResult.profilingUrl,
       stats: {
         compileTime,
         runTime,
