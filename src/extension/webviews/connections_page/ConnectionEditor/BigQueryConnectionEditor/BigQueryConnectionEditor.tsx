@@ -54,7 +54,7 @@ export const BigQueryConnectionEditor: React.FC<
         </tr>
         <tr>
           <LabelCell>
-            <Label>Project Name:</Label>
+            <Label>Project ID:</Label>
           </LabelCell>
           <td>
             <TextField
