@@ -205,7 +205,7 @@ const runMSQLCell = async (
     structDefAttempt,
     compiledStatement,
     sqlResults,
-    connectionName,
+    connectionName
   );
 
   // Calculate execution times.
