@@ -45,7 +45,7 @@ import {fixLogRange} from '../common/malloy_sql';
 const fakeMalloyResult = (
   {structDef}: StructDefResult,
   sql: string,
-  {rows: result, totalRows, runStats}: MalloyQueryData,
+  {rows: result, totalRows, runStats, profilingUrl}: MalloyQueryData,
   connectionName: string
 ): Result => {
   return new Result(
@@ -54,6 +54,7 @@ const fakeMalloyResult = (
       sql,
       result,
       totalRows,
+      profilingUrl,
       lastStageName: sql,
       malloy: '',
       connectionName,
