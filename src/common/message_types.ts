@@ -104,6 +104,7 @@ interface QueryMessageStatusDone {
   canDownloadStream: boolean;
   defaultTab?: string;
   stats: QueryRunStats;
+  profilingUrl?: string;
 }
 
 export interface QueryRunStats {
