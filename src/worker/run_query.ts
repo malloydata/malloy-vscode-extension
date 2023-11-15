@@ -205,7 +205,7 @@ const runMSQLCell = async (
     structDefAttempt,
     compiledStatement,
     sqlResults,
-    connectionName
+    connectionName,
   );
 
   // Calculate execution times.
@@ -355,6 +355,7 @@ export const runQuery = async (
       dataStyles: {},
       canDownloadStream: !isBrowser,
       defaultTab,
+      profilingUrl,
       stats: {
         compileTime,
         runTime,
