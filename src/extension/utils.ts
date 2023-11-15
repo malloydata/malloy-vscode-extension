@@ -61,6 +61,10 @@ const fixNotebookUri = (uri: vscode.Uri) => {
 export async function fetchFile(uriString: string): Promise<string> {
   const uri = vscode.Uri.parse(uriString);
   const openFiles = vscode.workspace.textDocuments;
+  if (['http', 'https'].includes(uri.scheme)) {
+    const response = await fetch(uriString);
+    return response.text();
+  }
 
   const openDocument = openFiles.find(
     document => document.uri.toString() === uriString
@@ -77,6 +81,13 @@ export async function fetchFile(uriString: string): Promise<string> {
 
 export async function fetchBinaryFile(uriString: string): Promise<Uint8Array> {
   const uri = fixNotebookUri(vscode.Uri.parse(uriString));
+  if (['http', 'https'].includes(uri.scheme)) {
+    const response = await fetch(uriString);
+    const body = await response.blob();
+    const binary = await body.arrayBuffer();
+    return new Uint8Array(binary);
+  }
+
   try {
     return await vscode.workspace.fs.readFile(uri);
   } catch (error) {
