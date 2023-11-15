@@ -63,7 +63,11 @@ export async function fetchFile(uriString: string): Promise<string> {
   const openFiles = vscode.workspace.textDocuments;
   if (['http', 'https'].includes(uri.scheme)) {
     const response = await fetch(uriString);
-    return response.text();
+    if (response.status >= 200 && response.status < 300) {
+      return response.text();
+    } else {
+      throw new Error(`Unable to fetch ${uriString}: ${response.statusText}`);
+    }
   }
 
   const openDocument = openFiles.find(
@@ -83,9 +87,13 @@ export async function fetchBinaryFile(uriString: string): Promise<Uint8Array> {
   const uri = fixNotebookUri(vscode.Uri.parse(uriString));
   if (['http', 'https'].includes(uri.scheme)) {
     const response = await fetch(uriString);
-    const body = await response.blob();
-    const binary = await body.arrayBuffer();
-    return new Uint8Array(binary);
+    if (response.status >= 200 && response.status < 300) {
+      const body = await response.blob();
+      const binary = await body.arrayBuffer();
+      return new Uint8Array(binary);
+    } else {
+      throw new Error(`Unable to fetch ${uriString}: ${response.statusText}`);
+    }
   }
 
   try {
