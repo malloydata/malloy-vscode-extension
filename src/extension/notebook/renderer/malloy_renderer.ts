@@ -49,7 +49,7 @@ export class MalloyRenderer extends LitElement {
 
   @property({type: Object}) results: ResultJSON | null = null;
 
-  render() {
+  override render() {
     if (!this.results) {
       return;
     }

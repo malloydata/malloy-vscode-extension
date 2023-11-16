@@ -43,7 +43,7 @@ export class VSCodeConnectionManager extends ConnectionManager {
     return this.setConnectionsConfig(getConnectionsConfig());
   }
 
-  getCurrentRowLimit(): number {
+  override getCurrentRowLimit(): number {
     // We get the `rowLimit` setting in this subclass instead of in the base class,
     // because the Language Server doesn't actually care about row limits, because it never
     // runs queries, and because it's slightly harder to get settings from within the language
