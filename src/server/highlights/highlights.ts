@@ -23,10 +23,7 @@
 
 import {TextDocument} from 'vscode-languageserver-textdocument';
 import {HighlightType} from '@malloydata/malloy';
-import {
-  SemanticTokens,
-  SemanticTokensBuilder,
-} from 'vscode-languageserver/node';
+import {SemanticTokens, SemanticTokensBuilder} from 'vscode-languageserver';
 import {parseWithCache} from '../parse_cache';
 
 export const TOKEN_TYPES = [

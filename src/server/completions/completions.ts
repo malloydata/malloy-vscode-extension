@@ -26,7 +26,7 @@ import {
   CompletionItem,
   CompletionItemKind,
   MarkupKind,
-} from 'vscode-languageserver/node';
+} from 'vscode-languageserver';
 import {TextDocument} from 'vscode-languageserver-textdocument';
 import {COMPLETION_DOCS} from '../../common/completion_docs';
 import {parseWithCache} from '../parse_cache';

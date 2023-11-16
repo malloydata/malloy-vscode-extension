@@ -24,7 +24,7 @@
 import {
   DidChangeConfigurationParams,
   TextDocuments,
-} from 'vscode-languageserver/node';
+} from 'vscode-languageserver';
 import {TextDocument} from 'vscode-languageserver-textdocument';
 import {connection, connectionManager} from './connections_node';
 import {initServer} from '../init';

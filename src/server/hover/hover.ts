@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {Hover, HoverParams, MarkupKind} from 'vscode-languageserver/node';
+import {Hover, HoverParams, MarkupKind} from 'vscode-languageserver';
 import {TextDocument} from 'vscode-languageserver-textdocument';
 
 import {COMPLETION_DOCS} from '../../common/completion_docs';

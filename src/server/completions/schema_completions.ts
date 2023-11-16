@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {CompletionParams} from 'vscode-languageserver/node';
+import {CompletionParams} from 'vscode-languageserver';
 import {Position, TextDocument} from 'vscode-languageserver-textdocument';
 import {TranslateCache} from '../translate_cache';
 import {Explore, Field, Model} from '@malloydata/malloy';
