@@ -74,8 +74,8 @@ export function runMalloyQuery(
     };
 
     const cancel = () => {
-      unsubscribe();
       cancellationTokenSource.cancel();
+      unsubscribe();
       resolve(undefined);
     };
 

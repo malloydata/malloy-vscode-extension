@@ -256,7 +256,10 @@ export const runQuery = async (
     let currentCell: Cell | null = null;
     let isMalloySql = false;
 
-    cancellationToken.onCancellationRequested(() => abortController.abort());
+    cancellationToken.onCancellationRequested(() => {
+      console.info('Cancelled', panelId);
+      abortController.abort('Cancelled');
+    });
 
     if (queryFileURL.protocol === 'vscode-notebook-cell:') {
       cellData = await fileHandler.fetchCellData(query.uri);
