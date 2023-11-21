@@ -30,6 +30,7 @@ import {BuildModelRequest, CellMetadata, QueryCost} from '../../common/types';
 import {convertFromBytes} from '../../common/convert_to_bytes';
 import {BaseLanguageClient} from 'vscode-languageclient';
 import {FetchModelMessage} from '../../common/message_types';
+import {noAwait} from '../../util/no_await';
 
 const NO_QUERY = 'Model has no queries.';
 
@@ -175,7 +176,7 @@ class MalloyController {
       ];
       const edit = new vscode.WorkspaceEdit();
       edit.set(cell.document.uri, edits);
-      vscode.workspace.applyEdit(edit);
+      noAwait(vscode.workspace.applyEdit(edit));
       this.statusBarProvider.update();
 
       const jsonResults = await runMalloyQuery(
@@ -220,12 +221,12 @@ class MalloyController {
           ];
           const edit = new vscode.WorkspaceEdit();
           edit.set(document.uri, edits);
-          vscode.workspace.applyEdit(edit);
+          noAwait(vscode.workspace.applyEdit(edit));
           this.statusBarProvider.update();
         }
       }
 
-      execution.replaceOutput(output);
+      noAwait(execution.replaceOutput(output));
       execution.end(true, Date.now());
     } catch (error) {
       if (errorMessage(error) === NO_QUERY) {
@@ -235,30 +236,36 @@ class MalloyController {
           languageId: document.languageId,
           refreshSchemaCache: false,
         };
-        execution.replaceOutput([
-          new vscode.NotebookCellOutput([
-            vscode.NotebookCellOutputItem.text('Loading Schema Information'),
-          ]),
-        ]);
+        noAwait(
+          execution.replaceOutput([
+            new vscode.NotebookCellOutput([
+              vscode.NotebookCellOutputItem.text('Loading Schema Information'),
+            ]),
+          ])
+        );
         const model: FetchModelMessage = await this.client.sendRequest(
           'malloy/fetchModel',
           request
         );
-        execution.replaceOutput([
-          new vscode.NotebookCellOutput([
-            vscode.NotebookCellOutputItem.json(
-              model,
-              'x-application/malloy-schema'
-            ),
-          ]),
-        ]);
+        noAwait(
+          execution.replaceOutput([
+            new vscode.NotebookCellOutput([
+              vscode.NotebookCellOutputItem.json(
+                model,
+                'x-application/malloy-schema'
+              ),
+            ]),
+          ])
+        );
         execution.end(true, Date.now());
       } else {
-        execution.replaceOutput([
-          new vscode.NotebookCellOutput([
-            vscode.NotebookCellOutputItem.text(errorMessage(error)),
-          ]),
-        ]);
+        noAwait(
+          execution.replaceOutput([
+            new vscode.NotebookCellOutput([
+              vscode.NotebookCellOutputItem.text(errorMessage(error)),
+            ]),
+          ])
+        );
         execution.end(false, Date.now());
       }
     }
