@@ -125,14 +125,51 @@ export const initServer = (
           });
         }
       }
+
+      // Trigger diagnostics for all documents we know that import this one,
+      // too.
+      translateCache.cache.forEach((entry, key) => {
+        // Don't re-eject the current document
+        if (documents.get(key)?.uri === document.uri) {
+          return;
+        }
+        if (entry.model.fromSources.includes(document.uri)) {
+          if (translateCache.cache.delete(key)) {
+            const document = documents.get(key);
+            if (document) {
+              connection.console.info(
+                `diagnoseDocument ejecting ${document.uri}`
+              );
+              debouncedDiagnoseDocuments[key](document);
+            }
+          }
+        }
+      });
       connection.console.info(`diagnoseDocument ${document.uri} end`);
     }
   }
 
-  const debouncedDiagnoseDocument = debounce(diagnoseDocument, 300);
+  const debouncedDiagnoseDocuments: Record<
+    string,
+    (document: TextDocument) => Promise<void> | undefined
+  > = {};
+
+  const debouncedDiagnoseDocument = (document: TextDocument) => {
+    const {uri} = document;
+    if (!debouncedDiagnoseDocuments[uri]) {
+      debouncedDiagnoseDocuments[uri] = debounce(diagnoseDocument, 300);
+    }
+    debouncedDiagnoseDocuments[uri](document);
+  };
 
   documents.onDidChangeContent(change => {
     debouncedDiagnoseDocument(change.document);
+  });
+
+  documents.onDidClose(event => {
+    const {uri} = event.document;
+    translateCache.cache.delete(uri);
+    delete debouncedDiagnoseDocuments[uri];
   });
 
   connection.onDocumentSymbol(handler => {
@@ -154,6 +191,7 @@ export const initServer = (
     if (document && document.languageId === 'malloy') {
       return getMalloyLenses(document);
     }
+    return [];
   });
 
   connection.onRequest(
@@ -177,7 +215,9 @@ export const initServer = (
 
   connection.onDidChangeConfiguration(change => {
     onDidChangeConfiguration?.(change);
-    connectionManager.setConnectionsConfig(change.settings.malloy.connections);
+    connectionManager.setConnectionsConfig(
+      (change?.settings as any)?.malloy?.connections ?? []
+    );
     haveConnectionsBeenSet = true;
     documents.all().forEach(debouncedDiagnoseDocument);
   });

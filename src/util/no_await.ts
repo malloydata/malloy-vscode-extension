@@ -21,30 +21,4 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as vscode from 'vscode';
-import {MALLOY_EXTENSION_STATE} from '../state';
-import {WorkerConnection} from '../worker_connection';
-import {runMalloyQueryWithProgress} from './run_query_utils';
-import {ResultJSON} from '@malloydata/malloy';
-
-export async function runQueryCommand(
-  worker: WorkerConnection,
-  query: string,
-  name?: string,
-  defaultTab?: string
-): Promise<ResultJSON | undefined> {
-  const document =
-    vscode.window.activeTextEditor?.document ||
-    MALLOY_EXTENSION_STATE.getActiveWebviewPanel()?.document;
-  if (document) {
-    return runMalloyQueryWithProgress(
-      worker,
-      {type: 'string', text: query, file: document},
-      `${document.uri.toString()} ${name}`,
-      name || document.uri.toString(),
-      {defaultTab}
-    );
-  }
-
-  return undefined;
-}
+export function noAwait(_: unknown) {}

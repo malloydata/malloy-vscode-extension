@@ -226,7 +226,7 @@ $(symbol-field) \`${field.name}\`
     );
   }
 
-  iconPath = {
+  override iconPath = {
     light: getIconPath(
       this.context,
       fieldType(this.field),

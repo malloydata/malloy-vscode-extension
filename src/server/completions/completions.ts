@@ -26,7 +26,7 @@ import {
   CompletionItem,
   CompletionItemKind,
   MarkupKind,
-} from 'vscode-languageserver/node';
+} from 'vscode-languageserver';
 import {TextDocument} from 'vscode-languageserver-textdocument';
 import {COMPLETION_DOCS} from '../../common/completion_docs';
 import {parseWithCache} from '../parse_cache';
@@ -67,8 +67,9 @@ export async function getCompletionItems(
 
 export function resolveCompletionItem(item: CompletionItem): CompletionItem {
   if (item.data) {
-    item.detail = item.data.property;
-    const docs = (COMPLETION_DOCS[item.data.type] || {})[item.data.property];
+    const data = item.data as any;
+    item.detail = data.property;
+    const docs = (COMPLETION_DOCS[data.type] || {})[data.property];
     if (docs) {
       item.documentation = {
         kind: MarkupKind.Markdown,

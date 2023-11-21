@@ -74,8 +74,8 @@ export function runMalloyQuery(
     };
 
     const cancel = () => {
-      unsubscribe();
       cancellationTokenSource.cancel();
+      unsubscribe();
       resolve(undefined);
     };
 
@@ -127,10 +127,11 @@ export function runMalloyQuery(
         cancellationTokenSource.token
       )
       .catch(() => {
-        const error = `The worker process has died, and has been restarted.
-This is possibly the result of a database bug. \
-Please consider filing an issue with as much detail as possible at \
-https://github.com/malloydata/malloy-vscode-extension/issues.`;
+        const error =
+          'The worker process has died, and has been restarted. ' +
+          'This is possibly the result of a database bug. ' +
+          'Please consider filing an issue with as much detail as possible at ' +
+          'https://github.com/malloydata/malloy-vscode-extension/issues.';
         current?.messages.postMessage({
           status: QueryRunStatus.Error,
           error,

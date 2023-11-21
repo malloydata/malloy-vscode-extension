@@ -45,7 +45,7 @@ import {fixLogRange} from '../common/malloy_sql';
 const fakeMalloyResult = (
   {structDef}: StructDefResult,
   sql: string,
-  {rows: result, totalRows, runStats}: MalloyQueryData,
+  {rows: result, totalRows, runStats, profilingUrl}: MalloyQueryData,
   connectionName: string
 ): Result => {
   return new Result(
@@ -54,6 +54,7 @@ const fakeMalloyResult = (
       sql,
       result,
       totalRows,
+      profilingUrl,
       lastStageName: sql,
       malloy: '',
       connectionName,
@@ -244,6 +245,8 @@ export const runQuery = async (
     messageHandler.sendProgress(progress, panelId, message);
   };
 
+  const abortController = new AbortController();
+  const abortSignal = abortController.signal;
   const url = new URL(query.uri);
   const connectionLookup = connectionManager.getConnectionLookup(url);
 
@@ -252,6 +255,11 @@ export const runQuery = async (
     let cellData: CellData | null = null;
     let currentCell: Cell | null = null;
     let isMalloySql = false;
+
+    cancellationToken.onCancellationRequested(() => {
+      console.info('Cancelled', panelId);
+      abortController.abort('Cancelled');
+    });
 
     if (queryFileURL.protocol === 'vscode-notebook-cell:') {
       cellData = await fileHandler.fetchCellData(query.uri);
@@ -339,7 +347,7 @@ export const runQuery = async (
       sql,
       dialect,
     });
-    const queryResult = await runnable.run({rowLimit});
+    const queryResult = await runnable.run({rowLimit, abortSignal});
     if (cancellationToken.isCancellationRequested) return;
 
     // Calculate execution times.
@@ -354,6 +362,7 @@ export const runQuery = async (
       dataStyles: {},
       canDownloadStream: !isBrowser,
       defaultTab,
+      profilingUrl: queryResult.profilingUrl,
       stats: {
         compileTime,
         runTime,
@@ -361,10 +370,14 @@ export const runQuery = async (
       },
     });
   } catch (error) {
-    sendMessage({
-      status: QueryRunStatus.Error,
-      error: errorMessage(error),
-    });
+    if (cancellationToken.isCancellationRequested) {
+      console.info('Cancelled request generated error', error);
+    } else {
+      sendMessage({
+        status: QueryRunStatus.Error,
+        error: errorMessage(error),
+      });
+    }
   }
 };
 

@@ -23,7 +23,7 @@
 
 import {TextDocument} from 'vscode-languageserver-textdocument';
 import {DocumentSymbol as MalloyDocumentSymbol} from '@malloydata/malloy';
-import {DocumentSymbol, SymbolKind} from 'vscode-languageserver/node';
+import {DocumentSymbol, SymbolKind} from 'vscode-languageserver';
 import {parseWithCache} from '../parse_cache';
 
 function mapSymbol({
