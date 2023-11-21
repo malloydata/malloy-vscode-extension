@@ -194,10 +194,6 @@ export const App: React.FC = () => {
               target: HTMLElement,
               drillFilters: string[]
             ) => {
-              // eslint-disable-next-line no-console
-              console.log('drill logs', drillQuery, target, drillFilters);
-              // navigator.clipboard.writeText(drillQuery);
-              // vscode.window.showInformationMessage('query copied');
               const status = QueryRunStatus.RunCommand;
               const command = 'malloy.copyToClipboard';
               const args = [drillQuery, 'Query'];
