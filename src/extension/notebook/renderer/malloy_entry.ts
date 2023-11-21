@@ -41,13 +41,7 @@ export const activate: ActivationFunction = () => {
       if (!root) {
         throw new Error('Element #root not found');
       }
-      render(
-        html`<malloy-renderer
-          .results=${info.json()}
-          .meta=${info.metadata as RenderDef}
-        />`,
-        root
-      );
+      render(html`<malloy-renderer .results=${info.json()} />`, root);
     },
   };
 };

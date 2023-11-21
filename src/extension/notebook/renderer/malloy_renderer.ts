@@ -28,11 +28,6 @@ import {Result, ResultJSON} from '@malloydata/malloy';
 import {HTMLView} from '@malloydata/render';
 import {RenderDef} from '@malloydata/render/dist/data_styles';
 
-export interface ResultProps {
-  results: ResultJSON;
-  meta: RenderDef;
-}
-
 const styles = css`
   :root {
     --malloy-font-family: var(--vscode-font-family, Roboto);
