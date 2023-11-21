@@ -23,8 +23,6 @@
 
 import {html, render} from 'lit';
 import {ActivationFunction} from 'vscode-notebook-renderer';
-// TODO(whscullin): export RenderDef from @malloydata/render
-import {RenderDef} from '@malloydata/render/dist/data_styles';
 import './malloy_renderer';
 
 export const activate: ActivationFunction = () => {
