@@ -30,6 +30,7 @@ import {
 } from './tree_views/schema_view';
 import {
   copyFieldPathCommand,
+  copyToClipboardCommand,
   runNamedQuery,
   runNamedSQLBlock,
   runQueryCommand,
@@ -148,6 +149,14 @@ export const setupSubscriptions = (
     vscode.commands.registerCommand(
       'malloy.copyFieldPath',
       copyFieldPathCommand
+    )
+  );
+
+  // Copy To ClipBoard
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      'malloy.copyToClipboard',
+      (val: string, type: string) => copyToClipboardCommand(val, type)
     )
   );
 

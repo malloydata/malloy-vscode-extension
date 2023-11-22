@@ -21,11 +21,9 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-export {runQueryFileCommand} from './run_query_file';
-export {runQueryCommand} from './run_query';
-export {copyFieldPathCommand} from './copy_field_path';
-export {copyToClipboardCommand} from './copy_to_clipboard';
-export {runNamedQuery} from './run_named_query';
-export {runNamedSQLBlock} from './run_named_sql_block';
-export {runUnnamedSQLBlock} from './run_unnamed_sql_block';
-export {showLicensesCommand} from './show_licenses';
+import * as vscode from 'vscode';
+
+export function copyToClipboardCommand(val: string, type: string): void {
+  vscode.env.clipboard.writeText(val);
+  vscode.window.showInformationMessage(`${type} copied to clipboard`);
+}

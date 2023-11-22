@@ -21,6 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import * as vscode from 'vscode';
 import {
   Explore,
   Field,
@@ -187,6 +188,17 @@ export const App: React.FC = () => {
             : '';
           const html = await new HTMLView(document).render(result, {
             dataStyles,
+            isDrillingEnabled: true,
+            onDrill: (
+              drillQuery: string,
+              target: HTMLElement,
+              drillFilters: string[]
+            ) => {
+              const status = QueryRunStatus.RunCommand;
+              const command = 'malloy.copyToClipboard';
+              const args = [drillQuery, 'Query'];
+              vscode.postMessage({status, command, args});
+            },
           });
           setStatus({status: Status.Displaying});
           setTimeout(() => {
