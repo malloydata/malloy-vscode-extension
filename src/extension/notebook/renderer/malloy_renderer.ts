@@ -40,6 +40,7 @@ const styles = css`
 
 @customElement('malloy-renderer')
 export class MalloyRenderer extends LitElement {
+  @property({type: Object}) postMessage?: (message: unknown) => void;
   static override styles = [styles];
 
   @property({type: Object}) results: ResultJSON | null = null;
@@ -51,6 +52,16 @@ export class MalloyRenderer extends LitElement {
     const result = Result.fromJSON(this.results);
     const resultHtml = new HTMLView(document).render(result, {
       dataStyles: {},
+      isDrillingEnabled: true,
+      onDrill: (
+        drillQuery: string,
+        _target: HTMLElement,
+        _drillFilters: string[]
+      ) => {
+        const command = 'malloy.copyToClipboard';
+        const args = [drillQuery, 'Query'];
+        this.postMessage?.({command, args});
+      },
     });
     return html`${until(resultHtml)}`;
   }
