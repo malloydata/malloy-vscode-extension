@@ -190,8 +190,8 @@ export const App: React.FC = () => {
             isDrillingEnabled: true,
             onDrill: (
               drillQuery: string,
-              target: HTMLElement,
-              drillFilters: string[]
+              _target: HTMLElement,
+              _drillFilters: string[]
             ) => {
               const status = QueryRunStatus.RunCommand;
               const command = 'malloy.copyToClipboard';

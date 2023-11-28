@@ -42,11 +42,11 @@
       {"prefer": "no-type-imports"}
     ],
     "@typescript-eslint/no-unused-vars": [
-      "warn",
+      "error",
       {"argsIgnorePattern": "^_", "varsIgnorePattern": "^_"}
     ],
     "@typescript-eslint/parameter-properties": [
-      "warn",
+      "error",
       {"prefer": "parameter-property"}
     ]
   },
