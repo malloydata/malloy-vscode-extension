@@ -2,8 +2,8 @@ import {
   Connection,
   ConnectionFactory,
   TestableConnection,
+  registerDialect,
 } from '@malloydata/malloy';
-import {registerDialect} from '@malloydata/malloy/dist/dialect';
 import {PluginManager} from 'live-plugin-manager';
 import {
   ExternalConnectionConfig,
