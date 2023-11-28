@@ -25,7 +25,7 @@ import {html, render} from 'lit';
 import {ActivationFunction} from 'vscode-notebook-renderer';
 import './malloy_renderer';
 
-export const activate: ActivationFunction = () => {
+export const activate: ActivationFunction = ({postMessage}) => {
   return {
     renderOutputItem(info, element) {
       let shadow = element.shadowRoot;
@@ -39,7 +39,13 @@ export const activate: ActivationFunction = () => {
       if (!root) {
         throw new Error('Element #root not found');
       }
-      render(html`<malloy-renderer .results=${info.json()} />`, root);
+      render(
+        html`<malloy-renderer
+          .results=${info.json()}
+          .postMessage=${postMessage}
+        />`,
+        root
+      );
     },
   };
 };
