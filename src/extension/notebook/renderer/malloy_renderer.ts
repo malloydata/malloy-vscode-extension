@@ -57,6 +57,7 @@ export class MalloyRenderer extends LitElement {
         _target: HTMLElement,
         _drillFilters: string[]
       ) => {
+        navigator.clipboard.writeText(drillQuery);
         const command = 'malloy.copyToClipboard';
         const args = [drillQuery, 'Query'];
         this.postMessage?.({command, args});
