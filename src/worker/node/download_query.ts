@@ -49,10 +49,13 @@ const sendMessage = (
 export async function downloadQuery(
   messageHandler: WorkerMessageHandler,
   connectionManager: ConnectionManager,
-  {query, panelId, downloadOptions, name, uri}: MessageDownload,
+  {query, downloadOptions, name}: MessageDownload,
   fileHandler: FileHandler
 ): Promise<void> {
-  const url = new URL(panelId);
+  const {
+    documentMeta: {uri},
+  } = query;
+  const url = new URL(uri);
 
   try {
     const runtime = new Runtime(
@@ -61,12 +64,12 @@ export async function downloadQuery(
     );
 
     let cellData: CellData | null = null;
-    if (query.uri.startsWith('vscode-notebook-cell:')) {
-      cellData = await fileHandler.fetchCellData(query.uri);
+    if (uri.startsWith('vscode-notebook-cell:')) {
+      cellData = await fileHandler.fetchCellData(uri);
     }
     let workspaceFolders: string[] = [];
-    if (query.uri.startsWith('untitled:')) {
-      workspaceFolders = await fileHandler.fetchWorkspaceFolders(query.uri);
+    if (uri.startsWith('untitled:')) {
+      workspaceFolders = await fileHandler.fetchWorkspaceFolders(uri);
     }
     const runnable = await createRunnable(
       query,

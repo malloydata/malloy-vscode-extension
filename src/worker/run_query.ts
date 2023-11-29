@@ -103,7 +103,10 @@ const runMSQLCell = async (
     messageHandler.sendProgress(progress, panelId, message);
   };
 
-  const url = new URL(query.uri);
+  const {
+    documentMeta: {uri},
+  } = query;
+  const url = new URL(uri);
   const connectionLookup = connectionManager.getConnectionLookup(url);
 
   const runtime = new Runtime(files, connectionLookup);
@@ -114,7 +117,7 @@ const runMSQLCell = async (
   });
 
   const modelMaterializer = await createModelMaterializer(
-    query.uri,
+    uri,
     runtime,
     cellData,
     workspaceFolders
@@ -144,7 +147,7 @@ const runMSQLCell = async (
       if (e instanceof MalloyError) {
         let message = 'Error: ';
         e.problems.forEach(log => {
-          message += fixLogRange(query.uri, malloyQuery, log);
+          message += fixLogRange(uri, malloyQuery, log);
         });
         throw new MalloyError(message, e.problems);
       }
@@ -247,11 +250,13 @@ export const runQuery = async (
 
   const abortController = new AbortController();
   const abortSignal = abortController.signal;
-  const url = new URL(query.uri);
-  const connectionLookup = connectionManager.getConnectionLookup(url);
+  const {
+    documentMeta: {uri},
+  } = query;
 
   try {
-    const queryFileURL = new URL(query.uri);
+    const url = new URL(uri);
+    const connectionLookup = connectionManager.getConnectionLookup(url);
     let cellData: CellData | null = null;
     let currentCell: Cell | null = null;
     let isMalloySql = false;
@@ -261,15 +266,15 @@ export const runQuery = async (
       abortController.abort('Cancelled');
     });
 
-    if (queryFileURL.protocol === 'vscode-notebook-cell:') {
-      cellData = await fileHandler.fetchCellData(query.uri);
+    if (url.protocol === 'vscode-notebook-cell:') {
+      cellData = await fileHandler.fetchCellData(uri);
       currentCell = cellData.cells[cellData.cells.length - 1];
       isMalloySql = currentCell.languageId === 'malloy-sql';
     }
 
     let workspaceFolders: string[] = [];
-    if (queryFileURL.protocol === 'untitled:') {
-      workspaceFolders = await fileHandler.fetchWorkspaceFolders(query.uri);
+    if (url.protocol === 'untitled:') {
+      workspaceFolders = await fileHandler.fetchWorkspaceFolders(uri);
     }
 
     if (isMalloySql) {

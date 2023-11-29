@@ -20,36 +20,42 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-import * as vscode from 'vscode';
+
+export interface DocumentMetadata {
+  fileName: string;
+  uri: string;
+  languageId: string;
+  version: number;
+}
 
 export interface NamedQuerySpec {
   type: 'named';
   name: string;
-  file: vscode.TextDocument;
+  documentMeta: DocumentMetadata;
 }
 
 export interface QueryStringSpec {
   type: 'string';
   text: string;
-  file: vscode.TextDocument;
+  documentMeta: DocumentMetadata;
 }
 
 export interface QueryFileSpec {
   type: 'file';
   index: number;
-  file: vscode.TextDocument;
+  documentMeta: DocumentMetadata;
 }
 
 export interface NamedSQLQuerySpec {
   type: 'named_sql';
   name: string;
-  file: vscode.TextDocument;
+  documentMeta: DocumentMetadata;
 }
 
 export interface UnnamedSQLQuerySpec {
   type: 'unnamed_sql';
   index: number;
-  file: vscode.TextDocument;
+  documentMeta: DocumentMetadata;
 }
 
 export type QuerySpec =

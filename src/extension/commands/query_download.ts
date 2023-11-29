@@ -26,11 +26,10 @@ import {QueryDownloadOptions} from '../../common/message_types';
 
 import * as vscode from 'vscode';
 import {Utils} from 'vscode-uri';
-import {QuerySpec} from './query_spec';
+import {QuerySpec} from '../../common/query_spec';
 import {
   MessageDownload,
   WorkerDownloadMessage,
-  WorkerQuerySpec,
 } from '../../common/worker_message_types';
 import {MALLOY_EXTENSION_STATE} from '../state';
 import {Disposable} from 'vscode-jsonrpc';
@@ -64,7 +63,7 @@ class VSCodeWriteStream implements WriteStream {
 
 const sendDownloadMessage = (
   worker: WorkerConnection,
-  query: WorkerQuerySpec,
+  query: QuerySpec,
   panelId: string,
   name: string,
   uri: string,
@@ -147,13 +146,9 @@ export async function queryDownload(
               )
             );
           } else {
-            const {file, ...params} = query;
             sendDownloadMessage(
               worker,
-              {
-                uri: file.uri.toString(),
-                ...params,
-              },
+              query,
               panelId,
               name,
               fileUri.toString(),

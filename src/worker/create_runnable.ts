@@ -27,8 +27,8 @@ import {
   Runtime,
   SQLBlockMaterializer,
 } from '@malloydata/malloy';
-import {WorkerQuerySpec} from '../common/worker_message_types';
 import {CellData} from '../common/types';
+import {QuerySpec} from '../common/query_spec';
 
 export const createModelMaterializer = async (
   uri: string,
@@ -70,15 +70,18 @@ export const createModelMaterializer = async (
 };
 
 export const createRunnable = async (
-  query: WorkerQuerySpec,
+  query: QuerySpec,
   runtime: Runtime,
   cellData: CellData | null,
   workspaceFolders: string[]
 ): Promise<SQLBlockMaterializer | QueryMaterializer> => {
-  console.debug('createRunnable', query.uri, 'begin');
+  const {
+    documentMeta: {uri},
+  } = query;
+  console.debug('createRunnable', uri, 'begin');
   let runnable: QueryMaterializer | SQLBlockMaterializer;
   const mm = await createModelMaterializer(
-    query.uri,
+    uri,
     runtime,
     cellData,
     workspaceFolders
@@ -109,6 +112,6 @@ export const createRunnable = async (
     default:
       throw new Error('Internal Error: Unexpected query type');
   }
-  console.debug('createRunnable', query.uri, 'end');
+  console.debug('createRunnable', uri, 'end');
   return runnable;
 };

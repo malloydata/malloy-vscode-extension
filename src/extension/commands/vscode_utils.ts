@@ -27,13 +27,14 @@ import {RunState, MALLOY_EXTENSION_STATE} from '../state';
 import {WebviewMessageManager} from '../webview_message_manager';
 import {getWebviewHtml} from '../webviews';
 import turtleIcon from '../../media/turtle.svg';
+import {DocumentMetadata} from '../../common/query_spec';
 
 export function createOrReuseWebviewPanel(
   viewType: string,
   title: string,
   panelId: string,
   cancel: () => void,
-  document: vscode.TextDocument
+  document: DocumentMetadata
 ): RunState {
   const previous = MALLOY_EXTENSION_STATE.getRunState(panelId);
 
