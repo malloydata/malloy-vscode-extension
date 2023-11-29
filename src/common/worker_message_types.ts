@@ -30,43 +30,7 @@ import {
 } from 'vscode-jsonrpc';
 import {QueryDownloadOptions} from './message_types';
 import {CellData, MalloyConfig} from './types';
-
-interface NamedQuerySpec {
-  type: 'named';
-  name: string;
-  uri: string;
-}
-
-interface QueryStringSpec {
-  type: 'string';
-  text: string;
-  uri: string;
-}
-
-interface QueryFileSpec {
-  type: 'file';
-  index: number;
-  uri: string;
-}
-
-interface NamedSQLQuerySpec {
-  type: 'named_sql';
-  name: string;
-  uri: string;
-}
-
-interface UnnamedSQLQuerySpec {
-  type: 'unnamed_sql';
-  index: number;
-  uri: string;
-}
-
-export type WorkerQuerySpec =
-  | NamedQuerySpec
-  | QueryStringSpec
-  | QueryFileSpec
-  | NamedSQLQuerySpec
-  | UnnamedSQLQuerySpec;
+import {QuerySpec} from './query_spec';
 
 /*
  * Incoming messages
@@ -76,7 +40,7 @@ export type WorkerQuerySpec =
 export interface MessageExit {}
 
 export interface MessageRun {
-  query: WorkerQuerySpec;
+  query: QuerySpec;
   panelId: string;
   name: string;
   showSQLOnly: boolean;
@@ -124,7 +88,7 @@ export interface MessageFetchCellData {
 }
 
 export interface MessageDownload {
-  query: WorkerQuerySpec;
+  query: QuerySpec;
   panelId: string;
   name: string;
   uri: string;

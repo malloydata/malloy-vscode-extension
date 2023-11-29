@@ -21,25 +21,24 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as vscode from 'vscode';
-import {MALLOY_EXTENSION_STATE} from '../state';
 import {WorkerConnection} from '../worker_connection';
-import {runMalloyQueryWithProgress} from './run_query_utils';
+import {
+  getActiveDocumentMetadata,
+  runMalloyQueryWithProgress,
+} from './run_query_utils';
 import {ResultJSON} from '@malloydata/malloy';
 
 export async function runUnnamedSQLBlock(
   worker: WorkerConnection,
   index: number
 ): Promise<ResultJSON | undefined> {
-  const document =
-    vscode.window.activeTextEditor?.document ||
-    MALLOY_EXTENSION_STATE.getActiveWebviewPanel()?.document;
-  if (document) {
+  const documentMeta = getActiveDocumentMetadata();
+  if (documentMeta) {
     return runMalloyQueryWithProgress(
       worker,
-      {type: 'unnamed_sql', index, file: document},
-      document.uri.toString(),
-      document.fileName.split('/').pop() || document.fileName
+      {type: 'unnamed_sql', index, documentMeta},
+      documentMeta.uri,
+      documentMeta.fileName.split('/').pop() || documentMeta.fileName
     );
   }
 

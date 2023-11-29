@@ -21,8 +21,10 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as vscode from 'vscode';
-import {runMalloyQueryWithProgress} from './run_query_utils';
+import {
+  runMalloyQueryWithProgress,
+  getActiveDocumentMetadata,
+} from './run_query_utils';
 import {WorkerConnection} from '../worker_connection';
 import {ResultJSON} from '@malloydata/malloy';
 
@@ -30,13 +32,17 @@ export async function runQueryFileCommand(
   worker: WorkerConnection,
   queryIndex = -1
 ): Promise<ResultJSON | undefined> {
-  const document = vscode.window.activeTextEditor?.document;
-  if (document) {
+  const documentMeta = getActiveDocumentMetadata();
+  if (documentMeta) {
     return runMalloyQueryWithProgress(
       worker,
-      {type: 'file', index: queryIndex, file: document},
-      document.uri.toString(),
-      document.fileName.split('/').pop() || document.fileName
+      {
+        type: 'file',
+        index: queryIndex,
+        documentMeta,
+      },
+      documentMeta.uri,
+      documentMeta.fileName.split('/').pop() || documentMeta.fileName
     );
   }
 

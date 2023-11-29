@@ -39,6 +39,7 @@ const styles = css`
 
 @customElement('malloy-renderer')
 export class MalloyRenderer extends LitElement {
+  @property({type: Object}) postMessage?: (message: unknown) => void;
   static override styles = [styles];
 
   @property({type: Object}) result: Result | null = null;
@@ -49,6 +50,17 @@ export class MalloyRenderer extends LitElement {
     }
     const resultHtml = new HTMLView(document).render(this.result, {
       dataStyles: {},
+      isDrillingEnabled: true,
+      onDrill: (
+        drillQuery: string,
+        _target: HTMLElement,
+        _drillFilters: string[]
+      ) => {
+        navigator.clipboard.writeText(drillQuery);
+        const command = 'malloy.copyToClipboard';
+        const args = [drillQuery, 'Query'];
+        this.postMessage?.({command, args});
+      },
     });
     return html`<link rel="preconnect" href="https://rsms.me/" />
       <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />

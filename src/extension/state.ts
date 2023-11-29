@@ -21,17 +21,18 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import vscode, {TextDocument, WebviewPanel} from 'vscode';
+import vscode, {WebviewPanel} from 'vscode';
 import {QueryMessageStatus} from '../common/message_types';
 import {WebviewMessageManager} from './webview_message_manager';
 import {Position} from 'vscode-languageclient';
+import {DocumentMetadata} from '../common/query_spec';
 
 export interface RunState {
   cancel: () => void;
   panel: WebviewPanel;
   messages: WebviewMessageManager<QueryMessageStatus>;
   panelId: string;
-  document: TextDocument;
+  document: DocumentMetadata;
 }
 
 class MalloyExtensionState {

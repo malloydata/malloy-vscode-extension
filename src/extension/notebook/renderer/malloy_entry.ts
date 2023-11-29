@@ -30,7 +30,7 @@ const mousewheelHandler = (evt: Event) => {
   evt.stopPropagation();
 };
 
-export const activate: ActivationFunction = () => {
+export const activate: ActivationFunction = ({postMessage}) => {
   return {
     renderOutputItem(info, element) {
       let shadow = element.shadowRoot;
@@ -54,7 +54,10 @@ export const activate: ActivationFunction = () => {
         root.style.padding = '';
         root.removeEventListener('mousewheel', mousewheelHandler);
       }
-      render(html`<malloy-renderer .result=${result} />`, root);
+      render(
+        html`<malloy-renderer .result=${result} .postMessage=${postMessage} />`,
+        root
+      );
     },
   };
 };

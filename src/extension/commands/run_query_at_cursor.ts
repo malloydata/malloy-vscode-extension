@@ -24,7 +24,6 @@
 import * as vscode from 'vscode';
 import {MALLOY_EXTENSION_STATE} from '../state';
 import {WorkerConnection} from '../worker_connection';
-// import {runMalloyQueryWithProgress} from './run_query_utils';
 import {ResultJSON} from '@malloydata/malloy';
 import {BaseLanguageClient, CodeLens} from 'vscode-languageclient';
 

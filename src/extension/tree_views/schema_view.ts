@@ -42,12 +42,13 @@ import oneToManyIcon from '../../media/one_to_many.svg';
 import manyToOneIcon from '../../media/many_to_one.svg';
 import oneToOneIcon from '../../media/one_to_one.svg';
 import unknownIcon from '../../media/unknown.svg';
-import {MALLOY_EXTENSION_STATE} from '../state';
 import {BaseLanguageClient} from 'vscode-languageclient/node';
 import {BuildModelRequest} from '../../common/types';
 import {exploreSubtype, fieldType, isFieldAggregate} from '../../common/schema';
 import {FetchModelMessage} from '../../common/message_types';
 import {WorkerConnection} from '../worker_connection';
+import {getActiveDocumentMetadata} from '../commands/run_query_utils';
+import {DocumentMetadata} from '../../common/query_spec';
 
 export class SchemaProvider
   implements vscode.TreeDataProvider<ExploreItem | FieldItem>
@@ -81,14 +82,16 @@ export class SchemaProvider
     this._onDidChangeTreeData.fire(undefined);
   }
 
-  async getStructs(
-    document: vscode.TextDocument
-  ): Promise<Explore[] | undefined> {
+  async getStructs({
+    uri,
+    version,
+    languageId,
+  }: DocumentMetadata): Promise<Explore[] | undefined> {
     try {
       const request: BuildModelRequest = {
-        uri: document.uri.toString(),
-        version: document.version,
-        languageId: document.languageId,
+        uri,
+        version,
+        languageId,
         refreshSchemaCache: this.refreshSchemaCache,
       };
       const model: FetchModelMessage = await this.client.sendRequest(
@@ -128,15 +131,12 @@ export class SchemaProvider
         }
       });
     } else {
-      const document =
-        vscode.window.activeTextEditor?.document ||
-        MALLOY_EXTENSION_STATE.getActiveWebviewPanel()?.document;
-
-      if (document === undefined) {
+      const documentMeta = getActiveDocumentMetadata();
+      if (!documentMeta) {
         return [];
       }
-
-      const cacheKey = document.uri.toString();
+      const {uri} = documentMeta;
+      const cacheKey = uri;
 
       if (this.previousKey !== cacheKey) {
         this.previousKey = cacheKey;
@@ -146,11 +146,11 @@ export class SchemaProvider
 
       if (this.refreshSchemaCache) {
         this.worker.sendRequest('malloy/refreshSchemaCache', {
-          uri: document.uri.toString(),
+          uri,
         });
       }
 
-      const explores = await this.getStructs(document);
+      const explores = await this.getStructs(documentMeta);
       this.refreshSchemaCache = false;
       if (explores === undefined) {
         return this.resultCache.get(cacheKey) || [];

@@ -499,7 +499,7 @@
           {
             "id": "check-out-samples",
             "title": "Explore Malloy Documentation",
-            "description": "Malloy documentation is super cool!\n[Visit Documentation](https://malloydata.github.io/documentation/user_guides/basic.html)",
+            "description": "Malloy documentation is super cool!\n[Visit Documentation](https://docs.malloydata.dev/documentation/user_guides/basic.html)",
             "media": {
               "markdown": "media/docs.md"
             }
