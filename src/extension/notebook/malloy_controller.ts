@@ -23,7 +23,7 @@
 
 import * as vscode from 'vscode';
 import {newUntitledNotebookCommand} from '../commands/new_untitled_notebook';
-import {runMalloyQuery} from '../commands/run_query_utils';
+import {getDocumentMetadata, runMalloyQuery} from '../commands/run_query_utils';
 import {WorkerConnection} from '../worker_connection';
 import {errorMessage} from '../../common/errors';
 import {BuildModelRequest, CellMetadata, QueryCost} from '../../common/types';
@@ -161,6 +161,7 @@ class MalloyController {
     cell: vscode.NotebookCell
   ): Promise<void> {
     const {document} = cell;
+    const uri = document.uri.toString();
     const execution = this._controller.createNotebookCellExecution(cell);
     execution.executionOrder = ++this._executionOrder;
     execution.start(Date.now());
@@ -175,14 +176,15 @@ class MalloyController {
         vscode.NotebookEdit.updateCellMetadata(cell.index, newMeta),
       ];
       const edit = new vscode.WorkspaceEdit();
-      edit.set(cell.document.uri, edits);
+      edit.set(document.uri, edits);
       noAwait(vscode.workspace.applyEdit(edit));
       this.statusBarProvider.update();
 
+      const documentMeta = getDocumentMetadata(document);
       const jsonResults = await runMalloyQuery(
         this.worker,
-        {type: 'file', index: -1, file: document},
-        document.uri.toString(),
+        {type: 'file', index: -1, documentMeta},
+        uri,
         document.fileName.split('/').pop() || document.fileName,
         {withWebview: false},
         execution.token

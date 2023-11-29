@@ -21,21 +21,23 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as vscode from 'vscode';
 import {WorkerConnection} from '../worker_connection';
-import {runMalloyQueryWithProgress} from './run_query_utils';
+import {
+  getActiveDocumentMetadata,
+  runMalloyQueryWithProgress,
+} from './run_query_utils';
 
 export function showSQLFileCommand(
   worker: WorkerConnection,
   queryIndex = -1
 ): void {
-  const document = vscode.window.activeTextEditor?.document;
-  if (document) {
+  const documentMeta = getActiveDocumentMetadata();
+  if (documentMeta) {
     runMalloyQueryWithProgress(
       worker,
-      {type: 'file', index: queryIndex, file: document},
-      document.uri.toString(),
-      document.fileName.split('/').pop() || document.fileName,
+      {type: 'file', index: queryIndex, documentMeta},
+      documentMeta.uri,
+      documentMeta.fileName.split('/').pop() || documentMeta.fileName,
       {showSQLOnly: true}
     );
   }

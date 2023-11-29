@@ -21,25 +21,24 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as vscode from 'vscode';
-import {MALLOY_EXTENSION_STATE} from '../state';
 import {WorkerConnection} from '../worker_connection';
-import {runMalloyQueryWithProgress} from './run_query_utils';
+import {
+  getActiveDocumentMetadata,
+  runMalloyQueryWithProgress,
+} from './run_query_utils';
 
 export function showSQLCommand(
   worker: WorkerConnection,
   query: string,
   name?: string
 ): void {
-  const document =
-    vscode.window.activeTextEditor?.document ||
-    MALLOY_EXTENSION_STATE.getActiveWebviewPanel()?.document;
-  if (document) {
+  const documentMeta = getActiveDocumentMetadata();
+  if (documentMeta) {
     runMalloyQueryWithProgress(
       worker,
-      {type: 'string', text: query, file: document},
-      `${document.uri.toString()} ${name}`,
-      name || document.uri.toString(),
+      {type: 'string', text: query, documentMeta},
+      `${documentMeta.uri} ${name}`,
+      name || documentMeta.uri,
       {showSQLOnly: true}
     );
   }

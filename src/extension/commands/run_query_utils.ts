@@ -34,7 +34,7 @@ import {
 import {queryDownload} from './query_download';
 import {malloyLog} from '../logger';
 import {trackQueryRun} from '../telemetry';
-import {QuerySpec} from './query_spec';
+import {DocumentMetadata, QuerySpec} from '../../common/query_spec';
 import {CancellationTokenSource, Disposable} from 'vscode-jsonrpc';
 import {
   createOrReuseWebviewPanel,
@@ -48,6 +48,53 @@ export interface RunMalloyQueryOptions {
   showSQLOnly?: boolean;
   withWebview?: boolean;
   defaultTab?: string;
+}
+
+/**
+ * Return the DocumentMetadata for the given TextDocument
+ *
+ * @param document
+ */
+export function getDocumentMetadata(
+  document: vscode.TextDocument
+): DocumentMetadata;
+/**
+ * Return the metadata for the given TextDocument, or
+ * `undefined` if the TextDocument is `undefined`
+ *
+ * @param document
+ */
+export function getDocumentMetadata(
+  document: vscode.TextDocument | undefined
+): DocumentMetadata | undefined;
+export function getDocumentMetadata(
+  document: vscode.TextDocument | undefined
+): DocumentMetadata | undefined {
+  if (!document) {
+    return undefined;
+  }
+
+  const {fileName, languageId, uri, version} = document;
+
+  return {
+    fileName,
+    languageId,
+    uri: uri.toString(),
+    version,
+  };
+}
+
+/**
+ * Returns the metadata for the current active document, either from the
+ * active editor or the last used document
+ *
+ * @returns metadata for current active document
+ */
+export function getActiveDocumentMetadata() {
+  return (
+    getDocumentMetadata(vscode.window.activeTextEditor?.document) ||
+    MALLOY_EXTENSION_STATE.getActiveWebviewPanel()?.document
+  );
 }
 
 export function runMalloyQuery(
@@ -96,7 +143,7 @@ export function runMalloyQuery(
         name,
         panelId,
         cancel,
-        query.file
+        query.documentMeta
       );
       const queryPageOnDiskPath = Utils.joinPath(
         MALLOY_EXTENSION_STATE.getExtensionUri(),
@@ -108,17 +155,11 @@ export function runMalloyQuery(
       showSchemaTreeViewWhenFocused(current.panel, panelId);
     }
 
-    const {file, ...params} = query;
-    const uri = file.uri.toString();
-
     worker
       .sendRequest(
         'malloy/run',
         {
-          query: {
-            uri,
-            ...params,
-          },
+          query,
           panelId,
           name,
           showSQLOnly,
