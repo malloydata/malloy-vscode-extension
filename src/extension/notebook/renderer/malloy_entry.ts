@@ -54,7 +54,7 @@ export const activate: ActivationFunction = () => {
         root.style.padding = '';
         root.removeEventListener('mousewheel', mousewheelHandler);
       }
-      render(html`<malloy-renderer .results=${info.json()} />`, root);
+      render(html`<malloy-renderer .result=${result} />`, root);
     },
   };
 };
