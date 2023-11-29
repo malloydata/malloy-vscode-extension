@@ -24,6 +24,11 @@
 import {html, render} from 'lit';
 import {ActivationFunction} from 'vscode-notebook-renderer';
 import './malloy_renderer';
+import {Result} from '@malloydata/malloy';
+
+const mousewheelHandler = (evt: Event) => {
+  evt.stopPropagation();
+};
 
 export const activate: ActivationFunction = () => {
   return {
@@ -38,6 +43,16 @@ export const activate: ActivationFunction = () => {
       const root = shadow.querySelector<HTMLElement>('#root');
       if (!root) {
         throw new Error('Element #root not found');
+      }
+      const result = Result.fromJSON(info.json());
+      if (result.resultExplore.modelTag.has('renderer_next')) {
+        root.style.border = '1px solid #e5e7eb';
+        root.style.padding = '10px';
+        root.addEventListener('mousewheel', mousewheelHandler);
+      } else {
+        root.style.border = '';
+        root.style.padding = '';
+        root.removeEventListener('mousewheel', mousewheelHandler);
       }
       render(html`<malloy-renderer .results=${info.json()} />`, root);
     },
