@@ -31,8 +31,14 @@ import {convertFromBytes} from '../../common/convert_to_bytes';
 import {BaseLanguageClient} from 'vscode-languageclient';
 import {FetchModelMessage} from '../../common/message_types';
 import {noAwait} from '../../util/no_await';
+import {MallowRendererMessage} from './types';
 
 const NO_QUERY = 'Model has no queries.';
+
+interface MessageEvent {
+  readonly editor: vscode.NotebookEditor;
+  readonly message: MallowRendererMessage;
+}
 
 function getQueryCostStats({queryCostBytes, isEstimate}: QueryCost): string {
   if (queryCostBytes === 0) {
@@ -112,13 +118,20 @@ export function activateNotebookController(
     )
   );
 
-  const messageChannel = vscode.notebooks.createRendererMessaging(
-    'malloy.notebook-renderer-schema'
+  const relayEvent = (event: MessageEvent) => {
+    const {command, args} = event.message;
+    vscode.commands.executeCommand(command, ...args);
+  };
+  context.subscriptions.push(
+    vscode.notebooks
+      .createRendererMessaging('malloy.notebook-renderer')
+      .onDidReceiveMessage(relayEvent)
   );
-  messageChannel.onDidReceiveMessage(event => {
-    const {type, args} = event.message;
-    vscode.commands.executeCommand(type, ...args);
-  });
+  context.subscriptions.push(
+    vscode.notebooks
+      .createRendererMessaging('malloy.notebook-renderer-schema')
+      .onDidReceiveMessage(relayEvent)
+  );
 }
 
 class MalloyController {

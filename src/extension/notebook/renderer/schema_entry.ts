@@ -29,6 +29,7 @@ import {ActivationFunction} from 'vscode-notebook-renderer';
 import {FetchModelMessage} from '../../../common/message_types';
 import {fieldType} from '../../../common/schema';
 import '../../webviews/components/schema_renderer';
+import {MallowRendererMessage} from '../types';
 
 export const activate: ActivationFunction = ({postMessage}) => {
   return {
@@ -66,7 +67,9 @@ export const activate: ActivationFunction = ({postMessage}) => {
 @customElement('schema-renderer-wrapper')
 export class SchemaRendererWrapper extends LitElement {
   @property({type: Object}) results?: FetchModelMessage;
-  @property({type: Object}) postMessage?: (message: unknown) => void;
+  @property({type: Object}) postMessage?: (
+    message: MallowRendererMessage
+  ) => void;
 
   onFieldClick = (field: Field) => {
     const type = fieldType(field);
@@ -80,12 +83,12 @@ export class SchemaRendererWrapper extends LitElement {
     const topLevelExplore = current;
 
     if (type === 'query') {
-      const type = 'malloy.runQuery';
+      const command = 'malloy.runQuery';
       const args = [
         `run: ${topLevelExplore.name}->${path}`,
         `${topLevelExplore.name}->${path}`,
       ];
-      this.postMessage?.({type, args});
+      this.postMessage?.({command, args});
     } else {
       let path = field.name;
       let current: Explore = field.parentExplore;
@@ -93,26 +96,28 @@ export class SchemaRendererWrapper extends LitElement {
         path = `${current.name}.${path}`;
         current = current.parentExplore;
       }
-      navigator.clipboard.writeText(path);
+      const command = 'malloy.copyToClipboard';
+      const args = [path, 'Path'];
+      this.postMessage?.({command, args});
     }
   };
 
   onQueryClick = (query: NamedQuery | QueryField) => {
     if ('parentExplore' in query) {
-      const type = 'malloy.runQuery';
+      const command = 'malloy.runQuery';
       const arg1 = `run: ${query.parentExplore.name}->${query.name}`;
       const arg2 = `${query.parentExplore.name}->${query.name}`;
       const args = [arg1, arg2];
-      this.postMessage?.({type, args});
+      this.postMessage?.({command, args});
     } else {
-      const type = 'malloy.runNamedQuery';
+      const command = 'malloy.runNamedQuery';
       const args = [query.name];
-      this.postMessage?.({type, args});
+      this.postMessage?.({command, args});
     }
   };
 
   onPreviewClick = (explore: Explore) => {
-    const type = 'malloy.runQuery';
+    const command = 'malloy.runQuery';
     const parts = [];
     let current: Explore | undefined = explore;
     while (current) {
@@ -128,7 +133,7 @@ export class SchemaRendererWrapper extends LitElement {
       `preview ${explore.name} ${path}`,
       'html',
     ];
-    this.postMessage?.({type, args});
+    this.postMessage?.({command, args});
   };
 
   constructor() {

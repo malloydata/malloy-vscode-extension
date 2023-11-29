@@ -526,7 +526,8 @@
         "id": "malloy.notebook-renderer",
         "mimeTypes": [
           "x-application/malloy-results"
-        ]
+        ],
+        "requiresMessaging": "optional"
       },
       {
         "displayName": "Malloy Schema",

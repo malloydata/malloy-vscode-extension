@@ -26,6 +26,7 @@ import {customElement, property} from 'lit/decorators.js';
 import {until} from 'lit/directives/until.js';
 import {Result, ResultJSON} from '@malloydata/malloy';
 import {HTMLView} from '@malloydata/render';
+import {MallowRendererMessage} from '../types';
 
 const styles = css`
   :root {
@@ -39,7 +40,9 @@ const styles = css`
 
 @customElement('malloy-renderer')
 export class MalloyRenderer extends LitElement {
-  @property({type: Object}) postMessage?: (message: unknown) => void;
+  @property({type: Object}) postMessage?: (
+    message: MallowRendererMessage
+  ) => void;
   static override styles = [styles];
 
   @property({type: Object}) results: ResultJSON | null = null;
@@ -57,7 +60,6 @@ export class MalloyRenderer extends LitElement {
         _target: HTMLElement,
         _drillFilters: string[]
       ) => {
-        navigator.clipboard.writeText(drillQuery);
         const command = 'malloy.copyToClipboard';
         const args = [drillQuery, 'Query'];
         this.postMessage?.({command, args});
