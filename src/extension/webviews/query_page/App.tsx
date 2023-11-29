@@ -89,6 +89,7 @@ export const App: React.FC = () => {
   const [resultKind, setResultKind] = useState<ResultKind>(ResultKind.HTML);
 
   const [showOnlySQL, setShowOnlySQL] = useState(false);
+  const [showOnlySchema, setShowOnlySchema] = useState(false);
 
   const [darkMode, setDarkMode] = useState(false);
   const [observer, setObserver] = useState<MutationObserver>();
@@ -149,6 +150,14 @@ export const App: React.FC = () => {
         setStatus({status: Status.Done, error: status.error});
         setResults({sql});
         setResultKind(ResultKind.SQL);
+      } else if (message.status === QueryRunStatus.Schema) {
+        setShowOnlySchema(true);
+        setStatus({status: Status.Done, error: status.error});
+        setResults({
+          ...results,
+          schema: message.schema.map(json => Explore.fromJSON(json)),
+        });
+        setResultKind(ResultKind.SCHEMA);
       } else if (message.status === QueryRunStatus.EstimatedCost) {
         setResults({
           ...results,
@@ -218,6 +227,7 @@ export const App: React.FC = () => {
       } else {
         setResults({html: document.createElement('span')});
         setShowOnlySQL(false);
+        setShowOnlySchema(false);
         switch (message.status) {
           case QueryRunStatus.Compiling:
             setStatus({status: Status.Compiling});
@@ -314,13 +324,21 @@ export const App: React.FC = () => {
       {!status.error &&
         [Status.Displaying, Status.Done].includes(status.status) && (
           <ResultControlsBar>
-            <ResultLabel>{showOnlySQL ? 'SQL' : 'QUERY RESULTS'}</ResultLabel>
+            <ResultLabel>
+              {showOnlySQL
+                ? 'SQL'
+                : showOnlySchema
+                ? 'SCHEMA'
+                : 'QUERY RESULTS'}
+            </ResultLabel>
             <ResultControlsItems>
-              <ResultKindToggle
-                kind={resultKind}
-                setKind={setResultKind}
-                showOnlySQL={showOnlySQL}
-              />
+              {!showOnlySchema && (
+                <ResultKindToggle
+                  kind={resultKind}
+                  setKind={setResultKind}
+                  showOnlySQL={showOnlySQL}
+                />
+              )}
               {canDownload && (
                 <DownloadButton
                   canStream={canDownloadStream}
@@ -531,6 +549,7 @@ const ResultControlsBar = styled.div`
 const ResultLabel = styled.span`
   font-weight: 500;
   font-size: 12px;
+  padding: 8px;
 `;
 
 const ResultControlsItems = styled.div`

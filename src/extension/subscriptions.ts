@@ -62,6 +62,7 @@ import {
 import {BaseLanguageClient} from 'vscode-languageclient';
 import {WorkerConnection} from './worker_connection';
 import {runQueryAtCursorCommand} from './commands/run_query_at_cursor';
+import {showSchemaFileCommand} from './commands/show_schema_file';
 
 function getNewClientId(): string {
   return uuid();
@@ -102,6 +103,13 @@ export const setupSubscriptions = (
   context.subscriptions.push(
     vscode.commands.registerCommand('malloy.runQueryAtCursor', () =>
       runQueryAtCursorCommand(worker, client)
+    )
+  );
+
+  // Show Schema (whole file)
+  context.subscriptions.push(
+    vscode.commands.registerCommand('malloy.showSchemaFile', (uri: string) =>
+      showSchemaFileCommand(worker, uri)
     )
   );
 

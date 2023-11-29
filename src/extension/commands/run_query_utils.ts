@@ -46,6 +46,7 @@ import {WorkerConnection} from '../worker_connection';
 
 export interface RunMalloyQueryOptions {
   showSQLOnly?: boolean;
+  showSchemaOnly?: boolean;
   withWebview?: boolean;
   defaultTab?: string;
 }
@@ -97,6 +98,16 @@ export function getActiveDocumentMetadata() {
   );
 }
 
+export function getDocumentMetadataFromUri(uri: string) {
+  const {path: fileName} = vscode.Uri.parse(uri);
+  return {
+    fileName,
+    languageId: 'malloy',
+    uri,
+    version: 0,
+  };
+}
+
 export function runMalloyQuery(
   worker: WorkerConnection,
   query: QuerySpec,
@@ -107,6 +118,7 @@ export function runMalloyQuery(
   progress?: vscode.Progress<{message?: string; increment?: number}>
 ): Thenable<ResultJSON | undefined> {
   const showSQLOnly = options.showSQLOnly ?? false;
+  const showSchemaOnly = options.showSchemaOnly ?? false;
   const withWebview = options.withWebview ?? true;
   const {defaultTab} = options;
 
@@ -163,6 +175,7 @@ export function runMalloyQuery(
           panelId,
           name,
           showSQLOnly,
+          showSchemaOnly,
           defaultTab,
         },
         cancellationTokenSource.token
@@ -206,6 +219,12 @@ export function runMalloyQuery(
               progress?.report({increment: 100, message: 'Complete'});
               resolve(undefined);
             }
+          }
+          break;
+        case QueryRunStatus.Schema:
+          {
+            progress?.report({increment: 100, message: 'Complete'});
+            resolve(undefined);
           }
           break;
         case QueryRunStatus.EstimatedCost:

@@ -44,14 +44,8 @@ export interface MessageRun {
   panelId: string;
   name: string;
   showSQLOnly: boolean;
+  showSchemaOnly: boolean;
   defaultTab?: string;
-}
-
-export interface MessageRunMSQL {
-  panelId: string;
-  malloySQLQuery: string;
-  statementIndex: number | null;
-  showSQLOnly?: boolean;
 }
 
 export interface CloudCodeConfig {

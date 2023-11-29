@@ -44,14 +44,7 @@ export enum QueryRunStatus {
   Done = 'done',
   StartDownload = 'start-download',
   RunCommand = 'run-command',
-}
-
-export enum MSQLQueryRunStatus {
-  Compiling = 'compiling',
-  Compiled = 'compiled',
-  Running = 'running',
-  Error = 'error',
-  Done = 'done',
+  Schema = 'schema',
 }
 
 export enum QueryMessageType {
@@ -97,6 +90,11 @@ interface QueryMessageStatusError {
   error: string;
 }
 
+interface QueryMessageStatusSchema {
+  status: QueryRunStatus.Schema;
+  schema: SerializedExplore[];
+}
+
 interface QueryMessageStatusDone {
   status: QueryRunStatus.Done;
   resultJson: ResultJSON;
@@ -121,7 +119,8 @@ export type QueryMessageStatus =
   | QueryMessageStatusEstimatedCost
   | QueryMessageStatusError
   | QueryMessageStatusRunning
-  | QueryMessageStatusDone;
+  | QueryMessageStatusDone
+  | QueryMessageStatusSchema;
 
 interface QueryMessageAppReady {
   type: QueryMessageType.AppReady;

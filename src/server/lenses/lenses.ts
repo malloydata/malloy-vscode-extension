@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {CodeLens, Position, Range} from 'vscode-languageserver';
+import {CodeLens, Connection, Position, Range} from 'vscode-languageserver';
 import {TextDocument} from 'vscode-languageserver-textdocument';
 import {parseWithCache} from '../parse_cache';
 
@@ -45,145 +45,212 @@ import {parseWithCache} from '../parse_cache';
 //     )
 // `;
 
-export function getMalloyLenses(document: TextDocument): CodeLens[] {
+/**
+ * Transforms vscode-notebook-cell: Uris to file: or vscode-vfs: URLS
+ * based on the workspace, because VS Code can't use a vscode-notebook-cell:
+ * as a relative url for non-cells, like external Malloy files.
+ *
+ * @param uri Document uri
+ * @returns Uri with an appropriate protocol
+ */
+const fixNotebookUrl = async (connection: Connection, url: URL) => {
+  if (url.protocol === 'vscode-notebook-cell:') {
+    let protocol = 'file:';
+    const workspaceFolders = await connection.workspace.getWorkspaceFolders();
+    if (workspaceFolders && workspaceFolders[0]) {
+      protocol = new URL(workspaceFolders[0].uri).protocol;
+    }
+    const urlString = url
+      .toString()
+      .replace(/^vscode-notebook-cell:/, protocol);
+    url = new URL(urlString);
+  }
+
+  return url;
+};
+
+export async function getMalloyLenses(
+  connection: Connection,
+  document: TextDocument
+): Promise<CodeLens[]> {
   const lenses: CodeLens[] = [];
   const symbols = parseWithCache(document).symbols;
 
   let currentUnnamedQueryIndex = 0;
   let currentUnnamedSQLBlockIndex = 0;
-  symbols.forEach(symbol => {
-    if (symbol.type === 'query') {
-      lenses.push(
+  for (const symbol of symbols) {
+    switch (symbol.type) {
+      case 'query':
+        lenses.push(
+          {
+            range: symbol.lensRange.toJSON(),
+            command: {
+              title: 'Run',
+              command: 'malloy.runNamedQuery',
+              arguments: [symbol.name],
+            },
+          },
+          {
+            range: symbol.lensRange.toJSON(),
+            command: {
+              title: 'Show SQL',
+              command: 'malloy.showSQLNamedQuery',
+              arguments: [symbol.name],
+            },
+          }
+        );
+        break;
+      case 'unnamed_query':
+        lenses.push(
+          {
+            range: symbol.lensRange.toJSON(),
+            command: {
+              title: 'Run',
+              command: 'malloy.runQueryFile',
+              arguments: [currentUnnamedQueryIndex],
+            },
+          },
+          {
+            range: symbol.lensRange.toJSON(),
+            command: {
+              title: 'Show SQL',
+              command: 'malloy.showSQLFile',
+              arguments: [currentUnnamedQueryIndex],
+            },
+          }
+        );
+        currentUnnamedQueryIndex++;
+        break;
+      case 'explore':
         {
+          const children = symbol.children;
+          const exploreName = symbol.name;
+          lenses.push({
+            range: symbol.lensRange.toJSON(),
+            command: {
+              title: 'Schema',
+              command: 'malloy.runQuery',
+              arguments: [
+                `run: ${exploreName}->{ select: *; limit: 20 }`,
+                `Preview ${exploreName}`,
+                'schema',
+              ],
+            },
+          });
+          lenses.push({
+            range: symbol.lensRange.toJSON(),
+            command: {
+              title: 'Preview',
+              command: 'malloy.runQuery',
+              arguments: [
+                `run: ${exploreName}->{ select: *; limit: 20 }`,
+                `Preview ${exploreName}`,
+              ],
+            },
+          });
+          // lenses.push({
+          //   range: symbol.range.toJSON(),
+          //   command: {
+          //     title: "Explain",
+          //     command: "malloy.runQuery",
+          //     arguments: [
+          //       `run: ${exploreName}->${explain}`,
+          //       `explain ${exploreName}`,
+          //     ],
+          //   },
+          // });
+          children.forEach(child => {
+            if (child.type === 'query') {
+              const queryName = child.name;
+              lenses.push(
+                {
+                  range: child.lensRange.toJSON(),
+                  command: {
+                    title: 'Run',
+                    command: 'malloy.runQuery',
+                    arguments: [
+                      `run: ${exploreName}->${queryName}`,
+                      `${exploreName}->${queryName}`,
+                    ],
+                  },
+                },
+                {
+                  range: child.lensRange.toJSON(),
+                  command: {
+                    title: 'Show SQL',
+                    command: 'malloy.showSQL',
+                    arguments: [
+                      `run: ${exploreName}->${queryName}`,
+                      `${exploreName}->${queryName}`,
+                    ],
+                  },
+                }
+              );
+            }
+          });
+        }
+        break;
+      case 'sql':
+        lenses.push({
           range: symbol.lensRange.toJSON(),
           command: {
             title: 'Run',
-            command: 'malloy.runNamedQuery',
+            command: 'malloy.runNamedSQLBlock',
             arguments: [symbol.name],
           },
-        },
-        {
-          range: symbol.lensRange.toJSON(),
-          command: {
-            title: 'Show SQL',
-            command: 'malloy.showSQLNamedQuery',
-            arguments: [symbol.name],
-          },
-        }
-      );
-    } else if (symbol.type === 'unnamed_query') {
-      lenses.push(
-        {
+        });
+        // TODO feature-sql-block Currently, named SQL blocks are not in the model, but stored
+        //      in the same list alongside unnamed SQL blocks. This is unlike the way queries work:
+        //      named queries exist in the model, and unnamed queries exist outside the model in
+        //      a separate list. Anyway, this means that at the moment, _named_ SQL blocks are also
+        //      indexable.
+        currentUnnamedSQLBlockIndex++;
+        break;
+      case 'unnamed_sql':
+        lenses.push({
           range: symbol.lensRange.toJSON(),
           command: {
             title: 'Run',
-            command: 'malloy.runQueryFile',
-            arguments: [currentUnnamedQueryIndex],
+            command: 'malloy.runUnnamedSQLBlock',
+            arguments: [currentUnnamedSQLBlockIndex],
           },
-        },
+        });
+        currentUnnamedSQLBlockIndex++;
+        break;
+      case 'import':
         {
-          range: symbol.lensRange.toJSON(),
-          command: {
-            title: 'Show SQL',
-            command: 'malloy.showSQLFile',
-            arguments: [currentUnnamedQueryIndex],
-          },
-        }
-      );
-      currentUnnamedQueryIndex++;
-    } else if (symbol.type === 'explore') {
-      const children = symbol.children;
-      const exploreName = symbol.name;
-      lenses.push({
-        range: symbol.lensRange.toJSON(),
-        command: {
-          title: 'Schema',
-          command: 'malloy.runQuery',
-          arguments: [
-            `run: ${exploreName}->{ select: *; limit: 20 }`,
-            `preview ${exploreName}`,
-            'schema',
-          ],
-        },
-      });
-      lenses.push({
-        range: symbol.lensRange.toJSON(),
-        command: {
-          title: 'Preview',
-          command: 'malloy.runQuery',
-          arguments: [
-            `run: ${exploreName}->{ select: *; limit: 20 }`,
-            `preview ${exploreName}`,
-          ],
-        },
-      });
-      // lenses.push({
-      //   range: symbol.range.toJSON(),
-      //   command: {
-      //     title: "Explain",
-      //     command: "malloy.runQuery",
-      //     arguments: [
-      //       `run: ${exploreName}->${explain}`,
-      //       `explain ${exploreName}`,
-      //     ],
-      //   },
-      // });
-      children.forEach(child => {
-        if (child.type === 'query') {
-          const queryName = child.name;
-          lenses.push(
-            {
+          const documentUrl = new URL(document.uri);
+          const url = await fixNotebookUrl(
+            connection,
+            new URL(symbol.name, documentUrl)
+          );
+          lenses.push({
+            range: symbol.lensRange.toJSON(),
+            command: {
+              title: 'Schemas: all',
+              command: 'malloy.showSchemaFile',
+              arguments: [url.toString()],
+            },
+          });
+          for (const child of symbol.children) {
+            lenses.push({
               range: child.lensRange.toJSON(),
               command: {
-                title: 'Run',
+                title: child.name,
                 command: 'malloy.runQuery',
                 arguments: [
-                  `run: ${exploreName}->${queryName}`,
-                  `${exploreName}->${queryName}`,
+                  `run: ${child.name}->{ select: *; limit: 20 }`,
+                  `Preview ${child.name}`,
+                  'schema',
+                  symbol.name,
                 ],
               },
-            },
-            {
-              range: child.lensRange.toJSON(),
-              command: {
-                title: 'Show SQL',
-                command: 'malloy.showSQL',
-                arguments: [
-                  `run: ${exploreName}->${queryName}`,
-                  `${exploreName}->${queryName}`,
-                ],
-              },
-            }
-          );
+            });
+          }
         }
-      });
-    } else if (symbol.type === 'sql') {
-      lenses.push({
-        range: symbol.lensRange.toJSON(),
-        command: {
-          title: 'Run',
-          command: 'malloy.runNamedSQLBlock',
-          arguments: [symbol.name],
-        },
-      });
-      // TODO feature-sql-block Currently, named SQL blocks are not in the model, but stored
-      //      in the same list alongside unnaed SQL blocks. This is unlike the way queries work:
-      //      named queries exist in the model, and unnamed queries exist outside the model in
-      //      a separate list. Anyway, this means that at the moment, _named_ SQL blocks are also
-      //      indexable.
-      currentUnnamedSQLBlockIndex++;
-    } else if (symbol.type === 'unnamed_sql') {
-      lenses.push({
-        range: symbol.lensRange.toJSON(),
-        command: {
-          title: 'Run',
-          command: 'malloy.runUnnamedSQLBlock',
-          arguments: [currentUnnamedSQLBlockIndex],
-        },
-      });
-      currentUnnamedSQLBlockIndex++;
+        break;
     }
-  });
+  }
 
   return lenses;
 }
@@ -199,11 +266,12 @@ function inRange(range: Range, position: Position): boolean {
   return afterStart && beforeEnd;
 }
 
-export function findMalloyLensesAt(
+export async function findMalloyLensesAt(
+  connection: Connection,
   document: TextDocument,
   position: Position
-): CodeLens[] {
-  const lenses = getMalloyLenses(document);
+): Promise<CodeLens[]> {
+  const lenses = await getMalloyLenses(connection, document);
 
   return lenses.filter(lens => inRange(lens.range, position));
 }

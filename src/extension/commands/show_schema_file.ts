@@ -27,27 +27,21 @@ import {
   getDocumentMetadataFromUri,
   runMalloyQueryWithProgress,
 } from './run_query_utils';
-import {ResultJSON} from '@malloydata/malloy';
 
-export async function runQueryCommand(
+export function showSchemaFileCommand(
   worker: WorkerConnection,
-  query: string,
-  name?: string,
-  defaultTab?: string,
   uri?: string
-): Promise<ResultJSON | undefined> {
+): void {
   const documentMeta = uri
     ? getDocumentMetadataFromUri(uri)
     : getActiveDocumentMetadata();
   if (documentMeta) {
-    return runMalloyQueryWithProgress(
+    runMalloyQueryWithProgress(
       worker,
-      {type: 'string', text: query, documentMeta},
-      `${documentMeta.uri} ${name}`,
-      name || documentMeta.uri,
-      {defaultTab}
+      {type: 'file', index: -1, documentMeta},
+      documentMeta.uri,
+      documentMeta.fileName.split('/').pop() || documentMeta.fileName,
+      {showSchemaOnly: true}
     );
   }
-
-  return undefined;
 }
