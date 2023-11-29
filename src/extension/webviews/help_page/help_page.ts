@@ -80,12 +80,12 @@ export class HelpPage extends LitElement {
       </div>
 
       <button-link
-        href="https://malloydata.github.io/documentation/user_guides/basic.html"
+        href="https://docs.malloydata.dev/documentation/user_guides/basic.html"
       >
         Quick Start Guide
       </button-link>
       <button-link
-        href="https://malloydata.github.io/documentation/language/sql_to_malloy.html"
+        href="https://docs.malloydata.dev/documentation/language/sql_to_malloy.html"
       >
         Language Reference
       </button-link>
@@ -94,7 +94,7 @@ export class HelpPage extends LitElement {
       >
         Download Sample Models
       </button-link>
-      <button-link href="https://malloydata.github.io/documentation/index.html">
+      <button-link href="https://docs.malloydata.dev/documentation/index.html">
         View Documentation
       </button-link>
     </div>`;
