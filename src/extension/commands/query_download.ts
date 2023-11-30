@@ -66,14 +66,14 @@ const sendDownloadMessage = (
   query: QuerySpec,
   panelId: string,
   name: string,
-  uri: string,
+  downloadUri: string,
   downloadOptions: QueryDownloadOptions
 ) => {
   const message: MessageDownload = {
     query,
     panelId,
     name,
-    uri,
+    downloadUri,
     downloadOptions,
   };
   worker.sendRequest('malloy/download', message);

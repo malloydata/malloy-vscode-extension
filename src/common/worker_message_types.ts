@@ -91,7 +91,7 @@ export interface MessageDownload {
   query: QuerySpec;
   panelId: string;
   name: string;
-  uri: string;
+  downloadUri: string;
   downloadOptions: QueryDownloadOptions;
 }
 

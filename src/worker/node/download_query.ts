@@ -49,7 +49,7 @@ const sendMessage = (
 export async function downloadQuery(
   messageHandler: WorkerMessageHandler,
   connectionManager: ConnectionManager,
-  {query, downloadOptions, name}: MessageDownload,
+  {query, downloadOptions, name, downloadUri}: MessageDownload,
   fileHandler: FileHandler
 ): Promise<void> {
   const {
@@ -78,7 +78,7 @@ export async function downloadQuery(
       workspaceFolders
     );
 
-    const writeStream = fs.createWriteStream(fileURLToPath(uri));
+    const writeStream = fs.createWriteStream(fileURLToPath(downloadUri));
     const writer =
       downloadOptions.format === 'json'
         ? new JSONWriter(writeStream)
