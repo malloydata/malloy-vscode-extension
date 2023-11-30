@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-export interface MallowRendererMessage {
+export interface MalloyRendererMessage {
   command: string;
   args: unknown[];
 }

@@ -29,7 +29,7 @@ import {ActivationFunction} from 'vscode-notebook-renderer';
 import {FetchModelMessage} from '../../../common/message_types';
 import {fieldType} from '../../../common/schema';
 import '../../webviews/components/schema_renderer';
-import {MallowRendererMessage} from '../types';
+import {MalloyRendererMessage} from '../types';
 
 export const activate: ActivationFunction = ({postMessage}) => {
   return {
@@ -68,7 +68,7 @@ export const activate: ActivationFunction = ({postMessage}) => {
 export class SchemaRendererWrapper extends LitElement {
   @property({type: Object}) results?: FetchModelMessage;
   @property({type: Object}) postMessage?: (
-    message: MallowRendererMessage
+    message: MalloyRendererMessage
   ) => void;
 
   onFieldClick = (field: Field) => {

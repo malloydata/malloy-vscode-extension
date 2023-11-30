@@ -26,7 +26,7 @@ import {customElement, property} from 'lit/decorators.js';
 import {until} from 'lit/directives/until.js';
 import {Result, ResultJSON} from '@malloydata/malloy';
 import {HTMLView} from '@malloydata/render';
-import {MallowRendererMessage} from '../types';
+import {MalloyRendererMessage} from '../types';
 
 const styles = css`
   :root {
@@ -41,7 +41,7 @@ const styles = css`
 @customElement('malloy-renderer')
 export class MalloyRenderer extends LitElement {
   @property({type: Object}) postMessage?: (
-    message: MallowRendererMessage
+    message: MalloyRendererMessage
   ) => void;
   static override styles = [styles];
 

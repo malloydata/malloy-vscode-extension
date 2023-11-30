@@ -31,13 +31,13 @@ import {convertFromBytes} from '../../common/convert_to_bytes';
 import {BaseLanguageClient} from 'vscode-languageclient';
 import {FetchModelMessage} from '../../common/message_types';
 import {noAwait} from '../../util/no_await';
-import {MallowRendererMessage} from './types';
+import {MalloyRendererMessage} from './types';
 
 const NO_QUERY = 'Model has no queries.';
 
 interface MessageEvent {
   readonly editor: vscode.NotebookEditor;
-  readonly message: MallowRendererMessage;
+  readonly message: MalloyRendererMessage;
 }
 
 function getQueryCostStats({queryCostBytes, isEstimate}: QueryCost): string {
