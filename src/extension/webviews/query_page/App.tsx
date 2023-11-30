@@ -337,7 +337,9 @@ export const App: React.FC = () => {
         )}
       {!status.error && results.html && resultKind === ResultKind.HTML && (
         <Scroll>
-          <div style={{margin: '10px'}}>
+          <div
+            style={{padding: '10px', height: '100%', boxSizing: 'border-box'}}
+          >
             <CopyButton onClick={copyToClipboard} />
             <DOMElement element={results.html} />
           </div>
@@ -479,7 +481,7 @@ const DOMElement: React.FC<{element: HTMLElement}> = ({element}) => {
     }
   }, [element]);
 
-  return <div style={{fontSize: 11}} ref={ref}></div>;
+  return <div style={{fontSize: 11, height: '100%'}} ref={ref}></div>;
 };
 
 const Tooltip = styled.div`

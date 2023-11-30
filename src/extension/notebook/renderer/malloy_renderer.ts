@@ -24,7 +24,7 @@
 import {LitElement, css, html} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
 import {until} from 'lit/directives/until.js';
-import {Result, ResultJSON} from '@malloydata/malloy';
+import {Result} from '@malloydata/malloy';
 import {HTMLView} from '@malloydata/render';
 
 const styles = css`
@@ -42,14 +42,13 @@ export class MalloyRenderer extends LitElement {
   @property({type: Object}) postMessage?: (message: unknown) => void;
   static override styles = [styles];
 
-  @property({type: Object}) results: ResultJSON | null = null;
+  @property({type: Object}) result: Result | null = null;
 
   override render() {
-    if (!this.results) {
+    if (!this.result) {
       return;
     }
-    const result = Result.fromJSON(this.results);
-    const resultHtml = new HTMLView(document).render(result, {
+    const resultHtml = new HTMLView(document).render(this.result, {
       dataStyles: {},
       isDrillingEnabled: true,
       onDrill: (
@@ -63,7 +62,14 @@ export class MalloyRenderer extends LitElement {
         this.postMessage?.({command, args});
       },
     });
-    return html`${until(resultHtml)}`;
+    return html`<link rel="preconnect" href="https://rsms.me/" />
+      <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
+      <style>
+        malloy-render::part(container) {
+          max-height: 600px;
+        }
+      </style>
+      ${until(resultHtml)}`;
   }
 }
 
