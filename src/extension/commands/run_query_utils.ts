@@ -224,6 +224,16 @@ export function runMalloyQuery(
         case QueryRunStatus.Schema:
           {
             progress?.report({increment: 100, message: 'Complete'});
+            current?.messages.onReceiveMessage(message => {
+              if (message.status === QueryRunStatus.RunCommand) {
+                MALLOY_EXTENSION_STATE.setActiveWebviewPanelId(panelId);
+                vscode.commands.executeCommand(
+                  message.command,
+                  ...message.args
+                );
+              }
+            });
+            unsubscribe();
             resolve(undefined);
           }
           break;
