@@ -248,12 +248,12 @@ export class TranslateCache {
           throw new Error('Missing model definition');
         }
         try {
-          await modelMaterializer.getQuery(`query:\n${malloyQuery.query}`);
+          await modelMaterializer.getQuery(`run:\n${malloyQuery.query}`);
         } catch (e) {
           // some errors come from Runtime stuff
           if (e instanceof MalloyError) {
             e.problems.forEach(log => {
-              // "query:\n" adds a line, so we subtract the line here
+              // "run:\n" adds a line, so we subtract the line here
               fixLogRange(uri, malloyQuery, log, -1);
             });
           }
