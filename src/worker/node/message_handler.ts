@@ -47,13 +47,16 @@ export class NodeMessageHandler {
 
     this.messageHandler = new MessageHandler(connection, connectionManager);
 
-    this.messageHandler.onRequest('malloy/download', message =>
-      downloadQuery(
-        this.messageHandler,
-        connectionManager,
-        message,
-        this.messageHandler.fileHandler
-      )
+    this.messageHandler.onRequest(
+      'malloy/download',
+      (message, cancellationToken) =>
+        downloadQuery(
+          this.messageHandler,
+          connectionManager,
+          message,
+          this.messageHandler.fileHandler,
+          cancellationToken
+        )
     );
     this.messageHandler.onRequest('malloy/config', message =>
       refreshConfig(connectionManager, message)

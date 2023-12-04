@@ -27,59 +27,70 @@ import {CSVWriter, JSONWriter, Runtime} from '@malloydata/malloy';
 import {
   MessageDownload,
   WorkerMessageHandler,
-  WorkerDownloadMessage,
 } from '../../common/worker_message_types';
 import {createRunnable} from '../create_runnable';
 import {CellData, FileHandler} from '../../common/types';
 import {ConnectionManager} from '../../common/connection_manager';
-import {errorMessage} from '../../common/errors';
-
-const sendMessage = (
-  messageHandler: WorkerMessageHandler,
-  name: string,
-  error?: string
-) => {
-  const msg: WorkerDownloadMessage = {
-    name,
-    error,
-  };
-  messageHandler.sendRequest('malloy/download', msg);
-};
+import {CancellationToken, ProgressType} from 'vscode-jsonrpc';
+import {
+  QueryDownloadMessage,
+  QueryDownloadStatus,
+} from '../../common/message_types';
 
 export async function downloadQuery(
   messageHandler: WorkerMessageHandler,
   connectionManager: ConnectionManager,
-  {query, downloadOptions, name, downloadUri}: MessageDownload,
-  fileHandler: FileHandler
+  {query, downloadOptions, panelId, downloadUri}: MessageDownload,
+  fileHandler: FileHandler,
+  cancellationToken: CancellationToken
 ): Promise<void> {
   const {
     documentMeta: {uri},
   } = query;
+
+  const sendMessage = (message: QueryDownloadMessage) => {
+    console.debug('sendMessage', panelId, message.status);
+    const progress = new ProgressType<QueryDownloadMessage>();
+    messageHandler.sendProgress(progress, panelId, message);
+  };
+
   const url = new URL(uri);
+  const abortController = new AbortController();
+  cancellationToken.onCancellationRequested(() => {
+    abortController.abort();
+  });
 
+  const runtime = new Runtime(
+    fileHandler,
+    connectionManager.getConnectionLookup(url)
+  );
+
+  sendMessage({
+    status: QueryDownloadStatus.Compiling,
+  });
+
+  let cellData: CellData | null = null;
+  if (uri.startsWith('vscode-notebook-cell:')) {
+    cellData = await fileHandler.fetchCellData(uri);
+  }
+  let workspaceFolders: string[] = [];
+  if (uri.startsWith('untitled:')) {
+    workspaceFolders = await fileHandler.fetchWorkspaceFolders(uri);
+  }
+  const runnable = await createRunnable(
+    query,
+    runtime,
+    cellData,
+    workspaceFolders
+  );
+
+  sendMessage({
+    status: QueryDownloadStatus.Running,
+  });
+
+  console.info(`Downloading ${uri} to ${downloadUri} `);
+  const writeStream = fs.createWriteStream(fileURLToPath(downloadUri));
   try {
-    const runtime = new Runtime(
-      fileHandler,
-      connectionManager.getConnectionLookup(url)
-    );
-
-    let cellData: CellData | null = null;
-    if (uri.startsWith('vscode-notebook-cell:')) {
-      cellData = await fileHandler.fetchCellData(uri);
-    }
-    let workspaceFolders: string[] = [];
-    if (uri.startsWith('untitled:')) {
-      workspaceFolders = await fileHandler.fetchWorkspaceFolders(uri);
-    }
-    const runnable = await createRunnable(
-      query,
-      runtime,
-      cellData,
-      workspaceFolders
-    );
-
-    console.info(`Downloading ${uri} to ${downloadUri} `);
-    const writeStream = fs.createWriteStream(fileURLToPath(downloadUri));
     const writer =
       downloadOptions.format === 'json'
         ? new JSONWriter(writeStream)
@@ -95,13 +106,11 @@ export async function downloadQuery(
     );
     const rowStream = runnable.runStream({
       rowLimit,
+      abortSignal: abortController.signal,
     });
     await writer.process(rowStream);
+  } finally {
     writeStream.close();
-    console.info(`Finished downloading ${uri} to ${downloadUri} `);
-    sendMessage(messageHandler, name);
-  } catch (error) {
-    console.error(`Error downloading ${uri}`, error);
-    sendMessage(messageHandler, name, errorMessage(error));
   }
+  console.info(`Finished downloading ${uri} to ${downloadUri} `);
 }

@@ -22,15 +22,17 @@
  */
 
 import {CSVWriter, JSONWriter, Result, WriteStream} from '@malloydata/malloy';
-import {QueryDownloadOptions} from '../../common/message_types';
+import {
+  QueryDownloadMessage,
+  QueryDownloadOptions,
+  QueryDownloadStatus,
+  downloadProgress,
+} from '../../common/message_types';
 
 import * as vscode from 'vscode';
 import {Utils} from 'vscode-uri';
 import {QuerySpec} from '../../common/query_spec';
-import {
-  MessageDownload,
-  WorkerDownloadMessage,
-} from '../../common/worker_message_types';
+import {MessageDownload} from '../../common/worker_message_types';
 import {MALLOY_EXTENSION_STATE} from '../state';
 import {Disposable} from 'vscode-jsonrpc';
 import {WorkerConnection} from '../worker_connection';
@@ -63,6 +65,7 @@ class VSCodeWriteStream implements WriteStream {
 
 const sendDownloadMessage = (
   worker: WorkerConnection,
+  cancellationToken: vscode.CancellationToken,
   query: QuerySpec,
   panelId: string,
   name: string,
@@ -72,11 +75,10 @@ const sendDownloadMessage = (
   const message: MessageDownload = {
     query,
     panelId,
-    name,
     downloadUri,
     downloadOptions,
   };
-  worker.sendRequest('malloy/download', message);
+  return worker.sendRequest('malloy/download', message, cancellationToken);
 };
 
 export async function queryDownload(
@@ -127,11 +129,12 @@ export async function queryDownload(
       {
         location: vscode.ProgressLocation.Notification,
         title: `Malloy Download (${name})`,
-        cancellable: false,
+        cancellable: true,
       },
-      async () => {
+      async (progress, cancellationToken) => {
+        const subscriptions: Disposable[] = [];
+
         try {
-          let off: Disposable;
           if (downloadOptions.amount === 'current') {
             const writeStream = new VSCodeWriteStream(fileUri);
             const writer =
@@ -140,42 +143,40 @@ export async function queryDownload(
                 : new CSVWriter(writeStream);
             const rowStream = currentResults.data.inMemoryStream();
             await writer.process(rowStream);
+            writeStream.close();
             noAwait(
               vscode.window.showInformationMessage(
                 `Malloy Download (${name}): Complete`
               )
             );
           } else {
-            sendDownloadMessage(
+            const listener = (msg: QueryDownloadMessage) => {
+              switch (msg.status) {
+                case QueryDownloadStatus.Compiling:
+                  progress.report({increment: 20, message: 'Compiling'});
+                  break;
+                case QueryDownloadStatus.Running:
+                  progress.report({increment: 40, message: 'Running'});
+                  break;
+              }
+            };
+            subscriptions.push(
+              worker.onProgress(downloadProgress, panelId, listener)
+            );
+            await sendDownloadMessage(
               worker,
+              cancellationToken,
               query,
               panelId,
               name,
               fileUri.toString(),
               downloadOptions
             );
-            const listener = (msg: WorkerDownloadMessage) => {
-              const {name: msgName, error} = msg;
-              if (msgName !== name) {
-                return;
-              }
-              if (error) {
-                noAwait(
-                  vscode.window.showErrorMessage(
-                    `Malloy Download (${name}): Error\n${error}`
-                  )
-                );
-              } else {
-                noAwait(
-                  vscode.window.showInformationMessage(
-                    `Malloy Download (${name}): Complete`
-                  )
-                );
-              }
-              off?.dispose();
-            };
-
-            off = worker.onRequest('malloy/download', listener);
+            noAwait(
+              vscode.window.showInformationMessage(
+                `Malloy Download (${name}): Complete`
+              )
+            );
           }
         } catch (error) {
           noAwait(
@@ -183,6 +184,8 @@ export async function queryDownload(
               `Malloy Download (${name}): Error\n${errorMessage(error)}`
             )
           );
+        } finally {
+          subscriptions.forEach(subscription => subscription.dispose());
         }
       }
     )
