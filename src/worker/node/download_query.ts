@@ -78,6 +78,7 @@ export async function downloadQuery(
       workspaceFolders
     );
 
+    console.info(`Downloading ${uri} to ${downloadUri} `);
     const writeStream = fs.createWriteStream(fileURLToPath(downloadUri));
     const writer =
       downloadOptions.format === 'json'
@@ -87,12 +88,20 @@ export async function downloadQuery(
       typeof downloadOptions.amount === 'number'
         ? downloadOptions.amount
         : undefined;
+    console.info(
+      `Downloading ${
+        typeof rowLimit === 'undefined' ? 'unlimited' : rowLimit
+      } rows`
+    );
     const rowStream = runnable.runStream({
       rowLimit,
     });
     await writer.process(rowStream);
+    writeStream.close();
+    console.info(`Finished downloading ${uri} to ${downloadUri} `);
     sendMessage(messageHandler, name);
   } catch (error) {
-    sendMessage(messageHandler, errorMessage(error));
+    console.error(`Error downloading ${uri}`, error);
+    sendMessage(messageHandler, name, errorMessage(error));
   }
 }
