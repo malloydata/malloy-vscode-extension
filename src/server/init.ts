@@ -186,20 +186,20 @@ export const initServer = (
       : new SemanticTokensBuilder().build();
   });
 
-  connection.onCodeLens(handler => {
+  connection.onCodeLens(async handler => {
     const document = documents.get(handler.textDocument.uri);
     if (document && document.languageId === 'malloy') {
-      return getMalloyLenses(document);
+      return await getMalloyLenses(connection, document);
     }
     return [];
   });
 
   connection.onRequest(
     'malloy/findLensesAt',
-    ({uri, position}: {uri: string; position: Position}) => {
+    async ({uri, position}: {uri: string; position: Position}) => {
       const document = documents.get(uri);
       if (document && position) {
-        return findMalloyLensesAt(document, position);
+        return await findMalloyLensesAt(connection, document, position);
       } else {
         return [];
       }

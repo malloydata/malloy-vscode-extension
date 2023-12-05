@@ -26,8 +26,6 @@ import {
   MalloyError,
   Model,
   ModelMaterializer,
-  NamedModelObject,
-  NamedQuery,
   Runtime,
 } from '@malloydata/malloy';
 import {TextDocument} from 'vscode-languageserver-textdocument';
@@ -37,9 +35,6 @@ import {BuildModelRequest, CellData} from '../common/types';
 import {MalloySQLSQLParser} from '@malloydata/malloy-sql';
 import {FetchModelMessage} from '../common/message_types';
 import {fixLogRange} from '../common/malloy_sql';
-
-const isNamedQuery = (object: NamedModelObject): object is NamedQuery =>
-  object.type === 'query';
 
 export class TranslateCache {
   // Cache for truncated documents used for providing schema suggestions
@@ -67,10 +62,7 @@ export class TranslateCache {
         if (model) {
           return {
             explores: model.explores.map(explore => explore.toJSON()) || [],
-            // TODO(whscullin) - Create non-backdoor access method
-            queries: Object.values(model._modelDef.contents).filter(
-              isNamedQuery
-            ),
+            queries: model.namedQueries,
           };
         } else {
           return {

@@ -240,7 +240,7 @@ export const runQuery = async (
   messageRun: MessageRun,
   cancellationToken: CancellationToken
 ): Promise<void> => {
-  const {query, panelId, showSQLOnly, defaultTab} = messageRun;
+  const {query, panelId, showSQLOnly, showSchemaOnly, defaultTab} = messageRun;
 
   const sendMessage = (message: QueryMessageStatus) => {
     console.debug('sendMessage', panelId, message.status);
@@ -308,6 +308,23 @@ export const runQuery = async (
       cellData,
       workspaceFolders
     );
+
+    if (showSchemaOnly) {
+      const modelMaterializer = await createModelMaterializer(
+        uri,
+        runtime,
+        cellData,
+        workspaceFolders
+      );
+      const model = await modelMaterializer?.getModel();
+      if (model) {
+        sendMessage({
+          status: QueryRunStatus.Schema,
+          schema: model.explores.map(explore => explore.toJSON()),
+        });
+      }
+      return;
+    }
 
     // Set the row limit to the limit provided in the final stage of the query, if present
     const rowLimit =
