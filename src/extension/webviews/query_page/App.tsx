@@ -103,6 +103,7 @@ export const App: React.FC = () => {
     visible: tooltipVisible,
     placement: 'top',
   });
+  const ref = useRef<HTMLDivElement>(null);
 
   const vscode = useQueryVSCodeContext();
 
@@ -302,6 +303,30 @@ export const App: React.FC = () => {
     }
   };
 
+  /*
+   * Intercept the context menu click from the schema renderer, and
+   * apply context data to the element's `vscode-context` attribute.
+   * Then simulate a context click so that VS Code will pick up
+   * the context and draw a context menu.
+   */
+  const onContextClick = (
+    event: MouseEvent,
+    context: Record<string, unknown>
+  ) => {
+    event.stopPropagation();
+    context = {...context, preventDefaultContextMenuItems: true};
+    if (ref.current) {
+      ref.current.dataset['vscodeContext'] = JSON.stringify(context);
+    }
+    ref.current?.dispatchEvent(
+      new MouseEvent('contextmenu', {
+        clientX: event.clientX,
+        clientY: event.clientY,
+        bubbles: true,
+      })
+    );
+  };
+
   return (
     <div
       style={{
@@ -310,6 +335,7 @@ export const App: React.FC = () => {
         display: 'flex',
         flexDirection: 'column',
       }}
+      ref={ref}
     >
       {[
         Status.Compiling,
@@ -405,6 +431,7 @@ export const App: React.FC = () => {
             defaultShow={true}
             onFieldClick={onFieldClick}
             onQueryClick={onQueryClick}
+            onContextClick={onContextClick}
           />
         </Scroll>
       )}

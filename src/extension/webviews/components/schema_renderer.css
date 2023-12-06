@@ -79,6 +79,7 @@ li.fields label {
 
 .field_name {
   padding-left: 0.5em;
+  user-select: none;
 }
 
 svg {

@@ -287,9 +287,10 @@ function getIconPath(
   return Utils.joinPath(uri, 'dist', imageFileName);
 }
 
-export function runTurtleFromSchemaCommand(
-  item: FieldItem | ExploreItem
-): void {
+export function runTurtleFromSchemaCommand(item: {
+  topLevelExplore: string;
+  accessPath: string[];
+}): void {
   vscode.commands.executeCommand(
     'malloy.runQuery',
     `run: ${item.topLevelExplore}->${item.accessPath.join('.')}`,
@@ -297,20 +298,23 @@ export function runTurtleFromSchemaCommand(
   );
 }
 
-export function previewFromSchemaCommand(item: FieldItem | ExploreItem): void {
+export function previewFromSchemaCommand(item: {
+  topLevelExplore: string;
+  accessPath: string[];
+}): void {
   vscode.commands.executeCommand(
     'malloy.runQuery',
     `run: ${item.topLevelExplore}->{ select: ${[...item.accessPath, '*'].join(
       '.'
     )}; limit: 20 }`,
-    `preview ${item.topLevelExplore} ${item.accessPath.join('.')}`,
+    `Preview ${item.topLevelExplore} ${item.accessPath.join('.')}`,
     'html'
   );
 }
 
-export function goToDefinitionFromSchemaCommand(
-  item: FieldItem | ExploreItem
-): void {
+export function goToDefinitionFromSchemaCommand(item: {
+  location?: DocumentLocation;
+}): void {
   const location = item.location;
   if (location) {
     const pos = new vscode.Position(
