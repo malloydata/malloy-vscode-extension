@@ -136,6 +136,23 @@ export type QueryPanelMessage =
   | QueryMessageAppReady
   | QueryMessageStartDownload;
 
+export enum QueryDownloadStatus {
+  Compiling = 'compiling',
+  Running = 'running',
+}
+
+interface QueryDownloadStatusCompiling {
+  status: QueryDownloadStatus.Compiling;
+}
+
+interface QueryDownloadStatusRunning {
+  status: QueryDownloadStatus.Running;
+}
+
+export type QueryDownloadMessage =
+  | QueryDownloadStatusCompiling
+  | QueryDownloadStatusRunning;
+
 export enum ConnectionMessageType {
   EditConnection = 'edit-connection',
   SetConnections = 'set-connections',
@@ -266,6 +283,8 @@ interface HelpMessageEditConnections {
 export type HelpPanelMessage = HelpMessageAppReady | HelpMessageEditConnections;
 
 export const queryPanelProgress = new ProgressType<QueryMessageStatus>();
+
+export const downloadProgress = new ProgressType<QueryDownloadMessage>();
 
 export interface FetchModelMessage {
   explores: SerializedExplore[];

@@ -84,7 +84,6 @@ export interface MessageFetchCellData {
 export interface MessageDownload {
   query: QuerySpec;
   panelId: string;
-  name: string;
   downloadUri: string;
   downloadOptions: QueryDownloadOptions;
 }
