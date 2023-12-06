@@ -24,6 +24,7 @@
 import * as vscode from 'vscode';
 import {SchemaProvider} from './tree_views/schema_view';
 import {
+  openUrlInBrowser,
   copyFieldPathCommand,
   copyToClipboardCommand,
   goToDefinitionFromSchemaCommand,
@@ -165,6 +166,13 @@ export const setupSubscriptions = (
     vscode.commands.registerCommand(
       'malloy.copyToClipboard',
       (val: string, type: string) => copyToClipboardCommand(val, type)
+    )
+  );
+
+  // source
+  context.subscriptions.push(
+    vscode.commands.registerCommand('malloy.openUrlInBrowser', (url: string) =>
+      openUrlInBrowser(url)
     )
   );
 
