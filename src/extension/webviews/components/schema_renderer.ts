@@ -31,6 +31,7 @@ import {
   exploreSubtype,
   fieldType,
   isFieldAggregate,
+  isFieldHidden,
 } from '../../../common/schema';
 import {
   booleanIcon,
@@ -82,14 +83,16 @@ function bucketFields(fields: Field[]) {
   for (const field of fields) {
     const type = fieldType(field);
 
-    if (isFieldAggregate(field)) {
-      measures.push(field);
-    } else if (field.isExploreField()) {
-      explores.push(field);
-    } else if (type === 'query') {
-      queries.push(field);
-    } else {
-      dimensions.push(field);
+    if (!isFieldHidden(field)) {
+      if (isFieldAggregate(field)) {
+        measures.push(field);
+      } else if (field.isExploreField()) {
+        explores.push(field);
+      } else if (type === 'query') {
+        queries.push(field);
+      } else {
+        dimensions.push(field) && !isFieldHidden(field);
+      }
     }
   }
 

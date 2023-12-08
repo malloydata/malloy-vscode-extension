@@ -48,3 +48,35 @@ export function exploreSubtype(explore: Explore) {
   }
   return subtype;
 }
+
+const hiddenFields = new WeakMap<Explore, RegExp[]>();
+
+const isStringTag = (tag: string | undefined): tag is string =>
+  typeof tag === 'string';
+
+const IS_REGEXP = /^\/(.*)\/$/;
+
+export function isFieldHidden(field: Field): boolean {
+  let hidden = hiddenFields.get(field.parentExplore);
+  if (!hidden) {
+    const hiddenTags =
+      field.parentExplore
+        .tagParse()
+        .tag.array('hidden')
+        ?.map(tag => tag.text())
+        .filter(isStringTag) || [];
+
+    hidden = hiddenTags.map(tag => {
+      const regExpMatch = IS_REGEXP.exec(tag);
+      if (regExpMatch) {
+        return new RegExp(regExpMatch[1]);
+      } else {
+        return new RegExp(
+          `^${tag.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')}$`
+        );
+      }
+    });
+    hiddenFields.set(field.parentExplore, hidden);
+  }
+  return hidden.some(pattern => pattern.test(field.name));
+}

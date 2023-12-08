@@ -30,7 +30,6 @@ import {
   SerializedExplore,
 } from '@malloydata/malloy';
 import {MalloySQLSQLParser} from '@malloydata/malloy-sql';
-import {DataStyles} from '@malloydata/render';
 
 import {WorkerMessageHandler, MessageRun} from '../common/worker_message_types';
 
@@ -155,7 +154,6 @@ const runMSQLCell = async (
     }
   }
 
-  const dataStyles: DataStyles = {};
   if (cancellationToken.isCancellationRequested) return;
 
   console.info(compiledStatement);
@@ -220,7 +218,6 @@ const runMSQLCell = async (
   sendMessage({
     status: QueryRunStatus.Done,
     resultJson: queryResult.toJSON(),
-    dataStyles,
     canDownloadStream: false,
     stats: {
       compileTime,
@@ -381,7 +378,6 @@ export const runQuery = async (
     sendMessage({
       status: QueryRunStatus.Done,
       resultJson: queryResult.toJSON(),
-      dataStyles: {},
       canDownloadStream: !isBrowser,
       defaultTab,
       profilingUrl: queryResult.profilingUrl,
