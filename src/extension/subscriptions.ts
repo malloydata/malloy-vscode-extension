@@ -152,7 +152,7 @@ export const setupSubscriptions = (
     )
   );
 
-  // Copy Field Path
+  // Copy Path
   context.subscriptions.push(
     vscode.commands.registerCommand(
       'malloy.copyFieldPath',
