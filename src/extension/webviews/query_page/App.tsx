@@ -168,7 +168,6 @@ export const App: React.FC = () => {
       } else if (message.status === QueryRunStatus.Done) {
         const {
           resultJson,
-          dataStyles,
           canDownloadStream,
           defaultTab,
           stats: runStats,
@@ -196,7 +195,7 @@ export const App: React.FC = () => {
             ? getStats(runStats, result.runStats?.queryCostBytes)
             : '';
           const html = await new HTMLView(document).render(result, {
-            dataStyles,
+            dataStyles: {},
             isDrillingEnabled: true,
             onDrill: (
               drillQuery: string,

@@ -22,7 +22,6 @@
  */
 
 import {NamedQuery, ResultJSON, SerializedExplore} from '@malloydata/malloy';
-import {DataStyles} from '@malloydata/render';
 import {
   ConnectionBackend,
   ConnectionConfig,
@@ -98,7 +97,6 @@ interface QueryMessageStatusSchema {
 interface QueryMessageStatusDone {
   status: QueryRunStatus.Done;
   resultJson: ResultJSON;
-  dataStyles: DataStyles;
   canDownloadStream: boolean;
   defaultTab?: string;
   stats: QueryRunStats;

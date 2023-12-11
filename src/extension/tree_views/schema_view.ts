@@ -44,7 +44,12 @@ import oneToOneIcon from '../../media/one_to_one.svg';
 import unknownIcon from '../../media/unknown.svg';
 import {BaseLanguageClient} from 'vscode-languageclient/node';
 import {BuildModelRequest} from '../../common/types';
-import {exploreSubtype, fieldType, isFieldAggregate} from '../../common/schema';
+import {
+  exploreSubtype,
+  fieldType,
+  isFieldAggregate,
+  isFieldHidden,
+} from '../../common/schema';
 import {FetchModelMessage} from '../../common/message_types';
 import {WorkerConnection} from '../worker_connection';
 import {getActiveDocumentMetadata} from '../commands/run_query_utils';
@@ -109,27 +114,30 @@ export class SchemaProvider
     element?: ExploreItem
   ): Promise<(ExploreItem | FieldItem)[]> {
     if (element) {
-      return element.explore.allFields.sort(byKindThenName).map(field => {
-        const newPath = [...element.accessPath, field.name];
-        if (field.isExploreField()) {
-          return new ExploreItem(
-            this.context,
-            element.topLevelExplore,
-            field,
-            newPath,
-            element.explore.location,
-            element.explore.allFields.length === 1
-          );
-        } else {
-          return new FieldItem(
-            this.context,
-            element.topLevelExplore,
-            field,
-            newPath,
-            field.location
-          );
-        }
-      });
+      return element.explore.allFields
+        .filter(field => !isFieldHidden(field))
+        .sort(byKindThenName)
+        .map(field => {
+          const newPath = [...element.accessPath, field.name];
+          if (field.isExploreField()) {
+            return new ExploreItem(
+              this.context,
+              element.topLevelExplore,
+              field,
+              newPath,
+              element.explore.location,
+              element.explore.allFields.length === 1
+            );
+          } else {
+            return new FieldItem(
+              this.context,
+              element.topLevelExplore,
+              field,
+              newPath,
+              field.location
+            );
+          }
+        });
     } else {
       const documentMeta = getActiveDocumentMetadata();
       if (!documentMeta) {
