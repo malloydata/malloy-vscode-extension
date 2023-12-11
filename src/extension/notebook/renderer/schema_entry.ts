@@ -73,41 +73,32 @@ export class SchemaRendererWrapper extends LitElement {
 
   onFieldClick = (field: Field) => {
     const type = fieldType(field);
-
-    let path = field.name;
-    let current: Explore = field.parentExplore;
-    while (current.parentExplore) {
-      path = `${current.name}.${path}`;
-      current = current.parentExplore;
-    }
-    const topLevelExplore = current;
+    const {fieldPath} = field;
+    const topLevelExplore = fieldPath.shift();
+    const accessPath = fieldPath.join('.');
 
     if (type === 'query') {
       const command = 'malloy.runQuery';
-      const args = [
-        `run: ${topLevelExplore.name}->${path}`,
-        `${topLevelExplore.name}->${path}`,
-      ];
+      const queryString = `run: ${topLevelExplore}->${accessPath}`;
+      const title = `${topLevelExplore}->${accessPath}`;
+      const args = [queryString, title];
       this.postMessage?.({command, args});
     } else {
-      let path = field.name;
-      let current: Explore = field.parentExplore;
-      while (current.parentExplore) {
-        path = `${current.name}.${path}`;
-        current = current.parentExplore;
-      }
       const command = 'malloy.copyToClipboard';
-      const args = [path, 'Path'];
+      const args = [accessPath, 'Path'];
       this.postMessage?.({command, args});
     }
   };
 
   onQueryClick = (query: NamedQuery | QueryField) => {
     if ('parentExplore' in query) {
+      const {fieldPath} = query;
+      const topLevelExplore = fieldPath.shift();
+      const accessPath = fieldPath.join('.');
       const command = 'malloy.runQuery';
-      const arg1 = `run: ${query.parentExplore.name}->${query.name}`;
-      const arg2 = `${query.parentExplore.name}->${query.name}`;
-      const args = [arg1, arg2];
+      const queryString = `run: ${topLevelExplore}->${accessPath}`;
+      const title = `${topLevelExplore}->${accessPath}`;
+      const args = [queryString, title];
       this.postMessage?.({command, args});
     } else {
       const command = 'malloy.runNamedQuery';
@@ -118,19 +109,14 @@ export class SchemaRendererWrapper extends LitElement {
 
   onPreviewClick = (explore: Explore) => {
     const command = 'malloy.runQuery';
-    const parts = [];
-    let current: Explore | undefined = explore;
-    while (current) {
-      parts.unshift(current.name);
-      current = current.parentExplore;
-    }
-    const exploreName = parts.shift();
-    const path = parts.join('.');
-    parts.push('*');
-    const select = parts.join('.');
+    const {fieldPath} = explore;
+    const exploreName = fieldPath.shift();
+    const accessPath = fieldPath.join('.');
+    fieldPath.push('*');
+    const select = fieldPath.join('.');
     const args = [
       `run: ${exploreName}->{ select: ${select}; limit: 20 }`,
-      `preview ${explore.name} ${path}`,
+      `Preview ${explore.name} ${accessPath}`,
       'html',
     ];
     this.postMessage?.({command, args});

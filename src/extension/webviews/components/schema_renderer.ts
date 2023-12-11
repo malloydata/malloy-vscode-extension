@@ -52,16 +52,11 @@ const sortByName = (a: {name: string}, b: {name: string}) =>
   a.name.localeCompare(b.name);
 
 const fieldContext = (field: Field) => {
-  const accessPath = [field.name];
-  let current: Explore | undefined = field.parentExplore;
-  while (current) {
-    accessPath.unshift(current.name);
-    current = current.parentExplore;
-  }
+  const {fieldPath: accessPath, location} = field;
   const topLevelExplore = accessPath.shift();
 
   return {
-    location: field.location,
+    location,
     topLevelExplore,
     accessPath,
   };
