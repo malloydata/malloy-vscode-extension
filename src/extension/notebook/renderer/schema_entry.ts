@@ -116,7 +116,7 @@ export class SchemaRendererWrapper extends LitElement {
     const select = fieldPath.join('.');
     const args = [
       `run: ${exploreName}->{ select: ${select}; limit: 20 }`,
-      `Preview ${explore.name} ${accessPath}`,
+      `Preview ${exploreName} ${accessPath}`,
       'html',
     ];
     this.postMessage?.({command, args});
