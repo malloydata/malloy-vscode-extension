@@ -152,7 +152,7 @@
       },
       {
         "command": "malloy.copyFieldPath",
-        "title": "Copy Field Path",
+        "title": "Copy Path",
         "category": "Malloy",
         "icon": "$(copy)",
         "enablement": "view == malloySchema || webviewId == malloyQuery"

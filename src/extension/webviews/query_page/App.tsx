@@ -281,23 +281,26 @@ export const App: React.FC = () => {
     const type = fieldType(field);
 
     if (type !== 'query') {
-      let path = field.name;
-      let current: Explore = field.parentExplore;
-      while (current.parentExplore) {
-        path = `${current.name}.${path}`;
-        current = current.parentExplore;
-      }
-      navigator.clipboard.writeText(path);
+      const {fieldPath} = field;
+      fieldPath.shift();
+      const accessPath = fieldPath.join('.');
+      const status = QueryRunStatus.RunCommand;
+      const command = 'malloy.copyToClipboard';
+      const args = [accessPath, 'Path'];
+      vscode.postMessage({status, command, args});
     }
   };
 
   const onQueryClick = (query: NamedQuery | QueryField) => {
     if ('parentExplore' in query) {
+      const {fieldPath} = query;
+      const exploreName = fieldPath.shift();
+      const accessPath = fieldPath.join('.');
       const status = QueryRunStatus.RunCommand;
       const command = 'malloy.runQuery';
-      const arg1 = `run: ${query.parentExplore.name}->${query.name}`;
-      const arg2 = `${query.parentExplore.name}->${query.name}`;
-      const args = [arg1, arg2];
+      const queryString = `run: ${exploreName}->${accessPath}`;
+      const title = `${exploreName}->${accessPath}`;
+      const args = [queryString, title];
       vscode.postMessage({status, command, args});
     }
   };
