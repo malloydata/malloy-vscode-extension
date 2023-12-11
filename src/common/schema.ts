@@ -49,34 +49,53 @@ export function exploreSubtype(explore: Explore) {
   return subtype;
 }
 
-const hiddenFields = new WeakMap<Explore, RegExp[]>();
+/**
+ * Cache of compiled field hiding patterns so that for a given schema
+ * view render, the pattern only needs to be compiled once. Uses a WeakMap
+ * because the Explore object is typically re-created for each render.
+ */
+const hiddenFields = new WeakMap<
+  Explore,
+  {strings: string[]; pattern?: RegExp}
+>();
 
+/**
+ * Guard created because TypeScript wasn't simply treating
+ * `typeof tag === 'string` as a sufficient guard in filter()
+ *
+ * @param tag string | undefined
+ * @returns true if tag is a string
+ */
 const isStringTag = (tag: string | undefined): tag is string =>
   typeof tag === 'string';
 
-const IS_REGEXP = /^\/(.*)\/$/;
-
+/**
+ * Determine whether to hide a field in the schema viewer based on tags
+ * applied to the source.
+ *
+ * `hidden = ["field1", "field2"]` will hide individual fields
+ * `hidden.pattern = "^_"` will hide fields that match the regular expression
+ * /^_/. They can be combined.
+ *
+ * @param field A Field object
+ * @returns true if field should not be displayed in schema viewer
+ */
 export function isFieldHidden(field: Field): boolean {
-  let hidden = hiddenFields.get(field.parentExplore);
+  const {name, parentExplore} = field;
+  let hidden = hiddenFields.get(parentExplore);
   if (!hidden) {
-    const hiddenTags =
-      field.parentExplore
-        .tagParse()
-        .tag.array('hidden')
+    const {tag} = parentExplore.tagParse();
+    const strings =
+      tag
+        .array('hidden')
         ?.map(tag => tag.text())
         .filter(isStringTag) || [];
 
-    hidden = hiddenTags.map(tag => {
-      const regExpMatch = IS_REGEXP.exec(tag);
-      if (regExpMatch) {
-        return new RegExp(regExpMatch[1]);
-      } else {
-        return new RegExp(
-          `^${tag.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')}$`
-        );
-      }
-    });
+    const patternText = tag.text('hidden', 'pattern');
+    const pattern = patternText ? new RegExp(patternText) : undefined;
+
+    hidden = {strings, pattern};
     hiddenFields.set(field.parentExplore, hidden);
   }
-  return hidden.some(pattern => pattern.test(field.name));
+  return !!(hidden.pattern?.test(name) || hidden.strings.includes(name));
 }
