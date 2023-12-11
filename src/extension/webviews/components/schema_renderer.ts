@@ -179,7 +179,7 @@ function getExploreName(explore: Explore, path: string) {
  */
 function buildTitle(field: Field | Explore, path: string) {
   if (field.isExplore()) {
-    return field.name;
+    return '';
   }
   let typeLabel = fieldType(field);
   if (field.isAtomicField() && field.isUnsupported()) {
@@ -200,6 +200,7 @@ Type: ${typeLabel}`;
  */
 const queryItem = (
   query: NamedQuery | QueryField,
+  path: string,
   onQueryClick?: (query: NamedQuery | QueryField) => void,
   onContextClick?: (event: MouseEvent, context: Record<string, unknown>) => void
 ) => {
@@ -228,13 +229,15 @@ const queryItem = (
     onContextClick?.(e, context);
   };
 
+  const title = `${query.name}\nPath: ${path}${path ? '.' : ''}${query.name}`;
+
   return html`<div
     class=${`field ${clickable}`}
     @click=${onClick}
     @contextmenu=${onContextMenu}
   >
     ${getIconElement('query', false)}
-    <span class="field_name">${query.name}</span>
+    <span title=${title} class="field_name">${query.name}</span>
   </div>`;
 };
 
@@ -297,7 +300,7 @@ export class StructItem extends LitElement {
     return html`<div class="field_list">
       ${fields.map(field =>
         field.isQuery()
-          ? queryItem(field, this.onQueryClick, this.onContextClick)
+          ? queryItem(field, path, this.onQueryClick, this.onContextClick)
           : this.fieldItem(field, path)
       )}
     </div>`;
@@ -391,7 +394,7 @@ export class SchemaRenderer extends LitElement {
         <div class="field_list">
           ${this.queries
             .sort(sortByName)
-            .map(query => queryItem(query, this.onQueryClick))}
+            .map(query => queryItem(query, query.name, this.onQueryClick))}
         </div>
       </li>
       ${this.explores
