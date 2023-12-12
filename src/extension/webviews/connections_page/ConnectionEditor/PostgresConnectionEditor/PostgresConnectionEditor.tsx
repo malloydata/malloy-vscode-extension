@@ -207,6 +207,22 @@ export const PostgresConnectionEditor: React.FC<
             </td>
           </tr>
         )}
+        <tr>
+          <LabelCell>
+            <Label>
+              Connection URL <i>(Advanced)</i>:
+            </Label>
+          </LabelCell>
+          <td>
+            <TextField
+              style={{width: '40em'}}
+              value={config.connectionString || ''}
+              setValue={connectionString => {
+                setConfig({...config, connectionString});
+              }}
+            />
+          </td>
+        </tr>
       </tbody>
     </table>
   );

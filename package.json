@@ -407,6 +407,9 @@
                   },
                   "databaseName": {
                     "type": "string"
+                  },
+                  "connectionString": {
+                    "type": "string"
                   }
                 }
               },

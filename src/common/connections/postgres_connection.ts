@@ -49,6 +49,7 @@ export const createPostgresConnection = async (
       password,
       port: connectionConfig.port,
       databaseName: connectionConfig.databaseName,
+      connectionString: connectionConfig.connectionString,
     };
   };
   const connection = new PostgresConnection(
