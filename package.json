@@ -407,6 +407,9 @@
                   },
                   "databaseName": {
                     "type": "string"
+                  },
+                  "connectionString": {
+                    "type": "string"
                   }
                 }
               },
@@ -556,13 +559,13 @@
   },
   "dependencies": {
     "@lit-labs/react": "^2.1.0",
-    "@malloydata/db-bigquery": "0.0.112",
-    "@malloydata/db-duckdb": "0.0.112",
-    "@malloydata/db-postgres": "0.0.112",
-    "@malloydata/malloy": "0.0.112",
-    "@malloydata/malloy-sql": "0.0.112",
-    "@malloydata/render": "0.0.112",
-    "@malloydata/syntax-highlight": "0.0.112",
+    "@malloydata/db-bigquery": "0.0.114",
+    "@malloydata/db-duckdb": "0.0.114",
+    "@malloydata/db-postgres": "0.0.114",
+    "@malloydata/malloy": "0.0.114",
+    "@malloydata/malloy-sql": "0.0.114",
+    "@malloydata/render": "0.0.114",
+    "@malloydata/syntax-highlight": "0.0.114",
     "@popperjs/core": "^2.11.6",
     "@vscode/codicons": "^0.0.33",
     "@vscode/webview-ui-toolkit": "^1.2.1",

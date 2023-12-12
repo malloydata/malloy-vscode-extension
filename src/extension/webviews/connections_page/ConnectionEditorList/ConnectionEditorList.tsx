@@ -149,18 +149,17 @@ export const ConnectionEditorList: React.FC<ConnectionEditorListProps> = ({
       {connections.length === 0 && (
         <EmptyStateBox>NO CONNECTIONS</EmptyStateBox>
       )}
-      {dirty && (
-        <ButtonGroup style={{margin: '10px'}}>
-          <VSCodeButton
-            onClick={() => {
-              setDirty(false);
-              saveConnections();
-            }}
-          >
-            Save
-          </VSCodeButton>
-        </ButtonGroup>
-      )}
+      <ButtonGroup style={{margin: '10px'}}>
+        <VSCodeButton
+          onClick={() => {
+            setDirty(false);
+            saveConnections();
+          }}
+          disabled={!dirty}
+        >
+          Save
+        </VSCodeButton>
+      </ButtonGroup>
     </div>
   );
 };

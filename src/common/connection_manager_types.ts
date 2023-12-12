@@ -30,7 +30,6 @@ export enum ConnectionBackend {
   BigQuery = 'bigquery',
   Postgres = 'postgres',
   DuckDB = 'duckdb',
-  DuckDBWASM_DEPRECATED = 'duckdb_wasm',
   External = 'external',
 }
 
@@ -38,7 +37,6 @@ export const ConnectionBackendNames: Record<ConnectionBackend, string> = {
   [ConnectionBackend.BigQuery]: 'BigQuery',
   [ConnectionBackend.Postgres]: 'Postgres',
   [ConnectionBackend.DuckDB]: 'DuckDB',
-  [ConnectionBackend.DuckDBWASM_DEPRECATED]: 'duckdDuckDBb_wasm',
   // TODO(figutierrez): Remove beta once ready.
   [ConnectionBackend.External]: 'External (Beta)',
 };
@@ -72,16 +70,11 @@ export interface PostgresConnectionConfig extends BaseConnectionConfig {
   port?: number;
   databaseName?: string;
   useKeychainPassword?: boolean;
+  connectionString?: string;
 }
 
 export interface DuckDBConnectionConfig extends BaseConnectionConfig {
   backend: ConnectionBackend.DuckDB;
-  workingDirectory?: string;
-}
-
-export interface DuckDBWASMConnectionConfigDeprecated
-  extends BaseConnectionConfig {
-  backend: ConnectionBackend.DuckDBWASM_DEPRECATED;
   workingDirectory?: string;
 }
 
@@ -116,7 +109,6 @@ export type ConnectionConfig =
   | BigQueryConnectionConfig
   | PostgresConnectionConfig
   | DuckDBConnectionConfig
-  | DuckDBWASMConnectionConfigDeprecated
   | ExternalConnectionConfig;
 
 export interface ConfigOptions {
