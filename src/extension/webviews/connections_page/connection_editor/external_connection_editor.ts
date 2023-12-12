@@ -174,9 +174,9 @@ export class ExternalConnectionEditor extends LitElement {
         ${this.config.connectionSchema?.map(parameter => {
           // TODO(figutierrez): Move this to its own component.
           return html`
-            <tr key=${parameter.label}>
+            <tr>
               <td class="label-cell">
-                <label>{parameter.label}:</label>
+                <label>${parameter.label}:</label>
               </td>
               <td>
                 <vscode-text-field
