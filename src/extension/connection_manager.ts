@@ -21,17 +21,15 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as vscode from 'vscode';
 import {ConnectionManager} from '../common/connection_manager';
 import {ConnectionConfig} from '../common/connection_manager_types';
 import {ConnectionFactory} from '../common/connections/types';
+import {getMalloyConfig} from './utils';
 
 const DEFAULT_ROW_LIMIT = 50;
 
 const getConnectionsConfig = (): ConnectionConfig[] => {
-  return vscode.workspace
-    .getConfiguration('malloy')
-    .get('connections') as ConnectionConfig[];
+  return getMalloyConfig().get('connections') as ConnectionConfig[];
 };
 
 export class VSCodeConnectionManager extends ConnectionManager {
@@ -48,9 +46,7 @@ export class VSCodeConnectionManager extends ConnectionManager {
     // because the Language Server doesn't actually care about row limits, because it never
     // runs queries, and because it's slightly harder to get settings from within the language
     // server.
-    const rowLimitRaw = vscode.workspace
-      .getConfiguration('malloy')
-      .get('rowLimit');
+    const rowLimitRaw = getMalloyConfig().get('rowLimit');
     if (rowLimitRaw === undefined) {
       return DEFAULT_ROW_LIMIT;
     }
