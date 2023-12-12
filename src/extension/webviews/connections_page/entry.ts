@@ -21,21 +21,12 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import ReactDOM from 'react-dom';
-import React from 'react';
-import {App} from './App';
-import {
-  getVSCodeAPI,
-  ConnectionsVSCodeContext,
-} from './connections_vscode_context';
-import {ConnectionPanelMessage} from '../../../common/message_types';
+import {html, render} from 'lit';
+import './connections_app';
 
-(() => {
-  const vscode = getVSCodeAPI<void, ConnectionPanelMessage>();
-  const el = React.createElement(
-    ConnectionsVSCodeContext.Provider,
-    {value: vscode},
-    [React.createElement(App, {key: 'app'}, null)]
-  );
-  ReactDOM.render(el, document.getElementById('app'));
-})();
+const root = document.getElementById('app');
+
+if (root) {
+  root.innerHTML = '';
+  render(html`<connections-app />`, root);
+}
