@@ -38,6 +38,7 @@ import {Disposable} from 'vscode-jsonrpc';
 import {WorkerConnection} from '../worker_connection';
 import {errorMessage} from '../../common/errors';
 import {noAwait} from '../../util/no_await';
+import {getMalloyConfig} from '../utils';
 
 /**
  * VSCode doesn't support streaming writes, so fake it.
@@ -89,9 +90,7 @@ export async function queryDownload(
   panelId: string,
   name: string
 ): Promise<void> {
-  const configDownloadPath = vscode.workspace
-    .getConfiguration('malloy')
-    .get('downloadsPath');
+  const configDownloadPath = getMalloyConfig().get('downloadsPath');
   let downloadPath =
     configDownloadPath && typeof configDownloadPath === 'string'
       ? configDownloadPath

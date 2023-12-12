@@ -34,7 +34,7 @@ import {editConnectionsCommand} from './commands/edit_connections';
 import {ConnectionsProvider} from '../tree_views/connections_view';
 import {connectionManager} from './connection_manager';
 import {setupFileMessaging, setupSubscriptions} from '../subscriptions';
-import {fileHandler} from '../utils';
+import {fileHandler, getMalloyConfig} from '../utils';
 import {MALLOY_EXTENSION_STATE} from '../state';
 import {WorkerConnectionNode} from './worker_connection_node';
 import {MalloyConfig} from '../../common/types';
@@ -146,9 +146,7 @@ async function setupLanguageServer(
 
 function sendWorkerConfig(worker: WorkerConnectionNode) {
   worker.sendRequest('malloy/config', {
-    malloy: vscode.workspace.getConfiguration(
-      'malloy'
-    ) as unknown as MalloyConfig,
+    malloy: getMalloyConfig() as unknown as MalloyConfig,
     cloudcode: vscode.workspace.getConfiguration(
       'cloudcode'
     ) as unknown as CloudCodeConfig,

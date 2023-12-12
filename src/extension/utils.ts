@@ -50,6 +50,16 @@ const fixNotebookUri = (uri: vscode.Uri) => {
 };
 
 /**
+ * Centralized place to pull configuration for Malloy extension
+ *
+ * @returns Uri with an appropriate protocol
+ */
+export const getMalloyConfig = (): vscode.WorkspaceConfiguration => {
+  const malloyConfig = vscode.workspace.getConfiguration('malloy');
+  return malloyConfig;
+};
+
+/**
  * Fetches the text contents of a Uri for the Malloy compiler. For most Uri
  * types this means either from the open file cache, or from VS Code's
  * file system.

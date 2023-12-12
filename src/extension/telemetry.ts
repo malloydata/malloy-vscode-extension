@@ -24,13 +24,13 @@
 import * as vscode from 'vscode';
 import {MALLOY_EXTENSION_STATE} from './state';
 import fetch from 'node-fetch';
+import {getMalloyConfig} from './utils';
 
 const telemetryLog = vscode.window.createOutputChannel('Malloy Telemetry');
 
 function isTelemetryEnabled() {
   const vsCodeValue = vscode.env.isTelemetryEnabled;
-  const configValue =
-    vscode.workspace.getConfiguration('malloy').get('telemetry') ?? false;
+  const configValue = getMalloyConfig().get('telemetry') ?? false;
   return vsCodeValue && configValue;
 }
 

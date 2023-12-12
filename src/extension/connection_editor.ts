@@ -36,6 +36,7 @@ import {ConnectionConfig} from '../common/connection_manager_types';
 import {MALLOY_EXTENSION_STATE} from './state';
 import {errorMessage} from '../common/errors';
 import {ConnectionManager} from '../common/connection_manager';
+import {getMalloyConfig} from './utils';
 
 export class EditConnectionPanel {
   panel: vscode.WebviewPanel;
@@ -79,7 +80,7 @@ export class EditConnectionPanel {
           const connections = await handleConnectionsPreSave(
             message.connections
           );
-          const malloyConfig = vscode.workspace.getConfiguration('malloy');
+          const malloyConfig = getMalloyConfig();
           const hasWorkspaceConfig =
             malloyConfig.inspect('connections')?.workspaceValue !== undefined;
           malloyConfig.update(
