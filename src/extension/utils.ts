@@ -52,7 +52,7 @@ const fixNotebookUri = (uri: vscode.Uri) => {
 /**
  * Centralized place to pull configuration for Malloy extension
  *
- * @returns Uri with an appropriate protocol
+ * @returns Malloy config (vscode.WorkspaceConfiguration)
  */
 export const getMalloyConfig = (): vscode.WorkspaceConfiguration => {
   const malloyConfig = vscode.workspace.getConfiguration('malloy');
