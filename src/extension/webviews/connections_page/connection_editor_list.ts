@@ -39,6 +39,7 @@ import {
   ConnectionMessageTest,
 } from '../../../common/message_types';
 import './connection_editor/connection_editor';
+import {styles as editorStyles} from './connection_editor/connection_editor.css';
 
 provideVSCodeDesignSystem().register(vsCodeButton());
 
@@ -62,25 +63,11 @@ const styles = css`
     justify-content: center;
     height: 100px;
   }
-
-  .connection-title {
-    color: var(--foreground);
-    font-family: var(--font-family);
-    display: flex;
-    align-items: center;
-  }
-
-  .connection-editor-box {
-    margin: 10px;
-    background-color: var(--vscode-list-hoverBackground);
-    padding: 10px;
-    border: 1px solid var(--vscode-contrastBorder);
-  }
 `;
 
 @customElement('connection-editor-list')
 export class ConnectionEditorList extends LitElement {
-  static override styles = [styles];
+  static override styles = [styles, editorStyles];
 
   @property({type: Array})
   connections!: ConnectionConfig[];
@@ -180,7 +167,10 @@ export class ConnectionEditorList extends LitElement {
               ></connection-editor>
             `
           : html`<div class="connection-editor-box">
-              <b @click=${() => (this.selectedId = config.id)}>
+              <b
+                class="connection-title"
+                @click=${() => (this.selectedId = config.id)}
+              >
                 <i className="codicon codicon-chevron-right"></i>
                 CONNECTION: ${config.name || 'Untitled'}
               </b>
