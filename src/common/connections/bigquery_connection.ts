@@ -36,7 +36,7 @@ export const createBigQueryConnection = async (
     connectionConfig.name,
     () => ({rowLimit}),
     {
-      projectId: connectionConfig.projectName,
+      projectId: connectionConfig.projectId,
       serviceAccountKeyPath: connectionConfig.serviceAccountKeyPath,
       location: connectionConfig.location,
       maximumBytesBilled: convertToBytes(

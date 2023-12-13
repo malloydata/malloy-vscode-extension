@@ -54,13 +54,13 @@ export const BigQueryConnectionEditor: React.FC<
         </tr>
         <tr>
           <LabelCell>
-            <Label>Project ID:</Label>
+            <Label>Default Project ID:</Label>
           </LabelCell>
           <td>
             <TextField
-              value={config.projectName || ''}
-              setValue={projectName => {
-                setConfig({...config, projectName});
+              value={config.projectId || ''}
+              setValue={projectId => {
+                setConfig({...config, projectId});
               }}
               placeholder="Optional"
             />
