@@ -148,20 +148,27 @@
         "title": "Run",
         "category": "Malloy",
         "icon": "$(play)",
-        "enablement": "(view == malloySchema && viewItem == query) || (webviewId == malloyQuery && webviewSection == schemaQuery)"
+        "enablement": "(view == malloySchema && viewItem == query) || webviewSection == malloySchemaQuery"
+      },
+      {
+        "command": "malloy.runNamedQueryFromSchema",
+        "title": "Run",
+        "category": "Malloy",
+        "icon": "$(play)",
+        "enablement": "webviewSection == malloySchemaNamedQuery"
       },
       {
         "command": "malloy.copyFieldPath",
         "title": "Copy Path",
         "category": "Malloy",
         "icon": "$(copy)",
-        "enablement": "view == malloySchema || webviewId == malloyQuery"
+        "enablement": "view == malloySchema || webviewSection == malloySchemaQuery || webviewSection == malloySchemaField"
       },
       {
         "command": "malloy.goToDefinitionFromSchema",
         "title": "Go to Definition",
         "category": "Malloy",
-        "enablement": "view == malloySchema || webviewId == malloyQuery"
+        "enablement": "view == malloySchema || webviewSection == malloySchemaQuery || webviewSection == malloySchemaNamedQuery || webviewSection == malloySchemaField"
       },
       {
         "command": "malloy.previewFromSchema",
@@ -243,15 +250,19 @@
       "webview/context": [
         {
           "command": "malloy.goToDefinitionFromSchema",
-          "when": "webviewId == malloyQuery && (webviewSection == schemaField || webviewSection == schemaQuery)"
+          "when": " webviewSection == malloySchemaField || webviewSection == malloySchemaNamedQuery || webviewSection == malloySchemaQuery"
         },
         {
           "command": "malloy.runTurtleFromSchema",
-          "when": "webviewId == malloyQuery && webviewSection == schemaQuery"
+          "when": "webviewSection == malloySchemaQuery"
+        },
+        {
+          "command": "malloy.runNamedQueryFromSchema",
+          "when": "webviewSection == malloySchemaNamedQuery"
         },
         {
           "command": "malloy.copyFieldPath",
-          "when": "webviewId == malloyQuery && (webviewSection == schemaField || webviewSection == schemaQuery)"
+          "when": "webviewSection == malloySchemaField || webviewSection == malloySchemaQuery"
         }
       ]
     },
