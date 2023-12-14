@@ -250,19 +250,23 @@
       "webview/context": [
         {
           "command": "malloy.goToDefinitionFromSchema",
-          "when": " webviewSection == malloySchemaField || webviewSection == malloySchemaNamedQuery || webviewSection == malloySchemaQuery"
+          "when": "webviewSection == malloySchemaField || webviewSection == malloySchemaNamedQuery || webviewSection == malloySchemaQuery",
+          "group": "schema@2"
         },
         {
           "command": "malloy.runTurtleFromSchema",
-          "when": "webviewSection == malloySchemaQuery"
+          "when": "webviewSection == malloySchemaQuery",
+          "group": "schema@1"
         },
         {
           "command": "malloy.runNamedQueryFromSchema",
-          "when": "webviewSection == malloySchemaNamedQuery"
+          "when": "webviewSection == malloySchemaNamedQuery",
+          "group": "schema@1"
         },
         {
           "command": "malloy.copyFieldPath",
-          "when": "webviewSection == malloySchemaField || webviewSection == malloySchemaQuery"
+          "when": "webviewSection == malloySchemaField || webviewSection == malloySchemaQuery",
+          "group": "schema@3"
         }
       ]
     },
