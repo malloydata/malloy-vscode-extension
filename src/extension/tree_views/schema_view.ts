@@ -295,6 +295,10 @@ function getIconPath(
   return Utils.joinPath(uri, 'dist', imageFileName);
 }
 
+export function runNamedQueryFromSchemaCommand(item: {name: string}): void {
+  vscode.commands.executeCommand('malloy.runNamedQuery', item.name);
+}
+
 export function runTurtleFromSchemaCommand(item: {
   topLevelExplore: string;
   accessPath: string[];
