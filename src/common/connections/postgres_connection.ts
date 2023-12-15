@@ -32,6 +32,15 @@ export const createPostgresConnection = async (
   connectionConfig: PostgresConnectionConfig,
   {rowLimit}: ConfigOptions
 ): Promise<PostgresConnection> => {
+  const {username, host, port, databaseName, connectionString} =
+    connectionConfig;
+  const options = {
+    username,
+    host,
+    port,
+    databaseName,
+    connectionString,
+  };
   const configReader = async () => {
     let password: string | undefined;
     if (connectionConfig.password !== undefined) {
@@ -44,14 +53,11 @@ export const createPostgresConnection = async (
         )) || undefined;
     }
     return {
-      username: connectionConfig.username,
-      host: connectionConfig.host,
+      ...options,
       password,
-      port: connectionConfig.port,
-      databaseName: connectionConfig.databaseName,
-      connectionString: connectionConfig.connectionString,
     };
   };
+  console.info('Creating postgres connection with', JSON.stringify(options));
   const connection = new PostgresConnection(
     connectionConfig.name,
     () => ({rowLimit}),
