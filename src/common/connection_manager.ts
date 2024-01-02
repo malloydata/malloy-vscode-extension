@@ -79,6 +79,7 @@ export class ConnectionManager {
 
   public setConnectionsConfig(connectionsConfig: ConnectionConfig[]): void {
     // Force existing connections to be regenerated
+    console.info('Using connection config', connectionsConfig);
     this.configList = connectionsConfig;
     this.buildConfigMap();
     this.connectionFactory.reset();
