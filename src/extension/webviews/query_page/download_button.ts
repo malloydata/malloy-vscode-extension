@@ -28,17 +28,18 @@ import '../components/popup_dialog';
 import './download_form';
 
 const styles = css`
-  icon {
+  .icon {
     padding-top: 3px;
-    svg {
-      width: 16px;
-      height: 16px;
-      cursor: pointer;
-      padding: 3px;
-      border-radius: 5px;
-      &:hover {
-        background: var(--vscode-toolbar-hoverBackground);
-      }
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    padding: 3px;
+    border-radius: 5px;
+    &:hover {
+      background: var(--vscode-toolbar-hoverBackground);
     }
   }
 `;
