@@ -22,7 +22,3 @@
  */
 
 export {Spinner} from './Spinner';
-export {VSCodeButton} from '@vscode/webview-ui-toolkit/react';
-export {TextField} from './TextField';
-export {Dropdown} from './Dropdown';
-export {VSCodeProgressRing} from '@vscode/webview-ui-toolkit/react';
