@@ -106,51 +106,55 @@ export class ConnectionsApp extends LitElement {
     });
   };
 
-  constructor() {
-    super();
+  onMessage = (event: MessageEvent<ConnectionPanelMessage>) => {
+    const message = event.data;
 
-    const listener = (event: MessageEvent<ConnectionPanelMessage>) => {
-      const message = event.data;
-
-      switch (message.type) {
-        case ConnectionMessageType.EditConnection:
-          this.selectedId = message.id;
-          break;
-        case ConnectionMessageType.SetConnections:
-          this.connections = message.connections;
-          this.availableBackends = message.availableBackends;
-          break;
-        case ConnectionMessageType.TestConnection:
-          this.testStatuses = [...this.testStatuses, message];
-          break;
-        case ConnectionMessageType.InstallExternalConnection:
-          this.installExternalConnectionStatuses = [
-            ...this.installExternalConnectionStatuses,
-            message,
-          ];
-          break;
-        case ConnectionMessageType.RequestBigQueryServiceAccountKeyFile: {
-          if (
-            message.status === ConnectionServiceAccountKeyRequestStatus.Success
-          ) {
-            this.connections = (this.connections || []).map(connection => {
-              if (connection.id === message.connectionId) {
-                return {
-                  ...connection,
-                  serviceAccountKeyPath: message.serviceAccountKeyPath,
-                };
-              } else {
-                return connection;
-              }
-            });
-          }
-          break;
+    switch (message.type) {
+      case ConnectionMessageType.EditConnection:
+        this.selectedId = message.id;
+        break;
+      case ConnectionMessageType.SetConnections:
+        this.connections = message.connections;
+        this.availableBackends = message.availableBackends;
+        break;
+      case ConnectionMessageType.TestConnection:
+        this.testStatuses = [...this.testStatuses, message];
+        break;
+      case ConnectionMessageType.InstallExternalConnection:
+        this.installExternalConnectionStatuses = [
+          ...this.installExternalConnectionStatuses,
+          message,
+        ];
+        break;
+      case ConnectionMessageType.RequestBigQueryServiceAccountKeyFile: {
+        if (
+          message.status === ConnectionServiceAccountKeyRequestStatus.Success
+        ) {
+          this.connections = (this.connections || []).map(connection => {
+            if (connection.id === message.connectionId) {
+              return {
+                ...connection,
+                serviceAccountKeyPath: message.serviceAccountKeyPath,
+              };
+            } else {
+              return connection;
+            }
+          });
         }
+        break;
       }
-    };
+    }
+  };
 
-    window.addEventListener('message', listener);
+  override connectedCallback() {
+    super.connectedCallback();
+    window.addEventListener('message', this.onMessage);
     this.vscode.postMessage({type: ConnectionMessageType.AppReady});
+  }
+
+  override disconnectedCallback() {
+    super.disconnectedCallback();
+    window.removeEventListener('message', this.onMessage);
   }
 
   override render() {
