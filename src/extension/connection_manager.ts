@@ -29,7 +29,10 @@ import {getMalloyConfig} from './utils';
 const DEFAULT_ROW_LIMIT = 50;
 
 const getConnectionsConfig = (): ConnectionConfig[] => {
-  return getMalloyConfig().get('connections') as ConnectionConfig[];
+  const malloyConfig = getMalloyConfig();
+  const connectionConfig = malloyConfig.get<ConnectionConfig[]>('connections');
+  console.info('Using connection config', connectionConfig);
+  return connectionConfig || [];
 };
 
 export class VSCodeConnectionManager extends ConnectionManager {

@@ -452,6 +452,12 @@
                   },
                   "serviceAccountKeyPath": {
                     "type": "string"
+                  },
+                  "maximumBytesBilled": {
+                    "type": "string"
+                  },
+                  "timeoutMs": {
+                    "type": "string"
                   }
                 }
               },
@@ -461,27 +467,6 @@
                   "backend": {
                     "type": "string",
                     "const": "duckdb"
-                  },
-                  "name": {
-                    "type": "string"
-                  },
-                  "id": {
-                    "type": "string"
-                  },
-                  "isDefault": {
-                    "type": "boolean"
-                  },
-                  "workingDirectory": {
-                    "type": "string"
-                  }
-                }
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "backend": {
-                    "type": "string",
-                    "const": "duckdb_wasm"
                   },
                   "name": {
                     "type": "string"
