@@ -24,6 +24,7 @@
 import * as vscode from 'vscode';
 import {CellData, FileHandler} from '../common/types';
 import {
+  BigQueryConnectionConfig,
   ConnectionBackend,
   ConnectionConfig,
 } from '../common/connection_manager_types';
@@ -70,11 +71,15 @@ export const getMalloyConfig = (): vscode.WorkspaceConfiguration => {
   // move over to "projectId", delete the "projectName" key, and save
   connectionConfigs.forEach(connectionConfig => {
     if (connectionConfig.backend === ConnectionBackend.BigQuery) {
-      const oldProjectNameValue = (connectionConfig as any)['projectName'];
+      const oldProjectNameValue = (
+        connectionConfig as BigQueryConnectionConfig & {projectName?: string}
+      ).projectName;
 
       if (oldProjectNameValue) {
         connectionConfig.projectId = oldProjectNameValue;
-        delete (connectionConfig as any)['projectName'];
+        delete (
+          connectionConfig as BigQueryConnectionConfig & {projectName?: string}
+        ).projectName;
 
         const hasWorkspaceConfig =
           malloyConfig.inspect('connections')?.workspaceValue !== undefined;
