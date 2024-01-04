@@ -33,7 +33,7 @@ export const createBigQueryConnection = async (
   {rowLimit}: ConfigOptions
 ): Promise<BigQueryConnection> => {
   const options = {
-    projectId: connectionConfig.projectName,
+    projectId: connectionConfig.projectId,
     serviceAccountKeyPath: connectionConfig.serviceAccountKeyPath,
     location: connectionConfig.location,
     maximumBytesBilled: convertToBytes(

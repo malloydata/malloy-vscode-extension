@@ -23,6 +23,11 @@
 
 import * as vscode from 'vscode';
 import {CellData, FileHandler} from '../common/types';
+import {
+  BigQueryConnectionConfig,
+  ConnectionBackend,
+  ConnectionConfig,
+} from '../common/connection_manager_types';
 
 /**
  * Transforms vscode-notebook-cell: Uris to file: or vscode-vfs: URLS
@@ -56,6 +61,45 @@ const fixNotebookUri = (uri: vscode.Uri) => {
  */
 export const getMalloyConfig = (): vscode.WorkspaceConfiguration => {
   const malloyConfig = vscode.workspace.getConfiguration('malloy');
+
+  // possibly update bigquery config parameters
+  const connectionConfigs = malloyConfig.get(
+    'connections'
+  ) as ConnectionConfig[];
+
+  // if bigquery connection config still uses old "projectName" key,
+  // move over to "projectId", delete the "projectName" key, and save
+  connectionConfigs.forEach(connectionConfig => {
+    if (connectionConfig.backend === ConnectionBackend.BigQuery) {
+      const oldProjectNameValue = (
+        connectionConfig as BigQueryConnectionConfig & {projectName?: string}
+      ).projectName;
+
+      if (oldProjectNameValue) {
+        connectionConfig.projectId = oldProjectNameValue;
+        delete (
+          connectionConfig as BigQueryConnectionConfig & {projectName?: string}
+        ).projectName;
+
+        const hasWorkspaceConfig =
+          malloyConfig.inspect('connections')?.workspaceValue !== undefined;
+
+        malloyConfig.update(
+          'connections',
+          connectionConfigs,
+          vscode.ConfigurationTarget.Global
+        );
+        if (hasWorkspaceConfig) {
+          malloyConfig.update(
+            'connections',
+            connectionConfigs,
+            vscode.ConfigurationTarget.Workspace
+          );
+        }
+      }
+    }
+  });
+
   return malloyConfig;
 };
 

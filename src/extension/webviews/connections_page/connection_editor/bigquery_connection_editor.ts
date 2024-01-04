@@ -71,13 +71,13 @@ export class BigQueryConnectionEditor extends LitElement {
         </tr>
         <tr>
           <td class="label-cell">
-            <label>Project ID:</label>
+            <label>Default Project ID:</label>
           </td>
           <td>
             <vscode-text-field
-              value=${this.config.projectName || ''}
+              value=${this.config.projectId || ''}
               @change=${({target: {value}}: {target: HTMLInputElement}) => {
-                this.setConfig({...this.config, projectName: value});
+                this.setConfig({...this.config, projectId: value});
               }}
               placeholder="Optional"
             ></vscode-text-field>

@@ -444,7 +444,7 @@
                   "isDefault": {
                     "type": "boolean"
                   },
-                  "projectName": {
+                  "projectId": {
                     "type": "string"
                   },
                   "location": {

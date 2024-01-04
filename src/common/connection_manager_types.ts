@@ -56,7 +56,8 @@ export interface BaseConnectionConfig {
 export interface BigQueryConnectionConfig extends BaseConnectionConfig {
   backend: ConnectionBackend.BigQuery;
   serviceAccountKeyPath?: string;
-  projectName?: string;
+  projectId?: string;
+  billingProjectId?: string;
   location?: string;
   maximumBytesBilled?: string;
   timeoutMs?: string;
