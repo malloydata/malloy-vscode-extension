@@ -1,7 +1,6 @@
 out
 dist
 node_modules
-.node-version
 .vscode-test/
 .vscode-test-web/
 .vscode/settings.json
