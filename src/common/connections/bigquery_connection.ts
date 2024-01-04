@@ -34,6 +34,7 @@ export const createBigQueryConnection = async (
 ): Promise<BigQueryConnection> => {
   const options = {
     projectId: connectionConfig.projectId,
+    billingProjectId: connectionConfig.billingProjectId,
     serviceAccountKeyPath: connectionConfig.serviceAccountKeyPath,
     location: connectionConfig.location,
     maximumBytesBilled: convertToBytes(
