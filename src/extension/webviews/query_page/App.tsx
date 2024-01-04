@@ -50,7 +50,6 @@ import {
   resultKindFromString,
 } from './ResultKindToggle';
 import Prism from 'prismjs';
-import {usePopperTooltip} from 'react-popper-tooltip';
 import {useQueryVSCodeContext} from './query_vscode_context';
 import {DownloadButton} from './DownloadButton';
 import {CopyButton} from './CopyButton';
@@ -97,12 +96,6 @@ export const App: React.FC = () => {
   const [canDownload, setCanDownload] = useState(false);
   const [canDownloadStream, setCanDownloadStream] = useState(false);
 
-  const [tooltipVisible, setTooltipVisible] = useState(false);
-  const tooltipId = useRef(0);
-  const {setTooltipRef, setTriggerRef, getTooltipProps} = usePopperTooltip({
-    visible: tooltipVisible,
-    placement: 'top',
-  });
   const ref = useRef<HTMLDivElement>(null);
 
   const vscode = useQueryVSCodeContext();
@@ -242,40 +235,36 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('message', listener);
   });
 
-  const copyToClipboard = useCallback(
-    ({target}: MouseEvent) => {
-      if (!results) {
-        return;
-      }
-      const {html, json, sql} = results;
-      switch (resultKind) {
-        case ResultKind.HTML:
-          if (html) {
-            navigator.clipboard.writeText(getStyledHTML(html));
-          }
-          break;
-        case ResultKind.JSON:
-          if (json) {
-            navigator.clipboard.writeText(json);
-          }
-          break;
-        case ResultKind.SQL:
-          if (sql) {
-            navigator.clipboard.writeText(sql);
-          }
-          break;
-      }
-      setTriggerRef(target as HTMLElement);
-      setTooltipVisible(true);
-      const currentTooltipId = ++tooltipId.current;
-      setTimeout(() => {
-        if (currentTooltipId === tooltipId.current) {
-          setTooltipVisible(false);
+  const copyToClipboard = useCallback(() => {
+    if (!results) {
+      return;
+    }
+    const {html, json, sql} = results;
+    let clipboardData: string | undefined;
+    switch (resultKind) {
+      case ResultKind.HTML:
+        if (html) {
+          clipboardData = getStyledHTML(html);
         }
-      }, 1000);
-    },
-    [resultKind, results]
-  );
+        break;
+      case ResultKind.JSON:
+        if (json) {
+          clipboardData = json;
+        }
+        break;
+      case ResultKind.SQL:
+        if (sql) {
+          clipboardData = sql;
+        }
+        break;
+    }
+    if (clipboardData) {
+      const status = QueryRunStatus.RunCommand;
+      const command = 'malloy.copyToClipboard';
+      const args = [clipboardData, 'Results'];
+      vscode.postMessage({status, command, args});
+    }
+  }, [resultKind, results]);
 
   const onFieldClick = (field: Field) => {
     const type = fieldType(field);
@@ -442,11 +431,6 @@ export const App: React.FC = () => {
       )}
       {status.warning && <Warning>{status.warning}</Warning>}
       {results.stats && <StatsBar>{results.stats}</StatsBar>}
-      {tooltipVisible && (
-        <Tooltip ref={setTooltipRef} {...getTooltipProps()}>
-          Copied!
-        </Tooltip>
-      )}
     </div>
   );
 };
@@ -530,14 +514,6 @@ const DOMElement: React.FC<{element: HTMLElement}> = ({element}) => {
 
   return <div style={{fontSize: 11, height: '100%'}} ref={ref}></div>;
 };
-
-const Tooltip = styled.div`
-  background-color: #505050;
-  color: white;
-  border-radius: 5px;
-  box-shadow: rgb(144 144 144) 0px 1px 5px 0px;
-  padding: 5px;
-`;
 
 const Warning = styled.div`
   color: var(--vscode-statusBarItem-warningForeground);

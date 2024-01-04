@@ -52,13 +52,14 @@ const sortByName = (a: {name: string}, b: {name: string}) =>
   a.name.localeCompare(b.name);
 
 const fieldContext = (field: Field) => {
-  const {fieldPath: accessPath, location} = field;
+  const {fieldPath: accessPath, location, name} = field;
   const topLevelExplore = accessPath.shift();
 
   return {
-    location,
-    topLevelExplore,
     accessPath,
+    location,
+    name,
+    topLevelExplore,
   };
 };
 /**
@@ -209,18 +210,17 @@ const queryItem = (
   };
 
   const clickable = onQueryClick ? 'clickable' : '';
-  let context: Record<string, unknown> = {
-    webviewSection: 'schemaQuery',
-  };
+  let context: Record<string, unknown> = {};
 
   if ('parentExplore' in query) {
     context = {
-      ...context,
+      webviewSection: 'malloySchemaQuery',
       ...fieldContext(query),
     };
   } else {
     context = {
-      ...context,
+      webviewSection: 'malloySchemaNamedQuery',
+      name: query.name,
       location: query.location,
     };
   }
@@ -271,7 +271,7 @@ export class StructItem extends LitElement {
 
   fieldItem(field: Field, path: string) {
     const context = {
-      webviewSection: 'schemaField',
+      webviewSection: 'malloySchemaField',
       ...fieldContext(field),
     };
 
@@ -394,7 +394,14 @@ export class SchemaRenderer extends LitElement {
         <div class="field_list">
           ${this.queries
             .sort(sortByName)
-            .map(query => queryItem(query, query.name, this.onQueryClick))}
+            .map(query =>
+              queryItem(
+                query,
+                query.name,
+                this.onQueryClick,
+                this.onContextClick
+              )
+            )}
         </div>
       </li>
       ${this.explores

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Google LLC
+ * Copyright 2024 Google LLC
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files
@@ -21,70 +21,12 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import React, {useState} from 'react';
-import styled from 'styled-components';
-import {QueryDownloadOptions} from '../../../common/message_types';
-import {Popover} from '../components/Popover';
-import {DownloadForm} from './DownloadForm';
-import DownloadIcon from '../assets/download_hover.svg';
+import * as React from 'react';
+import {createComponent} from '@lit-labs/react';
+import {DownloadButton as LitDownloadButton} from './download_button';
 
-interface DownloadButtonProps {
-  onDownload: (options: QueryDownloadOptions) => Promise<void>;
-  canStream: boolean;
-}
-
-export const DownloadButton: React.FC<DownloadButtonProps> = ({
-  onDownload,
-  canStream,
-}) => {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <>
-      <StyledDownloadIcon
-        onClick={() => setOpen(true)}
-        width={22}
-        height={22}
-      />
-      <Popover
-        open={open}
-        setOpen={setOpen}
-        width={200}
-        offsetSkidding={10}
-        offsetDistance={0}
-      >
-        <PopoverContent>
-          <DownloadForm
-            canStream={canStream}
-            onDownload={async options => {
-              onDownload(options);
-              setOpen(false);
-            }}
-          />
-        </PopoverContent>
-      </Popover>
-    </>
-  );
-};
-
-const PopoverContent = styled.div`
-  padding: 15px;
-`;
-
-const StyledDownloadIcon = styled(DownloadIcon)`
-  cursor: pointer;
-  .hoverfill {
-    fill: transparent;
-  }
-  .primaryfill {
-    fill: #d4d6d8;
-  }
-  &:hover {
-    .hoverfill {
-      fill: rgb(240, 246, 255);
-    }
-    .primaryfill {
-      fill: #4285f4;
-    }
-  }
-`;
+export const DownloadButton = createComponent({
+  tagName: 'download-button',
+  elementClass: LitDownloadButton,
+  react: React,
+});

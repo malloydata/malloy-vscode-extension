@@ -148,20 +148,27 @@
         "title": "Run",
         "category": "Malloy",
         "icon": "$(play)",
-        "enablement": "(view == malloySchema && viewItem == query) || (webviewId == malloyQuery && webviewSection == schemaQuery)"
+        "enablement": "(view == malloySchema && viewItem == query) || webviewSection == malloySchemaQuery"
+      },
+      {
+        "command": "malloy.runNamedQueryFromSchema",
+        "title": "Run",
+        "category": "Malloy",
+        "icon": "$(play)",
+        "enablement": "webviewSection == malloySchemaNamedQuery"
       },
       {
         "command": "malloy.copyFieldPath",
         "title": "Copy Path",
         "category": "Malloy",
         "icon": "$(copy)",
-        "enablement": "view == malloySchema || webviewId == malloyQuery"
+        "enablement": "view == malloySchema || webviewSection == malloySchemaQuery || webviewSection == malloySchemaField"
       },
       {
         "command": "malloy.goToDefinitionFromSchema",
         "title": "Go to Definition",
         "category": "Malloy",
-        "enablement": "view == malloySchema || webviewId == malloyQuery"
+        "enablement": "view == malloySchema || webviewSection == malloySchemaQuery || webviewSection == malloySchemaNamedQuery || webviewSection == malloySchemaField"
       },
       {
         "command": "malloy.previewFromSchema",
@@ -243,15 +250,23 @@
       "webview/context": [
         {
           "command": "malloy.goToDefinitionFromSchema",
-          "when": "webviewId == malloyQuery && (webviewSection == schemaField || webviewSection == schemaQuery)"
+          "when": "webviewSection == malloySchemaField || webviewSection == malloySchemaNamedQuery || webviewSection == malloySchemaQuery",
+          "group": "schema@2"
         },
         {
           "command": "malloy.runTurtleFromSchema",
-          "when": "webviewId == malloyQuery && webviewSection == schemaQuery"
+          "when": "webviewSection == malloySchemaQuery",
+          "group": "schema@1"
+        },
+        {
+          "command": "malloy.runNamedQueryFromSchema",
+          "when": "webviewSection == malloySchemaNamedQuery",
+          "group": "schema@1"
         },
         {
           "command": "malloy.copyFieldPath",
-          "when": "webviewId == malloyQuery && (webviewSection == schemaField || webviewSection == schemaQuery)"
+          "when": "webviewSection == malloySchemaField || webviewSection == malloySchemaQuery",
+          "group": "schema@3"
         }
       ]
     },
@@ -407,6 +422,9 @@
                   },
                   "databaseName": {
                     "type": "string"
+                  },
+                  "connectionString": {
+                    "type": "string"
                   }
                 }
               },
@@ -434,6 +452,12 @@
                   },
                   "serviceAccountKeyPath": {
                     "type": "string"
+                  },
+                  "maximumBytesBilled": {
+                    "type": "string"
+                  },
+                  "timeoutMs": {
+                    "type": "string"
                   }
                 }
               },
@@ -443,27 +467,6 @@
                   "backend": {
                     "type": "string",
                     "const": "duckdb"
-                  },
-                  "name": {
-                    "type": "string"
-                  },
-                  "id": {
-                    "type": "string"
-                  },
-                  "isDefault": {
-                    "type": "boolean"
-                  },
-                  "workingDirectory": {
-                    "type": "string"
-                  }
-                }
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "backend": {
-                    "type": "string",
-                    "const": "duckdb_wasm"
                   },
                   "name": {
                     "type": "string"
@@ -556,27 +559,24 @@
   },
   "dependencies": {
     "@lit-labs/react": "^2.1.0",
-    "@malloydata/db-bigquery": "0.0.112",
-    "@malloydata/db-duckdb": "0.0.112",
-    "@malloydata/db-postgres": "0.0.112",
-    "@malloydata/malloy": "0.0.112",
-    "@malloydata/malloy-sql": "0.0.112",
-    "@malloydata/render": "0.0.112",
-    "@malloydata/syntax-highlight": "0.0.112",
-    "@popperjs/core": "^2.11.6",
+    "@malloydata/db-bigquery": "0.0.114",
+    "@malloydata/db-duckdb": "0.0.114",
+    "@malloydata/db-postgres": "0.0.114",
+    "@malloydata/malloy": "0.0.114",
+    "@malloydata/malloy-sql": "0.0.114",
+    "@malloydata/render": "0.0.114",
+    "@malloydata/syntax-highlight": "0.0.114",
     "@vscode/codicons": "^0.0.33",
     "@vscode/webview-ui-toolkit": "^1.2.1",
     "duckdb": "0.8.1",
     "keytar": "7.7.0",
-    "lit": "^2.8.0",
+    "lit": "^3.0.2",
     "live-plugin-manager": "^0.18.1",
     "lodash": "^4.17.21",
     "node-fetch": "^2.6.6",
     "prismjs": "^1.28.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
-    "react-popper": "^2.3.0",
-    "react-popper-tooltip": "^4.3.1",
     "shiki": "^0.10.0",
     "styled-components": "^5.3.3",
     "uuid": "^8.3.2",
@@ -608,7 +608,7 @@
     "@typescript-eslint/eslint-plugin": "^5.48.2",
     "@typescript-eslint/parser": "^5.48.2",
     "@vscode/test-electron": "^2.2.3",
-    "@vscode/test-web": "^0.0.34",
+    "@vscode/test-web": "^0.0.50",
     "@vscode/vsce": "^2.19.0",
     "axios": "^1.6.0",
     "csv-stringify": "^5.6.5",
@@ -631,7 +631,7 @@
     "tar-stream": "^3.0.0",
     "ts-jest": "^29.1.1",
     "ts-node": "^10.9.1",
-    "typescript": "5.1.6",
+    "typescript": "5.3.3",
     "yargs": "^17.6.2"
   }
 }

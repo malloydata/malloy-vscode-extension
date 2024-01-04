@@ -122,6 +122,24 @@ export class SchemaRendererWrapper extends LitElement {
     this.postMessage?.({command, args});
   };
 
+  onContextClick = (event: MouseEvent, context: Record<string, unknown>) => {
+    event.stopPropagation();
+    context = {...context, preventDefaultContextMenuItems: true};
+    const root =
+      window.document.querySelector<HTMLElement>('.output_container');
+    if (!root) {
+      return;
+    }
+    root.dataset['vscodeContext'] = JSON.stringify(context);
+    root.dispatchEvent(
+      new MouseEvent('contextmenu', {
+        clientX: event.clientX,
+        clientY: event.clientY,
+        bubbles: true,
+      })
+    );
+  };
+
   constructor() {
     super();
   }
@@ -139,6 +157,7 @@ export class SchemaRendererWrapper extends LitElement {
       .onFieldClick=${this.onFieldClick}
       .onQueryClick=${this.onQueryClick}
       .onPreviewClick=${this.onPreviewClick}
+      .onContextClick=${this.onContextClick}
     />`;
   }
 }
