@@ -21,9 +21,9 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {svg} from 'lit';
+import {html} from 'lit';
 
-export const averageIcon = svg`
+export const averageIcon = html`
   <svg
     width="16px"
     height="16px"
@@ -50,7 +50,7 @@ export const averageIcon = svg`
   </svg>
 `;
 
-export const booleanIcon = svg`
+export const booleanIcon = html`
   <svg
     width="16px"
     height="16px"
@@ -94,7 +94,7 @@ export const booleanIcon = svg`
   </svg>
 `;
 
-export const databaseIcon = svg`
+export const databaseIcon = html`
   <svg
     width="78px"
     height="73px"
@@ -128,7 +128,7 @@ export const databaseIcon = svg`
   </svg>
 `;
 
-export const distanceIcon = svg`
+export const distanceIcon = html`
   <svg
     width="16px"
     height="16px"
@@ -155,7 +155,7 @@ export const distanceIcon = svg`
   </svg>
 `;
 
-export const locationIcon = svg`
+export const locationIcon = html`
   <svg
     width="16px"
     height="16px"
@@ -191,7 +191,7 @@ export const locationIcon = svg`
   </svg>
 `;
 
-export const fieldInfoIcon = svg` <svg
+export const fieldInfoIcon = html` <svg
   width="16px"
   height="16px"
   viewBox="0 0 16 16"
@@ -227,7 +227,7 @@ export const fieldInfoIcon = svg` <svg
   </g>
 </svg>`;
 
-export const percentIcon = svg` <svg
+export const percentIcon = html` <svg
   width="16px"
   height="16px"
   viewBox="3 3 10 10"
@@ -252,7 +252,7 @@ export const percentIcon = svg` <svg
   </g>
 </svg>`;
 
-export const manyToOneIcon = svg` <svg
+export const manyToOneIcon = html` <svg
   width="16px"
   height="16px"
   viewBox="0 0 25 25"
@@ -321,7 +321,7 @@ export const manyToOneIcon = svg` <svg
   </g>
 </svg>`;
 
-export const numberAggregateIcon = svg`
+export const numberAggregateIcon = html`
   <?xml version="1.0" encoding="UTF-8"?>
   <svg
     width="16px"
@@ -349,7 +349,7 @@ export const numberAggregateIcon = svg`
   </svg>
 `;
 
-export const numberIcon = svg`
+export const numberIcon = html`
   <svg
     width="16px"
     height="16px"
@@ -376,7 +376,7 @@ export const numberIcon = svg`
   </svg>
 `;
 
-export const oneToManyIcon = svg`
+export const oneToManyIcon = html`
   <svg
     width="16px"
     height="16px"
@@ -442,7 +442,7 @@ export const oneToManyIcon = svg`
   </svg>
 `;
 
-export const oneToOneIcon = svg` <svg
+export const oneToOneIcon = html` <svg
   width="16px"
   height="16px"
   viewBox="0 0 25 25"
@@ -483,7 +483,7 @@ export const oneToOneIcon = svg` <svg
   </g>
 </svg>`;
 
-export const stringIcon = svg`
+export const stringIcon = html`
   <svg
     width="16px"
     height="16px"
@@ -510,7 +510,7 @@ export const stringIcon = svg`
   </svg>
 `;
 
-export const structIcon = svg`
+export const structIcon = html`
   <svg
     width="15px"
     height="14px"
@@ -556,7 +556,7 @@ export const structIcon = svg`
   </svg>
 `;
 
-export const timeIcon = svg`
+export const timeIcon = html`
   <svg
     width="16px"
     height="16px"
@@ -587,7 +587,7 @@ export const timeIcon = svg`
   </svg>
 `;
 
-export const timestampIcon = svg`
+export const timestampIcon = html`
   <svg
     width="16px"
     height="16px"
@@ -618,7 +618,7 @@ export const timestampIcon = svg`
   </svg>
 `;
 
-export const queryIcon = svg`
+export const queryIcon = html`
   <svg
     width="16px"
     height="16px"
@@ -645,7 +645,7 @@ export const queryIcon = svg`
   </svg>
 `;
 
-export const viewContainerIcon = svg`
+export const viewContainerIcon = html`
   <svg
     width="15px"
     height="14px"
@@ -691,12 +691,33 @@ export const viewContainerIcon = svg`
   </svg>
 `;
 
-export const chevronRightIcon = svg`<svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px"><path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z"/></svg>`;
+export const chevronRightIcon = html`<svg
+  xmlns="http://www.w3.org/2000/svg"
+  height="16px"
+  viewBox="0 -960 960 960"
+  width="16px"
+>
+  <path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z" />
+</svg>`;
 
-export const chevronDownIcon = svg`<svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px"><path d="M480-345 240-585l56-56 184 184 184-184 56 56-240 240Z"/></svg>`;
+export const chevronDownIcon = html`<svg
+  xmlns="http://www.w3.org/2000/svg"
+  height="16px"
+  viewBox="0 -960 960 960"
+  width="16px"
+>
+  <path d="M480-345 240-585l56-56 184 184 184-184 56 56-240 240Z" />
+</svg>`;
 
-export const unknownIcon = svg`
-  <svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px">
-    <path d="M200-120q-33 0-56.5-23.5T120-200v-160h80v160h160v80H200Zm560 0H600v-80h160v-160h80v160q0 33-23.5 56.5T760-120ZM120-760q0-33 23.5-56.5T200-840h160v80H200v160h-80v-160Zm720 0v160h-80v-160H600v-80h160q33 0 56.5 23.5T840-760ZM480-240q21 0 35.5-14.5T530-290q0-21-14.5-35.5T480-340q-21 0-35.5 14.5T430-290q0 21 14.5 35.5T480-240Zm-36-153h73q0-34 8-52t35-45q35-35 46.5-56.5T618-598q0-54-39-88t-99-34q-50 0-86 26t-52 74l66 27q7-26 26.5-42.5T480-652q29 0 46.5 15.5T544-595q0 20-9.5 37.5T502-521q-33 29-45.5 56T444-393Z" />
+export const unknownIcon = html`
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    height="16px"
+    viewBox="0 -960 960 960"
+    width="16px"
+  >
+    <path
+      d="M200-120q-33 0-56.5-23.5T120-200v-160h80v160h160v80H200Zm560 0H600v-80h160v-160h80v160q0 33-23.5 56.5T760-120ZM120-760q0-33 23.5-56.5T200-840h160v80H200v160h-80v-160Zm720 0v160h-80v-160H600v-80h160q33 0 56.5 23.5T840-760ZM480-240q21 0 35.5-14.5T530-290q0-21-14.5-35.5T480-340q-21 0-35.5 14.5T430-290q0 21 14.5 35.5T480-240Zm-36-153h73q0-34 8-52t35-45q35-35 46.5-56.5T618-598q0-54-39-88t-99-34q-50 0-86 26t-52 74l66 27q7-26 26.5-42.5T480-652q29 0 46.5 15.5T544-595q0 20-9.5 37.5T502-521q-33 29-45.5 56T444-393Z"
+    />
   </svg>
 `;

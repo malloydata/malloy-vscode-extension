@@ -171,7 +171,7 @@ export class ConnectionEditorList extends LitElement {
                 class="connection-title"
                 @click=${() => (this.selectedId = config.id)}
               >
-                <i className="codicon codicon-chevron-right"></i>
+                <i class="codicon codicon-chevron-right"></i>
                 CONNECTION: ${config.name || 'Untitled'}
               </b>
             </div>`

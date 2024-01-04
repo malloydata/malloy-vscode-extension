@@ -115,7 +115,7 @@ export class ConnectionEditor extends LitElement {
         style="display: flex; align-items: center; gap: 5px; justify-content: space-between"
       >
         <b class="connection-title" @click=${() => this.setSelectedId(null)}>
-          <i className="codicon codicon-chevron-down" /></i>
+          <i class="codicon codicon-chevron-down" /></i>
           CONNECTION: ${this.config.name || 'Untitled'}
         </b>
         ${
