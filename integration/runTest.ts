@@ -48,7 +48,7 @@ async function main() {
       testOptions.vscodeExecutablePath = CLOUDBUILD_CODE;
     }
 
-    if (process.getuid() === 0) {
+    if (process.getuid?.() === 0) {
       testOptions.launchArgs = ['--no-sandbox', '--user-data-dir=/tmp'];
     }
 

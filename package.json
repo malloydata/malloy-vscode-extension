@@ -17,8 +17,9 @@
     ]
   },
   "engines": {
-    "vscode": "^1.72.0",
-    "node": ">=12"
+    "vscode": "^1.82.0",
+    "node": ">=18",
+    "npm": ">=9"
   },
   "scripts": {
     "build": "tsc --build && npm run build-extension",
@@ -52,22 +53,10 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:malloy.showLicenses",
-    "onCommand:malloy.runQueryFile",
-    "onCommand:malloy.runQuery",
-    "onCommand:malloy.showSQL",
-    "onCommand:malloy.showSQLFile",
-    "onCommand:malloy.showSQLNamedQuery",
-    "onCommand:malloy.runNamedQuery",
-    "onCommand:malloy.refreshSchema",
-    "onCommand:malloy.editConnections",
-    "onLanguage:malloy",
-    "onLanguage:malloy-sql",
     "workspaceContains:**/.malloy",
-    "onView:malloyConnections",
-    "onView:malloySchema",
+    "workspaceContains:**/.malloysql",
+    "workspaceContains:**/.malloynb",
     "onWebviewPanel:malloyQuery",
-    "onWebviewPanel:malloySQLQuery",
     "onWebviewPanel:malloyConnections",
     "onNotebook:malloy-notebook"
   ],
@@ -593,7 +582,7 @@
     "@types/lodash": "^4.14.191",
     "@types/madge": "^5.0.0",
     "@types/mocha": "^10.0.1",
-    "@types/node": "^14.11.2",
+    "@types/node": "^18.15.3",
     "@types/node-fetch": "^2.6.2",
     "@types/prismjs": "^1.26.0",
     "@types/react": "^17.0.38",
