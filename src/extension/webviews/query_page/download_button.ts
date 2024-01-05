@@ -21,32 +21,21 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {LitElement, css, html} from 'lit';
+import {LitElement, html} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
 import {QueryDownloadOptions} from '../../../common/message_types';
 import '../components/popup_dialog';
 import './download_form';
+import {
+  provideVSCodeDesignSystem,
+  vsCodeButton,
+} from '@vscode/webview-ui-toolkit';
 
-const styles = css`
-  .icon {
-    padding-top: 3px;
-  }
-
-  svg {
-    width: 16px;
-    height: 16px;
-    cursor: pointer;
-    padding: 3px;
-    border-radius: 5px;
-    &:hover {
-      background: var(--vscode-toolbar-hoverBackground);
-    }
-  }
-`;
+provideVSCodeDesignSystem().register(vsCodeButton());
 
 const icon = html`<svg
-  width="22px"
-  height="22px"
+  width="16px"
+  height="16px"
   viewBox="0 0 110 110"
   version="1.1"
 >
@@ -61,8 +50,6 @@ const icon = html`<svg
 
 @customElement('download-button')
 export class DownloadButton extends LitElement {
-  static override styles = [styles];
-
   @property()
   onDownload!: (options: QueryDownloadOptions) => Promise<void>;
 
@@ -72,14 +59,30 @@ export class DownloadButton extends LitElement {
   @property({attribute: false})
   open = false;
 
+  onMouseDown = (event: MouseEvent) => {
+    if (!this.contains(event.target as Node)) {
+      this.open = false;
+    }
+  };
+
+  override connectedCallback() {
+    super.connectedCallback();
+    document.addEventListener('mousedown', this.onMouseDown);
+  }
+
+  override disconnectedCallback() {
+    super.disconnectedCallback();
+    document.removeEventListener('mousedown', this.onMouseDown);
+  }
+
   override render() {
-    return html`<div
-        class="icon"
+    return html`<vscode-button
+        appearance="icon"
         title="Download"
         @click=${() => (this.open = !this.open)}
       >
         ${icon}
-      </div>
+      </vscode-button>
       <popup-dialog
         ?open=${this.open}
         .setOpen=${(open: boolean) => (this.open = open)}

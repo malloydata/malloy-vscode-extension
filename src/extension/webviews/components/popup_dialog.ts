@@ -58,30 +58,8 @@ export class PopupDialog extends LitElement {
   @property({type: Boolean})
   open!: boolean;
 
-  @property()
-  setOpen!: (open: boolean) => void;
-
-  onMouseDown = (event: MouseEvent) => {
-    if (!this.contains(event.target as Node)) {
-      this.setOpen(false);
-    }
-  };
-
-  override connectedCallback() {
-    super.connectedCallback();
-    document.addEventListener('mousedown', this.onMouseDown);
-  }
-
-  override disconnectedCallback() {
-    super.disconnectedCallback();
-    document.removeEventListener('mousedown', this.onMouseDown);
-  }
-
   override render() {
-    return html`<div
-      class=${classMap({popover: true, open: this.open})}
-      @mousedown=${(event: MouseEvent) => event.stopPropagation()}
-    >
+    return html`<div class=${classMap({popover: true, open: this.open})}>
       <div class="popover-content">
         <slot></slot>
       </div>
