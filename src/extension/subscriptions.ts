@@ -103,7 +103,7 @@ export const setupSubscriptions = (
   // Run query at cursor
   context.subscriptions.push(
     vscode.commands.registerCommand('malloy.runQueryAtCursor', () =>
-      runQueryAtCursorCommand(worker, client)
+      runQueryAtCursorCommand(client)
     )
   );
 

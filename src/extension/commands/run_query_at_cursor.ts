@@ -23,12 +23,10 @@
 
 import * as vscode from 'vscode';
 import {MALLOY_EXTENSION_STATE} from '../state';
-import {WorkerConnection} from '../worker_connection';
 import {ResultJSON} from '@malloydata/malloy';
 import {BaseLanguageClient, CodeLens} from 'vscode-languageclient';
 
 export async function runQueryAtCursorCommand(
-  worker: WorkerConnection,
   client: BaseLanguageClient
 ): Promise<ResultJSON | undefined> {
   const document =
