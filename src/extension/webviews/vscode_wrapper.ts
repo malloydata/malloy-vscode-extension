@@ -26,7 +26,7 @@
  *
  * @template StateType Type of the persisted state stored for the webview.
  */
-export interface WebviewApi<StateType, MessageType> {
+export interface VsCodeApi<MessageType, StateType> {
   /**
    * Post a message to the owner of the webview.
    *
@@ -63,6 +63,6 @@ export interface WebviewApi<StateType, MessageType> {
 export function getVSCodeAPI<
   StateType = unknown,
   MessageType = unknown,
->(): WebviewApi<StateType, MessageType> {
+>(): VsCodeApi<StateType, MessageType> {
   return acquireVsCodeApi();
 }

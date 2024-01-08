@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Google LLC
+ * Copyright 2024 Google LLC
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files
@@ -21,12 +21,13 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as React from 'react';
-import {createComponent} from '@lit-labs/react';
-import {SchemaRenderer as LitSchemaRenderer} from './schema_renderer';
+import {svg} from 'lit';
 
-export const SchemaRenderer = createComponent({
-  tagName: 'schema-renderer',
-  elementClass: LitSchemaRenderer,
-  react: React,
-});
+export const copy = svg`
+    <svg width="110px" height="110px" viewBox="0 0 110 110" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+        <title>Copy HTML to Clipboard</title>
+        <g id="item_duplicate" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+            <rect id="Rectangle" stroke="#4285F4" class="primarystroke" stroke-width="6" x="29.4307692" y="24" width="30.0923077" height="41.7692308" rx="5"></rect>
+            <rect id="Rectangle-Copy" stroke="#4285F4" class="primarystroke" stroke-width="6" fill="none" x="47.4769231" y="45.2307692" width="30.0923077" height="41.7692308" rx="5"></rect>
+        </g>
+    </svg>`;
