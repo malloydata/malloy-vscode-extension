@@ -60,9 +60,9 @@ const fixNotebookUrl = async (connection: Connection, url: URL) => {
     if (workspaceFolders && workspaceFolders[0]) {
       protocol = new URL(workspaceFolders[0].uri).protocol;
     }
-    const urlString = url
-      .toString()
-      .replace(/^vscode-notebook-cell:/, protocol);
+    const {pathname, search} = url;
+    const host = protocol === 'file:' ? '' : url.host;
+    const urlString = `${protocol}//${host}${pathname}${search}`;
     url = new URL(urlString);
   }
 
