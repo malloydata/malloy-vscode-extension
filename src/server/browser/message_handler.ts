@@ -32,7 +32,8 @@ export class BrowserMessageHandler {
   ) {
     const messageHandler = new MessageHandler(
       this.connection,
-      this.connectionManager
+      this.connectionManager,
+      true
     );
 
     messageHandler.onRequest('malloy/refreshSchemaCache', _message => {

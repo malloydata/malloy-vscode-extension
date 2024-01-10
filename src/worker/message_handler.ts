@@ -38,7 +38,8 @@ export class MessageHandler implements WorkerMessageHandler {
   public fileHandler: FileHandler;
   constructor(
     private connection: GenericConnection,
-    connectionManager: ConnectionManager
+    connectionManager: ConnectionManager,
+    isBrowser = false
   ) {
     this.fileHandler = new RpcFileHandler(this);
 
@@ -47,7 +48,7 @@ export class MessageHandler implements WorkerMessageHandler {
         this,
         this.fileHandler,
         connectionManager,
-        false,
+        isBrowser,
         message,
         cancellationToken
       )
