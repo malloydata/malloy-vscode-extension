@@ -86,6 +86,9 @@ export class QueryPage extends LitElement {
   showOnlySql = false;
 
   @property({type: Boolean, attribute: false})
+  showOnlySchema = false;
+
+  @property({type: Boolean, attribute: false})
   isDarkMode = false;
 
   readonly mutationController = new MutationController(this, {
@@ -114,6 +117,7 @@ export class QueryPage extends LitElement {
       color: var(--vscode-foreground);
       padding: 0 10px;
       user-select: none;
+      height: 2em;
     }
     .result-label {
       font-weight: 500;
@@ -205,6 +209,7 @@ export class QueryPage extends LitElement {
       if (this.messageStatus.showSQLOnly) {
         isFinishedStatus = true;
         this.showOnlySql = true;
+        this.showOnlySchema = false;
         this.resultKind = ResultKind.SQL;
         this.results = {sql: this.messageStatus.sql};
       } else {
@@ -218,6 +223,15 @@ export class QueryPage extends LitElement {
         queryCostBytes,
         schema: schema.map(json => Explore.fromJSON(json)),
       };
+    } else if (this.messageStatus.status === QueryRunStatus.Schema) {
+      const {schema} = this.messageStatus;
+      isFinishedStatus = true;
+      this.results = {
+        ...this.results,
+        schema: schema.map(json => Explore.fromJSON(json)),
+      };
+      this.resultKind = ResultKind.SCHEMA;
+      this.showOnlySchema = true;
     } else if (this.messageStatus.status === QueryRunStatus.Done) {
       isFinishedStatus = true;
       const {canDownloadStream, resultJson, defaultTab, stats, profilingUrl} =
@@ -229,6 +243,7 @@ export class QueryPage extends LitElement {
       }
       const result = Result.fromJSON(resultJson);
       this.showOnlySql = false;
+      this.showOnlySchema = false;
       const {data, sql} = result;
 
       let warning: string | undefined;
@@ -281,34 +296,42 @@ export class QueryPage extends LitElement {
       return html` <div class="container">
         <div class="result-controls-bar">
           <span class="result-label">
-            ${this.showOnlySql ? 'SQL' : 'QUERY RESULTS'}
+            ${this.showOnlySql
+              ? 'SQL'
+              : this.showOnlySchema
+              ? 'SCHEMA'
+              : 'QUERY RESULTS'}
           </span>
-          <div class="result-controls-items">
-            <result-kind-toggle
-              .showOnlySql=${this.showOnlySql}
-              .resultKind=${this.resultKind}
-              .setKind=${(kind: ResultKind) => {
-                this.resultKind = kind;
-                this.resultKindUpdated = true;
-              }}
-            >
-            </result-kind-toggle>
-            ${when(
-              this.results.canDownloadStream,
-              () =>
-                html`<download-button
-                  ?canStream=${this.results.canDownloadStream}
-                  .onDownload=${async (
-                    downloadOptions: QueryDownloadOptions
-                  ) => {
-                    this.vscode.postMessage({
-                      status: QueryRunStatus.StartDownload,
-                      downloadOptions,
-                    });
+          ${when(
+            !this.showOnlySchema,
+            () =>
+              html`<div class="result-controls-items">
+                <result-kind-toggle
+                  .showOnlySql=${this.showOnlySql}
+                  .resultKind=${this.resultKind}
+                  .setKind=${(kind: ResultKind) => {
+                    this.resultKind = kind;
+                    this.resultKindUpdated = true;
                   }}
-                ></download-button>`
-            )}
-          </div>
+                >
+                </result-kind-toggle>
+                ${when(
+                  this.results.canDownloadStream,
+                  () =>
+                    html`<download-button
+                      ?canStream=${this.results.canDownloadStream || false}
+                      .onDownload=${async (
+                        downloadOptions: QueryDownloadOptions
+                      ) => {
+                        this.vscode.postMessage({
+                          status: QueryRunStatus.StartDownload,
+                          downloadOptions,
+                        });
+                      }}
+                    ></download-button>`
+                )}
+              </div>`
+          )}
         </div>
         ${when(
           !this.showOnlySql && this.resultKind === ResultKind.HTML,
