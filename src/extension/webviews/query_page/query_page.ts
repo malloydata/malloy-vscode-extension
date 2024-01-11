@@ -21,13 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import '../components/labeled_spinner';
-import '../components/schema_renderer';
-import '../components/prism_container';
-import './download_button';
-import './error_panel';
-
-import {MutationController} from '@lit-labs/observers/mutation-controller.js';
 import {
   Explore,
   Field,
@@ -40,6 +33,7 @@ import {css, html, LitElement, nothing} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
 import {until} from 'lit/directives/until.js';
 import {when} from 'lit/directives/when.js';
+import {MutationController} from '@lit-labs/observers/mutation-controller.js';
 
 import {
   QueryDownloadOptions,
@@ -55,6 +49,12 @@ import {copy} from '../assets/copy';
 import {ResultKind, resultKindFromString} from './result_kind_toggle';
 import {VsCodeApi} from '../vscode_wrapper';
 import {convertFromBytes} from '../../../common/convert_to_bytes';
+
+import '../components/labeled_spinner';
+import '../components/schema_renderer';
+import '../components/prism_container';
+import './download_button';
+import './error_panel';
 
 interface Results {
   canDownloadStream?: boolean;
