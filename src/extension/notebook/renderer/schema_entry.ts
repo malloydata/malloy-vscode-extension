@@ -50,7 +50,7 @@ export const activate: ActivationFunction = ({postMessage}) => {
         html`<schema-renderer-wrapper
           .results=${info.json()}
           .postMessage=${postMessage}
-        />`,
+        ></schema-renderer-wrapper>`,
         root
       );
     },
@@ -158,6 +158,6 @@ export class SchemaRendererWrapper extends LitElement {
       .onQueryClick=${this.onQueryClick}
       .onPreviewClick=${this.onPreviewClick}
       .onContextClick=${this.onContextClick}
-    />`;
+    ></schema-renderer>`;
   }
 }

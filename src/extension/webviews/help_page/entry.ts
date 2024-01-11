@@ -28,5 +28,5 @@ const root = document.getElementById('app');
 
 if (root) {
   root.innerHTML = '';
-  render(html`<help-page />`, root);
+  render(html`<help-page></help-page>`, root);
 }

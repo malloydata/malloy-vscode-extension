@@ -360,7 +360,7 @@ export class StructItem extends LitElement {
                   .onQueryClick=${this.onQueryClick}
                   .onContextClick=${this.onContextClick}
                   ?hidden=${true}
-                />`
+                ></struct-item>`
             )
           : null}
       </ul>
@@ -413,7 +413,7 @@ export class SchemaRenderer extends LitElement {
               .onQueryClick=${this.onQueryClick}
               .onContextClick=${this.onContextClick}
               ?hidden=${hidden}
-            />`
+            ></struct-item>`
         )}
     </ul>`;
   }

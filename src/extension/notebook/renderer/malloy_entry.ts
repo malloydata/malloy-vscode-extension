@@ -55,7 +55,10 @@ export const activate: ActivationFunction = ({postMessage}) => {
         root.removeEventListener('mousewheel', mousewheelHandler);
       }
       render(
-        html`<malloy-renderer .result=${result} .postMessage=${postMessage} />`,
+        html`<malloy-renderer
+          .result=${result}
+          .postMessage=${postMessage}
+        ></malloy-renderer>`,
         root
       );
     },

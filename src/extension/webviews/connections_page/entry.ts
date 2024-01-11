@@ -28,5 +28,5 @@ const root = document.getElementById('app');
 
 if (root) {
   root.innerHTML = '';
-  render(html`<connections-app />`, root);
+  render(html`<connections-app></connections-app>`, root);
 }

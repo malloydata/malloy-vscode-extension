@@ -322,7 +322,6 @@ export const manyToOneIcon = html` <svg
 </svg>`;
 
 export const numberAggregateIcon = html`
-  <?xml version="1.0" encoding="UTF-8"?>
   <svg
     width="16px"
     height="16px"
