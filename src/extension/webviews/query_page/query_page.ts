@@ -179,6 +179,25 @@ export class QueryPage extends LitElement {
     this.messageStatus = event.data;
   };
 
+  /*
+   * Intercept the context menu click from the schema renderer, and
+   * apply context data to the element's `vscode-context` attribute.
+   * Then simulate a context click so that VS Code will pick up
+   * the context and draw a context menu.
+   */
+  onContextClick = (event: MouseEvent, context: Record<string, unknown>) => {
+    event.stopPropagation();
+    context = {...context, preventDefaultContextMenuItems: true};
+    this.dataset['vscodeContext'] = JSON.stringify(context);
+    this.dispatchEvent(
+      new MouseEvent('contextmenu', {
+        clientX: event.clientX,
+        clientY: event.clientY,
+        bubbles: true,
+      })
+    );
+  };
+
   override connectedCallback() {
     super.connectedCallback();
     window.addEventListener('message', this.onMessage);
@@ -393,6 +412,7 @@ export class QueryPage extends LitElement {
                 .onFieldClick=${(field: Field) => this.onFieldClick(field)}
                 .onQueryClick=${(query: NamedQuery | QueryField) =>
                   this.onQueryClick(query)}
+                .onContextClick=${this.onContextClick}
               >
               </schema-renderer>
             </div>`,
