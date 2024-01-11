@@ -187,6 +187,8 @@ export class QueryPage extends LitElement {
    */
   onContextClick = (event: MouseEvent, context: Record<string, unknown>) => {
     event.stopPropagation();
+    event.preventDefault();
+
     context = {...context, preventDefaultContextMenuItems: true};
     this.dataset['vscodeContext'] = JSON.stringify(context);
     this.dispatchEvent(

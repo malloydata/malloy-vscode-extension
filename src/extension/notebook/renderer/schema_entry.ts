@@ -124,6 +124,8 @@ export class SchemaRendererWrapper extends LitElement {
 
   onContextClick = (event: MouseEvent, context: Record<string, unknown>) => {
     event.stopPropagation();
+    event.preventDefault();
+
     context = {...context, preventDefaultContextMenuItems: true};
     const root =
       window.document.querySelector<HTMLElement>('.output_container');
