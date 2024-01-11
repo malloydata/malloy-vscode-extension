@@ -153,8 +153,8 @@ export class QueryPage extends LitElement {
       width: 25px;
       height: 25px;
       position: absolute;
-      bottom: 50px;
-      right: 50px;
+      bottom: 35px;
+      right: 25px;
       background-color: var(--vscode-editorWidget-background);
       color: var(--vscode-editorWidget-foreground);
       border: 1px solid var(--vscode-dropdown-border);
@@ -502,13 +502,16 @@ export class QueryPage extends LitElement {
   getProfilingUrlLink(profilingUrl?: string) {
     return profilingUrl
       ? html` <a class="profiling-url" href="${profilingUrl}"
-          >F1 Query Profile Page</a
+          >Query Profile Page</a
         >`
       : nothing;
   }
 
   copyToClipboard(text: string) {
-    navigator.clipboard.writeText(text);
+    const status = QueryRunStatus.RunCommand;
+    const command = 'malloy.copyToClipboard';
+    const args = [text, 'Results'];
+    this.vscode.postMessage?.({status, command, args});
   }
 
   onFieldClick(field: Field) {
