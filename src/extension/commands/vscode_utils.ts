@@ -26,8 +26,9 @@ import {Utils, URI} from 'vscode-uri';
 import {RunState, MALLOY_EXTENSION_STATE} from '../state';
 import {WebviewMessageManager} from '../webview_message_manager';
 import {getWebviewHtml} from '../webviews';
-import turtleIcon from '../../media/turtle.svg';
 import {DocumentMetadata} from '../../common/query_spec';
+
+const turtleIcon = 'turtle.svg';
 
 export function createOrReuseWebviewPanel(
   viewType: string,
@@ -69,7 +70,7 @@ export function createOrReuseWebviewPanel(
     };
     current.panel.iconPath = Utils.joinPath(
       MALLOY_EXTENSION_STATE.getExtensionUri(),
-      'dist',
+      'img',
       turtleIcon
     );
     MALLOY_EXTENSION_STATE.setRunState(panelId, current);

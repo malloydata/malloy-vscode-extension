@@ -219,7 +219,6 @@ export async function doBuild(
     minify: !development,
     sourcemap: development ? 'inline' : false,
     outdir: outDir,
-    loader: {['.svg']: 'file'},
     metafile: metadata,
     logLevel: 'info',
     target: 'node12.22',
@@ -266,7 +265,6 @@ export async function doBuild(
     ...baseOptions,
     entryNames: '[name]',
     platform: 'node',
-    loader: {['.png']: 'file', ['.svg']: 'file'},
     plugins: nodeExtensionPlugins,
     define: DEFINITIONS,
   };

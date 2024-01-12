@@ -31,17 +31,6 @@ import {
   AtomicField,
   DocumentLocation,
 } from '@malloydata/malloy';
-import numberIcon from '../../media/number.svg';
-import numberAggregateIcon from '../../media/number-aggregate.svg';
-import booleanIcon from '../../media/boolean.svg';
-import timeIcon from '../../media/time.svg';
-import structIcon from '../../media/struct.svg';
-import queryIcon from '../../media/turtle.svg';
-import stringIcon from '../../media/string.svg';
-import oneToManyIcon from '../../media/one_to_many.svg';
-import manyToOneIcon from '../../media/many_to_one.svg';
-import oneToOneIcon from '../../media/one_to_one.svg';
-import unknownIcon from '../../media/unknown.svg';
 import {BaseLanguageClient} from 'vscode-languageclient/node';
 import {BuildModelRequest} from '../../common/types';
 import {
@@ -54,6 +43,18 @@ import {FetchModelMessage} from '../../common/message_types';
 import {WorkerConnection} from '../worker_connection';
 import {getActiveDocumentMetadata} from '../commands/run_query_utils';
 import {DocumentMetadata} from '../../common/query_spec';
+
+const numberIcon = 'number.svg';
+const numberAggregateIcon = 'number-aggregate.svg';
+const booleanIcon = 'boolean.svg';
+const timeIcon = 'time.svg';
+const structIcon = 'struct.svg';
+const queryIcon = 'turtle.svg';
+const stringIcon = 'string.svg';
+const oneToManyIcon = 'one_to_many.svg';
+const manyToOneIcon = 'many_to_one.svg';
+const oneToOneIcon = 'one_to_one.svg';
+const unknownIcon = 'unknown.svg';
 
 export class SchemaProvider
   implements vscode.TreeDataProvider<ExploreItem | FieldItem>
@@ -292,7 +293,7 @@ function getIconPath(
   }
 
   const uri = context.extensionUri;
-  return Utils.joinPath(uri, 'dist', imageFileName);
+  return Utils.joinPath(uri, 'img', imageFileName);
 }
 
 export function runNamedQueryFromSchemaCommand(item: {name: string}): void {
