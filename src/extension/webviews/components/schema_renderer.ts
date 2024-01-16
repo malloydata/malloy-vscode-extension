@@ -107,13 +107,6 @@ function bucketFields(fields: Field[]) {
  * @param isAggregate Field aggregate status as returned from isFieldAggregate()
  * @returns A React wrapped svg of the icon.
  */
-/**
- * Returns the corresponding icon for fields and relationships.
- *
- * @param fieldType Field type and returned by fieldType()
- * @param isAggregate Field aggregate status as returned from isFieldAggregate()
- * @returns A React wrapped svg of the icon.
- */
 function getIconElement(fieldType: string, isAggregate: boolean) {
   let imageElement: TemplateResult | null;
   if (isAggregate) {
@@ -316,8 +309,12 @@ export class StructItem extends LitElement {
       explore.allFields
     );
 
-    const buildPath = (explore: Explore, path: string) => {
-      return `${path}${path ? '.' : ''}${explore.name}`;
+    const buildPath = (explore: Explore, path: string): string => {
+      if (path) {
+        return `${path}.${explore.name}`;
+      } else {
+        return explore.name;
+      }
     };
 
     const classes = classMap({schema: true, hidden: this.hidden});
@@ -363,7 +360,7 @@ export class StructItem extends LitElement {
                   .onQueryClick=${this.onQueryClick}
                   .onContextClick=${this.onContextClick}
                   ?hidden=${true}
-                />`
+                ></struct-item>`
             )
           : null}
       </ul>
@@ -416,7 +413,7 @@ export class SchemaRenderer extends LitElement {
               .onQueryClick=${this.onQueryClick}
               .onContextClick=${this.onContextClick}
               ?hidden=${hidden}
-            />`
+            ></struct-item>`
         )}
     </ul>`;
   }

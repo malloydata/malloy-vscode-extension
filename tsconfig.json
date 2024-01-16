@@ -2,7 +2,6 @@
   "compilerOptions": {
     "esModuleInterop": true,
     "experimentalDecorators": true,
-    "jsx": "react",
     "moduleResolution": "node",
     "noEmit": true,
     "resolveJsonModule": true,

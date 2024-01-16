@@ -49,7 +49,7 @@ import {getVSCodeAPI} from '../vscode_wrapper';
 
 @customElement('connections-app')
 export class ConnectionsApp extends LitElement {
-  vscode = getVSCodeAPI<void, ConnectionPanelMessage>();
+  vscode = getVSCodeAPI<ConnectionPanelMessage, void>();
 
   @property({attribute: false})
   selectedId: string | null = null;

@@ -115,19 +115,14 @@ export class ConnectionEditor extends LitElement {
         style="display: flex; align-items: center; gap: 5px; justify-content: space-between"
       >
         <b class="connection-title" @click=${() => this.setSelectedId(null)}>
-          <i class="codicon codicon-chevron-down" /></i>
+          <i class="codicon codicon-chevron-down"></i>
           CONNECTION: ${this.config.name || 'Untitled'}
         </b>
-        ${
-          this.isDefault
-            ? html`<vscode-tag>Default</vscode-tag>`
-            : html`<vscode-button
-                @click=${this.makeDefault}
-                style="height: 25px"
-              >
-                Make Default
-              </vscode-button>`
-        }
+        ${this.isDefault
+          ? html`<vscode-tag>Default</vscode-tag>`
+          : html`<vscode-button @click=${this.makeDefault} style="height: 25px">
+              Make Default
+            </vscode-button>`}
       </div>
       <table>
         <tbody>
@@ -158,34 +153,32 @@ export class ConnectionEditor extends LitElement {
           </tr>
         </tbody>
       </table>
-      ${
-        this.config.backend === ConnectionBackend.BigQuery
-          ? html` <bigquery-connection-editor
-              .config=${this.config}
-              .setConfig=${this.setConfig}
-              .requestServiceAccountKeyPath=${() =>
-                this.requestServiceAccountKeyPath(this.config.id)}
-            ></bigquery-connection-editor>`
-          : this.config.backend === ConnectionBackend.Postgres
-          ? html`<postgres-connection-editor
-              .config=${this.config as PostgresConnectionConfig}
-              .setConfig=${this.setConfig}
-            ></postgres-connection-editor>`
-          : this.config.backend === ConnectionBackend.DuckDB
-          ? html`<duckdb-connection-editor
-              .config=${this.config}
-              .setConfig=${this.setConfig}
-            ></duckdb-connection-editor>`
-          : this.config.backend === ConnectionBackend.External
-          ? html`<external-connection-editor
-              .config=${this.config}
-              .setConfig=${this.setConfig}
-              .installExternalConnection=${this.installExternalConnection}
-              .installExternalConnectionStatus=${this
-                .installExternalConnectionStatus}
-            ></external-connection-editor>`
-          : html`<div>Unknown Connection Type</div>`
-      }
+      ${this.config.backend === ConnectionBackend.BigQuery
+        ? html` <bigquery-connection-editor
+            .config=${this.config}
+            .setConfig=${this.setConfig}
+            .requestServiceAccountKeyPath=${() =>
+              this.requestServiceAccountKeyPath(this.config.id)}
+          ></bigquery-connection-editor>`
+        : this.config.backend === ConnectionBackend.Postgres
+        ? html`<postgres-connection-editor
+            .config=${this.config as PostgresConnectionConfig}
+            .setConfig=${this.setConfig}
+          ></postgres-connection-editor>`
+        : this.config.backend === ConnectionBackend.DuckDB
+        ? html`<duckdb-connection-editor
+            .config=${this.config}
+            .setConfig=${this.setConfig}
+          ></duckdb-connection-editor>`
+        : this.config.backend === ConnectionBackend.External
+        ? html`<external-connection-editor
+            .config=${this.config}
+            .setConfig=${this.setConfig}
+            .installExternalConnection=${this.installExternalConnection}
+            .installExternalConnectionStatus=${this
+              .installExternalConnectionStatus}
+          ></external-connection-editor>`
+        : html`<div>Unknown Connection Type</div>`}
       <vscode-divider></vscode-divider>
       <table>
         <tbody>
@@ -200,16 +193,12 @@ export class ConnectionEditor extends LitElement {
                   Delete
                 </vscode-button>
                 <vscode-button @click=${this.testConfig}>Test</vscode-button>
-                ${
-                  this.testStatus
-                    ? html`<vscode-tag>${this.testStatus?.status}</vscode-tag>`
-                    : null
-                }
-                ${
-                  this.testStatus?.status === 'error'
-                    ? this.testStatus.error
-                    : null
-                }
+                ${this.testStatus
+                  ? html`<vscode-tag>${this.testStatus?.status}</vscode-tag>`
+                  : null}
+                ${this.testStatus?.status === 'error'
+                  ? this.testStatus.error
+                  : null}
               </div>
             </td>
           </tr>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Google LLC
+ * Copyright 2024 Google LLC
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files
@@ -20,5 +20,38 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+import {css, html, LitElement} from 'lit';
+import {customElement, property} from 'lit/decorators.js';
+import {styleMap} from 'lit/directives/style-map.js';
 
-export {PrismContainer} from './PrismContainer';
+@customElement('error-panel')
+export class ErrorPanel extends LitElement {
+  @property() message?: string;
+
+  static override styles = css`
+    div {
+      background-color: var(--vscode-inputValidation-errorBackground);
+      padding: 10px;
+      margin: 30px;
+      border-radius: 4px;
+      font-size: var(--vscode-editor-font-size);
+      border: 1px solid var(--vscode-inputValidation-errorBorder);
+      overflow: auto;
+    }
+  `;
+
+  override render() {
+    const multiLine = this.message?.indexOf('\n') ?? -1 >= 0;
+    const multilineStyles = {
+      'white-space': multiLine ? 'pre' : 'normal',
+      'font-family': multiLine ? 'monospace' : 'inherit',
+    };
+    return html` <div style=${styleMap(multilineStyles)}>${this.message}</div>`;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'error-panel': ErrorPanel;
+  }
+}

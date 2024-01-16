@@ -21,17 +21,16 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import ReactDOM from 'react-dom';
-import React from 'react';
-import {App} from './App';
+import {html, render} from 'lit';
 import {QueryPanelMessage} from '../../../common/message_types';
-import {getVSCodeAPI, QueryVSCodeContext} from './query_vscode_context';
 
-(() => {
-  const vscode = getVSCodeAPI<void, QueryPanelMessage>();
-  const el = React.createElement(QueryVSCodeContext.Provider, {value: vscode}, [
-    React.createElement(App, {key: 'app'}, null),
-  ]);
+import './query_page';
+import {getVSCodeAPI} from './query_vscode_context';
 
-  ReactDOM.render(el, document.getElementById('app'));
-})();
+const root = document.getElementById('app');
+
+if (root) {
+  const vscode = getVSCodeAPI<QueryPanelMessage, void>();
+  root.innerHTML = '';
+  render(html`<query-page .vscode=${vscode}></query-page>`, root);
+}
