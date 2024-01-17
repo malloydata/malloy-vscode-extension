@@ -181,11 +181,14 @@ export class QueryPage extends LitElement {
     const {status} = message;
 
     switch (status) {
+      case QueryRunStatus.Compiling:
+        this.error = '';
+        this.showOnlySchema = false;
+        this.showOnlySql = false;
+        this.progressMessage = 'Compiling';
+        break;
       case QueryRunStatus.Running:
         this.progressMessage = 'Running';
-        break;
-      case QueryRunStatus.Compiling:
-        this.progressMessage = 'Compiling';
         break;
       case QueryRunStatus.Error:
         this.error = message.error;
