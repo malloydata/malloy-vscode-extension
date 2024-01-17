@@ -77,9 +77,6 @@ export class QueryPage extends LitElement {
   @property({attribute: false})
   progressMessage = '';
 
-  @property({attribute: false})
-  query!: NamedQuery;
-
   @property({type: Object, attribute: false})
   results: Results = {};
 
