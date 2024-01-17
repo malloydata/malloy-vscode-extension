@@ -77,6 +77,9 @@ export class QueryPage extends LitElement {
   @property({attribute: false})
   progressMessage = '';
 
+  @property({attribute: false})
+  error = '';
+
   @property({type: Object, attribute: false})
   results: Results = {};
 
@@ -185,9 +188,8 @@ export class QueryPage extends LitElement {
         this.progressMessage = 'Compiling';
         break;
       case QueryRunStatus.Error:
-        return html` <div class="container">
-          <error-panel .message=${message.error}> </error-panel>
-        </div>`;
+        this.error = message.error;
+        break;
       case QueryRunStatus.Compiled:
         if (message.showSQLOnly) {
           this.progressMessage = '';
@@ -325,7 +327,11 @@ export class QueryPage extends LitElement {
   }
 
   override render() {
-    if (this.progressMessage) {
+    if (this.error) {
+      return html` <div class="container">
+        <error-panel .message=${this.error}></error-panel>
+      </div>`;
+    } else if (this.progressMessage) {
       return html`<labeled-spinner
         text=${this.progressMessage}
       ></labeled-spinner>`;
