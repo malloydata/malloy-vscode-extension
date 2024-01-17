@@ -43,7 +43,7 @@ export function getWebviewHtml(
 <html lang="en">
   <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="base-uri 'none'; default-src 'none'; style-src 'unsafe-inline' ${cspSrc} https://rsms.me/; font-src ${cspSrc} https://rsms.me/; img-src ${cspSrc} https:; script-src 'nonce-${nonce}' 'unsafe-eval';">
+    <meta http-equiv="Content-Security-Policy" content="base-uri 'none'; default-src blob:; style-src 'unsafe-inline' ${cspSrc} https://rsms.me/; font-src ${cspSrc} https://rsms.me/; img-src ${cspSrc} https:; script-src 'nonce-${nonce}' 'unsafe-eval';">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="preconnect" href="https://rsms.me/" />
     <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />

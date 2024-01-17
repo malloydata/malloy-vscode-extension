@@ -96,6 +96,7 @@ interface QueryMessageStatusSchema {
 
 interface QueryMessageStatusDone {
   status: QueryRunStatus.Done;
+  name: string;
   resultJson: ResultJSON;
   canDownloadStream: boolean;
   defaultTab?: string;
