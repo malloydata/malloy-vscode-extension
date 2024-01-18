@@ -31,7 +31,6 @@ import {
 import {HTMLView} from '@malloydata/render';
 import {css, html, LitElement, nothing} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
-import {until} from 'lit/directives/until.js';
 import {when} from 'lit/directives/when.js';
 import {MutationController} from '@lit-labs/observers/mutation-controller.js';
 
@@ -73,11 +72,13 @@ export class QueryPage extends LitElement {
   @property({type: Object})
   vscode!: VsCodeApi<QueryPanelMessage, void>;
 
-  @property({type: Object, attribute: false})
-  messageStatus?: QueryMessageStatus;
-
   @property() resultKind = ResultKind.HTML;
-  resultKindUpdated = false;
+
+  @property({attribute: false})
+  progressMessage = '';
+
+  @property({attribute: false})
+  error = '';
 
   @property({type: Object, attribute: false})
   results: Results = {};
@@ -176,7 +177,124 @@ export class QueryPage extends LitElement {
   `;
 
   onMessage = (event: MessageEvent<QueryMessageStatus>) => {
-    this.messageStatus = event.data;
+    const message = event.data;
+    const {status} = message;
+
+    switch (status) {
+      case QueryRunStatus.Compiling:
+        this.error = '';
+        this.showOnlySchema = false;
+        this.showOnlySql = false;
+        this.progressMessage = 'Compiling';
+        break;
+      case QueryRunStatus.Running:
+        this.progressMessage = 'Running';
+        break;
+      case QueryRunStatus.Error:
+        this.error = message.error;
+        break;
+      case QueryRunStatus.Compiled:
+        if (message.showSQLOnly) {
+          this.progressMessage = '';
+          this.showOnlySql = true;
+          this.showOnlySchema = false;
+          this.resultKind = ResultKind.SQL;
+          this.results = {sql: message.sql};
+        } else {
+          this.progressMessage = 'Compiled';
+        }
+        break;
+      case QueryRunStatus.EstimatedCost:
+        {
+          const {queryCostBytes, schema} = message;
+          this.progressMessage = '';
+          this.results = {
+            ...this.results,
+            queryCostBytes,
+            schema: schema.map(json => Explore.fromJSON(json)),
+          };
+        }
+        break;
+      case QueryRunStatus.Schema:
+        {
+          const {schema} = message;
+          this.progressMessage = '';
+          this.results = {
+            ...this.results,
+            schema: schema.map(json => Explore.fromJSON(json)),
+          };
+          this.resultKind = ResultKind.SCHEMA;
+          this.showOnlySchema = true;
+        }
+        break;
+      case QueryRunStatus.Done: {
+        const {canDownloadStream, resultJson, defaultTab, stats, profilingUrl} =
+          message;
+
+        const defaultKind = resultKindFromString(defaultTab);
+        if (defaultKind) {
+          this.resultKind = defaultKind;
+        }
+        const result = Result.fromJSON(resultJson);
+        this.showOnlySql = false;
+        this.showOnlySchema = false;
+        const {data, sql} = result;
+
+        let warning: string | undefined;
+        if (data.rowCount < result.totalRows) {
+          const rowCount = data.rowCount.toLocaleString();
+          const totalRows = result.totalRows.toLocaleString();
+          warning = `Row limit hit. Viewing ${rowCount} of ${totalRows} results.`;
+        }
+
+        const queryCostBytes = result.runStats?.queryCostBytes;
+        const json = JSON.stringify(data.toObject(), null, 2);
+        const schema =
+          result.resultExplore.name.startsWith('__stage') &&
+          result.resultExplore.parentExplore
+            ? [result.resultExplore.parentExplore]
+            : [result.resultExplore];
+
+        this.results = {
+          json,
+          schema,
+          sql,
+          profilingUrl,
+          queryCostBytes,
+          stats,
+          // TODO(whscullin) Lens Query Panel
+          // Fix canDownload/canDownload stream distinction
+          canDownloadStream,
+          warning,
+        };
+
+        this.progressMessage = 'Rendering';
+
+        new HTMLView(document)
+          .render(result, {
+            dataStyles: {},
+            isDrillingEnabled: true,
+            onDrill: (
+              drillQuery: string,
+              _target: HTMLElement,
+              _drillFilters: string[]
+            ) => {
+              const status = QueryRunStatus.RunCommand;
+              const command = 'malloy.copyToClipboard';
+              const args = [drillQuery, 'Query'];
+              // TODO(cbhagwat): Fix this.
+              this.vscode.postMessage({status, command, args});
+            },
+          })
+          .then(html => {
+            this.progressMessage = '';
+            this.results = {
+              ...this.results,
+              html,
+            };
+          });
+      }
+    }
   };
 
   /*
@@ -212,108 +330,15 @@ export class QueryPage extends LitElement {
   }
 
   override render() {
-    if (!this.messageStatus) return nothing;
-
-    let isFinishedStatus = false;
-    let message: string | undefined;
-    let renderedHtmlPromise: Promise<HTMLElement> | undefined;
-
-    if (this.messageStatus.status === QueryRunStatus.Running) {
-      message = 'Running';
-    } else if (this.messageStatus.status === QueryRunStatus.Compiling) {
-      message = 'Compiling';
-    } else if (this.messageStatus.status === QueryRunStatus.Error) {
+    if (this.error) {
       return html` <div class="container">
-        <error-panel .message=${this.messageStatus.error}> </error-panel>
+        <error-panel .message=${this.error}></error-panel>
       </div>`;
-    } else if (this.messageStatus.status === QueryRunStatus.Compiled) {
-      if (this.messageStatus.showSQLOnly) {
-        isFinishedStatus = true;
-        this.showOnlySql = true;
-        this.showOnlySchema = false;
-        this.resultKind = ResultKind.SQL;
-        this.results = {sql: this.messageStatus.sql};
-      } else {
-        message = 'Compiled';
-      }
-    } else if (this.messageStatus.status === QueryRunStatus.EstimatedCost) {
-      const {queryCostBytes, schema} = this.messageStatus;
-      isFinishedStatus = true;
-      this.results = {
-        ...this.results,
-        queryCostBytes,
-        schema: schema.map(json => Explore.fromJSON(json)),
-      };
-    } else if (this.messageStatus.status === QueryRunStatus.Schema) {
-      const {schema} = this.messageStatus;
-      isFinishedStatus = true;
-      this.results = {
-        ...this.results,
-        schema: schema.map(json => Explore.fromJSON(json)),
-      };
-      this.resultKind = ResultKind.SCHEMA;
-      this.showOnlySchema = true;
-    } else if (this.messageStatus.status === QueryRunStatus.Done) {
-      isFinishedStatus = true;
-      const {canDownloadStream, resultJson, defaultTab, stats, profilingUrl} =
-        this.messageStatus;
-
-      const defaultKind = resultKindFromString(defaultTab);
-      if (defaultKind && !this.resultKindUpdated) {
-        this.resultKind = defaultKind;
-      }
-      const result = Result.fromJSON(resultJson);
-      this.showOnlySql = false;
-      this.showOnlySchema = false;
-      const {data, sql} = result;
-
-      let warning: string | undefined;
-      if (data.rowCount < result.totalRows) {
-        const rowCount = data.rowCount.toLocaleString();
-        const totalRows = result.totalRows.toLocaleString();
-        warning = `Row limit hit. Viewing ${rowCount} of ${totalRows} results.`;
-      }
-
-      const queryCostBytes = result.runStats?.queryCostBytes;
-      const json = JSON.stringify(data.toObject(), null, 2);
-      const schema =
-        result.resultExplore.name.startsWith('__stage') &&
-        result.resultExplore.parentExplore
-          ? [result.resultExplore.parentExplore]
-          : [result.resultExplore];
-
-      this.results = {
-        json,
-        schema,
-        sql,
-        profilingUrl,
-        queryCostBytes,
-        stats,
-        // TODO(whscullin) Lens Query Panel
-        // Fix canDownload/canDownload stream distinction
-        canDownloadStream,
-        warning,
-      };
-
-      renderedHtmlPromise = new HTMLView(document).render(result, {
-        dataStyles: {},
-        isDrillingEnabled: true,
-        onDrill: (
-          drillQuery: string,
-          _target: HTMLElement,
-          _drillFilters: string[]
-        ) => {
-          const status = QueryRunStatus.RunCommand;
-          const command = 'malloy.copyToClipboard';
-          const args = [drillQuery, 'Query'];
-          // TODO(cbhagwat): Fix this.
-          this.vscode.postMessage({status, command, args});
-        },
-      });
-    }
-
-    this.resultKindUpdated = false;
-    if (isFinishedStatus) {
+    } else if (this.progressMessage) {
+      return html`<labeled-spinner
+        text=${this.progressMessage}
+      ></labeled-spinner>`;
+    } else {
       return html` <div class="container">
         <div class="result-controls-bar">
           <span class="result-label">
@@ -332,7 +357,6 @@ export class QueryPage extends LitElement {
                   .resultKind=${this.resultKind}
                   .setKind=${(kind: ResultKind) => {
                     this.resultKind = kind;
-                    this.resultKindUpdated = true;
                   }}
                 >
                 </result-kind-toggle>
@@ -355,21 +379,18 @@ export class QueryPage extends LitElement {
           )}
         </div>
         ${when(
-          !this.showOnlySql && this.resultKind === ResultKind.HTML,
+          !this.showOnlySql &&
+            this.resultKind === ResultKind.HTML &&
+            this.results.html,
           () =>
             html` <div class="scroll">
               <div class="result-container">
-                ${until(
-                  renderedHtmlPromise,
-                  () => html`
-                    <labeled-spinner text="Rendering..."> </labeled-spinner>
-                  `
-                )}
+                ${this.results.html}
                 <div
                   class="copy-button"
                   @click=${() =>
-                    renderedHtmlPromise?.then(html =>
-                      this.copyToClipboard(this.getStyledHTML(html))
+                    this.copyToClipboard(
+                      this.getStyledHTML(this.results.html!)
                     )}
                 >
                   ${copy}
@@ -461,14 +482,9 @@ export class QueryPage extends LitElement {
           () => html`<div class="warning">${this.results.warning}</div>`
         )}
       </div>`;
-    } else if (message) {
-      this.resultKind = ResultKind.HTML;
-      this.results = {};
-      this.showOnlySql = false;
-      return html`<labeled-spinner .text=${message}></labeled-spinner>`;
     }
 
-    return html`<p></p>`;
+    return nothing;
   }
 
   getStats(
