@@ -134,6 +134,23 @@ export class QueryPage extends LitElement {
     .scroll {
       flex: 1;
       overflow: auto;
+
+      &::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+      &::-webkit-scrollbar-corner {
+        background: var(--vscode-input-background, #3c3c3c);
+      }
+      &::-webkit-scrollbar-thumb {
+        background: var(--vscode-scrollbarSlider-background, #79797966);
+      }
+      &::-webkit-scrollbar-thumb:hover {
+        background: var(--vscode-scrollbarSlider-hoverBackground, #646464b3);
+      }
+      &::-webkit-scrollbar-thumb:active {
+        background: var(--vscode-scrollbarSlider-activeBackground, #bfbfbf66);
+      }
     }
     .stats {
       display: flex;
