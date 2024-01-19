@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {TextDocuments} from 'vscode-languageserver/browser';
+import {TextDocuments} from 'vscode-languageserver';
 import {TextDocument} from 'vscode-languageserver-textdocument';
 import {connection, connectionManager} from './connections_browser';
 import {initServer} from '../init';
