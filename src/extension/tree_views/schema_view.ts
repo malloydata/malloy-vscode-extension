@@ -31,7 +31,7 @@ import {
   AtomicField,
   DocumentLocation,
 } from '@malloydata/malloy';
-import {BaseLanguageClient} from 'vscode-languageclient/node';
+import {BaseLanguageClient} from 'vscode-languageclient';
 import {BuildModelRequest} from '../../common/types';
 import {
   exploreSubtype,
