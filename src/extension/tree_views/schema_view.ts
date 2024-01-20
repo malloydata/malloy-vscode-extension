@@ -149,12 +149,12 @@ export class SchemaProvider
 
       if (this.previousKey !== cacheKey) {
         this.previousKey = cacheKey;
-        this.refresh();
+        await this.refresh();
         return this.resultCache.get(cacheKey) || [];
       }
 
       if (this.refreshSchemaCache) {
-        this.worker.sendRequest('malloy/refreshSchemaCache', {
+        await this.worker.sendRequest('malloy/refreshSchemaCache', {
           uri,
         });
       }
