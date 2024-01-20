@@ -142,7 +142,7 @@ export async function queryDownload(
                 : new CSVWriter(writeStream);
             const rowStream = currentResults.data.inMemoryStream();
             await writer.process(rowStream);
-            writeStream.close();
+            await writeStream.close();
             noAwait(
               vscode.window.showInformationMessage(
                 `Malloy Download (${name}): Complete`
