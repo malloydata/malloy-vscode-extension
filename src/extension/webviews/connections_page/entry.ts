@@ -27,6 +27,6 @@ import './connections_app';
 const root = document.getElementById('app');
 
 if (root) {
-  root.innerHTML = '';
+  root.innerText = '';
   render(html`<connections-app></connections-app>`, root);
 }

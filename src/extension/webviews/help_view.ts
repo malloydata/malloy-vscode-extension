@@ -22,12 +22,9 @@
  */
 
 import * as vscode from 'vscode';
-import {Utils} from 'vscode-uri';
 import {getWebviewHtml} from '../webviews';
 
 export class HelpViewProvider implements vscode.WebviewViewProvider {
-  private _view?: vscode.WebviewView;
-
   constructor(private readonly _extensionUri: vscode.Uri) {}
 
   public resolveWebviewView(
@@ -35,23 +32,10 @@ export class HelpViewProvider implements vscode.WebviewViewProvider {
     _context: vscode.WebviewViewResolveContext,
     _token: vscode.CancellationToken
   ): void {
-    this._view = webviewView;
-
     webviewView.webview.options = {
       enableScripts: true,
     };
 
-    const onDiskPath = Utils.joinPath(
-      this._extensionUri,
-      'dist',
-      'help_page.js'
-    );
-
-    const entrySrc = webviewView.webview.asWebviewUri(onDiskPath);
-
-    webviewView.webview.html = getWebviewHtml(
-      entrySrc.toString(),
-      webviewView.webview
-    );
+    webviewView.webview.html = getWebviewHtml('help_page', webviewView.webview);
   }
 }

@@ -22,7 +22,6 @@
  */
 
 import * as vscode from 'vscode';
-import {Utils} from 'vscode-uri';
 
 import {MALLOY_EXTENSION_STATE, RunState} from '../state';
 import {Result, ResultJSON} from '@malloydata/malloy';
@@ -39,7 +38,7 @@ import {CancellationTokenSource, Disposable} from 'vscode-jsonrpc';
 import {
   createOrReuseWebviewPanel,
   disposeWebviewPanel,
-  loadWebview,
+  loadQueryWebview,
   showSchemaTreeViewWhenFocused,
 } from './vscode_utils';
 import {WorkerConnection} from '../worker_connection';
@@ -157,13 +156,7 @@ export function runMalloyQuery(
         cancel,
         query.documentMeta
       );
-      const queryPageOnDiskPath = Utils.joinPath(
-        MALLOY_EXTENSION_STATE.getExtensionUri(),
-        'dist',
-        'query_page.js'
-      );
-
-      loadWebview(current, queryPageOnDiskPath);
+      loadQueryWebview(current, 'query_page');
       showSchemaTreeViewWhenFocused(current.panel, panelId);
     }
 

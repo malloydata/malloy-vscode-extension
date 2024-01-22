@@ -24,22 +24,19 @@
 import * as vscode from 'vscode';
 import {v1 as uuid} from 'uuid';
 import {MALLOY_EXTENSION_STATE} from '../state';
+import {Utils} from 'vscode-uri';
 
 export function getWebviewHtml(
-  entrySrc: string,
+  module: string,
   webview: vscode.Webview
 ): string {
-  const extensionUri = MALLOY_EXTENSION_STATE.getExtensionUri();
-  const cspSrc = webview.cspSource;
-  const codiconsUri = webview.asWebviewUri(
-    vscode.Uri.joinPath(
-      extensionUri,
-      'node_modules',
-      '@vscode/codicons',
-      'dist',
-      'codicon.css'
-    )
+  const onDiskPath = Utils.joinPath(
+    MALLOY_EXTENSION_STATE.getExtensionUri(),
+    'dist',
+    `${module}.js`
   );
+  const entrySrc = webview.asWebviewUri(onDiskPath);
+  const cspSrc = webview.cspSource;
 
   const nonce = getNonce();
   return /* html */ `<!DOCTYPE html>
@@ -50,7 +47,6 @@ export function getWebviewHtml(
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="preconnect" href="https://rsms.me/" />
     <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
-    <link href="${codiconsUri}" rel="stylesheet" />
     <title>Malloy Results</title>
   </head>
   <style>

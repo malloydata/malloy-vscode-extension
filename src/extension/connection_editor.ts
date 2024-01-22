@@ -22,7 +22,6 @@
  */
 
 import * as vscode from 'vscode';
-import {Utils} from 'vscode-uri';
 import {getWebviewHtml} from './webviews';
 import {
   ConnectionMessageType,
@@ -33,7 +32,6 @@ import {
 } from '../common/message_types';
 import {WebviewMessageManager} from './webview_message_manager';
 import {ConnectionConfig} from '../common/connection_manager_types';
-import {MALLOY_EXTENSION_STATE} from './state';
 import {errorMessage} from '../common/errors';
 import {ConnectionManager} from '../common/connection_manager';
 import {getMalloyConfig} from './utils';
@@ -57,16 +55,8 @@ export class EditConnectionPanel {
     );
     this.onDidDispose = this.panel.onDidDispose;
 
-    const onDiskPath = Utils.joinPath(
-      MALLOY_EXTENSION_STATE.getExtensionUri(),
-      'dist',
-      'connections_page.js'
-    );
-
-    const entrySrc = this.panel.webview.asWebviewUri(onDiskPath);
-
     this.panel.webview.html = getWebviewHtml(
-      entrySrc.toString(),
+      'connections_page',
       this.panel.webview
     );
 

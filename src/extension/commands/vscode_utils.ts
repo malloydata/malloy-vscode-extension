@@ -22,7 +22,7 @@
  */
 
 import * as vscode from 'vscode';
-import {Utils, URI} from 'vscode-uri';
+import {Utils} from 'vscode-uri';
 import {RunState, MALLOY_EXTENSION_STATE} from '../state';
 import {WebviewMessageManager} from '../webview_message_manager';
 import {getWebviewHtml} from '../webviews';
@@ -79,13 +79,8 @@ export function createOrReuseWebviewPanel(
   return current;
 }
 
-export function loadWebview(current: RunState, onDiskPath: URI): void {
-  const entrySrc = current.panel.webview.asWebviewUri(onDiskPath);
-
-  current.panel.webview.html = getWebviewHtml(
-    entrySrc.toString(),
-    current.panel.webview
-  );
+export function loadQueryWebview(current: RunState, module: string): void {
+  current.panel.webview.html = getWebviewHtml(module, current.panel.webview);
 
   current.panel.onDidDispose(() => {
     current.cancel();
