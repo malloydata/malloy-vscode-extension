@@ -266,11 +266,7 @@ export class QueryPage extends LitElement {
 
         const queryCostBytes = result.runStats?.queryCostBytes;
         const json = JSON.stringify(data.toObject(), null, 2);
-        const schema =
-          result.resultExplore.name.startsWith('__stage') &&
-          result.resultExplore.parentExplore
-            ? [result.resultExplore.parentExplore]
-            : [result.resultExplore];
+        const schema = [result.resultExplore];
 
         this.results = {
           json,
