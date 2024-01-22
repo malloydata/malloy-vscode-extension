@@ -129,7 +129,8 @@ export class QueryPage extends LitElement {
       align-items: center;
     }
     .result-container {
-      margin: 10px;
+      padding: 10px;
+      height: calc(100% - 20px);
     }
     .scroll {
       flex: 1;
