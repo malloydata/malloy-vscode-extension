@@ -31,6 +31,6 @@ const root = document.getElementById('app');
 
 if (root) {
   const vscode = getVSCodeAPI<QueryPanelMessage, void>();
-  root.innerHTML = '';
+  root.innerText = '';
   render(html`<query-page .vscode=${vscode}></query-page>`, root);
 }
