@@ -28,7 +28,6 @@ import {
   QueryField,
   QueryResult,
   Result,
-  ResultJSON,
 } from '@malloydata/malloy';
 import {HTMLView} from '@malloydata/render';
 import {css, html, LitElement, nothing} from 'lit';
