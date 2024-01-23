@@ -42,6 +42,7 @@ import {
   ConnectionMessageInstallExternalConnection,
   ConnectionMessageTest,
 } from '../../../../common/message_types';
+import {chevronDownIcon} from '../../components/icons';
 import {styles} from './connection_editor.css';
 import './bigquery_connection_editor';
 import './duckdb_connection_editor';
@@ -115,8 +116,7 @@ export class ConnectionEditor extends LitElement {
         style="display: flex; align-items: center; gap: 5px; justify-content: space-between"
       >
         <b class="connection-title" @click=${() => this.setSelectedId(null)}>
-          <i class="codicon codicon-chevron-down"></i>
-          CONNECTION: ${this.config.name || 'Untitled'}
+          ${chevronDownIcon} CONNECTION: ${this.config.name || 'Untitled'}
         </b>
         ${this.isDefault
           ? html`<vscode-tag>Default</vscode-tag>`
