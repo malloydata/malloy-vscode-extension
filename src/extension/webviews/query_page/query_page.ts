@@ -26,6 +26,7 @@ import {
   Field,
   NamedQuery,
   QueryField,
+  QueryResult,
   Result,
 } from '@malloydata/malloy';
 import {HTMLView} from '@malloydata/render';
@@ -55,12 +56,15 @@ import '../components/prism_container';
 import './download_button';
 import './error_panel';
 
+type ResultMetadata = Omit<QueryResult, 'result' | 'sql'>;
+
 interface Results {
   canDownloadStream?: boolean;
   stats?: QueryRunStats;
   html?: HTMLElement;
   sql?: string;
   json?: string;
+  metadataOnly?: ResultMetadata;
   schema?: Explore[];
   profilingUrl?: string;
   queryCostBytes?: number;
@@ -268,11 +272,13 @@ export class QueryPage extends LitElement {
         const queryCostBytes = result.runStats?.queryCostBytes;
         const json = JSON.stringify(data.toObject(), null, 2);
         const schema = [result.resultExplore];
+        const {sql: _s, result: _r, ...metadataOnly} = resultJson.queryResult;
 
         this.results = {
           json,
           schema,
           sql,
+          metadataOnly,
           profilingUrl,
           queryCostBytes,
           stats,
@@ -421,6 +427,29 @@ export class QueryPage extends LitElement {
             return html` <div class="scroll">
               <prism-container
                 .code="${this.results.json!}"
+                .language="${'json'}"
+                .darkMode="${this.isDarkMode}"
+              >
+              </prism-container>
+              <div
+                class="copy-button"
+                @click=${() => this.copyToClipboard(this.results.json!)}
+              >
+                ${copy}
+              </div>
+            </div>`;
+          },
+          () => nothing
+        )}
+        ${when(
+          !this.showOnlySql &&
+            this.resultKind === ResultKind.METADATA &&
+            this.results.metadataOnly,
+          () => {
+            return html` <div class="scroll">
+              </prism-container>
+              <prism-container
+                .code="${JSON.stringify(this.results.metadataOnly, null, 2)}"
                 .language="${'json'}"
                 .darkMode="${this.isDarkMode}"
               >
