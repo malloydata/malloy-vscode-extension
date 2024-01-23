@@ -38,6 +38,7 @@ import {
   ConnectionMessageInstallExternalConnection,
   ConnectionMessageTest,
 } from '../../../common/message_types';
+import {chevronRightIcon} from '../components/icons';
 import './connection_editor/connection_editor';
 import {styles as editorStyles} from './connection_editor/connection_editor.css';
 
@@ -171,8 +172,7 @@ export class ConnectionEditorList extends LitElement {
                 class="connection-title"
                 @click=${() => (this.selectedId = config.id)}
               >
-                <i class="codicon codicon-chevron-right"></i>
-                CONNECTION: ${config.name || 'Untitled'}
+                ${chevronRightIcon} CONNECTION: ${config.name || 'Untitled'}
               </b>
             </div>`
       )}
