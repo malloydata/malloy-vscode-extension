@@ -29,6 +29,7 @@ import {when} from 'lit/directives/when.js';
 export enum ResultKind {
   HTML = 'html',
   JSON = 'json',
+  METADATA = 'metadata',
   SQL = 'sql',
   SCHEMA = 'schema',
 }
@@ -39,6 +40,8 @@ export const resultKindFromString = (kind?: string) => {
       return ResultKind.HTML;
     case 'json':
       return ResultKind.JSON;
+    case 'metadata':
+      return ResultKind.METADATA;
     case 'sql':
       return ResultKind.SQL;
     case 'schema':
@@ -85,6 +88,12 @@ export class ResultKindToggle extends LitElement {
               label="JSON"
               .selected=${this.resultKind === ResultKind.JSON}
               @click=${() => this.localSetKind(ResultKind.JSON)}
+            >
+            </result-control>
+            <result-control
+              label="METADATA"
+              .selected=${this.resultKind === ResultKind.METADATA}
+              @click=${() => this.localSetKind(ResultKind.METADATA)}
             >
             </result-control>
             <result-control
