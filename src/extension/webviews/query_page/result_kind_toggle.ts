@@ -21,10 +21,9 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {css, html, LitElement, nothing} from 'lit';
+import {css, html, LitElement} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
 import {classMap} from 'lit/directives/class-map.js';
-import {when} from 'lit/directives/when.js';
 
 export enum ResultKind {
   HTML = 'html',
@@ -53,8 +52,8 @@ export const resultKindFromString = (kind?: string) => {
 
 @customElement('result-kind-toggle')
 export class ResultKindToggle extends LitElement {
+  @property({type: Array}) availableKinds: ResultKind[] = [];
   @property() resultKind = ResultKind.HTML;
-  @property({type: Boolean}) showOnlySql = false;
   @property() setKind: (kind: ResultKind) => void = (_kind: ResultKind) => {};
 
   static override styles = css`
@@ -64,6 +63,7 @@ export class ResultKindToggle extends LitElement {
       padding: 5px 5px 3px 5px;
       font-size: 12px;
       gap: 3px;
+      text-transform: uppercase;
     }
   `;
 
@@ -73,44 +73,17 @@ export class ResultKindToggle extends LitElement {
   }
 
   override render() {
-    return html` <div>
+    return html`<div>
       <div class="result-controls">
-        ${when(
-          !this.showOnlySql,
-          () => html`
-            <result-control
-              label="HTML"
-              .selected=${this.resultKind === ResultKind.HTML}
-              @click=${() => this.localSetKind(ResultKind.HTML)}
+        ${this.availableKinds.map(
+          kind =>
+            html`<result-control
+              label=${kind}
+              .selected=${this.resultKind === kind}
+              @click=${() => this.localSetKind(kind)}
             >
-            </result-control>
-            <result-control
-              label="JSON"
-              .selected=${this.resultKind === ResultKind.JSON}
-              @click=${() => this.localSetKind(ResultKind.JSON)}
-            >
-            </result-control>
-            <result-control
-              label="METADATA"
-              .selected=${this.resultKind === ResultKind.METADATA}
-              @click=${() => this.localSetKind(ResultKind.METADATA)}
-            >
-            </result-control>
-            <result-control
-              label="SCHEMA"
-              .selected=${this.resultKind === ResultKind.SCHEMA}
-              @click=${() => this.localSetKind(ResultKind.SCHEMA)}
-            >
-            </result-control>
-          `,
-          () => nothing
+            </result-control>`
         )}
-        <result-control
-          label="SQL"
-          .selected=${this.resultKind === ResultKind.SQL}
-          @click=${() => this.localSetKind(ResultKind.SQL)}
-        >
-        </result-control>
       </div>
     </div>`;
   }

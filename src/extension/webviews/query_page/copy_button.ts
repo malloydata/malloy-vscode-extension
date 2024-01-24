@@ -21,46 +21,43 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {html} from 'lit';
+import {LitElement, css, html} from 'lit';
+import {customElement, property} from 'lit/decorators.js';
+import {copy} from '../assets/copy';
+import '../components/popup_dialog';
+import './download_form';
 
-export const copy = html`<svg
-  width="110px"
-  height="110px"
-  viewBox="0 0 110 110"
-  version="1.1"
-  xmlns="http://www.w3.org/2000/svg"
-  xmlns:xlink="http://www.w3.org/1999/xlink"
->
-  <title>Copy HTML to Clipboard</title>
-  <g
-    id="item_duplicate"
-    stroke="none"
-    stroke-width="1"
-    fill="none"
-    fill-rule="evenodd"
-  >
-    <rect
-      id="Rectangle"
-      stroke="#4285F4"
-      class="primarystroke"
-      stroke-width="6"
-      x="29.4307692"
-      y="24"
-      width="30.0923077"
-      height="41.7692308"
-      rx="5"
-    ></rect>
-    <rect
-      id="Rectangle-Copy"
-      stroke="#4285F4"
-      class="primarystroke"
-      stroke-width="6"
-      fill="none"
-      x="47.4769231"
-      y="45.2307692"
-      width="30.0923077"
-      height="41.7692308"
-      rx="5"
-    ></rect>
-  </g>
-</svg>`;
+const styles = css`
+  .copy-button {
+    width: 25px;
+    height: 25px;
+    background-color: var(--vscode-editorWidget-background);
+    color: var(--vscode-editorWidget-foreground);
+    border: 1px solid var(--vscode-dropdown-border);
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .copy-button svg {
+    width: 25px;
+    height: 25px;
+  }
+`;
+
+@customElement('copy-button')
+export class CopyButton extends LitElement {
+  static override styles = [styles];
+
+  @property()
+  onCopy!: () => Promise<void>;
+
+  override render() {
+    return html`<div class="copy-button" @click=${this.onCopy}>${copy}</div>`;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'copy-button': CopyButton;
+  }
+}

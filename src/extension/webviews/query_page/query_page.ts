@@ -26,7 +26,6 @@ import {
   Field,
   NamedQuery,
   QueryField,
-  QueryResult,
   Result,
 } from '@malloydata/malloy';
 import {HTMLView} from '@malloydata/render';
@@ -44,7 +43,6 @@ import {
   QueryRunStatus,
 } from '../../../common/message_types';
 import {fieldType} from '../../../common/schema';
-import {copy} from '../assets/copy';
 
 import {ResultKind, resultKindFromString} from './result_kind_toggle';
 import {VsCodeApi} from '../vscode_wrapper';
@@ -53,10 +51,9 @@ import {convertFromBytes} from '../../../common/convert_to_bytes';
 import '../components/labeled_spinner';
 import '../components/schema_renderer';
 import '../components/prism_container';
+import './copy_button';
 import './download_button';
 import './error_panel';
-
-type ResultMetadata = Omit<QueryResult, 'result' | 'sql'>;
 
 interface Results {
   canDownloadStream?: boolean;
@@ -64,7 +61,7 @@ interface Results {
   html?: HTMLElement;
   sql?: string;
   json?: string;
-  metadataOnly?: ResultMetadata;
+  metadata?: string;
   schema?: Explore[];
   profilingUrl?: string;
   queryCostBytes?: number;
@@ -76,7 +73,11 @@ export class QueryPage extends LitElement {
   @property({type: Object})
   vscode!: VsCodeApi<QueryPanelMessage, void>;
 
-  @property() resultKind = ResultKind.HTML;
+  @property({attribute: false})
+  resultKind = ResultKind.HTML;
+
+  @property({attribute: false})
+  availableKinds: ResultKind[] = [];
 
   @property({attribute: false})
   progressMessage = '';
@@ -84,16 +85,10 @@ export class QueryPage extends LitElement {
   @property({attribute: false})
   error = '';
 
-  @property({type: Object, attribute: false})
+  @property({attribute: false})
   results: Results = {};
 
-  @property({type: Boolean, attribute: false})
-  showOnlySql = false;
-
-  @property({type: Boolean, attribute: false})
-  showOnlySchema = false;
-
-  @property({type: Boolean, attribute: false})
+  @property({attribute: false})
   isDarkMode = false;
 
   readonly mutationController = new MutationController(this, {
@@ -169,26 +164,18 @@ export class QueryPage extends LitElement {
       font-weight: bold;
       color: var(--vscode-editorWidget-Foreground);
     }
-    .scroll:hover .copy-button {
+    .scroll:hover copy-button {
       display: block;
     }
-    .copy-button {
-      width: 25px;
-      height: 25px;
+    copy-button {
       position: absolute;
       bottom: 35px;
       right: 25px;
-      background-color: var(--vscode-editorWidget-background);
-      color: var(--vscode-editorWidget-foreground);
-      border: 1px solid var(--vscode-dropdown-border);
-      border-radius: 4px;
-      cursor: pointer;
       z-index: 1;
       display: none;
     }
-    .copy-button svg {
-      width: 25px;
-      height: 25px;
+    schema-renderer {
+      margin: 10px;
     }
     .warning {
       color: var(--vscode-statusBarItem-warningForeground);
@@ -205,8 +192,8 @@ export class QueryPage extends LitElement {
     switch (status) {
       case QueryRunStatus.Compiling:
         this.error = '';
-        this.showOnlySchema = false;
-        this.showOnlySql = false;
+        this.results = {};
+        this.availableKinds = [];
         this.progressMessage = 'Compiling';
         break;
       case QueryRunStatus.Running:
@@ -218,8 +205,7 @@ export class QueryPage extends LitElement {
       case QueryRunStatus.Compiled:
         if (message.showSQLOnly) {
           this.progressMessage = '';
-          this.showOnlySql = true;
-          this.showOnlySchema = false;
+          this.availableKinds = [ResultKind.SQL];
           this.resultKind = ResultKind.SQL;
           this.results = {sql: message.sql};
         } else {
@@ -246,7 +232,7 @@ export class QueryPage extends LitElement {
             schema: schema.map(json => Explore.fromJSON(json)),
           };
           this.resultKind = ResultKind.SCHEMA;
-          this.showOnlySchema = true;
+          this.availableKinds = [ResultKind.SCHEMA];
         }
         break;
       case QueryRunStatus.Done: {
@@ -257,9 +243,14 @@ export class QueryPage extends LitElement {
         if (defaultKind) {
           this.resultKind = defaultKind;
         }
+        this.availableKinds = [
+          ResultKind.HTML,
+          ResultKind.JSON,
+          ResultKind.METADATA,
+          ResultKind.SCHEMA,
+          ResultKind.SQL,
+        ];
         const result = Result.fromJSON(resultJson);
-        this.showOnlySql = false;
-        this.showOnlySchema = false;
         const {data, sql} = result;
 
         let warning: string | undefined;
@@ -271,14 +262,17 @@ export class QueryPage extends LitElement {
 
         const queryCostBytes = result.runStats?.queryCostBytes;
         const json = JSON.stringify(data.toObject(), null, 2);
+
         const schema = [result.resultExplore];
+
         const {sql: _s, result: _r, ...metadataOnly} = resultJson.queryResult;
+        const metadata = JSON.stringify(metadataOnly, null, 2);
 
         this.results = {
           json,
           schema,
           sql,
-          metadataOnly,
+          metadata,
           profilingUrl,
           queryCostBytes,
           stats,
@@ -351,7 +345,7 @@ export class QueryPage extends LitElement {
 
   override render() {
     if (this.error) {
-      return html` <div class="container">
+      return html`<div class="container">
         <error-panel .message=${this.error}></error-panel>
       </div>`;
     } else if (this.progressMessage) {
@@ -359,166 +353,124 @@ export class QueryPage extends LitElement {
         text=${this.progressMessage}
       ></labeled-spinner>`;
     } else {
-      return html` <div class="container">
+      return html`<div class="container">
         <div class="result-controls-bar">
-          <span class="result-label">
-            ${this.showOnlySql
-              ? 'SQL'
-              : this.showOnlySchema
-              ? 'SCHEMA'
-              : 'QUERY RESULTS'}
-          </span>
-          ${when(
-            !this.showOnlySchema,
-            () =>
-              html`<div class="result-controls-items">
-                <result-kind-toggle
-                  .showOnlySql=${this.showOnlySql}
-                  .resultKind=${this.resultKind}
-                  .setKind=${(kind: ResultKind) => {
-                    this.resultKind = kind;
+          <span class="result-label">MALLOY</span>
+          <div class="result-controls-items">
+            <result-kind-toggle
+              .availableKinds=${this.availableKinds}
+              .resultKind=${this.resultKind}
+              .setKind=${(kind: ResultKind) => {
+                this.resultKind = kind;
+              }}
+            >
+            </result-kind-toggle>
+            ${when(
+              this.results.canDownloadStream,
+              () =>
+                html`<download-button
+                  ?canStream=${this.results.canDownloadStream || false}
+                  .onDownload=${async (
+                    downloadOptions: QueryDownloadOptions
+                  ) => {
+                    this.vscode.postMessage({
+                      status: QueryRunStatus.StartDownload,
+                      downloadOptions,
+                    });
                   }}
-                >
-                </result-kind-toggle>
-                ${when(
-                  this.results.canDownloadStream,
-                  () =>
-                    html`<download-button
-                      ?canStream=${this.results.canDownloadStream || false}
-                      .onDownload=${async (
-                        downloadOptions: QueryDownloadOptions
-                      ) => {
-                        this.vscode.postMessage({
-                          status: QueryRunStatus.StartDownload,
-                          downloadOptions,
-                        });
-                      }}
-                    ></download-button>`
-                )}
-              </div>`
-          )}
+                ></download-button>`
+            )}
+          </div>
         </div>
         ${when(
-          !this.showOnlySql &&
-            this.resultKind === ResultKind.HTML &&
-            this.results.html,
+          this.resultKind === ResultKind.HTML && this.results.html,
           () =>
-            html` <div class="scroll">
-              <div class="result-container">
-                ${this.results.html}
-                <div
-                  class="copy-button"
-                  @click=${() =>
-                    this.copyToClipboard(
-                      this.getStyledHTML(this.results.html!)
-                    )}
-                >
-                  ${copy}
-                </div>
-              </div>
-            </div>`,
-          () => nothing
+            html`<div class="scroll result-container">
+              ${this.results.html}
+              <copy-button
+                .onCopy=${() =>
+                  this.copyToClipboard(this.getStyledHTML(this.results.html!))}
+              >
+              </copy-button>
+            </div>`
         )}
         ${when(
-          !this.showOnlySql &&
-            this.resultKind === ResultKind.JSON &&
-            this.results.json,
-          () => {
-            return html` <div class="scroll">
+          this.resultKind === ResultKind.JSON && this.results.json,
+          () =>
+            html`<div class="scroll">
               <prism-container
-                .code="${this.results.json!}"
-                .language="${'json'}"
-                .darkMode="${this.isDarkMode}"
+                code=${this.results.json!}
+                language="json"
+                ?darkMode=${this.isDarkMode}
               >
               </prism-container>
-              <div
-                class="copy-button"
-                @click=${() => this.copyToClipboard(this.results.json!)}
+              <copy-button
+                .onCopy=${() => this.copyToClipboard(this.results.json!)}
               >
-                ${copy}
-              </div>
-            </div>`;
-          },
-          () => nothing
+              </copy-button>
+            </div>`
         )}
         ${when(
-          !this.showOnlySql &&
-            this.resultKind === ResultKind.METADATA &&
-            this.results.metadataOnly,
-          () => {
-            return html` <div class="scroll">
+          this.resultKind === ResultKind.METADATA && this.results.metadata,
+          () => html`<div class="scroll">
               </prism-container>
               <prism-container
-                .code="${JSON.stringify(this.results.metadataOnly, null, 2)}"
-                .language="${'json'}"
-                .darkMode="${this.isDarkMode}"
+                code=${this.results.metadata!}
+                language="json"
+                ?darkMode=${this.isDarkMode}
               >
               </prism-container>
-              <div
-                class="copy-button"
-                @click=${() => this.copyToClipboard(this.results.json!)}
+              <copy-button
+                .onCopy=${() => this.copyToClipboard(this.results.metadata!)}
               >
-                ${copy}
-              </div>
-            </div>`;
-          },
-          () => nothing
+              </copy-button>
+            </div>`
         )}
         ${when(
-          !this.showOnlySql &&
-            this.resultKind === ResultKind.SCHEMA &&
-            this.results.schema,
+          this.resultKind === ResultKind.SCHEMA && this.results.schema,
           () =>
-            html` <div class="scroll">
+            html`<div class="scroll">
               <schema-renderer
-                style="margin: 10px;"
                 .explores=${this.results.schema!}
                 .queries=${[]}
-                .defaultShow=${true}
-                .onFieldClick=${(field: Field) => this.onFieldClick(field)}
-                .onQueryClick=${(query: NamedQuery | QueryField) =>
-                  this.onQueryClick(query)}
+                ?defaultShow=${true}
+                .onFieldClick=${this.onFieldClick}
+                .onQueryClick=${this.onQueryClick}
                 .onContextClick=${this.onContextClick}
               >
               </schema-renderer>
-            </div>`,
-          () => nothing
+            </div>`
         )}
         ${when(
           this.resultKind === ResultKind.SQL && this.results.sql,
-          () => {
-            return html` <div class="scroll">
+          () =>
+            html`<div class="scroll">
               <div>
                 <prism-container
                   .code="${this.results.sql!}"
-                  .language="${'sql'}"
-                  .darkMode="${this.isDarkMode}"
+                  language="sql"
+                  ?darkMode=${this.isDarkMode}
                 >
                 </prism-container>
-                <div
-                  class="copy-button"
-                  @click=${() => this.copyToClipboard(this.results.sql!)}
+                <copy-button
+                  .onCopy=${() => this.copyToClipboard(this.results.sql!)}
                 >
-                  ${copy}
-                </div>
+                </copy-button>
               </div>
-            </div>`;
-          },
-          () => nothing
+            </div>`
         )}
         ${when(
           this.results.stats ||
             this.results.profilingUrl ||
             this.results.queryCostBytes,
           () =>
-            html` <div class="stats">
+            html`<div class="stats">
               ${this.getStats(
                 this.results.stats,
                 this.results.profilingUrl,
                 this.results.queryCostBytes
               )}
-            </div>`,
-          () => nothing
+            </div>`
         )}
         ${when(
           this.results.warning,
@@ -526,8 +478,6 @@ export class QueryPage extends LitElement {
         )}
       </div>`;
     }
-
-    return nothing;
   }
 
   getStats(
@@ -540,7 +490,7 @@ export class QueryPage extends LitElement {
         ${stats.runTime.toLocaleString()}s, Total Time:
         ${stats.totalTime.toLocaleString()}s.`
       : nothing}
-    ${this.getQueryCostStats(queryCostBytes, this.showOnlySql) ?? ''}
+    ${this.getQueryCostStats(queryCostBytes, !this.results.html) ?? ''}
     ${this.getProfilingUrlLink(profilingUrl)}`;
   }
 
@@ -573,7 +523,7 @@ export class QueryPage extends LitElement {
     this.vscode.postMessage?.({status, command, args});
   }
 
-  onFieldClick(field: Field) {
+  onFieldClick = (field: Field) => {
     const type = fieldType(field);
 
     if (type !== 'query') {
@@ -585,9 +535,9 @@ export class QueryPage extends LitElement {
       }
       this.copyToClipboard(path);
     }
-  }
+  };
 
-  onQueryClick(query: NamedQuery | QueryField) {
+  onQueryClick = (query: NamedQuery | QueryField) => {
     if ('parentExplore' in query) {
       const status = QueryRunStatus.RunCommand;
       const command = 'malloy.runQuery';
@@ -596,7 +546,7 @@ export class QueryPage extends LitElement {
       const args = [arg1, arg2];
       this.vscode.postMessage({status, command, args});
     }
-  }
+  };
 
   getStyledHTML(html: HTMLElement): string {
     const resolveStyles = getComputedStyle(html);
