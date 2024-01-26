@@ -21,30 +21,15 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {
-  runMalloyQueryWithProgress,
-  getActiveDocumentMetadata,
-} from './utils/run_query_utils';
-import {WorkerConnection} from '../worker_connection';
-import {ResultJSON} from '@malloydata/malloy';
+import * as vscode from 'vscode';
 
-export async function runQueryFileCommand(
-  worker: WorkerConnection,
-  queryIndex = -1
-): Promise<ResultJSON | undefined> {
-  const documentMeta = getActiveDocumentMetadata();
-  if (documentMeta) {
-    return runMalloyQueryWithProgress(
-      worker,
-      {
-        type: 'file',
-        index: queryIndex,
-        documentMeta,
-      },
-      documentMeta.uri,
-      documentMeta.fileName.split('/').pop() || documentMeta.fileName
-    );
-  }
-
-  return undefined;
+export function runTurtleFromSchemaCommand(item: {
+  topLevelExplore: string;
+  accessPath: string[];
+}): void {
+  vscode.commands.executeCommand(
+    'malloy.runQuery',
+    `run: ${item.topLevelExplore}->${item.accessPath.join('.')}`,
+    `${item.topLevelExplore}->${item.accessPath.join('.')}`
+  );
 }

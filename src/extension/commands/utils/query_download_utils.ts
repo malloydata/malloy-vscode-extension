@@ -27,18 +27,18 @@ import {
   QueryDownloadOptions,
   QueryDownloadStatus,
   downloadProgress,
-} from '../../common/message_types';
+} from '../../../common/types/message_types';
 
 import * as vscode from 'vscode';
 import {Utils} from 'vscode-uri';
-import {QuerySpec} from '../../common/query_spec';
-import {MessageDownload} from '../../common/worker_message_types';
-import {MALLOY_EXTENSION_STATE} from '../state';
+import {QuerySpec} from '../../../common/types/query_spec';
+import {MessageDownload} from '../../../common/types/worker_message_types';
+import {MALLOY_EXTENSION_STATE} from '../../state';
 import {Disposable} from 'vscode-jsonrpc';
-import {WorkerConnection} from '../worker_connection';
-import {errorMessage} from '../../common/errors';
-import {noAwait} from '../../util/no_await';
-import {getMalloyConfig} from '../utils';
+import {WorkerConnection} from '../../worker_connection';
+import {errorMessage} from '../../../common/errors';
+import {noAwait} from '../../../util/no_await';
+import {getMalloyConfig} from '../../utils/config';
 
 /**
  * VSCode doesn't support streaming writes, so fake it.

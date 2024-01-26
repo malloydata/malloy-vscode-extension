@@ -23,7 +23,7 @@
 
 import {LitElement, html} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
-import {QueryDownloadOptions} from '../../../common/message_types';
+import {QueryDownloadOptions} from '../../../common/types/message_types';
 import '../components/popup_dialog';
 import './download_form';
 import {

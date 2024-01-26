@@ -22,22 +22,24 @@
  */
 
 import * as vscode from 'vscode';
-import {
-  SchemaProvider,
-  goToDefinitionFromSchemaCommand,
-  previewFromSchemaCommand,
-  runNamedQueryFromSchemaCommand,
-  runTurtleFromSchemaCommand,
-} from './tree_views/schema_view';
+import {SchemaProvider} from './tree_views/schema_view';
 import {
   copyFieldPathCommand,
   copyToClipboardCommand,
+  goToDefinitionFromSchemaCommand,
+  newUntitledNotebookCommand,
+  previewFromSchemaCommand,
   runNamedQuery,
+  runNamedQueryFromSchemaCommand,
   runNamedSQLBlock,
   runQueryCommand,
   runQueryFileCommand,
+  runTurtleFromSchemaCommand,
   runUnnamedSQLBlock,
   showLicensesCommand,
+  showSQLCommand,
+  showSQLFileCommand,
+  showSQLNamedQueryCommand,
 } from './commands';
 import {malloyLog} from './logger';
 import {trackModelLoad, trackModelSave} from './telemetry';
@@ -52,14 +54,11 @@ import {
   FetchCellDataEvent,
   FetchFileEvent,
   FileHandler,
-} from '../common/types';
-import {showSQLCommand} from './commands/show_sql';
-import {showSQLFileCommand} from './commands/show_sql_file';
-import {showSQLNamedQueryCommand} from './commands/show_sql_named_query';
+} from '../common/types/file_handler';
 import {
   GenericConnection,
   WorkerFetchMessage,
-} from '../common/worker_message_types';
+} from '../common/types/worker_message_types';
 import {BaseLanguageClient} from 'vscode-languageclient';
 import {WorkerConnection} from './worker_connection';
 import {runQueryAtCursorCommand} from './commands/run_query_at_cursor';
@@ -169,6 +168,7 @@ export const setupSubscriptions = (
     )
   );
 
+  // Schema Tree and related commands
   const schemaTree = new SchemaProvider(context, client, worker);
 
   context.subscriptions.push(
@@ -209,16 +209,25 @@ export const setupSubscriptions = (
     )
   );
 
-  // Show Licenses
-  context.subscriptions.push(
-    vscode.commands.registerCommand('malloy.showLicenses', showLicensesCommand)
-  );
-
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor(() =>
       vscode.commands.executeCommand('malloy.refreshSchema')
     )
   );
+
+  // Show Licenses
+  context.subscriptions.push(
+    vscode.commands.registerCommand('malloy.showLicenses', showLicensesCommand)
+  );
+
+  // Tracking
+  let clientId: string | undefined =
+    context.globalState.get('malloy_client_id');
+  if (clientId === undefined) {
+    clientId = getNewClientId();
+    context.globalState.update('malloy_client_id', clientId);
+  }
+  MALLOY_EXTENSION_STATE.setClientId(clientId);
 
   context.subscriptions.push(
     vscode.workspace.onDidOpenTextDocument(async e => {
@@ -245,16 +254,16 @@ export const setupSubscriptions = (
     vscode.window.registerWebviewViewProvider('malloyHelp', provider)
   );
 
+  // Notebooks
   activateNotebookSerializer(context);
   activateNotebookController(context, client, worker);
 
-  let clientId: string | undefined =
-    context.globalState.get('malloy_client_id');
-  if (clientId === undefined) {
-    clientId = getNewClientId();
-    context.globalState.update('malloy_client_id', clientId);
-  }
-  MALLOY_EXTENSION_STATE.setClientId(clientId);
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      'malloy.newUntitledNotebook',
+      newUntitledNotebookCommand
+    )
+  );
 };
 
 export const setupFileMessaging = (

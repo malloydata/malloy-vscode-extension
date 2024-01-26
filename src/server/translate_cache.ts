@@ -31,9 +31,9 @@ import {
 import {TextDocument} from 'vscode-languageserver-textdocument';
 
 import {ConnectionManager} from '../common/connection_manager';
-import {BuildModelRequest, CellData} from '../common/types';
+import {BuildModelRequest, CellData} from '../common/types/file_handler';
 import {MalloySQLSQLParser} from '@malloydata/malloy-sql';
-import {FetchModelMessage} from '../common/message_types';
+import {FetchModelMessage} from '../common/types/message_types';
 import {fixLogRange} from '../common/malloy_sql';
 
 export class TranslateCache {

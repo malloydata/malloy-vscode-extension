@@ -28,7 +28,7 @@ import {
   ConnectionBackend,
   ConnectionConfig,
   ExternalConnectionConfig,
-} from '../../connection_manager_types';
+} from '../../types/connection_manager_types';
 import {createDuckDbWasmConnection} from '../duckdb_wasm_connection';
 import {DuckDBWASMConnection} from '@malloydata/db-duckdb/wasm';
 

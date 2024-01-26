@@ -24,7 +24,7 @@
 import * as vscode from 'vscode';
 import {MALLOY_EXTENSION_STATE} from './state';
 import fetch from 'node-fetch';
-import {getMalloyConfig} from './utils';
+import {getMalloyConfig} from './utils/config';
 
 const telemetryLog = vscode.window.createOutputChannel('Malloy Telemetry');
 

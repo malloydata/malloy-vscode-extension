@@ -22,14 +22,20 @@
  */
 
 import * as vscode from 'vscode';
-import {newUntitledNotebookCommand} from '../commands/new_untitled_notebook';
-import {getDocumentMetadata, runMalloyQuery} from '../commands/run_query_utils';
+import {
+  getDocumentMetadata,
+  runMalloyQuery,
+} from '../commands/utils/run_query_utils';
 import {WorkerConnection} from '../worker_connection';
 import {errorMessage} from '../../common/errors';
-import {BuildModelRequest, CellMetadata, QueryCost} from '../../common/types';
+import {
+  BuildModelRequest,
+  CellMetadata,
+  QueryCost,
+} from '../../common/types/file_handler';
 import {convertFromBytes} from '../../common/convert_to_bytes';
 import {BaseLanguageClient} from 'vscode-languageclient';
-import {FetchModelMessage} from '../../common/message_types';
+import {FetchModelMessage} from '../../common/types/message_types';
 import {noAwait} from '../../util/no_await';
 import {MalloyRendererMessage} from './types';
 
@@ -109,13 +115,6 @@ export function activateNotebookController(
 
   context.subscriptions.push(
     new MalloyController(worker, client, statusBarProvider)
-  );
-
-  context.subscriptions.push(
-    vscode.commands.registerCommand(
-      'malloy.newUntitledNotebook',
-      newUntitledNotebookCommand
-    )
   );
 
   const relayEvent = (event: MessageEvent) => {

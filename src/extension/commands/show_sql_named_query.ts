@@ -25,7 +25,7 @@ import {WorkerConnection} from '../worker_connection';
 import {
   getActiveDocumentMetadata,
   runMalloyQueryWithProgress,
-} from './run_query_utils';
+} from './utils/run_query_utils';
 
 export function showSQLNamedQueryCommand(
   worker: WorkerConnection,

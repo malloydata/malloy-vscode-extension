@@ -22,7 +22,7 @@
  */
 
 import {html, render} from 'lit';
-import {QueryPanelMessage} from '../../../common/message_types';
+import {QueryPanelMessage} from '../../../common/types/message_types';
 
 import './query_page';
 import {getVSCodeAPI} from './query_vscode_context';

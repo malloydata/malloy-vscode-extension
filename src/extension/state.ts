@@ -22,10 +22,10 @@
  */
 
 import vscode, {WebviewPanel} from 'vscode';
-import {QueryMessageStatus} from '../common/message_types';
+import {QueryMessageStatus} from '../common/types/message_types';
 import {WebviewMessageManager} from './webview_message_manager';
 import {Position} from 'vscode-languageclient';
-import {DocumentMetadata} from '../common/query_spec';
+import {DocumentMetadata} from '../common/types/query_spec';
 
 export interface RunState {
   cancel: () => void;

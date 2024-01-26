@@ -28,18 +28,37 @@ import {
   Result,
   Runtime,
   SerializedExplore,
+  StructDef,
 } from '@malloydata/malloy';
 import {MalloySQLSQLParser} from '@malloydata/malloy-sql';
 
-import {WorkerMessageHandler, MessageRun} from '../common/worker_message_types';
+import {
+  WorkerMessageHandler,
+  MessageRun,
+} from '../common/types/worker_message_types';
 
-import {QueryMessageStatus, QueryRunStatus} from '../common/message_types';
+import {
+  QueryMessageStatus,
+  QueryRunStatus,
+} from '../common/types/message_types';
 import {createModelMaterializer, createRunnable} from './create_runnable';
 import {ConnectionManager} from '../common/connection_manager';
-import {Cell, CellData, FileHandler, StructDefResult} from '../common/types';
+import {Cell, CellData, FileHandler} from '../common/types/file_handler';
 import {CancellationToken, ProgressType} from 'vscode-jsonrpc';
 import {errorMessage} from '../common/errors';
 import {fixLogRange} from '../common/malloy_sql';
+
+interface StructDefSuccess {
+  structDef: StructDef;
+  error?: undefined;
+}
+
+interface StructDefFailure {
+  error: string;
+  structDef?: undefined;
+}
+
+type StructDefResult = StructDefSuccess | StructDefFailure;
 
 const fakeMalloyResult = (
   {structDef}: StructDefResult,

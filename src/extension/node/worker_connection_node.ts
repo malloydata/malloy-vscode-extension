@@ -25,9 +25,9 @@ import * as child_process from 'child_process';
 import stream from 'stream';
 import * as vscode from 'vscode';
 import * as rpc from 'vscode-jsonrpc/node';
-import {FileHandler} from '../../common/types';
+import {FileHandler} from '../../common/types/file_handler';
 import {WorkerConnection} from '../worker_connection';
-import {GenericConnection} from '../../common/worker_message_types';
+import {GenericConnection} from '../../common/types/worker_message_types';
 
 const DEFAULT_RESTART_SECONDS = 1;
 

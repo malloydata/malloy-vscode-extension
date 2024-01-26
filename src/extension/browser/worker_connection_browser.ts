@@ -22,8 +22,8 @@
  */
 
 import * as vscode from 'vscode';
-import {GenericConnection} from '../../common/worker_message_types';
-import {FileHandler} from '../../common/types';
+import {GenericConnection} from '../../common/types/worker_message_types';
+import {FileHandler} from '../../common/types/file_handler';
 import {WorkerConnection} from '../worker_connection';
 
 export class WorkerConnectionBrowser extends WorkerConnection {

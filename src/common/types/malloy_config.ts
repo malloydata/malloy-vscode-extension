@@ -21,30 +21,13 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {
-  runMalloyQueryWithProgress,
-  getActiveDocumentMetadata,
-} from './utils/run_query_utils';
-import {WorkerConnection} from '../worker_connection';
-import {ResultJSON} from '@malloydata/malloy';
+import {ConnectionConfig} from './connection_manager_types';
 
-export async function runQueryFileCommand(
-  worker: WorkerConnection,
-  queryIndex = -1
-): Promise<ResultJSON | undefined> {
-  const documentMeta = getActiveDocumentMetadata();
-  if (documentMeta) {
-    return runMalloyQueryWithProgress(
-      worker,
-      {
-        type: 'file',
-        index: queryIndex,
-        documentMeta,
-      },
-      documentMeta.uri,
-      documentMeta.fileName.split('/').pop() || documentMeta.fileName
-    );
-  }
-
-  return undefined;
+export interface MalloyConfig {
+  /** Maximum number of top-level rows to fetch when running queries. */
+  rowLimit: number;
+  /** Path to directory to save downloaded results */
+  downloadsPath: string;
+  /** Connections for Malloy to use to access data when compiling and querying. */
+  connections: ConnectionConfig[];
 }

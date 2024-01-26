@@ -9,7 +9,7 @@ import {
   ExternalConnectionConfig,
   ExternalConnectionPackageInfo,
   ExternalConnectionSource,
-} from '../connection_manager_types';
+} from '../types/connection_manager_types';
 
 // TODO(figutierrez): Can we check if package deps are in sync with these?
 

@@ -29,7 +29,8 @@ import {
   ProgressType,
 } from 'vscode-jsonrpc';
 import {QueryDownloadOptions} from './message_types';
-import {CellData, MalloyConfig} from './types';
+import {CellData} from './file_handler';
+import {MalloyConfig} from './malloy_config';
 import {QuerySpec} from './query_spec';
 
 /*

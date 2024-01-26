@@ -25,7 +25,7 @@ import {connectionManager} from '../connection_manager';
 import {
   ConnectionConfig,
   getDefaultIndex,
-} from '../../../common/connection_manager_types';
+} from '../../../common/types/connection_manager_types';
 import {deletePassword, setPassword} from 'keytar';
 import {EditConnectionPanel} from '../../connection_editor';
 import {ConnectionItem} from '../../tree_views/connections_view';

@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {MessageConfig} from '../../common/worker_message_types';
+import {MessageConfig} from '../../common/types/worker_message_types';
 import {ConnectionManager} from '../../common/connection_manager';
 
 const DEFAULT_ROW_LIMIT = 50;

@@ -28,7 +28,7 @@ import {
   ConnectionBackend,
   ConnectionConfig,
   ExternalConnectionConfig,
-} from '../../connection_manager_types';
+} from '../../types/connection_manager_types';
 import {createBigQueryConnection} from '../bigquery_connection';
 import {createDuckDbConnection} from '../duckdb_connection';
 import {createPostgresConnection} from '../postgres_connection';

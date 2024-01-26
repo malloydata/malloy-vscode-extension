@@ -21,8 +21,8 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {CellData, FileHandler} from '../common/types';
-import {WorkerMessageHandler} from '../common/worker_message_types';
+import {CellData, FileHandler} from '../common/types/file_handler';
+import {WorkerMessageHandler} from '../common/types/worker_message_types';
 
 export class RpcFileHandler implements FileHandler {
   constructor(private connection: WorkerMessageHandler) {}

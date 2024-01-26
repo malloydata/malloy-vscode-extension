@@ -41,7 +41,7 @@ import {
   QueryPanelMessage,
   QueryRunStats,
   QueryRunStatus,
-} from '../../../common/message_types';
+} from '../../../common/types/message_types';
 import {fieldType} from '../../../common/schema';
 
 import {ResultKind, resultKindFromString} from './result_kind_toggle';

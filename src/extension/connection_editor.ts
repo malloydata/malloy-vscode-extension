@@ -29,12 +29,12 @@ import {
   ConnectionServiceAccountKeyRequestStatus,
   ConnectionTestStatus,
   InstallExternalConnectionStatus,
-} from '../common/message_types';
+} from '../common/types/message_types';
 import {WebviewMessageManager} from './webview_message_manager';
-import {ConnectionConfig} from '../common/connection_manager_types';
+import {ConnectionConfig} from '../common/types/connection_manager_types';
 import {errorMessage} from '../common/errors';
 import {ConnectionManager} from '../common/connection_manager';
-import {getMalloyConfig} from './utils';
+import {getMalloyConfig} from './utils/config';
 
 export class EditConnectionPanel {
   panel: vscode.WebviewPanel;

@@ -25,7 +25,7 @@ import {DuckDBConnection} from '@malloydata/db-duckdb';
 import {
   ConfigOptions,
   DuckDBConnectionConfig,
-} from '../connection_manager_types';
+} from '../types/connection_manager_types';
 import {isDuckDBAvailable} from '../../common/duckdb_availability';
 
 export const createDuckDbConnection = async (

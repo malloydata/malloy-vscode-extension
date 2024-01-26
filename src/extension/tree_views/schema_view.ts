@@ -32,17 +32,17 @@ import {
   DocumentLocation,
 } from '@malloydata/malloy';
 import {BaseLanguageClient} from 'vscode-languageclient';
-import {BuildModelRequest} from '../../common/types';
+import {BuildModelRequest} from '../../common/types/file_handler';
 import {
   exploreSubtype,
   fieldType,
   isFieldAggregate,
   isFieldHidden,
 } from '../../common/schema';
-import {FetchModelMessage} from '../../common/message_types';
+import {FetchModelMessage} from '../../common/types/message_types';
 import {WorkerConnection} from '../worker_connection';
-import {getActiveDocumentMetadata} from '../commands/run_query_utils';
-import {DocumentMetadata} from '../../common/query_spec';
+import {getActiveDocumentMetadata} from '../commands/utils/run_query_utils';
+import {DocumentMetadata} from '../../common/types/query_spec';
 
 const numberIcon = 'number.svg';
 const numberAggregateIcon = 'number-aggregate.svg';
@@ -294,49 +294,6 @@ function getIconPath(
 
   const uri = context.extensionUri;
   return Utils.joinPath(uri, 'img', imageFileName);
-}
-
-export function runNamedQueryFromSchemaCommand(item: {name: string}): void {
-  vscode.commands.executeCommand('malloy.runNamedQuery', item.name);
-}
-
-export function runTurtleFromSchemaCommand(item: {
-  topLevelExplore: string;
-  accessPath: string[];
-}): void {
-  vscode.commands.executeCommand(
-    'malloy.runQuery',
-    `run: ${item.topLevelExplore}->${item.accessPath.join('.')}`,
-    `${item.topLevelExplore}->${item.accessPath.join('.')}`
-  );
-}
-
-export function previewFromSchemaCommand(item: {
-  topLevelExplore: string;
-  accessPath: string[];
-}): void {
-  vscode.commands.executeCommand(
-    'malloy.runQuery',
-    `run: ${item.topLevelExplore}->{ select: ${[...item.accessPath, '*'].join(
-      '.'
-    )}; limit: 20 }`,
-    `Preview ${item.topLevelExplore} ${item.accessPath.join('.')}`,
-    'html'
-  );
-}
-
-export function goToDefinitionFromSchemaCommand(item: {
-  location?: DocumentLocation;
-}): void {
-  const location = item.location;
-  if (location) {
-    const pos = new vscode.Position(
-      location.range.start.line,
-      location.range.start.character
-    );
-    const uri = vscode.Uri.parse(location.url);
-    vscode.commands.executeCommand('editor.action.goToLocations', uri, pos, []);
-  }
 }
 
 function byKindThenName(field1: Field, field2: Field) {
