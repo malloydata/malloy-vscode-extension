@@ -58,6 +58,8 @@ import './error_panel';
 interface Results {
   canDownloadStream?: boolean;
   stats?: QueryRunStats;
+  name?: string;
+  result?: Result;
   html?: HTMLElement;
   sql?: string;
   json?: string;
@@ -236,8 +238,14 @@ export class QueryPage extends LitElement {
         }
         break;
       case QueryRunStatus.Done: {
-        const {canDownloadStream, resultJson, defaultTab, stats, profilingUrl} =
-          message;
+        const {
+          canDownloadStream,
+          resultJson,
+          defaultTab,
+          name,
+          stats,
+          profilingUrl,
+        } = message;
 
         const defaultKind = resultKindFromString(defaultTab);
         if (defaultKind) {
@@ -270,6 +278,8 @@ export class QueryPage extends LitElement {
 
         this.results = {
           json,
+          name,
+          result,
           schema,
           sql,
           metadata,
@@ -366,9 +376,11 @@ export class QueryPage extends LitElement {
             >
             </result-kind-toggle>
             ${when(
-              this.results.canDownloadStream,
+              this.results.result,
               () =>
                 html`<download-button
+                  .name=${this.results.name}
+                  .result=${this.results.result!}
                   ?canStream=${this.results.canDownloadStream || false}
                   .onDownload=${async (
                     downloadOptions: QueryDownloadOptions
