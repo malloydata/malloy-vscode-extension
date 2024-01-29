@@ -31,7 +31,10 @@ import {
   vsCodeOption,
   vsCodeTextField,
 } from '@vscode/webview-ui-toolkit';
-import {QueryDownloadOptions} from '../../../common/types/message_types';
+import {
+  QueryDownloadCopyData,
+  QueryDownloadOptions,
+} from '../../../common/types/message_types';
 import {
   CSVWriter,
   DataWriter,
@@ -39,6 +42,7 @@ import {
   Result,
   WriteStream,
 } from '@malloydata/malloy';
+import {when} from 'lit/directives/when.js';
 
 const styles = css`
   .form {
@@ -49,6 +53,7 @@ const styles = css`
 
   .form-row {
     display: flex;
+    gap: 10px;
   }
 `;
 
@@ -86,6 +91,9 @@ export class DownloadForm extends LitElement {
   @property()
   onDownload!: (options: QueryDownloadOptions) => Promise<void>;
 
+  @property()
+  onCopy!: (options: QueryDownloadCopyData) => Promise<void>;
+
   @property({type: Boolean})
   canStream!: boolean;
 
@@ -102,15 +110,7 @@ export class DownloadForm extends LitElement {
 
   href: string | null = null;
 
-  /**
-   * Creates a link element that contains a download button, which
-   * when clicked will initiate a download of the current result set.
-   * This current targets only the browser version, and does not
-   * support streaming.
-   *
-   * @returns Link element template
-   */
-  async buildDownloadHref(): Promise<TemplateResult> {
+  async createTextBlob(): Promise<QueryDownloadCopyData> {
     const writeStream = new MemoryWriteStream();
     let writer: DataWriter;
     let type: string;
@@ -127,13 +127,28 @@ export class DownloadForm extends LitElement {
     const rowStream = this.result.data.inMemoryStream();
     await writer.process(rowStream);
     writeStream.close();
+    const data = writeStream.data;
 
+    return {type, download, data};
+  }
+
+  /**
+   * Creates a link element that contains a download button, which
+   * when clicked will initiate a download of the current result set.
+   * This current targets only the browser version, and does not
+   * support streaming.
+   *
+   * @returns Link element template
+   */
+  async buildDownloadHref(): Promise<TemplateResult> {
     // Dereference any existing blob
     if (this.href) {
       window.URL.revokeObjectURL(this.href);
     }
+    const {type, download, data} = await this.createTextBlob();
+
     // Create a new blob with our data
-    const blob = new Blob([writeStream.data], {type});
+    const blob = new Blob([data], {type});
     this.href = window.URL.createObjectURL(blob);
 
     return html`<a href=${this.href} download=${download} @click=${this.onClose}
@@ -147,6 +162,11 @@ export class DownloadForm extends LitElement {
       window.URL.revokeObjectURL(this.href);
     }
   }
+
+  copyToClipboard = async () => {
+    const options = await this.createTextBlob();
+    this.onCopy(options);
+  };
 
   override render() {
     let buttonPromise: Promise<TemplateResult> | undefined;
@@ -230,6 +250,16 @@ export class DownloadForm extends LitElement {
                 >
                   Download
                 </vscode-button>
+                ${when(
+                  this.amount === 'current',
+                  () =>
+                    html` <vscode-button
+                      class="copy-button"
+                      @click=${this.copyToClipboard}
+                    >
+                      To Clipboard
+                    </vscode-button>`
+                )}
               </div>`
       }
       </div>

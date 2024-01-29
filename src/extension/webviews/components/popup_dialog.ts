@@ -41,7 +41,7 @@ const styles = css`
 
     &.open {
       display: flex;
-      z-index: 1;
+      z-index: 101;
     }
   }
 

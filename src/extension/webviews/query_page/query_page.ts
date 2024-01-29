@@ -35,6 +35,7 @@ import {when} from 'lit/directives/when.js';
 import {MutationController} from '@lit-labs/observers/mutation-controller.js';
 
 import {
+  QueryDownloadCopyData,
   QueryDownloadOptions,
   QueryMessageStatus,
   QueryMessageType,
@@ -303,11 +304,7 @@ export class QueryPage extends LitElement {
               _target: HTMLElement,
               _drillFilters: string[]
             ) => {
-              const status = QueryRunStatus.RunCommand;
-              const command = 'malloy.copyToClipboard';
-              const args = [drillQuery, 'Query'];
-              // TODO(cbhagwat): Fix this.
-              this.vscode.postMessage({status, command, args});
+              this.copyToClipboard(drillQuery, 'Drill Query');
             },
           })
           .then(html => {
@@ -390,6 +387,9 @@ export class QueryPage extends LitElement {
                       downloadOptions,
                     });
                   }}
+                  .onCopy=${async ({data}: QueryDownloadCopyData) => {
+                    this.copyToClipboard(data, 'Results');
+                  }}
                 ></download-button>`
             )}
           </div>
@@ -401,7 +401,10 @@ export class QueryPage extends LitElement {
               ${this.results.html}
               <copy-button
                 .onCopy=${() =>
-                  this.copyToClipboard(this.getStyledHTML(this.results.html!))}
+                  this.copyToClipboard(
+                    this.getStyledHTML(this.results.html!),
+                    'HTML Results'
+                  )}
               >
               </copy-button>
             </div>`
@@ -417,7 +420,8 @@ export class QueryPage extends LitElement {
               >
               </prism-container>
               <copy-button
-                .onCopy=${() => this.copyToClipboard(this.results.json!)}
+                .onCopy=${() =>
+                  this.copyToClipboard(this.results.json!, 'JSON Results')}
               >
               </copy-button>
             </div>`
@@ -433,7 +437,11 @@ export class QueryPage extends LitElement {
               >
               </prism-container>
               <copy-button
-                .onCopy=${() => this.copyToClipboard(this.results.metadata!)}
+                .onCopy=${() =>
+                  this.copyToClipboard(
+                    this.results.metadata!,
+                    'Result Metadata'
+                  )}
               >
               </copy-button>
             </div>`
@@ -465,7 +473,8 @@ export class QueryPage extends LitElement {
                 >
                 </prism-container>
                 <copy-button
-                  .onCopy=${() => this.copyToClipboard(this.results.sql!)}
+                  .onCopy=${() =>
+                    this.copyToClipboard(this.results.sql!, 'SQL')}
                 >
                 </copy-button>
               </div>
@@ -528,11 +537,11 @@ export class QueryPage extends LitElement {
       : nothing;
   }
 
-  copyToClipboard(text: string) {
+  copyToClipboard(text: string, type: string) {
     const status = QueryRunStatus.RunCommand;
     const command = 'malloy.copyToClipboard';
-    const args = [text, 'Results'];
-    this.vscode.postMessage?.({status, command, args});
+    const args = [text, type];
+    this.vscode.postMessage({status, command, args});
   }
 
   onFieldClick = (field: Field) => {
@@ -545,7 +554,7 @@ export class QueryPage extends LitElement {
         path = `${current.name}.${path}`;
         current = current.parentExplore;
       }
-      this.copyToClipboard(path);
+      this.copyToClipboard(path, 'Path');
     }
   };
 

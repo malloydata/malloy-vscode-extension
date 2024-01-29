@@ -23,7 +23,10 @@
 
 import {LitElement, html} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
-import {QueryDownloadOptions} from '../../../common/types/message_types';
+import {
+  QueryDownloadCopyData,
+  QueryDownloadOptions,
+} from '../../../common/types/message_types';
 import '../components/popup_dialog';
 import './download_form';
 import {
@@ -59,6 +62,9 @@ export class DownloadButton extends LitElement {
 
   @property()
   onDownload!: (options: QueryDownloadOptions) => Promise<void>;
+
+  @property()
+  onCopy!: (options: QueryDownloadCopyData) => Promise<void>;
 
   @property({type: Boolean})
   canStream!: boolean;
@@ -107,10 +113,14 @@ export class DownloadButton extends LitElement {
           .result=${this.result}
           ?canStream=${this.canStream}
           .onDownload=${async (options: QueryDownloadOptions) => {
-            this.open = false;
+            this.onClose();
             await this.onDownload(options);
           }}
           .onClose=${this.onClose}
+          .onCopy=${async (options: QueryDownloadCopyData) => {
+            this.onClose();
+            await this.onCopy(options);
+          }}
         ></download-form>
       </popup-dialog>`;
   }
