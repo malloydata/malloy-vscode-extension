@@ -394,39 +394,37 @@ export class QueryPage extends LitElement {
             )}
           </div>
         </div>
-          ${when(
-            this.resultKind === ResultKind.HTML && this.results.html,
-            () =>
-              html`<div class="scroll result-container">
-                ${this.results.html}
-                <copy-button
-                  .onCopy=${() =>
-                    this.copyToClipboard(
-                      this.getStyledHTML(this.results.html!)
-                    )}
-                >
-                </copy-button>
-              </div>`
-          )}
-          ${when(
-            this.resultKind === ResultKind.JSON && this.results.json,
-            () =>
-              html`<div class="scroll">
-                <prism-container
-                  code=${this.results.json!}
-                  language="json"
-                  ?darkMode=${this.isDarkMode}
-                >
-                </prism-container>
-                <copy-button
-                  .onCopy=${() => this.copyToClipboard(this.results.json!)}
-                >
-                </copy-button>
-              </div>`
-          )}
-          ${when(
-            this.resultKind === ResultKind.METADATA && this.results.metadata,
-            () => html`<div class="scroll">
+        ${when(
+          this.resultKind === ResultKind.HTML && this.results.html,
+          () =>
+            html`<div class="scroll result-container">
+              ${this.results.html}
+              <copy-button
+                .onCopy=${() =>
+                  this.copyToClipboard(this.getStyledHTML(this.results.html!))}
+              >
+              </copy-button>
+            </div>`
+        )}
+        ${when(
+          this.resultKind === ResultKind.JSON && this.results.json,
+          () =>
+            html`<div class="scroll">
+              <prism-container
+                code=${this.results.json!}
+                language="json"
+                ?darkMode=${this.isDarkMode}
+              >
+              </prism-container>
+              <copy-button
+                .onCopy=${() => this.copyToClipboard(this.results.json!)}
+              >
+              </copy-button>
+            </div>`
+        )}
+        ${when(
+          this.resultKind === ResultKind.METADATA && this.results.metadata,
+          () => html`<div class="scroll">
               </prism-container>
               <prism-container
                 code=${this.results.metadata!}
@@ -439,58 +437,57 @@ export class QueryPage extends LitElement {
               >
               </copy-button>
             </div>`
-          )}
-          ${when(
-            this.resultKind === ResultKind.SCHEMA && this.results.schema,
-            () =>
-              html`<div class="scroll">
-                <schema-renderer
-                  .explores=${this.results.schema!}
-                  .queries=${[]}
-                  ?defaultShow=${true}
-                  .onFieldClick=${this.onFieldClick}
-                  .onQueryClick=${this.onQueryClick}
-                  .onContextClick=${this.onContextClick}
+        )}
+        ${when(
+          this.resultKind === ResultKind.SCHEMA && this.results.schema,
+          () =>
+            html`<div class="scroll">
+              <schema-renderer
+                .explores=${this.results.schema!}
+                .queries=${[]}
+                ?defaultShow=${true}
+                .onFieldClick=${this.onFieldClick}
+                .onQueryClick=${this.onQueryClick}
+                .onContextClick=${this.onContextClick}
+              >
+              </schema-renderer>
+            </div>`
+        )}
+        ${when(
+          this.resultKind === ResultKind.SQL && this.results.sql,
+          () =>
+            html`<div class="scroll">
+              <div>
+                <prism-container
+                  .code="${this.results.sql!}"
+                  language="sql"
+                  ?darkMode=${this.isDarkMode}
                 >
-                </schema-renderer>
-              </div>`
-          )}
-          ${when(
-            this.resultKind === ResultKind.SQL && this.results.sql,
-            () =>
-              html`<div class="scroll">
-                <div>
-                  <prism-container
-                    .code="${this.results.sql!}"
-                    language="sql"
-                    ?darkMode=${this.isDarkMode}
-                  >
-                  </prism-container>
-                  <copy-button
-                    .onCopy=${() => this.copyToClipboard(this.results.sql!)}
-                  >
-                  </copy-button>
-                </div>
-              </div>`
-          )}
-          ${when(
-            this.results.stats ||
-              this.results.profilingUrl ||
-              this.results.queryCostBytes,
-            () =>
-              html`<div class="stats">
-                ${this.getStats(
-                  this.results.stats,
-                  this.results.profilingUrl,
-                  this.results.queryCostBytes
-                )}
-              </div>`
-          )}
-          ${when(
-            this.results.warning,
-            () => html`<div class="warning">${this.results.warning}</div>`
-          )}
-        </div>
+                </prism-container>
+                <copy-button
+                  .onCopy=${() => this.copyToClipboard(this.results.sql!)}
+                >
+                </copy-button>
+              </div>
+            </div>`
+        )}
+        ${when(
+          this.results.stats ||
+            this.results.profilingUrl ||
+            this.results.queryCostBytes,
+          () =>
+            html`<div class="stats">
+              ${this.getStats(
+                this.results.stats,
+                this.results.profilingUrl,
+                this.results.queryCostBytes
+              )}
+            </div>`
+        )}
+        ${when(
+          this.results.warning,
+          () => html`<div class="warning">${this.results.warning}</div>`
+        )}
       </div>`;
     }
   }
