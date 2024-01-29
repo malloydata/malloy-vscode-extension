@@ -28,7 +28,7 @@ import {
 import {TextDocument} from 'vscode-languageserver-textdocument';
 import {connection, connectionManager} from './connections_node';
 import {initServer} from '../init';
-import {CloudCodeConfig} from '../../common/worker_message_types';
+import {CloudCodeConfig} from '../../common/types/worker_message_types';
 
 const documents = new TextDocuments(TextDocument);
 

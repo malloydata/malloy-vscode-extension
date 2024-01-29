@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Google LLC
+ * Copyright 2024 Google LLC
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files
@@ -21,30 +21,18 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {
-  runMalloyQueryWithProgress,
-  getActiveDocumentMetadata,
-} from './utils/run_query_utils';
-import {WorkerConnection} from '../worker_connection';
-import {ResultJSON} from '@malloydata/malloy';
+import * as vscode from 'vscode';
 
-export async function runQueryFileCommand(
-  worker: WorkerConnection,
-  queryIndex = -1
-): Promise<ResultJSON | undefined> {
-  const documentMeta = getActiveDocumentMetadata();
-  if (documentMeta) {
-    return runMalloyQueryWithProgress(
-      worker,
-      {
-        type: 'file',
-        index: queryIndex,
-        documentMeta,
-      },
-      documentMeta.uri,
-      documentMeta.fileName.split('/').pop() || documentMeta.fileName
-    );
-  }
-
-  return undefined;
+export function previewFromSchemaCommand(item: {
+  topLevelExplore: string;
+  accessPath: string[];
+}): void {
+  vscode.commands.executeCommand(
+    'malloy.runQuery',
+    `run: ${item.topLevelExplore}->{ select: ${[...item.accessPath, '*'].join(
+      '.'
+    )}; limit: 20 }`,
+    `Preview ${item.topLevelExplore} ${item.accessPath.join('.')}`,
+    'html'
+  );
 }

@@ -23,7 +23,7 @@
 
 import {VSCodeConnectionManager} from '../connection_manager';
 import {WebConnectionFactory} from '../../common/connections/browser/connection_factory';
-import {fetchBinaryFile} from '../utils';
+import {fetchBinaryFile} from '../utils/files';
 
 export const connectionFactory = new WebConnectionFactory(fetchBinaryFile);
 export const connectionManager = new VSCodeConnectionManager(connectionFactory);

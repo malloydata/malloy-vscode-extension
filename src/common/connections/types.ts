@@ -26,7 +26,7 @@ import {
   ConnectionBackend,
   ConnectionConfig,
   ExternalConnectionConfig,
-} from '../connection_manager_types';
+} from '../types/connection_manager_types';
 import {TestableConnection} from '@malloydata/malloy';
 
 export interface ConnectionFactory {

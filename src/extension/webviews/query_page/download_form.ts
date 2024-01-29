@@ -30,7 +30,7 @@ import {
   vsCodeOption,
   vsCodeTextField,
 } from '@vscode/webview-ui-toolkit';
-import {QueryDownloadOptions} from '../../../common/message_types';
+import {QueryDownloadOptions} from '../../../common/types/message_types';
 
 const styles = css`
   .form {

@@ -24,7 +24,7 @@
 import {
   ConnectionConfig,
   getDefaultIndex,
-} from '../../../common/connection_manager_types';
+} from '../../../common/types/connection_manager_types';
 import {EditConnectionPanel} from '../../connection_editor';
 import {ConnectionItem} from '../../tree_views/connections_view';
 import {connectionManager} from '../connection_manager';

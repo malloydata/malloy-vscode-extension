@@ -27,8 +27,8 @@ import {
   Runtime,
   SQLBlockMaterializer,
 } from '@malloydata/malloy';
-import {CellData} from '../common/types';
-import {QuerySpec} from '../common/query_spec';
+import {CellData} from '../common/types/file_handler';
+import {QuerySpec} from '../common/types/query_spec';
 
 export const createModelMaterializer = async (
   uri: string,

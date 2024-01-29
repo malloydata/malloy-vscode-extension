@@ -32,8 +32,8 @@ import {
   WorkerFetchCellDataMessage,
   WorkerFetchMessage,
   ExtensionMessageHandler,
-} from '../common/worker_message_types';
-import {FileHandler} from '../common/types';
+} from '../common/types/worker_message_types';
+import {FileHandler} from '../common/types/file_handler';
 import {Disposable, NotificationHandler, ProgressType} from 'vscode-jsonrpc';
 import {logPrefix} from '../common/log';
 

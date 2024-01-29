@@ -30,7 +30,7 @@ import {
   ConfigOptions,
   ConnectionConfig,
   ExternalConnectionConfig,
-} from './connection_manager_types';
+} from './types/connection_manager_types';
 import {ConnectionFactory} from './connections/types';
 
 const DEFAULT_CONFIG = Symbol('default-config');

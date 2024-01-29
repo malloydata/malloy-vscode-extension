@@ -27,15 +27,15 @@ import {CSVWriter, JSONWriter, Runtime} from '@malloydata/malloy';
 import {
   MessageDownload,
   WorkerMessageHandler,
-} from '../../common/worker_message_types';
+} from '../../common/types/worker_message_types';
 import {createRunnable} from '../create_runnable';
-import {CellData, FileHandler} from '../../common/types';
+import {CellData, FileHandler} from '../../common/types/file_handler';
 import {ConnectionManager} from '../../common/connection_manager';
 import {CancellationToken, ProgressType} from 'vscode-jsonrpc';
 import {
   QueryDownloadMessage,
   QueryDownloadStatus,
-} from '../../common/message_types';
+} from '../../common/types/message_types';
 
 export async function downloadQuery(
   messageHandler: WorkerMessageHandler,

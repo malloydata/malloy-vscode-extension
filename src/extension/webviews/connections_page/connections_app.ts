@@ -34,7 +34,7 @@ import {
   ConnectionBackend,
   ConnectionConfig,
   ExternalConnectionConfig,
-} from '../../../common/connection_manager_types';
+} from '../../../common/types/connection_manager_types';
 import {
   ConnectionMessageType,
   ConnectionPanelMessage,
@@ -43,7 +43,7 @@ import {
   ConnectionServiceAccountKeyRequestStatus,
   InstallExternalConnectionStatus,
   ConnectionMessageInstallExternalConnection,
-} from '../../../common/message_types';
+} from '../../../common/types/message_types';
 import './connection_editor_list';
 import {getVSCodeAPI} from '../vscode_wrapper';
 

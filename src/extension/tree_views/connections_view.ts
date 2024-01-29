@@ -27,7 +27,7 @@ import {
   ConnectionBackendNames,
   ConnectionConfig,
   getDefaultIndex,
-} from '../../common/connection_manager_types';
+} from '../../common/types/connection_manager_types';
 import {VSCodeConnectionManager} from '../connection_manager';
 
 export class ConnectionsProvider

@@ -23,7 +23,7 @@
 
 import * as vscode from 'vscode';
 import {MalloySQLParser, MalloySQLStatementType} from '@malloydata/malloy-sql';
-import {CellMetadata} from '../../common/types';
+import {CellMetadata} from '../../common/types/file_handler';
 
 interface NotebookMetadata {
   initialComments?: string | undefined;

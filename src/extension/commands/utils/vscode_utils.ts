@@ -23,10 +23,10 @@
 
 import * as vscode from 'vscode';
 import {Utils} from 'vscode-uri';
-import {RunState, MALLOY_EXTENSION_STATE} from '../state';
-import {WebviewMessageManager} from '../webview_message_manager';
-import {getWebviewHtml} from '../webviews';
-import {DocumentMetadata} from '../../common/query_spec';
+import {RunState, MALLOY_EXTENSION_STATE} from '../../state';
+import {WebviewMessageManager} from '../../webview_message_manager';
+import {getWebviewHtml} from '../../webviews';
+import {DocumentMetadata} from '../../../common/types/query_spec';
 
 const turtleIcon = 'turtle.svg';
 

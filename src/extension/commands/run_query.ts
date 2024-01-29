@@ -26,7 +26,7 @@ import {
   getActiveDocumentMetadata,
   getDocumentMetadataFromUri,
   runMalloyQueryWithProgress,
-} from './run_query_utils';
+} from './utils/run_query_utils';
 import {ResultJSON} from '@malloydata/malloy';
 
 export async function runQueryCommand(

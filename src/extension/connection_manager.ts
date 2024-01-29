@@ -22,9 +22,9 @@
  */
 
 import {ConnectionManager} from '../common/connection_manager';
-import {ConnectionConfig} from '../common/connection_manager_types';
+import {ConnectionConfig} from '../common/types/connection_manager_types';
 import {ConnectionFactory} from '../common/connections/types';
-import {getMalloyConfig} from './utils';
+import {getMalloyConfig} from './utils/config';
 
 const DEFAULT_ROW_LIMIT = 50;
 

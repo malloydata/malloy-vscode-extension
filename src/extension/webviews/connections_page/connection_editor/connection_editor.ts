@@ -37,11 +37,11 @@ import {
   ConnectionConfig,
   ExternalConnectionConfig,
   PostgresConnectionConfig,
-} from '../../../../common/connection_manager_types';
+} from '../../../../common/types/connection_manager_types';
 import {
   ConnectionMessageInstallExternalConnection,
   ConnectionMessageTest,
-} from '../../../../common/message_types';
+} from '../../../../common/types/message_types';
 import {chevronDownIcon} from '../../components/icons';
 import {styles} from './connection_editor.css';
 import './bigquery_connection_editor';

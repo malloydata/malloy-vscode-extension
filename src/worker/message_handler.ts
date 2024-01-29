@@ -28,10 +28,10 @@ import {
   WorkerMessageHandler,
   MessageMap,
   WorkerMessageMap,
-} from '../common/worker_message_types';
+} from '../common/types/worker_message_types';
 import {ConnectionManager} from '../common/connection_manager';
 import {RpcFileHandler} from './file_handler';
-import {FileHandler} from '../common/types';
+import {FileHandler} from '../common/types/file_handler';
 import {ProgressType} from 'vscode-jsonrpc';
 
 export class MessageHandler implements WorkerMessageHandler {

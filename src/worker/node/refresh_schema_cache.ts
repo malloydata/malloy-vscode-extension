@@ -22,8 +22,8 @@
  */
 
 import {Runtime} from '@malloydata/malloy';
-import {MessageRefreshSchemaCache} from '../../common/worker_message_types';
-import {CellData, FileHandler} from '../../common/types';
+import {MessageRefreshSchemaCache} from '../../common/types/worker_message_types';
+import {CellData, FileHandler} from '../../common/types/file_handler';
 import {ConnectionManager} from '../../common/connection_manager';
 import {createModelMaterializer} from '../create_runnable';
 

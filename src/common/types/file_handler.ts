@@ -21,17 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {StructDef, URLReader} from '@malloydata/malloy';
-import {ConnectionConfig} from './connection_manager_types';
-
-export interface MalloyConfig {
-  /** Maximum number of top-level rows to fetch when running queries. */
-  rowLimit: number;
-  /** Path to directory to save downloaded results */
-  downloadsPath: string;
-  /** Connections for Malloy to use to access data when compiling and querying. */
-  connections: ConnectionConfig[];
-}
+import {URLReader} from '@malloydata/malloy';
 
 export interface FetchFileEvent {
   uri: string;
@@ -115,27 +105,3 @@ export interface FileHandler extends URLReader {
    */
   fetchWorkspaceFolders(uri: string): Promise<string[]>;
 }
-
-export interface StructDefSuccess {
-  structDef: StructDef;
-  error?: undefined;
-}
-
-export interface StructDefFailure {
-  error: string;
-  structDef?: undefined;
-}
-
-export type StructDefResult = StructDefSuccess | StructDefFailure;
-
-export const isStructDefSuccess = (
-  structDefResult: StructDefResult
-): structDefResult is StructDefSuccess => {
-  return !!structDefResult.structDef;
-};
-
-export const isStructDefFailure = (
-  structDefResult: StructDefResult
-): structDefResult is StructDefFailure => {
-  return !!structDefResult.error;
-};
