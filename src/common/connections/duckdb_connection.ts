@@ -29,21 +29,21 @@ import {
 import {isDuckDBAvailable} from '../../common/duckdb_availability';
 
 export const createDuckDbConnection = async (
-  connectionConfig: DuckDBConnectionConfig,
-  {workingDirectory, rowLimit}: ConfigOptions
+  {name, workingDirectory}: DuckDBConnectionConfig,
+  {rowLimit, workingDirectory: defaultWorkingDirectory}: ConfigOptions
 ) => {
   if (!isDuckDBAvailable) {
     throw new Error('DuckDB is not available.');
   }
+  workingDirectory = workingDirectory || defaultWorkingDirectory;
   try {
-    const options = {workingDirectory};
+    const options = {
+      name,
+      databasePath: ':memory:',
+      workingDirectory,
+    };
     console.info('Creating duckdb connection with', JSON.stringify(options));
-    const connection = new DuckDBConnection(
-      connectionConfig.name,
-      ':memory:',
-      connectionConfig.workingDirectory || workingDirectory,
-      () => ({rowLimit})
-    );
+    const connection = new DuckDBConnection(options, () => ({rowLimit}));
     return connection;
   } catch (error) {
     console.error('Could not create DuckDB connection:', error);

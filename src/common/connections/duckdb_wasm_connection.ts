@@ -29,23 +29,24 @@ import {
 import {isDuckDBAvailable} from '../duckdb_availability';
 
 export const createDuckDbWasmConnection = async (
-  connectionConfig: DuckDBConnectionConfig,
-  {workingDirectory, rowLimit}: ConfigOptions
+  {name, workingDirectory}: DuckDBConnectionConfig,
+  {rowLimit, workingDirectory: defaultWorkingDirectory}: ConfigOptions
 ) => {
   if (!isDuckDBAvailable) {
     throw new Error('DuckDB is not available.');
   }
-  workingDirectory = connectionConfig.workingDirectory || workingDirectory;
+  workingDirectory = workingDirectory || defaultWorkingDirectory;
   if (workingDirectory.startsWith('file:')) {
     workingDirectory = workingDirectory.substring(7);
   }
   try {
-    const connection = new DuckDBWASMConnection(
-      connectionConfig.name,
-      ':memory:',
+    const options = {
+      name,
+      databasePath: ':memory:',
       workingDirectory,
-      () => ({rowLimit})
-    );
+    };
+    console.info('Creating duckdb connection with', JSON.stringify(options));
+    const connection = new DuckDBWASMConnection(options, () => ({rowLimit}));
     return connection;
   } catch (error) {
     console.error('Could not create DuckDB WASM connection:', error);

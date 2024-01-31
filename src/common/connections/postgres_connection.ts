@@ -32,36 +32,28 @@ export const createPostgresConnection = async (
   connectionConfig: PostgresConnectionConfig,
   {rowLimit}: ConfigOptions
 ): Promise<PostgresConnection> => {
-  const {username, host, port, databaseName, connectionString} =
+  let {password} = connectionConfig;
+  const {name, username, host, port, databaseName, connectionString} =
     connectionConfig;
-  const options = {
-    username,
-    host,
-    port,
-    databaseName,
-    connectionString,
-  };
-  const configReader = async () => {
-    let password: string | undefined;
-    if (connectionConfig.password !== undefined) {
-      password = connectionConfig.password;
-    } else if (connectionConfig.useKeychainPassword) {
+  if (password === undefined) {
+    if (connectionConfig.useKeychainPassword) {
       password =
         (await getPassword(
           'com.malloy-lang.vscode-extension',
           `connections.${connectionConfig.id}.password`
         )) || undefined;
     }
-    return {
-      ...options,
-      password,
-    };
+  }
+  const options = {
+    name,
+    username,
+    password,
+    host,
+    port,
+    databaseName,
+    connectionString,
   };
   console.info('Creating postgres connection with', JSON.stringify(options));
-  const connection = new PostgresConnection(
-    connectionConfig.name,
-    () => ({rowLimit}),
-    configReader
-  );
+  const connection = new PostgresConnection(options, () => ({rowLimit}));
   return connection;
 };

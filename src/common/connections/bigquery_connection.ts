@@ -32,23 +32,27 @@ export const createBigQueryConnection = async (
   connectionConfig: BigQueryConnectionConfig,
   {rowLimit}: ConfigOptions
 ): Promise<BigQueryConnection> => {
+  const {
+    name,
+    projectId,
+    billingProjectId,
+    serviceAccountKeyPath,
+    location,
+    maximumBytesBilled,
+    timeoutMs,
+  } = connectionConfig;
   const options = {
-    projectId: connectionConfig.projectId,
-    billingProjectId: connectionConfig.billingProjectId,
-    serviceAccountKeyPath: connectionConfig.serviceAccountKeyPath,
-    location: connectionConfig.location,
-    maximumBytesBilled: convertToBytes(
-      connectionConfig.maximumBytesBilled || ''
-    ),
-    timeoutMs: connectionConfig.timeoutMs,
+    name,
+    projectId,
+    billingProjectId,
+    serviceAccountKeyPath,
+    location,
+    maximumBytesBilled: convertToBytes(maximumBytesBilled || ''),
+    timeoutMs,
   };
   console.info('Creating bigquery connection with', JSON.stringify(options));
-  const connection = new BigQueryConnection(
-    connectionConfig.name,
-    () => ({
-      rowLimit,
-    }),
-    options
-  );
+  const connection = new BigQueryConnection(options, () => ({
+    rowLimit,
+  }));
   return connection;
 };
