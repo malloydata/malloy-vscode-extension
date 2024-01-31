@@ -130,6 +130,12 @@ export interface QueryDownloadOptions {
   amount: 'current' | 'all' | number;
 }
 
+export interface QueryDownloadCopyData {
+  type: string;
+  download: string;
+  data: string;
+}
+
 export type QueryPanelMessage =
   | QueryMessageStatus
   | QueryMessageAppReady
