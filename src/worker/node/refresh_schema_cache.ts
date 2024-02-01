@@ -45,12 +45,16 @@ export const refreshSchemaCache = async (
     workspaceFolders = await fileHandler.fetchWorkspaceFolders(uri);
   }
 
-  const mm = await createModelMaterializer(
-    uri,
-    runtime,
-    cellData,
-    workspaceFolders,
-    true
-  );
-  await mm?.getModel();
+  try {
+    const mm = await createModelMaterializer(
+      uri,
+      runtime,
+      cellData,
+      workspaceFolders,
+      true
+    );
+    await mm?.getModel();
+  } catch (e) {
+    console.error('refreshSchemaCache failed with', e);
+  }
 };
