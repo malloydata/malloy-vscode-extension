@@ -36,7 +36,7 @@ export class ExternalConnectionFactory {
 
     const factory = externalConnection.connectionFactory as ConnectionFactory;
     const connection = factory.createConnection(
-      config.configParameters ?? {},
+      {name: config.name, ...config.configParameters},
       registerDialect
     ) as Connection & TestableConnection;
     return connection;
