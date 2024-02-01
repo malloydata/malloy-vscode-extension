@@ -145,6 +145,7 @@ export async function getMalloyLenses(
               arguments: [
                 `run: ${exploreName}->{ select: *; limit: 20 }`,
                 `Preview ${exploreName}`,
+                'preview',
               ],
             },
           });

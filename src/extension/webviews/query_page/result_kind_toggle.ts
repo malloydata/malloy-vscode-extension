@@ -29,6 +29,7 @@ export enum ResultKind {
   HTML = 'html',
   JSON = 'json',
   METADATA = 'metadata',
+  PREVIEW = 'preview',
   SQL = 'sql',
   SCHEMA = 'schema',
 }
@@ -41,6 +42,8 @@ export const resultKindFromString = (kind?: string) => {
       return ResultKind.JSON;
     case 'metadata':
       return ResultKind.METADATA;
+    case 'preview':
+      return ResultKind.PREVIEW;
     case 'sql':
       return ResultKind.SQL;
     case 'schema':

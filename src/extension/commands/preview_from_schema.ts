@@ -33,6 +33,6 @@ export function previewFromSchemaCommand(item: {
       '.'
     )}; limit: 20 }`,
     `Preview ${item.topLevelExplore} ${item.accessPath.join('.')}`,
-    'html'
+    'preview'
   );
 }

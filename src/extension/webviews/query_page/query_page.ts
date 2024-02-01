@@ -252,13 +252,26 @@ export class QueryPage extends LitElement {
         if (defaultKind) {
           this.resultKind = defaultKind;
         }
-        this.availableKinds = [
-          ResultKind.HTML,
-          ResultKind.JSON,
-          ResultKind.METADATA,
-          ResultKind.SCHEMA,
-          ResultKind.SQL,
-        ];
+
+        const isPreview =
+          defaultKind === ResultKind.PREVIEW ||
+          defaultKind === ResultKind.SCHEMA;
+
+        if (isPreview) {
+          this.availableKinds = [
+            ResultKind.SCHEMA,
+            ResultKind.PREVIEW,
+            ResultKind.METADATA,
+          ];
+        } else {
+          this.availableKinds = [
+            ResultKind.HTML,
+            ResultKind.JSON,
+            ResultKind.METADATA,
+            ResultKind.SCHEMA,
+            ResultKind.SQL,
+          ];
+        }
         const result = Result.fromJSON(resultJson);
         const {data, sql} = result;
 
@@ -272,10 +285,18 @@ export class QueryPage extends LitElement {
         const queryCostBytes = result.runStats?.queryCostBytes;
         const json = JSON.stringify(data.toObject(), null, 2);
 
-        const schema = [result.resultExplore];
+        const schema =
+          isPreview && result.resultExplore.parentExplore
+            ? [result.resultExplore.parentExplore]
+            : [result.resultExplore];
 
-        const {sql: _s, result: _r, ...metadataOnly} = resultJson.queryResult;
-        const metadata = JSON.stringify(metadataOnly, null, 2);
+        let metadata: string;
+        if (isPreview) {
+          metadata = JSON.stringify(schema[0], null, 2);
+        } else {
+          const {sql: _s, result: _r, ...metadataOnly} = resultJson.queryResult;
+          metadata = JSON.stringify(metadataOnly, null, 2);
+        }
 
         this.results = {
           json,
@@ -395,7 +416,9 @@ export class QueryPage extends LitElement {
           </div>
         </div>
         ${when(
-          this.resultKind === ResultKind.HTML && this.results.html,
+          (this.resultKind === ResultKind.HTML ||
+            this.resultKind === ResultKind.PREVIEW) &&
+            this.results.html,
           () =>
             html`<div class="scroll result-container">
               ${this.results.html}
