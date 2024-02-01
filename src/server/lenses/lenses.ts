@@ -25,6 +25,7 @@ import {CodeLens, Connection, Position, Range} from 'vscode-languageserver';
 import {TextDocument} from 'vscode-languageserver-textdocument';
 import {parseWithCache} from '../parse_cache';
 import {ConnectionManager} from '../../common/connection_manager';
+import {getSourceUrl} from './utils';
 
 // const explain = `
 //   index
@@ -83,15 +84,15 @@ export async function getMalloyLenses(
   for (const table of tablepaths) {
     const conn = await connectionManager
       .getConnectionLookup(new URL(document.uri))
-      .lookupConnection(table.connId);
-    if (conn.browsableSource()) {
-      const tableSource = conn.getTableSourceUrl(table.tablePath);
+      .lookupConnection(table.connectionId);
+    const tableUrl = getSourceUrl(table.tablePath, conn);
+    if (tableUrl !== undefined) {
       lenses.push({
         range: table.range,
         command: {
           title: 'Table',
           command: 'malloy.openUrlInBrowser',
-          arguments: [tableSource],
+          arguments: [tableUrl],
         },
       });
     }
