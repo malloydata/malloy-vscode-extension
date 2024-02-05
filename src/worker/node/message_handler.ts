@@ -24,9 +24,7 @@
 import {downloadQuery} from './download_query';
 import {ConnectionManager} from '../../common/connection_manager';
 import {MessageHandler} from '../message_handler';
-import {refreshConfig} from './refresh_config';
 import {inspect} from 'node:util';
-import {refreshSchemaCache} from './refresh_schema_cache';
 import {GenericConnection} from '../../common/types/worker_message_types';
 
 export class NodeMessageHandler {
@@ -48,16 +46,6 @@ export class NodeMessageHandler {
           this.messageHandler.fileHandler,
           cancellationToken
         )
-    );
-    this.messageHandler.onRequest('malloy/config', message =>
-      refreshConfig(connectionManager, message)
-    );
-    this.messageHandler.onRequest('malloy/refreshSchemaCache', message =>
-      refreshSchemaCache(
-        connectionManager,
-        this.messageHandler.fileHandler,
-        message
-      )
     );
     this.messageHandler.log('NodeMessageHandler initialized.');
   }
