@@ -30,7 +30,10 @@ import {
 
 import {setupFileMessaging, setupSubscriptions} from '../subscriptions';
 import {connectionManager} from './connection_manager';
-import {ConnectionsProvider} from '../tree_views/connections_view';
+import {
+  ConnectionItem,
+  ConnectionsProvider,
+} from '../tree_views/connections_view';
 import {editConnectionsCommand} from './commands/edit_connections';
 import {fileHandler} from '../utils/files';
 import {WorkerConnectionBrowser} from './worker_connection_browser';
@@ -56,7 +59,7 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.commands.registerCommand(
       'malloy.editConnections',
-      editConnectionsCommand
+      (item?: ConnectionItem) => editConnectionsCommand(worker, item?.id)
     )
   );
 }

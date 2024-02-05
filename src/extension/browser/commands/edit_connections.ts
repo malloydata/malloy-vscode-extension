@@ -26,21 +26,24 @@ import {
   getDefaultIndex,
 } from '../../../common/types/connection_manager_types';
 import {EditConnectionPanel} from '../../connection_editor';
-import {ConnectionItem} from '../../tree_views/connections_view';
+import {WorkerConnection} from '../../worker_connection';
 import {connectionManager} from '../connection_manager';
 
 let panel: EditConnectionPanel | null = null;
 
-export function editConnectionsCommand({id}: ConnectionItem): void {
+export function editConnectionsCommand(
+  worker: WorkerConnection,
+  id?: string
+): void {
   if (!panel) {
     panel = new EditConnectionPanel(
       connectionManager,
+      worker,
       handleConnectionsPreSave
     );
     panel.onDidDispose(() => (panel = null));
-  } else {
-    panel.reveal(id);
   }
+  panel.reveal(id);
 }
 
 /**

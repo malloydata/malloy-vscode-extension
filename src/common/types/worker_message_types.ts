@@ -32,6 +32,7 @@ import {QueryDownloadOptions} from './message_types';
 import {CellData} from './file_handler';
 import {MalloyConfig} from './malloy_config';
 import {QuerySpec} from './query_spec';
+import {ConnectionConfig} from './connection_manager_types';
 
 /*
  * Incoming messages
@@ -93,6 +94,10 @@ export interface MessageRefreshSchemaCache {
   uri: string;
 }
 
+export interface MessageTest {
+  config: ConnectionConfig;
+}
+
 export interface MessageFetchWorkspaceFolders {
   workspaceFolders: string[];
 }
@@ -116,6 +121,7 @@ export interface MessageMap {
   'malloy/run': MessageRun;
   'malloy/download': MessageDownload;
   'malloy/refreshSchemaCache': MessageRefreshSchemaCache;
+  'malloy/testConnection': MessageTest;
 }
 
 /**

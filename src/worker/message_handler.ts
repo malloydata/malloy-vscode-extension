@@ -22,6 +22,7 @@
  */
 
 import {runQuery} from './run_query';
+import {testConnection} from './test_connection';
 import {
   GenericConnection,
   ListenerType,
@@ -52,6 +53,10 @@ export class MessageHandler implements WorkerMessageHandler {
         message,
         cancellationToken
       )
+    );
+
+    this.onRequest('malloy/testConnection', message =>
+      testConnection(connectionManager, message.config)
     );
   }
 
