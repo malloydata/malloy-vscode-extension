@@ -35,6 +35,7 @@ import {ConnectionConfig} from '../common/types/connection_manager_types';
 import {errorMessage} from '../common/errors';
 import {ConnectionManager} from '../common/connection_manager';
 import {getMalloyConfig} from './utils/config';
+import {WorkerConnection} from './worker_connection';
 
 export class EditConnectionPanel {
   panel: vscode.WebviewPanel;
@@ -43,6 +44,7 @@ export class EditConnectionPanel {
 
   constructor(
     private connectionManager: ConnectionManager,
+    private worker: WorkerConnection,
     handleConnectionsPreSave: (
       connections: ConnectionConfig[]
     ) => Promise<ConnectionConfig[]>
@@ -94,10 +96,9 @@ export class EditConnectionPanel {
         }
         case ConnectionMessageType.TestConnection: {
           try {
-            const connection = await this.connectionManager.connectionForConfig(
-              message.connection
-            );
-            await connection.test();
+            await this.worker.sendRequest('malloy/testConnection', {
+              config: message.connection,
+            });
             this.messageManager.postMessage({
               type: ConnectionMessageType.TestConnection,
               status: ConnectionTestStatus.Success,

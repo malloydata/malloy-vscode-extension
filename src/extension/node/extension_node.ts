@@ -31,7 +31,10 @@ import {
   TransportKind,
 } from 'vscode-languageclient/node';
 import {editConnectionsCommand} from './commands/edit_connections';
-import {ConnectionsProvider} from '../tree_views/connections_view';
+import {
+  ConnectionItem,
+  ConnectionsProvider,
+} from '../tree_views/connections_view';
 import {connectionManager} from './connection_manager';
 import {setupFileMessaging, setupSubscriptions} from '../subscriptions';
 import {getMalloyConfig} from '../utils/config';
@@ -73,7 +76,7 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.commands.registerCommand(
       'malloy.editConnections',
-      editConnectionsCommand
+      (item?: ConnectionItem) => editConnectionsCommand(worker, item?.id)
     )
   );
 

@@ -28,19 +28,23 @@ import {
 } from '../../../common/types/connection_manager_types';
 import {deletePassword, setPassword} from 'keytar';
 import {EditConnectionPanel} from '../../connection_editor';
-import {ConnectionItem} from '../../tree_views/connections_view';
+import {WorkerConnection} from '../../worker_connection';
 
 let panel: EditConnectionPanel | null = null;
 
-export function editConnectionsCommand(item?: ConnectionItem): void {
+export function editConnectionsCommand(
+  worker: WorkerConnection,
+  id?: string
+): void {
   if (!panel) {
     panel = new EditConnectionPanel(
       connectionManager,
+      worker,
       handleConnectionsPreSave
     );
     panel.onDidDispose(() => (panel = null));
   }
-  panel.reveal(item?.id);
+  panel.reveal(id);
 }
 
 /**
