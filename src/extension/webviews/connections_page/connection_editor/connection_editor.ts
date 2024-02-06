@@ -77,7 +77,11 @@ export class ConnectionEditor extends LitElement {
   testStatus!: ConnectionMessageTest | undefined;
 
   @property()
-  requestServiceAccountKeyPath!: (connectionId: string) => void;
+  requestFilePath!: (
+    connectionId: string,
+    configKey: string,
+    filters: {[key: string]: string[]}
+  ) => void;
 
   @property({type: Boolean})
   isDefault!: boolean;
@@ -157,8 +161,7 @@ export class ConnectionEditor extends LitElement {
         ? html` <bigquery-connection-editor
             .config=${this.config}
             .setConfig=${this.setConfig}
-            .requestServiceAccountKeyPath=${() =>
-              this.requestServiceAccountKeyPath(this.config.id)}
+            .requestFilePath=${this.requestFilePath}
           ></bigquery-connection-editor>`
         : this.config.backend === ConnectionBackend.Postgres
         ? html`<postgres-connection-editor

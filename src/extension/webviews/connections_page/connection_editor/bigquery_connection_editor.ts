@@ -51,7 +51,17 @@ export class BigQueryConnectionEditor extends LitElement {
   setConfig!: (config: BigQueryConnectionConfig) => void;
 
   @property()
-  requestServiceAccountKeyPath!: () => void;
+  requestFilePath!: (
+    connectionId: string,
+    configKey: string,
+    filters: {[key: string]: string[]}
+  ) => void;
+
+  requestServiceAccountKeyPath = () => {
+    this.requestFilePath(this.config.id, 'serviceAccountKeyPath', {
+      JSON: ['json'],
+    });
+  };
 
   override render() {
     return html` <table>
