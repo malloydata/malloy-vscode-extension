@@ -40,7 +40,7 @@ import {
   ConnectionPanelMessage,
   ConnectionMessageTest,
   ConnectionTestStatus,
-  ConnectionServiceAccountKeyRequestStatus,
+  ConnectionServiceFileRequestStatus,
   InstallExternalConnectionStatus,
   ConnectionMessageInstallExternalConnection,
 } from '../../../common/types/message_types';
@@ -98,11 +98,17 @@ export class ConnectionsApp extends LitElement {
     ];
   };
 
-  requestServiceAccountKeyPath = (connectionId: string) => {
+  requestFilePath = (
+    connectionId: string,
+    configKey: string,
+    filters: {[key: string]: string[]}
+  ) => {
     this.vscode.postMessage({
-      type: ConnectionMessageType.RequestBigQueryServiceAccountKeyFile,
+      type: ConnectionMessageType.RequestFile,
       connectionId,
-      status: ConnectionServiceAccountKeyRequestStatus.Waiting,
+      status: ConnectionServiceFileRequestStatus.Waiting,
+      configKey,
+      filters,
     });
   };
 
@@ -126,15 +132,15 @@ export class ConnectionsApp extends LitElement {
           message,
         ];
         break;
-      case ConnectionMessageType.RequestBigQueryServiceAccountKeyFile: {
-        if (
-          message.status === ConnectionServiceAccountKeyRequestStatus.Success
-        ) {
+      case ConnectionMessageType.RequestFile: {
+        if (message.status === ConnectionServiceFileRequestStatus.Success) {
           this.connections = (this.connections || []).map(connection => {
-            if (connection.id === message.connectionId) {
+            const {connectionId, fsPath, configKey} = message;
+            if (connection.id === connectionId) {
               return {
                 ...connection,
-                serviceAccountKeyPath: message.serviceAccountKeyPath,
+                [configKey]: fsPath,
+                configKey: message.configKey,
               };
             } else {
               return connection;
@@ -172,7 +178,7 @@ export class ConnectionsApp extends LitElement {
               .saveConnections=${this.postConnections}
               .testConnection=${this.testConnection}
               .testStatuses=${this.testStatuses}
-              .requestServiceAccountKeyPath=${this.requestServiceAccountKeyPath}
+              .requestFilePath=${this.requestFilePath}
               .availableBackends=${this.availableBackends}
               .installExternalConnection=${this.installExternalConnection}
               .installExternalConnectionStatuses=${this

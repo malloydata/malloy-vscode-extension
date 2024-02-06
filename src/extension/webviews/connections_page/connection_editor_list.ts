@@ -81,7 +81,11 @@ export class ConnectionEditorList extends LitElement {
   @property({type: Array})
   testStatuses!: ConnectionMessageTest[];
   @property()
-  requestServiceAccountKeyPath!: (connectionId: string) => void;
+  requestFilePath!: (
+    connectionId: string,
+    configKey: string,
+    filters: {[key: string]: string[]}
+  ) => void;
   @property({type: Array})
   availableBackends!: ConnectionBackend[];
   @property()
@@ -151,8 +155,7 @@ export class ConnectionEditorList extends LitElement {
                 .testStatus=${[...this.testStatuses]
                   .reverse()
                   .find(message => message.connection.id === config.id)}
-                .requestServiceAccountKeyPath=${this
-                  .requestServiceAccountKeyPath}
+                .requestFilePath=${this.requestFilePath}
                 .isDefault=${index === defaultConnectionIndex}
                 .makeDefault=${() => this.makeDefault(index)}
                 .availableBackends=${this.availableBackends}
