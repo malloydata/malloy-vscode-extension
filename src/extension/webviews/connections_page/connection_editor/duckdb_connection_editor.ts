@@ -48,6 +48,19 @@ export class DuckDBConnectionEditor extends LitElement {
   @property()
   setConfig!: (config: DuckDBConnectionConfig) => void;
 
+  @property()
+  requestFilePath!: (
+    connectionId: string,
+    configKey: string,
+    filters: {[key: string]: string[]}
+  ) => void;
+
+  requestDatabasePath = () => {
+    this.requestFilePath(this.config.id, 'databasePath', {
+      DuckDB: ['.db', '.duckdb', '.ddb'],
+    });
+  };
+
   override render() {
     return html` <table>
       <tbody>
@@ -75,6 +88,25 @@ export class DuckDBConnectionEditor extends LitElement {
                 this.setConfig({...this.config, workingDirectory: value});
               }}
             ></vscode-text-field>
+          </td>
+        </tr>
+        <tr>
+          <td class="label-cell">
+            <label>Database File:</label>
+          </td>
+          <td>
+            <vscode-text-field
+              value=${this.config.databasePath || ''}
+              placeholder=":memory:"
+              @change=${({target: {value}}: {target: HTMLInputElement}) => {
+                this.setConfig({...this.config, databasePath: value});
+              }}
+            ></vscode-text-field>
+          </td>
+          <td>
+            <vscode-button @click=${this.requestDatabasePath}>
+              Pick File
+            </vscode-button>
           </td>
         </tr>
       </tbody>

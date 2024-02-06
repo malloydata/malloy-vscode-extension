@@ -36,12 +36,16 @@ export const createDuckDbConnection = async (
     throw new Error('DuckDB is not available.');
   }
   try {
-    const options = {workingDirectory};
+    const name = connectionConfig.name;
+    const databasePath = connectionConfig.databasePath || ':memory:';
+    workingDirectory = connectionConfig.workingDirectory || workingDirectory;
+
+    const options = {name, databasePath, workingDirectory};
     console.info('Creating duckdb connection with', JSON.stringify(options));
     const connection = new DuckDBConnection(
-      connectionConfig.name,
-      ':memory:',
-      connectionConfig.workingDirectory || workingDirectory,
+      name,
+      databasePath,
+      workingDirectory,
       () => ({rowLimit})
     );
     return connection;
