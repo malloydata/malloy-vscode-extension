@@ -26,7 +26,6 @@ import * as vscode from 'vscode';
 import {
   ConnectionBackendNames,
   ConnectionConfig,
-  getDefaultIndex,
 } from '../../common/types/connection_manager_types';
 import {VSCodeConnectionManager} from '../connection_manager';
 
@@ -57,13 +56,11 @@ export class ConnectionsProvider
     if (element === undefined) {
       const availableBackends = this.connectionManager.getAvailableBackends();
       const config = this.connectionManager.getAllConnectionConfigs();
-      const defaultIndex = getDefaultIndex(config);
       return config.map(
-        (config, index) =>
+        config =>
           new ConnectionItem(
             this.context,
             config,
-            index === defaultIndex,
             availableBackends.includes(config.backend)
           )
       );
@@ -77,14 +74,13 @@ export class ConnectionItem extends vscode.TreeItem {
   constructor(
     private context: vscode.ExtensionContext,
     config: ConnectionConfig,
-    isDefault: boolean,
     isAvailable: boolean
   ) {
     super(config.name, vscode.TreeItemCollapsibleState.None);
 
     const backendName = ConnectionBackendNames[config.backend];
     this.id = config.id;
-    this.description = `(${backendName}${isDefault ? ', default' : ''}${
+    this.description = `(${backendName}${
       config.isGenerated ? ', automatically generated' : ''
     }) ${isAvailable ? '' : '(Not available)'}`;
   }

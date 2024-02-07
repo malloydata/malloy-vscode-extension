@@ -21,10 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {
-  ConnectionConfig,
-  getDefaultIndex,
-} from '../../../common/types/connection_manager_types';
+import {ConnectionConfig} from '../../../common/types/connection_manager_types';
 import {EditConnectionPanel} from '../../connection_editor';
 import {WorkerConnection} from '../../worker_connection';
 import {connectionManager} from '../connection_manager';
@@ -53,17 +50,14 @@ export function editConnectionsCommand(
  * @param connections The connection configs received from the webview.
  * @returns An updated list of connections
  *
- * - Fixes up `isDefault` issues.
  * - Handles scrubbing passwords and putting them in the keychain.
  */
 async function handleConnectionsPreSave(
   connections: ConnectionConfig[]
 ): Promise<ConnectionConfig[]> {
-  const defaultIndex = getDefaultIndex(connections);
   const modifiedConnections = [];
   for (let index = 0; index < connections.length; index++) {
     const connection = connections[index];
-    connection.isDefault = index === defaultIndex;
     if (!connection.isGenerated) {
       modifiedConnections.push(connection);
     }

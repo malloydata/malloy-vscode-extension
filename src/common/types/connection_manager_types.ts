@@ -48,7 +48,6 @@ export const ConnectionBackendNames: Record<ConnectionBackend, string> = {
 
 export interface BaseConnectionConfig {
   name: string;
-  isDefault: boolean;
   id: string;
   isGenerated?: boolean; // Not part of VS Code configuration
 }
@@ -117,26 +116,4 @@ export interface ConfigOptions {
   workingDirectory?: string;
   rowLimit?: number;
   useCache?: boolean;
-}
-
-/**
- * Return the index of the connection that should be treated as
- * the default.
- *
- * @param connections
- * @returns The index of the first connection with `isDefault === true`,
- *          or else 0 (if there is any connection), or else `undefined`.
- */
-export function getDefaultIndex(
-  connections: ConnectionConfig[]
-): number | undefined {
-  const index = connections.findIndex(connection => connection.isDefault);
-  if (index === -1) {
-    if (connections.length >= 1) {
-      return 0;
-    } else {
-      return undefined;
-    }
-  }
-  return index;
 }

@@ -407,9 +407,6 @@
                   "id": {
                     "type": "string"
                   },
-                  "isDefault": {
-                    "type": "boolean"
-                  },
                   "databaseName": {
                     "type": "string"
                   },
@@ -430,9 +427,6 @@
                   },
                   "id": {
                     "type": "string"
-                  },
-                  "isDefault": {
-                    "type": "boolean"
                   },
                   "projectId": {
                     "type": "string"
@@ -463,9 +457,6 @@
                   },
                   "id": {
                     "type": "string"
-                  },
-                  "isDefault": {
-                    "type": "boolean"
                   },
                   "workingDirectory": {
                     "type": "string"

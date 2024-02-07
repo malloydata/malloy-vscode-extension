@@ -113,7 +113,6 @@ export class WebConnectionFactory implements ConnectionFactory {
         name: 'duckdb',
         backend: ConnectionBackend.DuckDB,
         id: 'duckdb-default',
-        isDefault: false,
         isGenerated: true,
       });
     }

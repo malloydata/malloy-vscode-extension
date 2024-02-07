@@ -32,7 +32,6 @@ import {
   ConnectionBackend,
   ConnectionConfig,
   ExternalConnectionConfig,
-  getDefaultIndex,
 } from '../../../common/types/connection_manager_types';
 import {
   ConnectionMessageInstallExternalConnection,
@@ -106,7 +105,6 @@ export class ConnectionEditorList extends LitElement {
         name: '',
         backend: this.availableBackends[0],
         id,
-        isDefault: this.connections.length === 0,
       },
     ]);
     this.selectedId = id;
@@ -120,18 +118,7 @@ export class ConnectionEditorList extends LitElement {
     this.dirty = true;
   }
 
-  makeDefault(defaultIndex: number) {
-    this.setConnections(
-      this.connections.map((connection, index) => {
-        return {...connection, isDefault: index === defaultIndex};
-      })
-    );
-    this.dirty = true;
-  }
-
   override render() {
-    const defaultConnectionIndex = getDefaultIndex(this.connections);
-
     return html` <div style="marginTop: 20px">
       <div class="button-group" style="margin: 10px">
         <vscode-button @click=${this.addConnection}
@@ -156,8 +143,6 @@ export class ConnectionEditorList extends LitElement {
                   .reverse()
                   .find(message => message.connection.id === config.id)}
                 .requestFilePath=${this.requestFilePath}
-                .isDefault=${index === defaultConnectionIndex}
-                .makeDefault=${() => this.makeDefault(index)}
                 .availableBackends=${this.availableBackends}
                 .installExternalConnection=${this.installExternalConnection}
                 .installExternalConnectionStatus=${[
