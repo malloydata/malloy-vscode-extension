@@ -135,10 +135,7 @@ export class BigQueryConnectionEditor extends LitElement {
             ></vscode-text-field>
           </td>
           <td>
-            <vscode-button
-              @click=${this.requestServiceAccountKeyPath}
-              style="height: 25px"
-            >
+            <vscode-button @click=${this.requestServiceAccountKeyPath}>
               Pick File
             </vscode-button>
           </td>

@@ -124,7 +124,7 @@ export class ConnectionEditor extends LitElement {
         </b>
         ${this.isDefault
           ? html`<vscode-tag>Default</vscode-tag>`
-          : html`<vscode-button @click=${this.makeDefault} style="height: 25px">
+          : html`<vscode-button @click=${this.makeDefault}>
               Make Default
             </vscode-button>`}
       </div>
@@ -172,6 +172,7 @@ export class ConnectionEditor extends LitElement {
         ? html`<duckdb-connection-editor
             .config=${this.config}
             .setConfig=${this.setConfig}
+            .requestFilePath=${this.requestFilePath}
           ></duckdb-connection-editor>`
         : this.config.backend === ConnectionBackend.External
         ? html`<external-connection-editor
