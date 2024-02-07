@@ -173,7 +173,8 @@ export function runMalloyQuery(
         },
         cancellationTokenSource.token
       )
-      .catch(() => {
+      .catch(e => {
+        console.error(e);
         const error =
           'The worker process has died, and has been restarted. ' +
           'This is possibly the result of a database bug. ' +

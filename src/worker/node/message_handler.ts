@@ -21,30 +21,19 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as rpc from 'vscode-jsonrpc/node';
 import {downloadQuery} from './download_query';
 import {ConnectionManager} from '../../common/connection_manager';
-import {DesktopConnectionFactory} from '../../common/connections/node/connection_factory';
 import {MessageHandler} from '../message_handler';
-import {refreshConfig} from './refresh_config';
 import {inspect} from 'node:util';
-import {refreshSchemaCache} from './refresh_schema_cache';
+import {GenericConnection} from '../../common/types/worker_message_types';
 
 export class NodeMessageHandler {
   messageHandler: MessageHandler;
 
-  constructor() {
-    const connection = rpc.createMessageConnection(
-      new rpc.IPCMessageReader(process),
-      new rpc.IPCMessageWriter(process)
-    );
-    connection.listen();
-
-    const connectionManager = new ConnectionManager(
-      new DesktopConnectionFactory(),
-      []
-    );
-
+  constructor(
+    connection: GenericConnection,
+    connectionManager: ConnectionManager
+  ) {
     this.messageHandler = new MessageHandler(connection, connectionManager);
 
     this.messageHandler.onRequest(
@@ -57,16 +46,6 @@ export class NodeMessageHandler {
           this.messageHandler.fileHandler,
           cancellationToken
         )
-    );
-    this.messageHandler.onRequest('malloy/config', message =>
-      refreshConfig(connectionManager, message)
-    );
-    this.messageHandler.onRequest('malloy/refreshSchemaCache', message =>
-      refreshSchemaCache(
-        connectionManager,
-        this.messageHandler.fileHandler,
-        message
-      )
     );
     this.messageHandler.log('NodeMessageHandler initialized.');
   }

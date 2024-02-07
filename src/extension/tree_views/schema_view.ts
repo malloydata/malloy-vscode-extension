@@ -153,12 +153,6 @@ export class SchemaProvider
         return this.resultCache.get(cacheKey) || [];
       }
 
-      if (this.refreshSchemaCache) {
-        await this.worker.sendRequest('malloy/refreshSchemaCache', {
-          uri,
-        });
-      }
-
       const explores = await this.getStructs(documentMeta);
       this.refreshSchemaCache = false;
       if (explores === undefined) {

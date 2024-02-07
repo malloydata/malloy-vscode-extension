@@ -26,7 +26,6 @@ import {
   GenericConnection,
   ListenerType,
   MessageMap,
-  WorkerLogMessage,
   WorkerMessageMap,
   WorkerFetchBinaryMessage,
   WorkerFetchCellDataMessage,
@@ -47,12 +46,6 @@ export abstract class WorkerConnection implements ExtensionMessageHandler {
   abstract get connection(): GenericConnection;
 
   subscribe() {
-    this.context.subscriptions.push(
-      this.onRequest('malloy/log', (message: WorkerLogMessage) => {
-        workerLog.appendLine(message.message);
-      })
-    );
-
     this.context.subscriptions.push(
       this.onRequest('malloy/fetch', async ({uri}: WorkerFetchMessage) => {
         workerLog.appendLine(`${logPrefix('Debug')} reading file ${uri}`);

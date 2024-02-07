@@ -21,92 +21,26 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as child_process from 'child_process';
-import stream from 'stream';
 import * as vscode from 'vscode';
-import * as rpc from 'vscode-jsonrpc/node';
 import {FileHandler} from '../../common/types/file_handler';
 import {WorkerConnection} from '../worker_connection';
 import {GenericConnection} from '../../common/types/worker_message_types';
 
-const DEFAULT_RESTART_SECONDS = 1;
-
 export class WorkerConnectionNode extends WorkerConnection {
-  worker: child_process.ChildProcess | undefined;
-  _connection: GenericConnection | undefined;
+  _connection: GenericConnection;
 
-  constructor(context: vscode.ExtensionContext, fileHandler: FileHandler) {
+  constructor(
+    context: vscode.ExtensionContext,
+    connection: GenericConnection,
+    fileHandler: FileHandler
+  ) {
     super(context, fileHandler);
-
-    const workerModule = context.asAbsolutePath('dist/worker_node.js');
-    const execArgv = ['--no-lazy'];
-    if (context.extensionMode === vscode.ExtensionMode.Development) {
-      execArgv.push(
-        '--inspect=6010',
-        '--preserve-symlinks',
-        '--enable-source-maps'
-      );
-    }
-
-    const cwd = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
-
-    const startWorker = () => {
-      let connection: rpc.MessageConnection | null = null;
-
-      const stdoutStream = new stream.Writable({
-        write: data => {
-          console.info(data.toString());
-        },
-      });
-      const stderrStream = new stream.Writable({
-        write: data => {
-          console.error(data.toString());
-        },
-      });
-
-      this.worker = child_process
-        // .spawn('node', [workerModule, ...execArgv], {stdio: ['ipc'], cwd})
-        .fork(workerModule, {
-          execArgv,
-          cwd,
-          stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
-        })
-        .on('error', console.error)
-        .on('exit', status => {
-          connection?.dispose();
-          console.error(`Worker exited with ${status}`);
-          if (status !== 0) {
-            console.info(`Restarting in ${DEFAULT_RESTART_SECONDS} seconds`);
-            // Maybe exponential backoff? Not sure what our failure
-            // modes are going to be
-            setTimeout(startWorker, DEFAULT_RESTART_SECONDS * 1000);
-          }
-        });
-
-      this.worker.stdout?.pipe(stdoutStream);
-      this.worker.stderr?.pipe(stderrStream);
-
-      connection = rpc.createMessageConnection(
-        new rpc.IPCMessageReader(this.worker),
-        new rpc.IPCMessageWriter(this.worker)
-      );
-      connection.listen();
-      context.subscriptions.push(connection);
-      this._connection = connection;
-
-      this.subscribe();
-    };
-    startWorker();
+    this._connection = connection;
   }
 
   get connection() {
-    if (!this._connection) {
-      throw new Error('Uninitialized connection');
-    }
     return this._connection;
   }
 
-  dispose(): void {
-    this.worker?.kill('SIGHUP');
-  }
+  dispose(): void {}
 }

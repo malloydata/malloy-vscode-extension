@@ -52,7 +52,7 @@
         "no-restricted-imports": [
           "error",
           {
-            "patterns": ["**/extension/**", "**/worker/**", "vscode"]
+            "patterns": ["**/extension/**", "vscode"]
           }
         ]
       }

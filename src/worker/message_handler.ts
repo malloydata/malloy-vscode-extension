@@ -83,6 +83,6 @@ export class MessageHandler implements WorkerMessageHandler {
   }
 
   log(message: string) {
-    this.sendRequest('malloy/log', {message});
+    console.info(message);
   }
 }

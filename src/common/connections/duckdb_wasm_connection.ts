@@ -36,7 +36,7 @@ export const createDuckDbWasmConnection = async (
     throw new Error('DuckDB is not available.');
   }
   workingDirectory = connectionConfig.workingDirectory || workingDirectory;
-  if (workingDirectory.startsWith('file:')) {
+  if (workingDirectory?.startsWith('file:')) {
     workingDirectory = workingDirectory.substring(7);
   }
   try {

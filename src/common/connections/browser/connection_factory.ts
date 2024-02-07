@@ -60,9 +60,7 @@ export class WebConnectionFactory implements ConnectionFactory {
 
   async getConnectionForConfig(
     connectionConfig: ConnectionConfig,
-    configOptions: ConfigOptions = {
-      workingDirectory: '/',
-    }
+    configOptions: ConfigOptions = {}
   ): Promise<TestableConnection> {
     const {useCache, workingDirectory} = configOptions;
     const cacheKey = `${connectionConfig.name}::${workingDirectory}`;
