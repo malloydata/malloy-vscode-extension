@@ -112,7 +112,6 @@ export class ConnectionEditorList extends LitElement {
 
   setConfig(config: ConnectionConfig, index: number) {
     const copy = [...this.connections];
-    config.isGenerated = false;
     copy[index] = config;
     this.setConnections(copy);
     this.dirty = true;

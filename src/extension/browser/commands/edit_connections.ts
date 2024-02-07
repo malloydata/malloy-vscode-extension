@@ -24,7 +24,7 @@
 import {ConnectionConfig} from '../../../common/types/connection_manager_types';
 import {EditConnectionPanel} from '../../connection_editor';
 import {WorkerConnection} from '../../worker_connection';
-import {connectionManager} from '../connection_manager';
+import {connectionConfigManager} from '../connection_config_manager_browser';
 
 let panel: EditConnectionPanel | null = null;
 
@@ -34,7 +34,7 @@ export function editConnectionsCommand(
 ): void {
   if (!panel) {
     panel = new EditConnectionPanel(
-      connectionManager,
+      connectionConfigManager,
       worker,
       handleConnectionsPreSave
     );
@@ -57,10 +57,7 @@ async function handleConnectionsPreSave(
 ): Promise<ConnectionConfig[]> {
   const modifiedConnections = [];
   for (let index = 0; index < connections.length; index++) {
-    const connection = connections[index];
-    if (!connection.isGenerated) {
-      modifiedConnections.push(connection);
-    }
+    modifiedConnections.push(connections[index]);
   }
   return modifiedConnections;
 }

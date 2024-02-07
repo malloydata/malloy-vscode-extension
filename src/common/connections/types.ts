@@ -23,16 +23,12 @@
 
 import {
   ConfigOptions,
-  ConnectionBackend,
   ConnectionConfig,
-  ExternalConnectionConfig,
 } from '../types/connection_manager_types';
 import {TestableConnection} from '@malloydata/malloy';
 
 export interface ConnectionFactory {
   reset(): void;
-
-  getAvailableBackends(): ConnectionBackend[];
 
   getConnectionForConfig(
     connectionConfig: ConnectionConfig,
@@ -42,8 +38,4 @@ export interface ConnectionFactory {
   getWorkingDirectory(url: URL): string;
 
   addDefaults(configs: ConnectionConfig[]): ConnectionConfig[];
-
-  installExternalConnectionPackage(
-    connectionConfig: ExternalConnectionConfig
-  ): Promise<ExternalConnectionConfig>;
 }

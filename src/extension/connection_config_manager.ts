@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Google LLC
+ * Copyright 2024 Google LLC
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files
@@ -21,12 +21,13 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {ConnectionManager} from '../common/connection_manager';
-import {ConnectionConfig} from '../common/types/connection_manager_types';
-import {ConnectionFactory} from '../common/connections/types';
+import {
+  ConnectionBackend,
+  ConnectionConfig,
+  ConnectionConfigManager,
+  ExternalConnectionConfig,
+} from '../common/types/connection_manager_types';
 import {getMalloyConfig} from './utils/config';
-
-const DEFAULT_ROW_LIMIT = 50;
 
 const getConnectionsConfig = (): ConnectionConfig[] => {
   const malloyConfig = getMalloyConfig();
@@ -35,34 +36,45 @@ const getConnectionsConfig = (): ConnectionConfig[] => {
   return connectionConfig || [];
 };
 
-export class VSCodeConnectionManager extends ConnectionManager {
-  constructor(connectionFactory: ConnectionFactory) {
-    super(connectionFactory, getConnectionsConfig());
+export abstract class ConnectionConfigManagerBase
+  implements ConnectionConfigManager
+{
+  private configList: ConnectionConfig[] = [];
+
+  constructor() {
+    this.onConfigurationUpdated();
+  }
+
+  public abstract getAvailableBackends(): ConnectionBackend[];
+
+  public abstract installExternalConnectionPackage(
+    connectionConfig: ExternalConnectionConfig
+  ): Promise<ExternalConnectionConfig>;
+
+  public getAllConnectionConfigs() {
+    return this.configList;
+  }
+
+  public getConnectionConfigs() {
+    return this.filterUnavailableConnectionBackends(this.configList);
+  }
+
+  protected filterUnavailableConnectionBackends(
+    connectionsConfig: ConnectionConfig[]
+  ): ConnectionConfig[] {
+    const availableBackends = this.getAvailableBackends();
+    return connectionsConfig.filter(config =>
+      availableBackends.includes(config.backend)
+    );
+  }
+
+  public setConnectionsConfig(connectionsConfig: ConnectionConfig[]): void {
+    // Force existing connections to be regenerated
+    console.info('Using connection config', connectionsConfig);
+    this.configList = connectionsConfig;
   }
 
   async onConfigurationUpdated(): Promise<void> {
     return this.setConnectionsConfig(getConnectionsConfig());
-  }
-
-  override getCurrentRowLimit(): number {
-    // We get the `rowLimit` setting in this subclass instead of in the base class,
-    // because the Language Server doesn't actually care about row limits, because it never
-    // runs queries, and because it's slightly harder to get settings from within the language
-    // server.
-    const rowLimitRaw = getMalloyConfig().get('rowLimit');
-    if (rowLimitRaw === undefined) {
-      return DEFAULT_ROW_LIMIT;
-    }
-    if (typeof rowLimitRaw === 'string') {
-      try {
-        return parseInt(rowLimitRaw);
-      } catch (_error) {
-        return DEFAULT_ROW_LIMIT;
-      }
-    }
-    if (typeof rowLimitRaw !== 'number') {
-      return DEFAULT_ROW_LIMIT;
-    }
-    return rowLimitRaw;
   }
 }

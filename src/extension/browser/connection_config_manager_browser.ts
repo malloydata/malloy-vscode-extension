@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Google LLC
+ * Copyright 2024 Google LLC
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files
@@ -21,9 +21,25 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {VSCodeConnectionManager} from '../connection_manager';
-import {WebConnectionFactory} from '../../common/connections/browser/connection_factory';
-import {fetchBinaryFile} from '../utils/files';
+import {
+  ConnectionBackend,
+  ExternalConnectionConfig,
+} from '../../common/types/connection_manager_types';
+import {ConnectionConfigManagerBase} from '../connection_config_manager';
 
-export const connectionFactory = new WebConnectionFactory(fetchBinaryFile);
-export const connectionManager = new VSCodeConnectionManager(connectionFactory);
+class ConnectionConfigManagerBrowser extends ConnectionConfigManagerBase {
+  public getAvailableBackends(): ConnectionBackend[] {
+    const available = [ConnectionBackend.DuckDB];
+    return available;
+  }
+
+  public async installExternalConnectionPackage(
+    _connectionConfig: ExternalConnectionConfig
+  ): Promise<ExternalConnectionConfig> {
+    throw new Error(
+      'Can not install external packages in the browser for now.'
+    );
+  }
+}
+
+export const connectionConfigManager = new ConnectionConfigManagerBrowser();
