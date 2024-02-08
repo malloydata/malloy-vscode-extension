@@ -83,12 +83,6 @@ export class ConnectionEditor extends LitElement {
     filters: {[key: string]: string[]}
   ) => void;
 
-  @property({type: Boolean})
-  isDefault!: boolean;
-
-  @property()
-  makeDefault!: () => void;
-
   @property({type: Array})
   availableBackends!: ConnectionBackend[];
 
@@ -122,11 +116,6 @@ export class ConnectionEditor extends LitElement {
         <b class="connection-title" @click=${() => this.setSelectedId(null)}>
           ${chevronDownIcon} CONNECTION: ${this.config.name || 'Untitled'}
         </b>
-        ${this.isDefault
-          ? html`<vscode-tag>Default</vscode-tag>`
-          : html`<vscode-button @click=${this.makeDefault}>
-              Make Default
-            </vscode-button>`}
       </div>
       <table>
         <tbody>

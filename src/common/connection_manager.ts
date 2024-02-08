@@ -33,8 +33,6 @@ import {
 } from './types/connection_manager_types';
 import {ConnectionFactory} from './connections/types';
 
-const DEFAULT_CONFIG = Symbol('default-config');
-
 export class DynamicConnectionLookup implements LookupConnection<Connection> {
   connections: Record<string | symbol, Promise<Connection>> = {};
 
@@ -151,9 +149,6 @@ export class ConnectionManager {
 
     const configs = this.connectionFactory.addDefaults(this.configList);
     configs.forEach(config => {
-      if (config.isDefault) {
-        this.configMap[DEFAULT_CONFIG] = config;
-      }
       this.configMap[config.name] = config;
     });
   }
