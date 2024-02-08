@@ -34,10 +34,13 @@ import {createPostgresConnection} from '../postgres_connection';
 
 import {fileURLToPath} from 'url';
 import {ExternalConnectionFactory} from '../external_connection_factory';
+import {GenericConnection} from '../../types/worker_message_types';
 
 export class NodeConnectionFactory implements ConnectionFactory {
   connectionCache: Record<string, TestableConnection> = {};
   externalConnectionFactory = new ExternalConnectionFactory();
+
+  constructor(private client: GenericConnection) {}
 
   reset() {
     Object.values(this.connectionCache).forEach(connection =>
@@ -66,6 +69,7 @@ export class NodeConnectionFactory implements ConnectionFactory {
         break;
       case ConnectionBackend.Postgres: {
         connection = await createPostgresConnection(
+          this.client,
           connectionConfig,
           configOptions
         );

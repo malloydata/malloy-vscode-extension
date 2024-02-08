@@ -28,5 +28,5 @@ import {NodeConnectionFactory} from '../../common/connections/node/connection_fa
 export const connection = createConnection(ProposedFeatures.all);
 
 export const connectionManager = new ConnectionManager(
-  new NodeConnectionFactory()
+  new NodeConnectionFactory(connection)
 );

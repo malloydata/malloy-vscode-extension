@@ -21,15 +21,17 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import * as vscode from 'vscode';
 import {connectionConfigManager} from '../connection_config_manager_node';
 import {ConnectionConfig} from '../../../common/types/connection_manager_types';
-import {deletePassword, setPassword} from 'keytar';
+import {deletePassword} from 'keytar';
 import {EditConnectionPanel} from '../../connection_editor';
 import {WorkerConnection} from '../../worker_connection';
 
 let panel: EditConnectionPanel | null = null;
 
 export function editConnectionsCommand(
+  context: vscode.ExtensionContext,
   worker: WorkerConnection,
   id?: string
 ): void {
@@ -37,7 +39,8 @@ export function editConnectionsCommand(
     panel = new EditConnectionPanel(
       connectionConfigManager,
       worker,
-      handleConnectionsPreSave
+      (connections: ConnectionConfig[]) =>
+        handleConnectionsPreSave(context, connections)
     );
     panel.onDidDispose(() => (panel = null));
   }
@@ -53,19 +56,22 @@ export function editConnectionsCommand(
  *
  * - Handles scrubbing passwords and putting them in the keychain.
  */
+// TODO(whscullin) keytar
+// This can be moved to common code once keytar is removed
 async function handleConnectionsPreSave(
+  context: vscode.ExtensionContext,
   connections: ConnectionConfig[]
 ): Promise<ConnectionConfig[]> {
   const modifiedConnections = [];
   for (let index = 0; index < connections.length; index++) {
     const connection = connections[index];
     if ('password' in connection) {
+      const key = `connections.${connection.id}.password`;
+      // TODO(whscullin) keytar - delete
+      await deletePassword('com.malloy-lang.vscode-extension', key);
       if (connection.useKeychainPassword === false) {
         connection.useKeychainPassword = undefined;
-        await deletePassword(
-          'com.malloy-lang.vscode-extension',
-          `connections.${connection.id}.password`
-        );
+        await context.secrets.delete(key);
       }
       if (connection.password) {
         modifiedConnections.push({
@@ -73,11 +79,7 @@ async function handleConnectionsPreSave(
           password: undefined,
           useKeychainPassword: true,
         });
-        await setPassword(
-          'com.malloy-lang.vscode-extension',
-          `connections.${connection.id}.password`,
-          connection.password
-        );
+        await context.secrets.store(key, connection.password);
       }
     } else {
       modifiedConnections.push(connection);

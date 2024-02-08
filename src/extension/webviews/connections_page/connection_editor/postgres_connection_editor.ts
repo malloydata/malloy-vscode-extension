@@ -181,7 +181,7 @@ export class PostgresConnectionEditor extends LitElement {
                   }
                 }}
               >
-                Enter a password ${this.config.password !== undefined && ':'}
+                Enter a password
               </vscode-radio>
             </div>
           </td>

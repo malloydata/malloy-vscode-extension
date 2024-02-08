@@ -30,13 +30,15 @@ import {
 } from '../../types/connection_manager_types';
 import {createDuckDbWasmConnection} from '../duckdb_wasm_connection';
 import {DuckDBWASMConnection} from '@malloydata/db-duckdb/wasm';
+import {GenericConnection} from '../../types/worker_message_types';
+import {errorMessage} from '../../errors';
 
 export type FetchCallback = (uri: string) => Promise<Uint8Array>;
 
 export class WebConnectionFactory implements ConnectionFactory {
   connectionCache: Record<string, TestableConnection> = {};
 
-  constructor(private fetchBinaryFile?: FetchCallback) {}
+  constructor(private client: GenericConnection) {}
 
   async reset() {
     await Promise.all(
@@ -48,6 +50,18 @@ export class WebConnectionFactory implements ConnectionFactory {
   getAvailableBackends(): ConnectionBackend[] {
     return [ConnectionBackend.DuckDB];
   }
+
+  private fetchBinaryFile = async (uri: string): Promise<Uint8Array> => {
+    try {
+      console.info(`fetchBinaryFile requesting ${uri}`);
+      return await this.client.sendRequest('malloy/fetchBinaryFile', {uri});
+    } catch (error) {
+      console.error(errorMessage(error));
+      throw new Error(
+        `fetchBinaryFile: unable to load '${uri}': ${errorMessage(error)}`
+      );
+    }
+  };
 
   async getConnectionForConfig(
     connectionConfig: ConnectionConfig,
@@ -63,11 +77,8 @@ export class WebConnectionFactory implements ConnectionFactory {
       case ConnectionBackend.DuckDB:
         {
           const remoteTableCallback = async (tableName: string) => {
-            if (this.fetchBinaryFile) {
-              const url = new URL(tableName, workingDirectory);
-              return this.fetchBinaryFile(url.toString());
-            }
-            return undefined;
+            const url = new URL(tableName, workingDirectory);
+            return this.fetchBinaryFile(url.toString());
           };
           const duckDBConnection: DuckDBWASMConnection =
             await createDuckDbWasmConnection(connectionConfig, configOptions);

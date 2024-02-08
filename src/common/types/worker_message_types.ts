@@ -134,6 +134,10 @@ export interface WorkerFetchWorkspaceFoldersMessage {
   uri: string;
 }
 
+export interface WorkerGetSecretMessage {
+  key: string;
+}
+
 /**
  * Map of worker message types to worker message interfaces.
  */
@@ -143,6 +147,7 @@ export interface WorkerMessageMap {
   'malloy/fetch': WorkerFetchMessage;
   'malloy/fetchCellData': WorkerFetchCellDataMessage;
   'malloy/fetchWorkspaceFolders': WorkerFetchWorkspaceFoldersMessage;
+  'malloy/getSecret': WorkerGetSecretMessage;
 }
 
 /**
