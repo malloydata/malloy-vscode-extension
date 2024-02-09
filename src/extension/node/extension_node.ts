@@ -35,7 +35,7 @@ import {
   ConnectionItem,
   ConnectionsProvider,
 } from '../tree_views/connections_view';
-import {connectionManager} from './connection_manager';
+import {connectionConfigManager} from './connection_config_manager_node';
 import {setupFileMessaging, setupSubscriptions} from '../subscriptions';
 import {fileHandler} from '../utils/files';
 import {MALLOY_EXTENSION_STATE} from '../state';
@@ -61,7 +61,10 @@ export function activate(context: vscode.ExtensionContext): void {
   setupLanguageServer(context);
   const worker = new WorkerConnectionNode(context, client, fileHandler);
   setupSubscriptions(context, worker, client);
-  const connectionsTree = new ConnectionsProvider(context, connectionManager);
+  const connectionsTree = new ConnectionsProvider(
+    context,
+    connectionConfigManager
+  );
 
   MALLOY_EXTENSION_STATE.setHomeUri(vscode.Uri.file(os.homedir()));
 
@@ -79,7 +82,7 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration(async e => {
       if (e.affectsConfiguration('malloy')) {
-        await connectionManager.onConfigurationUpdated();
+        await connectionConfigManager.onConfigurationUpdated();
         connectionsTree.refresh();
       }
       if (e.affectsConfiguration('cloudcode')) {

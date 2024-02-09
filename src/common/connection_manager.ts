@@ -29,7 +29,6 @@ import {
 import {
   ConfigOptions,
   ConnectionConfig,
-  ExternalConnectionConfig,
 } from './types/connection_manager_types';
 import {ConnectionFactory} from './connections/types';
 
@@ -62,24 +61,12 @@ export class DynamicConnectionLookup implements LookupConnection<Connection> {
 
 export class ConnectionManager {
   private connectionLookups: Record<string, DynamicConnectionLookup> = {};
+  private configList: ConnectionConfig[] = [];
   configMap: Record<string | symbol, ConnectionConfig> = {};
   connectionCache: Record<string | symbol, TestableConnection> = {};
   currentRowLimit = 50;
 
-  constructor(
-    private connectionFactory: ConnectionFactory,
-    private configList: ConnectionConfig[]
-  ) {
-    this.buildConfigMap();
-  }
-
-  public setConnectionsConfig(connectionsConfig: ConnectionConfig[]): void {
-    // Force existing connections to be regenerated
-    console.info('Using connection config', connectionsConfig);
-    this.configList = connectionsConfig;
-    this.buildConfigMap();
-    this.connectionFactory.reset();
-  }
+  constructor(private connectionFactory: ConnectionFactory) {}
 
   public async connectionForConfig(
     connectionConfig: ConnectionConfig
@@ -114,33 +101,11 @@ export class ConnectionManager {
     return this.currentRowLimit;
   }
 
-  public getAllConnectionConfigs() {
-    return this.configList;
-  }
-
-  public getConnectionConfigs() {
-    return this.filterUnavailableConnectionBackends(this.configList);
-  }
-
-  public async installExternalConnectionPackage(
-    connectionConfig: ExternalConnectionConfig
-  ): Promise<ExternalConnectionConfig> {
-    return this.connectionFactory.installExternalConnectionPackage(
-      connectionConfig
-    );
-  }
-
-  public getAvailableBackends() {
-    return this.connectionFactory.getAvailableBackends();
-  }
-
-  protected filterUnavailableConnectionBackends(
-    connectionsConfig: ConnectionConfig[]
-  ): ConnectionConfig[] {
-    const availableBackends = this.connectionFactory.getAvailableBackends();
-    return connectionsConfig.filter(config =>
-      availableBackends.includes(config.backend)
-    );
+  public setConnectionsConfig(connectionsConfig: ConnectionConfig[]): void {
+    // Force existing connections to be regenerated
+    console.info('Using connection config', connectionsConfig);
+    this.configList = connectionsConfig;
+    this.buildConfigMap();
   }
 
   private buildConfigMap(): void {

@@ -31,9 +31,11 @@ import {
   InstallExternalConnectionStatus,
 } from '../common/types/message_types';
 import {WebviewMessageManager} from './webview_message_manager';
-import {ConnectionConfig} from '../common/types/connection_manager_types';
+import {
+  ConnectionConfig,
+  ConnectionConfigManager,
+} from '../common/types/connection_manager_types';
 import {errorMessage} from '../common/errors';
-import {ConnectionManager} from '../common/connection_manager';
 import {getMalloyConfig} from './utils/config';
 import {WorkerConnection} from './worker_connection';
 
@@ -43,7 +45,7 @@ export class EditConnectionPanel {
   onDidDispose: vscode.Event<void>;
 
   constructor(
-    private connectionManager: ConnectionManager,
+    connectionConfigManager: ConnectionConfigManager,
     private worker: WorkerConnection,
     handleConnectionsPreSave: (
       connections: ConnectionConfig[]
@@ -136,7 +138,7 @@ export class EditConnectionPanel {
         case ConnectionMessageType.InstallExternalConnection: {
           try {
             const installResult =
-              await connectionManager.installExternalConnectionPackage(
+              await connectionConfigManager.installExternalConnectionPackage(
                 message.connection
               );
             this.messageManager.postMessage({
@@ -157,8 +159,8 @@ export class EditConnectionPanel {
       }
     });
 
-    const connections = this.connectionManager.getConnectionConfigs();
-    const availableBackends = this.connectionManager.getAvailableBackends();
+    const connections = connectionConfigManager.getConnectionConfigs();
+    const availableBackends = connectionConfigManager.getAvailableBackends();
 
     this.messageManager.postMessage({
       type: ConnectionMessageType.SetConnections,

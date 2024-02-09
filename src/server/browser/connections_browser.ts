@@ -48,6 +48,5 @@ const fetchBinaryFile = async (uri: string): Promise<Uint8Array> => {
 };
 
 export const connectionManager = new ConnectionManager(
-  new WebConnectionFactory(fetchBinaryFile),
-  []
+  new WebConnectionFactory(fetchBinaryFile)
 );

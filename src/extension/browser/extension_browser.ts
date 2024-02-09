@@ -29,7 +29,7 @@ import {
 } from 'vscode-languageclient/browser';
 
 import {setupFileMessaging, setupSubscriptions} from '../subscriptions';
-import {connectionManager} from './connection_manager';
+import {connectionConfigManager} from './connection_config_manager_browser';
 import {
   ConnectionItem,
   ConnectionsProvider,
@@ -44,14 +44,17 @@ export function activate(context: vscode.ExtensionContext): void {
   const worker = new WorkerConnectionBrowser(context, client, fileHandler);
   setupSubscriptions(context, worker, client);
 
-  const connectionsTree = new ConnectionsProvider(context, connectionManager);
+  const connectionsTree = new ConnectionsProvider(
+    context,
+    connectionConfigManager
+  );
   context.subscriptions.push(
     vscode.window.registerTreeDataProvider('malloyConnections', connectionsTree)
   );
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration(async e => {
       if (e.affectsConfiguration('malloy')) {
-        await connectionManager.onConfigurationUpdated();
+        await connectionConfigManager.onConfigurationUpdated();
         connectionsTree.refresh();
       }
     })

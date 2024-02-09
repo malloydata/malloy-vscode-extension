@@ -49,7 +49,6 @@ export const ConnectionBackendNames: Record<ConnectionBackend, string> = {
 export interface BaseConnectionConfig {
   name: string;
   id: string;
-  isGenerated?: boolean; // Not part of VS Code configuration
 }
 
 export interface BigQueryConnectionConfig extends BaseConnectionConfig {
@@ -116,4 +115,14 @@ export interface ConfigOptions {
   workingDirectory?: string;
   rowLimit?: number;
   useCache?: boolean;
+}
+
+export interface ConnectionConfigManager {
+  getAllConnectionConfigs(): ConnectionConfig[];
+  getAvailableBackends(): ConnectionBackend[];
+  getConnectionConfigs(): ConnectionConfig[];
+  installExternalConnectionPackage(
+    config: ExternalConnectionConfig
+  ): Promise<ExternalConnectionConfig>;
+  onConfigurationUpdated(): Promise<void>;
 }

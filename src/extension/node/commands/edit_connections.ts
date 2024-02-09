@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {connectionManager} from '../connection_manager';
+import {connectionConfigManager} from '../connection_config_manager_node';
 import {ConnectionConfig} from '../../../common/types/connection_manager_types';
 import {deletePassword, setPassword} from 'keytar';
 import {EditConnectionPanel} from '../../connection_editor';
@@ -35,7 +35,7 @@ export function editConnectionsCommand(
 ): void {
   if (!panel) {
     panel = new EditConnectionPanel(
-      connectionManager,
+      connectionConfigManager,
       worker,
       handleConnectionsPreSave
     );
@@ -79,7 +79,7 @@ async function handleConnectionsPreSave(
           connection.password
         );
       }
-    } else if (!connection.isGenerated) {
+    } else {
       modifiedConnections.push(connection);
     }
   }

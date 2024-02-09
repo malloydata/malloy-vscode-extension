@@ -27,17 +27,15 @@ import {
   ConfigOptions,
   ConnectionBackend,
   ConnectionConfig,
-  ExternalConnectionConfig,
 } from '../../types/connection_manager_types';
 import {createBigQueryConnection} from '../bigquery_connection';
 import {createDuckDbConnection} from '../duckdb_connection';
 import {createPostgresConnection} from '../postgres_connection';
-import {isDuckDBAvailable} from '../../duckdb_availability';
 
 import {fileURLToPath} from 'url';
 import {ExternalConnectionFactory} from '../external_connection_factory';
 
-export class DesktopConnectionFactory implements ConnectionFactory {
+export class NodeConnectionFactory implements ConnectionFactory {
   connectionCache: Record<string, TestableConnection> = {};
   externalConnectionFactory = new ExternalConnectionFactory();
 
@@ -46,18 +44,6 @@ export class DesktopConnectionFactory implements ConnectionFactory {
       connection.close()
     );
     this.connectionCache = {};
-  }
-
-  getAvailableBackends(): ConnectionBackend[] {
-    const available = [
-      ConnectionBackend.BigQuery,
-      ConnectionBackend.Postgres,
-      ConnectionBackend.External,
-    ];
-    if (isDuckDBAvailable) {
-      available.push(ConnectionBackend.DuckDB);
-    }
-    return available;
   }
 
   async getConnectionForConfig(
@@ -118,23 +104,6 @@ export class DesktopConnectionFactory implements ConnectionFactory {
     return connection;
   }
 
-  async installExternalConnectionPackage(
-    connectionConfig: ExternalConnectionConfig
-  ): Promise<ExternalConnectionConfig> {
-    const packageInfo =
-      await this.externalConnectionFactory.installExternalConnectionPackage(
-        connectionConfig
-      );
-    const connectionSpec =
-      await this.externalConnectionFactory.fetchConnectionFactory(packageInfo);
-    return {
-      ...connectionConfig,
-      packageInfo: packageInfo,
-      name: connectionSpec.connectionName,
-      connectionSchema: connectionSpec.configSchema,
-    };
-  }
-
   getWorkingDirectory(url: URL): string {
     try {
       const baseUrl = new URL('.', url);
@@ -154,7 +123,6 @@ export class DesktopConnectionFactory implements ConnectionFactory {
         name: 'bigquery',
         backend: ConnectionBackend.BigQuery,
         id: 'bigquery-default',
-        isGenerated: true,
       });
     }
 
@@ -164,7 +132,6 @@ export class DesktopConnectionFactory implements ConnectionFactory {
         name: 'duckdb',
         backend: ConnectionBackend.DuckDB,
         id: 'duckdb-default',
-        isGenerated: true,
       });
     }
     return configs;

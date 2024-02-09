@@ -26,15 +26,15 @@ import * as vscode from 'vscode';
 import {
   ConnectionBackendNames,
   ConnectionConfig,
+  ConnectionConfigManager,
 } from '../../common/types/connection_manager_types';
-import {VSCodeConnectionManager} from '../connection_manager';
 
 export class ConnectionsProvider
   implements vscode.TreeDataProvider<ConnectionItem>
 {
   constructor(
     private context: vscode.ExtensionContext,
-    private connectionManager: VSCodeConnectionManager
+    private connectionConfigManager: ConnectionConfigManager
   ) {}
 
   getTreeItem(element: ConnectionItem): vscode.TreeItem {
@@ -54,8 +54,9 @@ export class ConnectionsProvider
 
   async getChildren(element?: ConnectionItem): Promise<ConnectionItem[]> {
     if (element === undefined) {
-      const availableBackends = this.connectionManager.getAvailableBackends();
-      const config = this.connectionManager.getAllConnectionConfigs();
+      const availableBackends =
+        this.connectionConfigManager.getAvailableBackends();
+      const config = this.connectionConfigManager.getAllConnectionConfigs();
       return config.map(
         config =>
           new ConnectionItem(
@@ -80,9 +81,9 @@ export class ConnectionItem extends vscode.TreeItem {
 
     const backendName = ConnectionBackendNames[config.backend];
     this.id = config.id;
-    this.description = `(${backendName}${
-      config.isGenerated ? ', automatically generated' : ''
-    }) ${isAvailable ? '' : '(Not available)'}`;
+    this.description = `(${backendName}) ${
+      isAvailable ? '' : '(Not available)'
+    }`;
   }
 
   override contextValue = 'connection';

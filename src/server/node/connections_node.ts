@@ -23,11 +23,10 @@
 
 import {createConnection, ProposedFeatures} from 'vscode-languageserver/node';
 import {ConnectionManager} from '../../common/connection_manager';
-import {DesktopConnectionFactory} from '../../common/connections/node/connection_factory';
+import {NodeConnectionFactory} from '../../common/connections/node/connection_factory';
 
 export const connection = createConnection(ProposedFeatures.all);
 
 export const connectionManager = new ConnectionManager(
-  new DesktopConnectionFactory(),
-  []
+  new NodeConnectionFactory()
 );
