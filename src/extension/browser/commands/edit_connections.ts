@@ -39,11 +39,31 @@ export function editConnectionsCommand(
       connectionConfigManager,
       worker,
       (connections: ConnectionConfig[]) =>
+        handleConnectionsPreLoad(context, connections),
+      (connections: ConnectionConfig[]) =>
         handleConnectionsPreSave(context, connections)
     );
     panel.onDidDispose(() => (panel = null));
   }
   panel.reveal(id);
+}
+
+/**
+ * Perform setup on the connections being sent to the webview.
+ *
+ * @param connections The connection configs.
+ * @returns An updated list of connections
+ *
+ * - Handles scrubbing passwords and putting them in the keychain.
+ */
+// TODO(whscullin) keytar
+// This can be moved to common code once keytar is removed
+async function handleConnectionsPreLoad(
+  _context: vscode.ExtensionContext,
+  connections: ConnectionConfig[]
+): Promise<ConnectionConfig[]> {
+  // Currently no-op in browser
+  return connections;
 }
 
 /**
@@ -58,29 +78,9 @@ export function editConnectionsCommand(
 // TODO(whscullin) keytar
 // This can be moved to common code once keytar is removed
 async function handleConnectionsPreSave(
-  context: vscode.ExtensionContext,
+  _context: vscode.ExtensionContext,
   connections: ConnectionConfig[]
 ): Promise<ConnectionConfig[]> {
-  const modifiedConnections = [];
-  for (let index = 0; index < connections.length; index++) {
-    const connection = connections[index];
-    if ('password' in connection) {
-      const key = `connections.${connection.id}.password`;
-      if (connection.useKeychainPassword === false) {
-        connection.useKeychainPassword = undefined;
-        await context.secrets.delete(key);
-      }
-      if (connection.password) {
-        await context.secrets.store(key, connection.password);
-        modifiedConnections.push({
-          ...connection,
-          password: undefined,
-          useKeychainPassword: true,
-        });
-      }
-    } else {
-      modifiedConnections.push(connection);
-    }
-  }
-  return modifiedConnections;
+  // Currently no-op in browser
+  return connections;
 }

@@ -77,6 +77,7 @@ export class NodeConnectionFactory implements ConnectionFactory {
       }
       case ConnectionBackend.DuckDB: {
         connection = await createDuckDbConnection(
+          this.client,
           connectionConfig,
           configOptions
         );

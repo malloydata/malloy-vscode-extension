@@ -69,11 +69,13 @@ export class ConnectionManager {
   constructor(private connectionFactory: ConnectionFactory) {}
 
   public async connectionForConfig(
-    connectionConfig: ConnectionConfig
+    connectionConfig: ConnectionConfig,
+    options: ConfigOptions
   ): Promise<TestableConnection> {
-    return this.connectionFactory.getConnectionForConfig(connectionConfig, {
-      workingDirectory: '/',
-    });
+    return this.connectionFactory.getConnectionForConfig(
+      connectionConfig,
+      options
+    );
   }
 
   public getConnectionLookup(fileURL: URL): LookupConnection<Connection> {
@@ -103,6 +105,7 @@ export class ConnectionManager {
 
   public setConnectionsConfig(connectionsConfig: ConnectionConfig[]): void {
     // Force existing connections to be regenerated
+    this.connectionFactory.reset();
     console.info('Using connection config', connectionsConfig);
     this.configList = connectionsConfig;
     this.buildConfigMap();
