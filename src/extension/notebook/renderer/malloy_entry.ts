@@ -26,14 +26,23 @@ import {ActivationFunction} from 'vscode-notebook-renderer';
 import './malloy_renderer';
 import {Result} from '@malloydata/malloy';
 
-const mousewheelHandler = (evt: Event) => {
-  evt.stopPropagation();
-};
-
 export const activate: ActivationFunction = ({postMessage}) => {
+  let shadow: ShadowRoot | null = null;
+  const mousewheelHandler = (evt: WheelEvent) => {
+    const tableScrollState = shadow
+      ?.querySelector('malloy-renderer')
+      ?.getMalloyRender()
+      ?.getTableScrollState?.();
+    const blockScrollUp = evt.deltaY < 0 && !tableScrollState?.isAtTop;
+    const blockScrollDown = evt.deltaY > 0 && !tableScrollState?.isAtBottom;
+    if (blockScrollUp || blockScrollDown) {
+      evt.stopPropagation();
+    }
+  };
+
   return {
     renderOutputItem(info, element) {
-      let shadow = element.shadowRoot;
+      shadow = element.shadowRoot;
       if (!shadow) {
         shadow = element.attachShadow({mode: 'open'});
         const root = document.createElement('div');
@@ -48,11 +57,11 @@ export const activate: ActivationFunction = ({postMessage}) => {
       if (result.resultExplore.modelTag.has('renderer_next')) {
         root.style.border = '1px solid #e5e7eb';
         root.style.padding = '10px';
-        root.addEventListener('mousewheel', mousewheelHandler);
+        root.addEventListener('wheel', mousewheelHandler);
       } else {
         root.style.border = '';
         root.style.padding = '';
-        root.removeEventListener('mousewheel', mousewheelHandler);
+        root.removeEventListener('wheel', mousewheelHandler);
       }
       render(
         html`<malloy-renderer
