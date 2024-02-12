@@ -71,12 +71,12 @@ async function handleConnectionsPreSave(
         await context.secrets.delete(key);
       }
       if (connection.password) {
+        await context.secrets.store(key, connection.password);
         modifiedConnections.push({
           ...connection,
           password: undefined,
           useKeychainPassword: true,
         });
-        await context.secrets.store(key, connection.password);
       }
     } else {
       modifiedConnections.push(connection);
