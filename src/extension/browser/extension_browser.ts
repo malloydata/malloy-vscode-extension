@@ -37,6 +37,7 @@ import {
 import {editConnectionsCommand} from './commands/edit_connections';
 import {fileHandler} from '../utils/files';
 import {WorkerConnectionBrowser} from './worker_connection_browser';
+import {WorkerGetSecretMessage} from '../../common/types/worker_message_types';
 let client: LanguageClient;
 
 export function activate(context: vscode.ExtensionContext): void {
@@ -62,7 +63,16 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.commands.registerCommand(
       'malloy.editConnections',
-      (item?: ConnectionItem) => editConnectionsCommand(worker, item?.id)
+      (item?: ConnectionItem) =>
+        editConnectionsCommand(context, worker, item?.id)
+    )
+  );
+  context.subscriptions.push(
+    client.onRequest(
+      'malloy/getSecret',
+      async ({key}: WorkerGetSecretMessage) => {
+        return await context.secrets.get(key);
+      }
     )
   );
 }

@@ -21,14 +21,15 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {getPassword} from 'keytar';
 import {PostgresConnection} from '@malloydata/db-postgres';
 import {
   PostgresConnectionConfig,
   ConfigOptions,
 } from '../types/connection_manager_types';
+import {GenericConnection} from '../types/worker_message_types';
 
 export const createPostgresConnection = async (
+  client: GenericConnection,
   connectionConfig: PostgresConnectionConfig,
   {rowLimit}: ConfigOptions
 ): Promise<PostgresConnection> => {
@@ -43,14 +44,12 @@ export const createPostgresConnection = async (
   };
   const configReader = async () => {
     let password: string | undefined;
-    if (connectionConfig.password !== undefined) {
+    if (connectionConfig.useKeychainPassword) {
+      password = await client.sendRequest('malloy/getSecret', {
+        key: `connections.${connectionConfig.id}.password`,
+      });
+    } else if (connectionConfig.password !== undefined) {
       password = connectionConfig.password;
-    } else if (connectionConfig.useKeychainPassword) {
-      password =
-        (await getPassword(
-          'com.malloy-lang.vscode-extension',
-          `connections.${connectionConfig.id}.password`
-        )) || undefined;
     }
     return {
       ...options,

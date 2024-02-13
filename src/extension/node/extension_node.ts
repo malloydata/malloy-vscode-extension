@@ -40,6 +40,8 @@ import {setupFileMessaging, setupSubscriptions} from '../subscriptions';
 import {fileHandler} from '../utils/files';
 import {MALLOY_EXTENSION_STATE} from '../state';
 import {WorkerConnectionNode} from './worker_connection_node';
+import {WorkerGetSecretMessage} from '../../common/types/worker_message_types';
+import {deletePassword, getPassword} from 'keytar';
 
 let client: LanguageClient;
 
@@ -75,7 +77,8 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.commands.registerCommand(
       'malloy.editConnections',
-      (item?: ConnectionItem) => editConnectionsCommand(worker, item?.id)
+      (item?: ConnectionItem) =>
+        editConnectionsCommand(context, worker, item?.id)
     )
   );
 
@@ -89,6 +92,25 @@ export function activate(context: vscode.ExtensionContext): void {
         cloudCodeEnv();
       }
     })
+  );
+
+  context.subscriptions.push(
+    client.onRequest(
+      'malloy/getSecret',
+      async ({key}: WorkerGetSecretMessage) => {
+        // TODO(whscullin) Migrate old keytar values for now, remove with keytar
+        // Once keytar is removed this can move to common browser/node code
+        const value = await getPassword(
+          'com.malloy-lang.vscode-extension',
+          key
+        );
+        if (value) {
+          deletePassword('com.malloy-lang.vscode-extension', key);
+          await context.secrets.store(key, value);
+        }
+        return await context.secrets.get(key);
+      }
+    )
   );
 }
 
