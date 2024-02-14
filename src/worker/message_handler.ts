@@ -34,6 +34,7 @@ import {ConnectionManager} from '../common/connection_manager';
 import {RpcFileHandler} from './file_handler';
 import {FileHandler} from '../common/types/file_handler';
 import {ProgressType} from 'vscode-jsonrpc';
+import {errorMessage} from '../common/errors';
 
 export class MessageHandler implements WorkerMessageHandler {
   public fileHandler: FileHandler;
@@ -55,9 +56,14 @@ export class MessageHandler implements WorkerMessageHandler {
       )
     );
 
-    this.onRequest('malloy/testConnection', message =>
-      testConnection(connectionManager, message.config)
-    );
+    this.onRequest('malloy/testConnection', async message => {
+      try {
+        await testConnection(connectionManager, message.config);
+      } catch (error) {
+        return errorMessage(error);
+      }
+      return '';
+    });
   }
 
   onRequest<K extends keyof MessageMap>(
