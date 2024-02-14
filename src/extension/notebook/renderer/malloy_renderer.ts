@@ -47,6 +47,10 @@ export class MalloyRenderer extends LitElement {
 
   @property({type: Object}) result: Result | null = null;
 
+  public getMalloyRender() {
+    return this.shadowRoot?.querySelector('malloy-render');
+  }
+
   override render() {
     if (!this.result) {
       return;
