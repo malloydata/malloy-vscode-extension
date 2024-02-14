@@ -76,6 +76,7 @@ export interface DuckDBConnectionConfig extends BaseConnectionConfig {
   backend: ConnectionBackend.DuckDB;
   workingDirectory?: string;
   databasePath?: string;
+  motherDuckToken?: string;
 }
 
 export interface ExternalConnectionPackageInfo {
@@ -115,6 +116,7 @@ export interface ConfigOptions {
   workingDirectory?: string;
   rowLimit?: number;
   useCache?: boolean;
+  useKeyStore?: boolean;
 }
 
 export interface ConnectionConfigManager {

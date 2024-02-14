@@ -120,9 +120,9 @@ export class ConnectionEditorList extends LitElement {
   override render() {
     return html` <div style="marginTop: 20px">
       <div class="button-group" style="margin: 10px">
-        <vscode-button @click=${this.addConnection}
-          >New Connection</vscode-button
-        >
+        <vscode-button @click=${this.addConnection}>
+          New Connection
+        </vscode-button>
       </div>
       ${this.connections.map((config, index) =>
         this.selectedId === config.id

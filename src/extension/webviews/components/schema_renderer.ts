@@ -321,9 +321,9 @@ export class StructItem extends LitElement {
 
     return html`<li class=${classes} title=${buildTitle(explore, path)}>
       <div @click=${this.toggleHidden}>
-        <span class="chevron"
-          >${this.hidden ? chevronRightIcon : chevronDownIcon}</span
-        >
+        <span class="chevron">
+          ${this.hidden ? chevronRightIcon : chevronDownIcon}
+        </span>
         ${getIconElement(`struct_${subtype}`, false)}
         <b class="explore_name">${getExploreName(explore, path)}</b>
         ${this.onPreviewClick

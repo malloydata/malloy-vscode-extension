@@ -24,19 +24,13 @@
 import {LitElement, html} from 'lit';
 import {
   provideVSCodeDesignSystem,
-  vsCodeCheckbox,
-  vsCodeRadio,
   vsCodeTextField,
 } from '@vscode/webview-ui-toolkit';
 import {PostgresConnectionConfig} from '../../../../common/types/connection_manager_types';
 import {customElement, property} from 'lit/decorators.js';
 import {styles} from './connection_editor.css';
 
-provideVSCodeDesignSystem().register(
-  vsCodeCheckbox(),
-  vsCodeRadio(),
-  vsCodeTextField()
-);
+provideVSCodeDesignSystem().register(vsCodeTextField());
 
 @customElement('postgres-connection-editor')
 export class PostgresConnectionEditor extends LitElement {
@@ -46,9 +40,6 @@ export class PostgresConnectionEditor extends LitElement {
   config!: PostgresConnectionConfig;
   @property()
   setConfig!: (config: PostgresConnectionConfig) => void;
-
-  @property({attribute: false})
-  showPassword = false;
 
   override render() {
     return html`<table>
@@ -123,97 +114,14 @@ export class PostgresConnectionEditor extends LitElement {
             <label>Password:</label>
           </td>
           <td>
-            ${this.config.useKeychainPassword !== undefined &&
-            html`<div>
-              <vscode-radio
-                value="keychain"
-                .checked=${this.config.useKeychainPassword || false}
-                @change=${({target}: {target: HTMLInputElement}) => {
-                  if (target.checked) {
-                    this.setConfig({
-                      ...this.config,
-                      password: undefined,
-                      useKeychainPassword: true,
-                    });
-                  }
-                }}
-              >
-                Use existing value
-              </vscode-radio>
-            </div>`}
-            <div>
-              <vscode-radio
-                value="none"
-                key="none"
-                .checked=${!this.config.useKeychainPassword &&
-                this.config.password === undefined}
-                @change=${({target}: {target: HTMLInputElement}) => {
-                  if (target.checked) {
-                    this.setConfig({
-                      ...this.config,
-                      password: undefined,
-                      useKeychainPassword:
-                        this.config.useKeychainPassword === undefined
-                          ? undefined
-                          : false,
-                    });
-                  }
-                }}
-              >
-                No password
-              </vscode-radio>
-            </div>
-            <div>
-              <vscode-radio
-                value="specified"
-                key="specified"
-                .checked=${this.config.password !== undefined}
-                @change=${({target}: {target: HTMLInputElement}) => {
-                  if (target.checked) {
-                    this.setConfig({
-                      ...this.config,
-                      password: '',
-                      useKeychainPassword:
-                        this.config.useKeychainPassword === undefined
-                          ? undefined
-                          : false,
-                    });
-                  }
-                }}
-              >
-                Enter a password
-              </vscode-radio>
-            </div>
+            <secret-editor
+              .secret=${this.config.password}
+              .setSecret=${(secret: string) => {
+                this.setConfig({...this.config, password: secret});
+              }}
+            ></secret-editor>
           </td>
         </tr>
-        ${this.config.password !== undefined
-          ? html`<tr>
-              <td></td>
-              <td>
-                <vscode-text-field
-                  value=${this.config.password || ''}
-                  @change=${({target: {value}}: {target: HTMLInputElement}) => {
-                    this.setConfig({
-                      ...this.config,
-                      password: value,
-                    });
-                  }}
-                  type=${this.showPassword ? 'text' : 'password'}
-                  placeholder="Optional"
-                ></vscode-text-field>
-              </td>
-              <td style="padding-left: 10px">
-                <vscode-checkbox
-                  .checked=${this.showPassword}
-                  @change=${({target}: {target: HTMLInputElement}) => {
-                    this.showPassword = target.checked;
-                  }}
-                >
-                  Show Password
-                </vscode-checkbox>
-              </td>
-            </tr>`
-          : null}
         <tr>
           <td class="label-cell">
             <label> Connection URL <i>(Advanced)</i>: </label>

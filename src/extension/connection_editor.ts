@@ -38,6 +38,7 @@ import {
 import {errorMessage} from '../common/errors';
 import {getMalloyConfig} from './utils/config';
 import {WorkerConnection} from './worker_connection';
+import {noAwait} from '../util/no_await';
 
 export class EditConnectionPanel {
   panel: vscode.WebviewPanel;
@@ -47,6 +48,9 @@ export class EditConnectionPanel {
   constructor(
     connectionConfigManager: ConnectionConfigManager,
     private worker: WorkerConnection,
+    handleConnectionsPreLoad: (
+      connections: ConnectionConfig[]
+    ) => Promise<ConnectionConfig[]>,
     handleConnectionsPreSave: (
       connections: ConnectionConfig[]
     ) => Promise<ConnectionConfig[]>
@@ -67,6 +71,8 @@ export class EditConnectionPanel {
     this.messageManager = new WebviewMessageManager<ConnectionPanelMessage>(
       this.panel
     );
+
+    const availableBackends = connectionConfigManager.getAvailableBackends();
 
     this.messageManager.onReceiveMessage(async message => {
       switch (message.type) {
@@ -159,14 +165,17 @@ export class EditConnectionPanel {
       }
     });
 
-    const connections = connectionConfigManager.getConnectionConfigs();
-    const availableBackends = connectionConfigManager.getAvailableBackends();
+    const init = async () => {
+      let connections = connectionConfigManager.getConnectionConfigs();
+      connections = await handleConnectionsPreLoad(connections);
 
-    this.messageManager.postMessage({
-      type: ConnectionMessageType.SetConnections,
-      connections,
-      availableBackends,
-    });
+      this.messageManager.postMessage({
+        type: ConnectionMessageType.SetConnections,
+        connections,
+        availableBackends,
+      });
+    };
+    noAwait(init());
   }
 
   reveal(id: string | null = null) {

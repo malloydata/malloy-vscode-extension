@@ -31,8 +31,9 @@ import {GenericConnection} from '../types/worker_message_types';
 export const createPostgresConnection = async (
   client: GenericConnection,
   connectionConfig: PostgresConnectionConfig,
-  {rowLimit}: ConfigOptions
+  {rowLimit, useKeyStore}: ConfigOptions
 ): Promise<PostgresConnection> => {
+  useKeyStore ??= true;
   const {username, host, port, databaseName, connectionString} =
     connectionConfig;
   const options = {
@@ -44,7 +45,7 @@ export const createPostgresConnection = async (
   };
   const configReader = async () => {
     let password: string | undefined;
-    if (connectionConfig.useKeychainPassword) {
+    if (useKeyStore) {
       password = await client.sendRequest('malloy/getSecret', {
         key: `connections.${connectionConfig.id}.password`,
       });

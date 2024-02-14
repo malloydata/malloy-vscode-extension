@@ -27,11 +27,14 @@ import {
   DuckDBConnectionConfig,
 } from '../types/connection_manager_types';
 import {isDuckDBAvailable} from '../../common/duckdb_availability';
+import {GenericConnection} from '../types/worker_message_types';
 
 export const createDuckDbConnection = async (
+  client: GenericConnection,
   connectionConfig: DuckDBConnectionConfig,
-  {workingDirectory, rowLimit}: ConfigOptions
+  {workingDirectory, rowLimit, useKeyStore}: ConfigOptions
 ) => {
+  useKeyStore ??= true;
   if (!isDuckDBAvailable) {
     throw new Error('DuckDB is not available.');
   }
@@ -39,13 +42,22 @@ export const createDuckDbConnection = async (
     const name = connectionConfig.name;
     const databasePath = connectionConfig.databasePath || ':memory:';
     workingDirectory = connectionConfig.workingDirectory || workingDirectory;
+    let motherDuckToken = connectionConfig.motherDuckToken;
+    if (motherDuckToken && useKeyStore) {
+      motherDuckToken = await client.sendRequest('malloy/getSecret', {
+        key: `connections.${connectionConfig.id}.motherDuckToken`,
+      });
+    }
 
     const options = {name, databasePath, workingDirectory};
     console.info('Creating duckdb connection with', JSON.stringify(options));
     const connection = new DuckDBConnection(
-      name,
-      databasePath,
-      workingDirectory,
+      {
+        name,
+        databasePath,
+        workingDirectory,
+        motherDuckToken,
+      },
       () => ({rowLimit})
     );
     return connection;

@@ -31,6 +31,8 @@ import {
 import {DuckDBConnectionConfig} from '../../../../common/types/connection_manager_types';
 import {customElement, property} from 'lit/decorators.js';
 import {styles} from './connection_editor.css';
+import {when} from 'lit/directives/when.js';
+import './components/secret_editor';
 
 provideVSCodeDesignSystem().register(
   vsCodeCheckbox(),
@@ -109,6 +111,23 @@ export class DuckDBConnectionEditor extends LitElement {
             </vscode-button>
           </td>
         </tr>
+        ${when(
+          this.config.databasePath?.startsWith('md:'),
+          () =>
+            html`<tr>
+              <td class="label-cell">
+                <label>MotherDuck Token:</label>
+              </td>
+              <td>
+                <secret-editor
+                  .secret=${this.config.motherDuckToken}
+                  .setSecret=${(secret: string) => {
+                    this.setConfig({...this.config, motherDuckToken: secret});
+                  }}
+                ></secret-editor>
+              </td>
+            </tr>`
+        )}
       </tbody>
     </table>`;
   }

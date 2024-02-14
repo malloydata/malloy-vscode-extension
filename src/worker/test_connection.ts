@@ -28,6 +28,9 @@ export async function testConnection(
   connectionManager: ConnectionManager,
   config: ConnectionConfig
 ) {
-  const connection = await connectionManager.connectionForConfig(config);
+  const connection = await connectionManager.connectionForConfig(config, {
+    useCache: false,
+    useKeyStore: false,
+  });
   await connection.test();
 }
