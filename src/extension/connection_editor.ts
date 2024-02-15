@@ -104,9 +104,15 @@ export class EditConnectionPanel {
         }
         case ConnectionMessageType.TestConnection: {
           try {
-            await this.worker.sendRequest('malloy/testConnection', {
-              config: message.connection,
-            });
+            const result: string = await this.worker.sendRequest(
+              'malloy/testConnection',
+              {
+                config: message.connection,
+              }
+            );
+            if (result) {
+              throw new Error(result);
+            }
             this.messageManager.postMessage({
               type: ConnectionMessageType.TestConnection,
               status: ConnectionTestStatus.Success,
