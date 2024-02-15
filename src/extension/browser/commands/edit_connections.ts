@@ -59,11 +59,22 @@ export function editConnectionsCommand(
 // TODO(whscullin) keytar
 // This can be moved to common code once keytar is removed
 async function handleConnectionsPreLoad(
-  _context: vscode.ExtensionContext,
+  context: vscode.ExtensionContext,
   connections: ConnectionConfig[]
 ): Promise<ConnectionConfig[]> {
-  // Currently no-op in browser
-  return connections;
+  const modifiedConnections = [];
+  for (let connection of connections) {
+    if ('motherDuckToken' in connection && connection.motherDuckToken) {
+      const key = `connections.${connection.id}.motherDuckToken`;
+      const motherDuckToken = await context.secrets.get(key);
+      connection = {
+        ...connection,
+        motherDuckToken,
+      };
+    }
+    modifiedConnections.push(connection);
+  }
+  return modifiedConnections;
 }
 
 /**
@@ -78,9 +89,21 @@ async function handleConnectionsPreLoad(
 // TODO(whscullin) keytar
 // This can be moved to common code once keytar is removed
 async function handleConnectionsPreSave(
-  _context: vscode.ExtensionContext,
+  context: vscode.ExtensionContext,
   connections: ConnectionConfig[]
 ): Promise<ConnectionConfig[]> {
-  // Currently no-op in browser
-  return connections;
+  const modifiedConnections = [];
+  for (let connection of connections) {
+    if ('motherDuckToken' in connection && connection.motherDuckToken) {
+      const key = `connections.${connection.id}.motherDuckToken`;
+      await context.secrets.store(key, connection.motherDuckToken);
+      connection = {
+        ...connection,
+        // Change the config to trigger a connection reload
+        motherDuckToken: `$secret-${Date.now().toString()}$`,
+      };
+    }
+    modifiedConnections.push(connection);
+  }
+  return modifiedConnections;
 }

@@ -81,7 +81,11 @@ export class WebConnectionFactory implements ConnectionFactory {
             return this.fetchBinaryFile(url.toString());
           };
           const duckDBConnection: DuckDBWASMConnection =
-            await createDuckDbWasmConnection(connectionConfig, configOptions);
+            await createDuckDbWasmConnection(
+              this.client,
+              connectionConfig,
+              configOptions
+            );
           duckDBConnection.registerRemoteTableCallback(remoteTableCallback);
           connection = duckDBConnection;
         }
