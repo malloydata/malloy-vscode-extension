@@ -53,9 +53,7 @@ export const createDuckDbConnection = async (
     console.info('Creating duckdb connection with', JSON.stringify(options));
     const connection = new DuckDBConnection(
       {
-        name,
-        databasePath,
-        workingDirectory,
+        ...options,
         motherDuckToken,
       },
       () => ({rowLimit})

@@ -26,24 +26,35 @@ import {
   ConfigOptions,
   DuckDBConnectionConfig,
 } from '../types/connection_manager_types';
-import {isDuckDBAvailable} from '../duckdb_availability';
+import {GenericConnection} from '../types/worker_message_types';
 
 export const createDuckDbWasmConnection = async (
+  client: GenericConnection,
   connectionConfig: DuckDBConnectionConfig,
-  {workingDirectory, rowLimit}: ConfigOptions
+  {workingDirectory, rowLimit, useKeyStore}: ConfigOptions
 ) => {
-  if (!isDuckDBAvailable) {
-    throw new Error('DuckDB is not available.');
-  }
+  useKeyStore ??= true;
+  const {name} = connectionConfig;
+  const databasePath = connectionConfig.databasePath || ':memory:';
   workingDirectory = connectionConfig.workingDirectory || workingDirectory;
   if (workingDirectory?.startsWith('file:')) {
     workingDirectory = workingDirectory.substring(7);
   }
+  let motherDuckToken = connectionConfig.motherDuckToken;
+  if (motherDuckToken && useKeyStore) {
+    motherDuckToken = await client.sendRequest('malloy/getSecret', {
+      key: `connections.${connectionConfig.id}.motherDuckToken`,
+    });
+  }
+
+  const options = {name, databasePath, workingDirectory};
+  console.info('Creating duckdb connection with', JSON.stringify(options));
   try {
     const connection = new DuckDBWASMConnection(
-      connectionConfig.name,
-      ':memory:',
-      workingDirectory,
+      {
+        ...options,
+        motherDuckToken,
+      },
       () => ({rowLimit})
     );
     return connection;
