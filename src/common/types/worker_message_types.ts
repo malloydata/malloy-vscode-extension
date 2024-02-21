@@ -136,6 +136,7 @@ export interface WorkerFetchWorkspaceFoldersMessage {
 
 export interface WorkerGetSecretMessage {
   key: string;
+  promptIfMissing?: false | string;
 }
 
 /**
