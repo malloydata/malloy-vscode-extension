@@ -458,8 +458,14 @@
                   "id": {
                     "type": "string"
                   },
+                  "motherDuckToken": {
+                    "type": "string"
+                  },
                   "workingDirectory": {
                     "type": "string"
+                  },
+                  "additionalExtensions": {
+                    "type": "array"
                   }
                 }
               }

@@ -73,6 +73,7 @@ export interface PostgresConnectionConfig extends BaseConnectionConfig {
 }
 
 export interface DuckDBConnectionConfig extends BaseConnectionConfig {
+  additionalExtensions?: string[];
   backend: ConnectionBackend.DuckDB;
   workingDirectory?: string;
   databasePath?: string;

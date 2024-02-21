@@ -39,7 +39,7 @@ export const createDuckDbConnection = async (
     throw new Error('DuckDB is not available.');
   }
   try {
-    const name = connectionConfig.name;
+    const {name, additionalExtensions} = connectionConfig;
     const databasePath = connectionConfig.databasePath || ':memory:';
     workingDirectory = connectionConfig.workingDirectory || workingDirectory;
     let motherDuckToken = connectionConfig.motherDuckToken;
@@ -49,7 +49,12 @@ export const createDuckDbConnection = async (
       });
     }
 
-    const options = {name, databasePath, workingDirectory};
+    const options = {
+      name,
+      additionalExtensions,
+      databasePath,
+      workingDirectory,
+    };
     console.info('Creating duckdb connection with', JSON.stringify(options));
     const connection = new DuckDBConnection(
       {
