@@ -70,8 +70,19 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     client.onRequest(
       'malloy/getSecret',
-      async ({key}: WorkerGetSecretMessage) => {
-        return await context.secrets.get(key);
+      async ({key, promptIfMissing}: WorkerGetSecretMessage) => {
+        let secret = await context.secrets.get(key);
+        if (!secret && promptIfMissing) {
+          secret = await vscode.window.showInputBox({
+            title: promptIfMissing,
+            ignoreFocusOut: true,
+            password: true,
+          });
+          if (secret) {
+            context.secrets.store(key, secret);
+          }
+        }
+        return secret;
       }
     )
   );

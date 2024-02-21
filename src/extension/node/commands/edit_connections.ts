@@ -116,9 +116,6 @@ async function handleConnectionsPreSave(
       const key = `connections.${connection.id}.password`;
       // TODO(whscullin) keytar - delete
       await deletePassword('com.malloy-lang.vscode-extension', key);
-      if (!connection.password) {
-        await context.secrets.delete(key);
-      }
       if (connection.password) {
         await context.secrets.store(key, connection.password);
         connection = {
@@ -127,16 +124,32 @@ async function handleConnectionsPreSave(
           password: `$secret-${Date.now().toString()}$`,
           useKeychainPassword: undefined,
         };
+      } else {
+        await context.secrets.delete(key);
+        connection = {
+          ...connection,
+          // Change the config to trigger a connection reload
+          password: '',
+        };
       }
     }
-    if ('motherDuckToken' in connection && connection.motherDuckToken) {
+    if ('motherDuckToken' in connection) {
       const key = `connections.${connection.id}.motherDuckToken`;
-      await context.secrets.store(key, connection.motherDuckToken);
-      connection = {
-        ...connection,
-        // Change the config to trigger a connection reload
-        motherDuckToken: `$secret-${Date.now().toString()}$`,
-      };
+      if (connection.motherDuckToken) {
+        await context.secrets.store(key, connection.motherDuckToken);
+        connection = {
+          ...connection,
+          // Change the config to trigger a connection reload
+          motherDuckToken: `$secret-${Date.now().toString()}$`,
+        };
+      } else {
+        await context.secrets.delete(key);
+        connection = {
+          ...connection,
+          // Change the config to trigger a connection reload
+          motherDuckToken: '',
+        };
+      }
     }
     modifiedConnections.push(connection);
   }

@@ -97,7 +97,7 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     client.onRequest(
       'malloy/getSecret',
-      async ({key}: WorkerGetSecretMessage) => {
+      async ({key, promptIfMissing}: WorkerGetSecretMessage) => {
         // TODO(whscullin) Migrate old keytar values for now, remove with keytar
         // Once keytar is removed this can move to common browser/node code
         const value = await getPassword(
@@ -108,7 +108,18 @@ export function activate(context: vscode.ExtensionContext): void {
           deletePassword('com.malloy-lang.vscode-extension', key);
           await context.secrets.store(key, value);
         }
-        return await context.secrets.get(key);
+        let secret = await context.secrets.get(key);
+        if (!secret && promptIfMissing) {
+          secret = await vscode.window.showInputBox({
+            title: promptIfMissing,
+            ignoreFocusOut: true,
+            password: true,
+          });
+          if (secret) {
+            context.secrets.store(key, secret);
+          }
+        }
+        return secret;
       }
     )
   );

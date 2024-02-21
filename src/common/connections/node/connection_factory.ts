@@ -139,6 +139,15 @@ export class NodeConnectionFactory implements ConnectionFactory {
         id: 'duckdb-default',
       });
     }
+
+    // Create a default motherduck connection if one isn't configured
+    if (!configs.find(config => config.name === 'md')) {
+      configs.push({
+        name: 'md',
+        backend: ConnectionBackend.DuckDB,
+        id: 'motherduck-default',
+      });
+    }
     return configs;
   }
 }

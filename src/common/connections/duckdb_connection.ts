@@ -41,11 +41,16 @@ export const createDuckDbConnection = async (
   try {
     const name = connectionConfig.name;
     const databasePath = connectionConfig.databasePath || ':memory:';
+    const isMotherDuck =
+      databasePath.startsWith('md:') || databasePath.startsWith('motherduck:');
     workingDirectory = connectionConfig.workingDirectory || workingDirectory;
     let motherDuckToken = connectionConfig.motherDuckToken;
-    if (motherDuckToken && useKeyStore) {
+    const hasEnv =
+      process.env['motherduck_token'] || process.env['MOTHERDUCK_TOKEN'];
+    if (isMotherDuck && useKeyStore) {
       motherDuckToken = await client.sendRequest('malloy/getSecret', {
         key: `connections.${connectionConfig.id}.motherDuckToken`,
+        promptIfMissing: hasEnv ? false : 'Enter your MotherDuck token:',
       });
     }
 
