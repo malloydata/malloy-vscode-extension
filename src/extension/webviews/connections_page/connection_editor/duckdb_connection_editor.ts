@@ -136,7 +136,7 @@ export class DuckDBConnectionEditor extends LitElement {
             <vscode-text-field
               value=${this.config.additionalExtensions?.join(',') || ''}
               placeholder="ext1, ext2"
-              @change=${({target: {value}}: {target: HTMLInputElement}) => {
+              @input=${({target: {value}}: {target: HTMLInputElement}) => {
                 this.setConfig({
                   ...this.config,
                   additionalExtensions: value.split(/\s*,\s*/g),
