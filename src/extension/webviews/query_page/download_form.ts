@@ -228,7 +228,7 @@ export class DownloadForm extends LitElement {
                 ? html`<div class="form-row">
                     <vscode-text-field
                       value=${this.rowLimit.toString()}
-                      @change=${({
+                      @input=${({
                         target: {value},
                       }: {
                         target: HTMLInputElement;

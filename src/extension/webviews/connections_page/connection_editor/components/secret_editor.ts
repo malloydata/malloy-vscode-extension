@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {LitElement, html} from 'lit';
+import {LitElement, css, html} from 'lit';
 import {
   provideVSCodeDesignSystem,
   vsCodeButton,
@@ -38,9 +38,17 @@ provideVSCodeDesignSystem().register(
   vsCodeTextField()
 );
 
+const columnStyle = css`
+  .column {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+`;
+
 @customElement('secret-editor')
 class SecretEditor extends LitElement {
-  static override styles = [styles];
+  static override styles = [styles, columnStyle];
 
   @property()
   secret?: string;
@@ -53,35 +61,47 @@ class SecretEditor extends LitElement {
   @property({attribute: false})
   settingSecret = false;
 
+  currentSecret = '';
+
   override render() {
     return html`
-      <div>
+      <div class="column">
         ${when(
           this.settingSecret,
           () =>
             html`<div class="button-group">
-              <vscode-text-field
-                @change=${({target: {value}}: {target: HTMLInputElement}) => {
-                  this.setSecret(value);
-                }}
-                type=${this.showSecret ? 'text' : 'password'}
-              ></vscode-text-field>
-              <vscode-button
-                @click=${() => {
-                  this.settingSecret = false;
-                }}
-              >
-                Cancel
-              </vscode-button>
-              <vscode-checkbox
-                .checked=${this.showSecret}
-                @change=${({target}: {target: HTMLInputElement}) => {
-                  this.showSecret = target.checked;
-                }}
-              >
-                Show Password
-              </vscode-checkbox>
-            </div>`,
+                <vscode-text-field
+                  @change=${({target: {value}}: {target: HTMLInputElement}) => {
+                    this.currentSecret = value;
+                  }}
+                  type=${this.showSecret ? 'text' : 'password'}
+                ></vscode-text-field>
+              </div>
+              <div class="button-group">
+                <vscode-button
+                  @click=${() => {
+                    this.settingSecret = false;
+                    this.setSecret(this.currentSecret);
+                  }}
+                >
+                  ${this.secret ? 'Change' : 'Set'}
+                </vscode-button>
+                <vscode-button
+                  @click=${() => {
+                    this.settingSecret = false;
+                  }}
+                >
+                  Cancel
+                </vscode-button>
+                <vscode-checkbox
+                  .checked=${this.showSecret}
+                  @change=${({target}: {target: HTMLInputElement}) => {
+                    this.showSecret = target.checked;
+                  }}
+                >
+                  Show Secret
+                </vscode-checkbox>
+              </div>`,
           () =>
             html`<div class="button-group">
               <vscode-button
