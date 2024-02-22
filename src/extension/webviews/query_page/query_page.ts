@@ -43,7 +43,7 @@ import {
   QueryRunStats,
   QueryRunStatus,
 } from '../../../common/types/message_types';
-import {fieldType} from '../../../common/schema';
+import {fieldType, quoteIfNecessary} from '../../../common/schema';
 
 import {ResultKind, resultKindFromString} from './result_kind_toggle';
 import {VsCodeApi} from '../vscode_wrapper';
@@ -571,12 +571,9 @@ export class QueryPage extends LitElement {
     const type = fieldType(field);
 
     if (type !== 'query') {
-      let path = field.name;
-      let current: Explore = field.parentExplore;
-      while (current.parentExplore) {
-        path = `${current.name}.${path}`;
-        current = current.parentExplore;
-      }
+      const {fieldPath} = field;
+      fieldPath.shift(); // Remove source
+      const path = fieldPath.map(quoteIfNecessary).join('.');
       this.copyToClipboard(path, 'Path');
     }
   };

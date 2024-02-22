@@ -99,3 +99,17 @@ export function isFieldHidden(field: Field): boolean {
   }
   return !!(hidden.pattern?.test(name) || hidden.strings.includes(name));
 }
+
+/**
+ * Add `` around path elements that have special characters. Ideally this
+ * would also quote reserved words but we don't have that list handy.
+ * @param element A field path element
+ * @returns A potentially quoted field path element
+ */
+export const quoteIfNecessary = (element: string) => {
+  // Quote if contains non-word characters
+  if (/\W/.test(element)) {
+    return `\`${element}\``;
+  }
+  return element;
+};
