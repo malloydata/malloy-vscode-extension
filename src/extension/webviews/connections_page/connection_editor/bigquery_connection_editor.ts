@@ -73,7 +73,7 @@ export class BigQueryConnectionEditor extends LitElement {
           <td>
             <vscode-text-field
               value=${this.config.name}
-              @change=${({target: {value}}: {target: HTMLInputElement}) => {
+              @input=${({target: {value}}: {target: HTMLInputElement}) => {
                 this.setConfig({...this.config, name: value});
               }}
             ></vscode-text-field>
@@ -86,7 +86,7 @@ export class BigQueryConnectionEditor extends LitElement {
           <td>
             <vscode-text-field
               value=${this.config.projectId || ''}
-              @change=${({target: {value}}: {target: HTMLInputElement}) => {
+              @input=${({target: {value}}: {target: HTMLInputElement}) => {
                 this.setConfig({...this.config, projectId: value});
               }}
               placeholder="Optional"
@@ -100,7 +100,7 @@ export class BigQueryConnectionEditor extends LitElement {
           <td>
             <vscode-text-field
               value=${this.config.billingProjectId || ''}
-              @change=${({target: {value}}: {target: HTMLInputElement}) => {
+              @input=${({target: {value}}: {target: HTMLInputElement}) => {
                 this.setConfig({...this.config, billingProjectId: value});
               }}
               placeholder="Optional"
@@ -114,7 +114,7 @@ export class BigQueryConnectionEditor extends LitElement {
           <td>
             <vscode-text-field
               value=${this.config.location || ''}
-              @change=${({target: {value}}: {target: HTMLInputElement}) => {
+              @input=${({target: {value}}: {target: HTMLInputElement}) => {
                 this.setConfig({...this.config, location: value});
               }}
               placeholder="Optional (default US)"
@@ -128,7 +128,7 @@ export class BigQueryConnectionEditor extends LitElement {
           <td>
             <vscode-text-field
               value=${this.config.serviceAccountKeyPath || ''}
-              @change=${({target: {value}}: {target: HTMLInputElement}) => {
+              @input=${({target: {value}}: {target: HTMLInputElement}) => {
                 this.setConfig({...this.config, serviceAccountKeyPath: value});
               }}
               placeholder="Optional"
@@ -147,7 +147,7 @@ export class BigQueryConnectionEditor extends LitElement {
           <td>
             <vscode-text-field
               value=${this.config.maximumBytesBilled || ''}
-              @change=${({target: {value}}: {target: HTMLInputElement}) => {
+              @input=${({target: {value}}: {target: HTMLInputElement}) => {
                 this.setConfig({...this.config, maximumBytesBilled: value});
               }}
               placeholder="Optional"
@@ -161,7 +161,7 @@ export class BigQueryConnectionEditor extends LitElement {
           <td>
             <vscode-text-field
               value=${this.config.timeoutMs || ''}
-              @change=${({target: {value}}: {target: HTMLInputElement}) => {
+              @input=${({target: {value}}: {target: HTMLInputElement}) => {
                 this.setConfig({...this.config, timeoutMs: value});
               }}
               placeholder="Optional"

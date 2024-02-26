@@ -50,8 +50,8 @@ export class PostgresConnectionEditor extends LitElement {
           </td>
           <td>
             <vscode-text-field
-              value=${this.config.name}
-              @change=${({target: {value}}: {target: HTMLInputElement}) => {
+              input=${this.config.name}
+              @input=${({target: {value}}: {target: HTMLInputElement}) => {
                 this.setConfig({...this.config, name: value});
               }}
             ></vscode-text-field>
@@ -64,7 +64,7 @@ export class PostgresConnectionEditor extends LitElement {
           <td>
             <vscode-text-field
               value=${this.config.host || ''}
-              @change=${({target: {value}}: {target: HTMLInputElement}) => {
+              @input=${({target: {value}}: {target: HTMLInputElement}) => {
                 this.setConfig({...this.config, host: value});
               }}
             ></vscode-text-field>
@@ -77,7 +77,7 @@ export class PostgresConnectionEditor extends LitElement {
           <td>
             <vscode-text-field
               value=${this.config.port ? this.config.port.toString() : ''}
-              @change=${({target: {value}}: {target: HTMLInputElement}) => {
+              @input=${({target: {value}}: {target: HTMLInputElement}) => {
                 this.setConfig({...this.config, port: parseInt(value)});
               }}
             ></vscode-text-field>
@@ -90,7 +90,7 @@ export class PostgresConnectionEditor extends LitElement {
           <td>
             <vscode-text-field
               value=${this.config.databaseName || ''}
-              @change=${({target: {value}}: {target: HTMLInputElement}) => {
+              @input=${({target: {value}}: {target: HTMLInputElement}) => {
                 this.setConfig({...this.config, databaseName: value});
               }}
             ></vscode-text-field>
@@ -103,7 +103,7 @@ export class PostgresConnectionEditor extends LitElement {
           <td>
             <vscode-text-field
               value=${this.config.username || ''}
-              @change=${({target: {value}}: {target: HTMLInputElement}) => {
+              @input=${({target: {value}}: {target: HTMLInputElement}) => {
                 this.setConfig({...this.config, username: value});
               }}
             ></vscode-text-field>
@@ -130,7 +130,7 @@ export class PostgresConnectionEditor extends LitElement {
             <vscode-text-field
               style="width: 40em"
               value=${this.config.connectionString || ''}
-              @change=${({target: {value}}: {target: HTMLInputElement}) => {
+              @input=${({target: {value}}: {target: HTMLInputElement}) => {
                 this.setConfig({...this.config, connectionString: value});
               }}
             ></vscode-text-field>

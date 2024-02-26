@@ -124,7 +124,7 @@ export class ExternalConnectionEditor extends LitElement {
           <td>
             <vscode-text-field
               value=${this.config.path || ''}
-              @change=${({target: {value}}: {target: HTMLInputElement}) => {
+              @input=${({target: {value}}: {target: HTMLInputElement}) => {
                 this.setConfig({
                   ...this.config,
                   path: value.trim(),
@@ -164,7 +164,7 @@ export class ExternalConnectionEditor extends LitElement {
               <td>
                 <vscode-text-field
                   value=${this.config.name}
-                  @change=${({target: {value}}: {target: HTMLInputElement}) => {
+                  @input=${({target: {value}}: {target: HTMLInputElement}) => {
                     this.setConfig({...this.config, name: value});
                   }}
                 ></vscode-text-field>
@@ -189,7 +189,7 @@ export class ExternalConnectionEditor extends LitElement {
                     : ''}
                   value=${(this.config.configParameters?.[parameter.name] ||
                     '') as string}
-                  @change=${({target: {value}}: {target: HTMLInputElement}) => {
+                  @input=${({target: {value}}: {target: HTMLInputElement}) => {
                     const configParameters =
                       this.config.configParameters ?? ({} as ConnectionConfig);
                     let configParameterValue: ConnectionParameterValue = value;

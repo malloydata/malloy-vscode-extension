@@ -73,7 +73,7 @@ export class DuckDBConnectionEditor extends LitElement {
           <td>
             <vscode-text-field
               value=${this.config.name}
-              @change=${({target: {value}}: {target: HTMLInputElement}) => {
+              @input=${({target: {value}}: {target: HTMLInputElement}) => {
                 this.setConfig({...this.config, name: value});
               }}
             ></vscode-text-field>
@@ -86,7 +86,7 @@ export class DuckDBConnectionEditor extends LitElement {
           <td>
             <vscode-text-field
               value=${this.config.workingDirectory || ''}
-              @change=${({target: {value}}: {target: HTMLInputElement}) => {
+              @input=${({target: {value}}: {target: HTMLInputElement}) => {
                 this.setConfig({...this.config, workingDirectory: value});
               }}
             ></vscode-text-field>
@@ -100,7 +100,7 @@ export class DuckDBConnectionEditor extends LitElement {
             <vscode-text-field
               value=${this.config.databasePath || ''}
               placeholder=":memory:"
-              @change=${({target: {value}}: {target: HTMLInputElement}) => {
+              @input=${({target: {value}}: {target: HTMLInputElement}) => {
                 this.setConfig({...this.config, databasePath: value});
               }}
             ></vscode-text-field>
