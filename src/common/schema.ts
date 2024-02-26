@@ -99,3 +99,90 @@ export function isFieldHidden(field: Field): boolean {
   }
   return !!(hidden.pattern?.test(name) || hidden.strings.includes(name));
 }
+
+/**
+ * Add `` around path elements that have special characters or are in
+ * the list of reserved words
+ * @param element A field path element
+ * @returns A potentially quoted field path element
+ */
+export const quoteIfNecessary = (element: string) => {
+  // Quote if contains non-word characters
+  if (/\W/.test(element) || RESERVED.includes(element.toUpperCase())) {
+    return `\`${element}\``;
+  }
+  return element;
+};
+
+const RESERVED: string[] = [
+  'ALL',
+  'AND',
+  'AS',
+  'ASC',
+  'AVG',
+  'BOOLEAN',
+  'BY',
+  'CASE',
+  'CAST',
+  'CONDITION',
+  'COUNT',
+  'DATE',
+  'DAY',
+  'DAYS',
+  'DESC',
+  'DISTINCT',
+  'ELSE',
+  'END',
+  'EXCLUDE',
+  'EXTEND',
+  'FALSE',
+  'FULL',
+  'FOR',
+  'FROM',
+  'FROM_SQL',
+  'HAS',
+  'HOUR',
+  'HOURS',
+  'IMPORT',
+  'INNER',
+  'IS',
+  'JSON',
+  'LAST',
+  'LEFT',
+  'MAX',
+  'MIN',
+  'MINUTE',
+  'MINUTES',
+  'MONTH',
+  'MONTHS',
+  'NOT',
+  'NOW',
+  'NULL',
+  'NUMBER',
+  'ON',
+  'OR',
+  'PICK',
+  'QUARTER',
+  'QUARTERS',
+  'RIGHT',
+  'SECOND',
+  'SECONDS',
+  'STRING',
+  'SOURCE_KW',
+  'SUM',
+  'SQL',
+  'TABLE',
+  'THEN',
+  'THIS',
+  'TIMESTAMP',
+  'TO',
+  'TRUE',
+  'TURTLE',
+  'WEEK',
+  'WEEKS',
+  'WHEN',
+  'WITH',
+  'YEAR',
+  'YEARS',
+  'UNGROUPED',
+] as const;
