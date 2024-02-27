@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import vscode, {WebviewPanel} from 'vscode';
+import * as vscode from 'vscode';
 import {QueryMessageStatus} from '../common/types/message_types';
 import {WebviewMessageManager} from './webview_message_manager';
 import {Position} from 'vscode-languageclient';
@@ -29,7 +29,7 @@ import {DocumentMetadata} from '../common/types/query_spec';
 
 export interface RunState {
   cancel: () => void;
-  panel: WebviewPanel;
+  panel: vscode.WebviewPanel;
   messages: WebviewMessageManager<QueryMessageStatus>;
   panelId: string;
   document: DocumentMetadata;
