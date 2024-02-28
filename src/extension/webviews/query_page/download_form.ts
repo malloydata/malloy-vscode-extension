@@ -165,7 +165,7 @@ export class DownloadForm extends LitElement {
 
   copyToClipboard = async () => {
     const options = await this.createTextBlob();
-    this.onCopy(options);
+    await this.onCopy(options);
   };
 
   override render() {
