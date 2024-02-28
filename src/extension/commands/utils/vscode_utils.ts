@@ -27,6 +27,7 @@ import {RunState, MALLOY_EXTENSION_STATE} from '../../state';
 import {WebviewMessageManager} from '../../webview_message_manager';
 import {getWebviewHtml} from '../../webviews';
 import {DocumentMetadata} from '../../../common/types/query_spec';
+import {noAwait} from '../../../util/no_await';
 
 const turtleIcon = 'turtle.svg';
 
@@ -107,7 +108,7 @@ export function showSchemaTreeViewWhenFocused(
   panel.onDidChangeViewState(event => {
     if (event.webviewPanel.active) {
       MALLOY_EXTENSION_STATE.setActiveWebviewPanelId(panelId);
-      vscode.commands.executeCommand('malloy.refreshSchema');
+      noAwait(vscode.commands.executeCommand('malloy.refreshSchema'));
     }
   });
 
