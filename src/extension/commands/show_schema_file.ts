@@ -21,6 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import {ResultJSON} from '@malloydata/malloy';
 import {WorkerConnection} from '../worker_connection';
 import {
   getActiveDocumentMetadata,
@@ -28,15 +29,15 @@ import {
   runMalloyQueryWithProgress,
 } from './utils/run_query_utils';
 
-export function showSchemaFileCommand(
+export async function showSchemaFileCommand(
   worker: WorkerConnection,
   uri?: string
-): void {
+): Promise<ResultJSON | undefined> {
   const documentMeta = uri
     ? getDocumentMetadataFromUri(uri)
     : getActiveDocumentMetadata();
   if (documentMeta) {
-    runMalloyQueryWithProgress(
+    return runMalloyQueryWithProgress(
       worker,
       {type: 'file', index: -1, documentMeta},
       documentMeta.uri,

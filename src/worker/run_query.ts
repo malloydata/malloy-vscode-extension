@@ -47,6 +47,7 @@ import {Cell, CellData, FileHandler} from '../common/types/file_handler';
 import {CancellationToken, ProgressType} from 'vscode-jsonrpc';
 import {errorMessage} from '../common/errors';
 import {fixLogRange} from '../common/malloy_sql';
+import {noAwait} from '../util/no_await';
 
 interface StructDefSuccess {
   structDef: StructDef;
@@ -118,7 +119,7 @@ const runMSQLCell = async (
   const sendMessage = (message: QueryMessageStatus) => {
     const progress = new ProgressType<QueryMessageStatus>();
     console.debug('sendMessage', panelId, message.status);
-    messageHandler.sendProgress(progress, panelId, message);
+    noAwait(messageHandler.sendProgress(progress, panelId, message));
   };
 
   const {
@@ -263,7 +264,7 @@ export const runQuery = async (
   const sendMessage = (message: QueryMessageStatus) => {
     console.debug('sendMessage', panelId, message.status);
     const progress = new ProgressType<QueryMessageStatus>();
-    messageHandler.sendProgress(progress, panelId, message);
+    noAwait(messageHandler.sendProgress(progress, panelId, message));
   };
 
   const abortController = new AbortController();

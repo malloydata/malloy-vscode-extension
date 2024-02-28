@@ -42,6 +42,7 @@ import {MALLOY_EXTENSION_STATE} from '../state';
 import {WorkerConnectionNode} from './worker_connection_node';
 import {WorkerGetSecretMessage} from '../../common/types/worker_message_types';
 import {deletePassword, getPassword} from 'keytar';
+import {noAwait} from '../../util/no_await';
 
 let client: LanguageClient;
 
@@ -59,8 +60,12 @@ const cloudCodeEnv = () => {
 };
 
 export function activate(context: vscode.ExtensionContext): void {
+  noAwait(asyncActivate(context));
+}
+
+async function asyncActivate(context: vscode.ExtensionContext) {
   cloudCodeEnv();
-  setupLanguageServer(context);
+  await setupLanguageServer(context);
   const worker = new WorkerConnectionNode(context, client, fileHandler);
   setupSubscriptions(context, worker, client);
   const connectionsTree = new ConnectionsProvider(
@@ -105,7 +110,7 @@ export function activate(context: vscode.ExtensionContext): void {
           key
         );
         if (value) {
-          deletePassword('com.malloy-lang.vscode-extension', key);
+          await deletePassword('com.malloy-lang.vscode-extension', key);
           await context.secrets.store(key, value);
         }
         let secret = await context.secrets.get(key);
@@ -116,7 +121,7 @@ export function activate(context: vscode.ExtensionContext): void {
             password: true,
           });
           if (secret) {
-            context.secrets.store(key, secret);
+            await context.secrets.store(key, secret);
           }
         }
         return secret;

@@ -21,16 +21,20 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import {ResultJSON} from '@malloydata/malloy';
 import {WorkerConnection} from '../worker_connection';
 import {
   getActiveDocumentMetadata,
   runMalloyQueryWithProgress,
 } from './utils/run_query_utils';
 
-export function runNamedSQLBlock(worker: WorkerConnection, name: string): void {
+export async function runNamedSQLBlock(
+  worker: WorkerConnection,
+  name: string
+): Promise<ResultJSON | undefined> {
   const documentMeta = getActiveDocumentMetadata();
   if (documentMeta) {
-    runMalloyQueryWithProgress(
+    return runMalloyQueryWithProgress(
       worker,
       {type: 'named_sql', name, documentMeta},
       `${documentMeta.uri} ${name}`,

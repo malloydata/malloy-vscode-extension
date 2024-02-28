@@ -23,6 +23,8 @@
 
 import * as vscode from 'vscode';
 
-export function runNamedQueryFromSchemaCommand(item: {name: string}): void {
-  vscode.commands.executeCommand('malloy.runNamedQuery', item.name);
+export async function runNamedQueryFromSchemaCommand(item: {
+  name: string;
+}): Promise<void> {
+  return vscode.commands.executeCommand('malloy.runNamedQuery', item.name);
 }

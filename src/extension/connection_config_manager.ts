@@ -27,6 +27,7 @@ import {
   ConnectionConfigManager,
   ExternalConnectionConfig,
 } from '../common/types/connection_manager_types';
+import {noAwait} from '../util/no_await';
 import {getMalloyConfig} from './utils/config';
 
 const getConnectionsConfig = (): ConnectionConfig[] => {
@@ -42,7 +43,7 @@ export abstract class ConnectionConfigManagerBase
   private configList: ConnectionConfig[] = [];
 
   constructor() {
-    this.onConfigurationUpdated();
+    noAwait(this.onConfigurationUpdated());
   }
 
   public abstract getAvailableBackends(): ConnectionBackend[];

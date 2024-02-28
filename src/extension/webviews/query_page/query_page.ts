@@ -334,7 +334,8 @@ export class QueryPage extends LitElement {
               ...this.results,
               html,
             };
-          });
+          })
+          .catch(console.error);
       }
     }
   };

@@ -45,6 +45,4 @@ export async function runQueryFileCommand(
       documentMeta.fileName.split('/').pop() || documentMeta.fileName
     );
   }
-
-  return undefined;
 }

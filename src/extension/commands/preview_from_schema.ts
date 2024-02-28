@@ -26,8 +26,8 @@ import * as vscode from 'vscode';
 export function previewFromSchemaCommand(item: {
   topLevelExplore: string;
   accessPath: string[];
-}): void {
-  vscode.commands.executeCommand(
+}): Thenable<void> {
+  return vscode.commands.executeCommand(
     'malloy.runQuery',
     `run: ${item.topLevelExplore}->{ select: ${[...item.accessPath, '*'].join(
       '.'

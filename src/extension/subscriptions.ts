@@ -226,7 +226,7 @@ export const setupSubscriptions = (
     context.globalState.get('malloy_client_id');
   if (clientId === undefined) {
     clientId = getNewClientId();
-    context.globalState.update('malloy_client_id', clientId);
+    noAwait(context.globalState.update('malloy_client_id', clientId));
   }
   MALLOY_EXTENSION_STATE.setClientId(clientId);
 

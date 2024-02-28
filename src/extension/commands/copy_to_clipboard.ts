@@ -23,7 +23,10 @@
 
 import * as vscode from 'vscode';
 
-export function copyToClipboardCommand(val: string, type: string): void {
-  vscode.env.clipboard.writeText(val);
-  vscode.window.showInformationMessage(`${type} copied to clipboard`);
+export async function copyToClipboardCommand(
+  val: string,
+  type: string
+): Promise<void> {
+  await vscode.env.clipboard.writeText(val);
+  await vscode.window.showInformationMessage(`${type} copied to clipboard`);
 }

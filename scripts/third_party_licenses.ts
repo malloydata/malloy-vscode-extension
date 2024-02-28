@@ -252,4 +252,4 @@ const getLicenses = async () => {
   }
 };
 
-getLicenses();
+void getLicenses();
