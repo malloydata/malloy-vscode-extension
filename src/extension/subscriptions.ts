@@ -63,6 +63,7 @@ import {BaseLanguageClient} from 'vscode-languageclient';
 import {WorkerConnection} from './worker_connection';
 import {runQueryAtCursorCommand} from './commands/run_query_at_cursor';
 import {showSchemaFileCommand} from './commands/show_schema_file';
+import {noAwait} from '../util/no_await';
 
 function getNewClientId(): string {
   return uuid();
@@ -232,16 +233,16 @@ export const setupSubscriptions = (
   context.subscriptions.push(
     vscode.workspace.onDidOpenTextDocument(async e => {
       if (e.languageId === 'malloy') {
-        trackModelLoad();
+        noAwait(trackModelLoad());
       }
     })
   );
 
   context.subscriptions.push(
     vscode.workspace.onDidSaveTextDocument(async e => {
-      vscode.commands.executeCommand('malloy.refreshSchema');
+      noAwait(vscode.commands.executeCommand('malloy.refreshSchema'));
       if (e.languageId === 'malloy') {
-        trackModelSave();
+        noAwait(trackModelSave());
       }
     })
   );

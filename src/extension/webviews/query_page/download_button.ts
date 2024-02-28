@@ -105,7 +105,6 @@ export class DownloadButton extends LitElement {
       <popup-dialog
         @mousedown=${mouseBlock}
         ?open=${this.open}
-        .setOpen=${(open: boolean) => (this.open = open)}
         style="width: 200px"
       >
         <download-form
