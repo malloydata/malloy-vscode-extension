@@ -27,6 +27,7 @@ import {
   ConnectionBackend,
   ConnectionConfig,
 } from '../../common/types/connection_manager_types';
+import {noAwait} from '../../util/no_await';
 
 /**
  * Centralized place to pull configuration for Malloy extension
@@ -58,16 +59,20 @@ export const getMalloyConfig = (): vscode.WorkspaceConfiguration => {
         const hasWorkspaceConfig =
           malloyConfig.inspect('connections')?.workspaceValue !== undefined;
 
-        malloyConfig.update(
-          'connections',
-          connectionConfigs,
-          vscode.ConfigurationTarget.Global
-        );
-        if (hasWorkspaceConfig) {
+        noAwait(
           malloyConfig.update(
             'connections',
             connectionConfigs,
-            vscode.ConfigurationTarget.Workspace
+            vscode.ConfigurationTarget.Global
+          )
+        );
+        if (hasWorkspaceConfig) {
+          noAwait(
+            malloyConfig.update(
+              'connections',
+              connectionConfigs,
+              vscode.ConfigurationTarget.Workspace
+            )
           );
         }
       }

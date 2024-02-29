@@ -1,8 +1,5 @@
 {
   "extends": ["./node_modules/gts/", "plugin:lit/recommended"],
-  "parserOptions": {
-    "warnOnUnsupportedTypeScriptVersion": false
-  },
   "ignorePatterns": [
     "*.d.ts",
     "node_modules/",
@@ -46,6 +43,15 @@
     ]
   },
   "overrides": [
+    {
+      "files": ["**/*.ts"],
+      "parser": "@typescript-eslint/parser",
+      "parserOptions": {
+        "warnOnUnsupportedTypeScriptVersion": false,
+        "project": ["./tsconfig.json"]
+      },
+      "rules": {"@typescript-eslint/no-floating-promises": "error"}
+    },
     {
       "files": ["src/server/**"],
       "rules": {
@@ -107,6 +113,13 @@
         "node/no-unpublished-import": "off",
         "no-console": "off",
         "no-process-exit": "off"
+      }
+    },
+    {
+      "files": ["integration/**"],
+      "parserOptions": {
+        "warnOnUnsupportedTypeScriptVersion": false,
+        "project": ["./tsconfig.integration.json"]
       }
     }
   ]

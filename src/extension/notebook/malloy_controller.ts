@@ -119,7 +119,7 @@ export function activateNotebookController(
 
   const relayEvent = (event: MessageEvent) => {
     const {command, args} = event.message;
-    vscode.commands.executeCommand(command, ...args);
+    noAwait(vscode.commands.executeCommand(command, ...args));
   };
   context.subscriptions.push(
     vscode.notebooks

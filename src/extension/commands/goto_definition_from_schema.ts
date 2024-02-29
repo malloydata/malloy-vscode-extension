@@ -24,9 +24,9 @@
 import * as vscode from 'vscode';
 import {DocumentLocation} from '@malloydata/malloy';
 
-export function goToDefinitionFromSchemaCommand(item: {
+export async function goToDefinitionFromSchemaCommand(item: {
   location?: DocumentLocation;
-}): void {
+}): Promise<void> {
   const location = item.location;
   if (location) {
     const pos = new vscode.Position(
@@ -34,6 +34,11 @@ export function goToDefinitionFromSchemaCommand(item: {
       location.range.start.character
     );
     const uri = vscode.Uri.parse(location.url);
-    vscode.commands.executeCommand('editor.action.goToLocations', uri, pos, []);
+    return vscode.commands.executeCommand(
+      'editor.action.goToLocations',
+      uri,
+      pos,
+      []
+    );
   }
 }

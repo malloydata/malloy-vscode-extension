@@ -41,6 +41,4 @@ export async function runNamedQuery(
       name
     );
   }
-
-  return undefined;
 }

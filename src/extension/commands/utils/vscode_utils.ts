@@ -113,12 +113,13 @@ export function showSchemaTreeViewWhenFocused(
   });
 
   panel.onDidChangeViewState(
-    (e: vscode.WebviewPanelOnDidChangeViewStateEvent) => {
-      vscode.commands.executeCommand(
-        'setContext',
-        'malloy.webviewPanelFocused',
-        e.webviewPanel.active
-      );
-    }
+    (e: vscode.WebviewPanelOnDidChangeViewStateEvent) =>
+      noAwait(
+        vscode.commands.executeCommand(
+          'setContext',
+          'malloy.webviewPanelFocused',
+          e.webviewPanel.active
+        )
+      )
   );
 }

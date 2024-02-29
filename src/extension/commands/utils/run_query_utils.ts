@@ -42,6 +42,7 @@ import {
   showSchemaTreeViewWhenFocused,
 } from './vscode_utils';
 import {WorkerConnection} from '../../worker_connection';
+import {noAwait} from '../../../util/no_await';
 
 export interface RunMalloyQueryOptions {
   showSQLOnly?: boolean;
@@ -107,7 +108,7 @@ export function getDocumentMetadataFromUri(uri: string) {
   };
 }
 
-export function runMalloyQuery(
+export async function runMalloyQuery(
   worker: WorkerConnection,
   query: QuerySpec,
   panelId: string,
@@ -115,7 +116,7 @@ export function runMalloyQuery(
   options: RunMalloyQueryOptions = {},
   cancellationToken: vscode.CancellationToken,
   progress?: vscode.Progress<{message?: string; increment?: number}>
-): Thenable<ResultJSON | undefined> {
+): Promise<ResultJSON | undefined> {
   const showSQLOnly = options.showSQLOnly ?? false;
   const showSchemaOnly = options.showSchemaOnly ?? false;
   const withWebview = options.withWebview ?? true;
@@ -221,9 +222,11 @@ export function runMalloyQuery(
             current?.messages.onReceiveMessage(message => {
               if (message.status === QueryRunStatus.RunCommand) {
                 MALLOY_EXTENSION_STATE.setActiveWebviewPanelId(panelId);
-                vscode.commands.executeCommand(
-                  message.command,
-                  ...message.args
+                noAwait(
+                  vscode.commands.executeCommand(
+                    message.command,
+                    ...message.args
+                  )
                 );
               }
             });
@@ -238,7 +241,7 @@ export function runMalloyQuery(
           break;
         case QueryRunStatus.Running:
           {
-            trackQueryRun({dialect: message.dialect});
+            noAwait(trackQueryRun({dialect: message.dialect}));
 
             progress?.report({increment: 40, message: 'Running'});
           }
@@ -256,19 +259,23 @@ export function runMalloyQuery(
 
             current?.messages.onReceiveMessage(message => {
               if (message.status === QueryRunStatus.StartDownload) {
-                queryDownload(
-                  worker,
-                  query,
-                  message.downloadOptions,
-                  queryResult,
-                  panelId,
-                  name
+                noAwait(
+                  queryDownload(
+                    worker,
+                    query,
+                    message.downloadOptions,
+                    queryResult,
+                    panelId,
+                    name
+                  )
                 );
               } else if (message.status === QueryRunStatus.RunCommand) {
                 MALLOY_EXTENSION_STATE.setActiveWebviewPanelId(panelId);
-                vscode.commands.executeCommand(
-                  message.command,
-                  ...message.args
+                noAwait(
+                  vscode.commands.executeCommand(
+                    message.command,
+                    ...message.args
+                  )
                 );
               }
             });

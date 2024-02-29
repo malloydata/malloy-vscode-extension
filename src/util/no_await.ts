@@ -21,4 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-export function noAwait(_: unknown) {}
+export function noAwait(x: Thenable<unknown>) {
+  // Avoid unhandled exceptions
+  x.then(() => {}, console.error);
+}

@@ -40,8 +40,8 @@ import {WorkerConnectionBrowser} from './worker_connection_browser';
 import {WorkerGetSecretMessage} from '../../common/types/worker_message_types';
 let client: LanguageClient;
 
-export function activate(context: vscode.ExtensionContext): void {
-  setupLanguageServer(context);
+export async function activate(context: vscode.ExtensionContext) {
+  await setupLanguageServer(context);
   const worker = new WorkerConnectionBrowser(context, client, fileHandler);
   setupSubscriptions(context, worker, client);
 
@@ -79,7 +79,7 @@ export function activate(context: vscode.ExtensionContext): void {
             password: true,
           });
           if (secret) {
-            context.secrets.store(key, secret);
+            await context.secrets.store(key, secret);
           }
         }
         return secret;

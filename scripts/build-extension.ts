@@ -25,7 +25,7 @@ import * as yargs from 'yargs';
 import {doBuild} from './build_common';
 import {outDir, Targets} from './constants';
 
-yargs
+void yargs
   .scriptName('build-extension')
   .usage('$0 <cmd> [args]')
   .command(

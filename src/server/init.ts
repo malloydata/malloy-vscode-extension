@@ -118,7 +118,7 @@ export const initServer = (
           versionAtRequest === undefined ||
           versionAtRequest === document.version
         ) {
-          connection.sendDiagnostics({
+          await connection.sendDiagnostics({
             uri,
             diagnostics: diagnostics[uri],
             version: documents.get(uri)?.version,
@@ -140,7 +140,7 @@ export const initServer = (
               connection.console.info(
                 `diagnoseDocument ejecting ${document.uri}`
               );
-              debouncedDiagnoseDocuments[key](document);
+              debouncedDiagnoseDocument(document);
             }
           }
         }
@@ -159,7 +159,7 @@ export const initServer = (
     if (!debouncedDiagnoseDocuments[uri]) {
       debouncedDiagnoseDocuments[uri] = debounce(diagnoseDocument, 300);
     }
-    debouncedDiagnoseDocuments[uri](document);
+    debouncedDiagnoseDocuments[uri](document)?.catch(console.error);
   };
 
   documents.onDidChangeContent(change => {

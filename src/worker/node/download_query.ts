@@ -36,6 +36,7 @@ import {
   QueryDownloadMessage,
   QueryDownloadStatus,
 } from '../../common/types/message_types';
+import {noAwait} from '../../util/no_await';
 
 export async function downloadQuery(
   messageHandler: WorkerMessageHandler,
@@ -51,7 +52,7 @@ export async function downloadQuery(
   const sendMessage = (message: QueryDownloadMessage) => {
     console.debug('sendMessage', panelId, message.status);
     const progress = new ProgressType<QueryDownloadMessage>();
-    messageHandler.sendProgress(progress, panelId, message);
+    noAwait(messageHandler.sendProgress(progress, panelId, message));
   };
 
   const url = new URL(uri);

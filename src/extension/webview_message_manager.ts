@@ -22,6 +22,7 @@
  */
 
 import {WebviewPanel, WebviewView} from 'vscode';
+import {noAwait} from '../util/no_await';
 
 export class WebviewMessageManager<T> {
   constructor(private panel: WebviewPanel | WebviewView) {
@@ -51,7 +52,7 @@ export class WebviewMessageManager<T> {
 
   public postMessage(message: T): void {
     if (this.canSendMessages) {
-      this.panel.webview.postMessage(message);
+      noAwait(this.panel.webview.postMessage(message));
     } else {
       this.pendingMessages.push(message);
     }
@@ -63,7 +64,7 @@ export class WebviewMessageManager<T> {
 
   private flushPendingMessages() {
     this.pendingMessages.forEach(message => {
-      this.panel.webview.postMessage(message);
+      noAwait(this.panel.webview.postMessage(message));
     });
     this.pendingMessages.splice(0, this.pendingMessages.length);
   }

@@ -83,13 +83,13 @@ export class EditConnectionPanel {
           const malloyConfig = getMalloyConfig();
           const hasWorkspaceConfig =
             malloyConfig.inspect('connections')?.workspaceValue !== undefined;
-          malloyConfig.update(
+          await malloyConfig.update(
             'connections',
             connections,
             vscode.ConfigurationTarget.Global
           );
           if (hasWorkspaceConfig) {
-            malloyConfig.update(
+            await malloyConfig.update(
               'connections',
               connections,
               vscode.ConfigurationTarget.Workspace

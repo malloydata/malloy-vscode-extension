@@ -26,8 +26,8 @@ import * as vscode from 'vscode';
 export function runTurtleFromSchemaCommand(item: {
   topLevelExplore: string;
   accessPath: string[];
-}): void {
-  vscode.commands.executeCommand(
+}): Thenable<void> {
+  return vscode.commands.executeCommand(
     'malloy.runQuery',
     `run: ${item.topLevelExplore}->${item.accessPath.join('.')}`,
     `${item.topLevelExplore}->${item.accessPath.join('.')}`
