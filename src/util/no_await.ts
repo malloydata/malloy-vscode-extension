@@ -21,6 +21,8 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import 'vscode';
+
 export function noAwait(x: Thenable<unknown>) {
   // Avoid unhandled exceptions
   x.then(() => {}, console.error);

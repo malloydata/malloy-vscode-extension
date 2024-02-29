@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {LitElement, css, html} from 'lit';
+import {LitElement, css, html, nothing} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
 import {until} from 'lit/directives/until.js';
 import {Result} from '@malloydata/malloy';
@@ -49,7 +49,7 @@ export class MalloyRenderer extends LitElement {
 
   override render() {
     if (!this.result) {
-      return;
+      return nothing;
     }
     const resultHtml = new HTMLView(document).render(this.result, {
       dataStyles: {},

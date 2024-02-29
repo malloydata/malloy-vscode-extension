@@ -41,4 +41,5 @@ export async function runNamedSQLBlock(
       name
     );
   }
+  return undefined;
 }

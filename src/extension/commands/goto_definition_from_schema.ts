@@ -41,4 +41,5 @@ export async function goToDefinitionFromSchemaCommand(item: {
       []
     );
   }
+  return undefined;
 }

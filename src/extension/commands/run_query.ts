@@ -48,4 +48,5 @@ export async function runQueryCommand(
       {defaultTab}
     );
   }
+  return undefined;
 }
