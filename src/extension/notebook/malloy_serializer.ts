@@ -49,6 +49,7 @@ const languageIdFromStatementType = (type: MalloySQLStatementType) => {
     case MalloySQLStatementType.SQL:
       return 'malloy-sql';
     case MalloySQLStatementType.MARKDOWN:
+    default:
       return 'markdown';
   }
 };

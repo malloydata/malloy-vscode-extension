@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {LitElement, TemplateResult, html} from 'lit';
+import {LitElement, TemplateResult, html, nothing} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
 import {classMap} from 'lit/directives/class-map.js';
 
@@ -302,7 +302,7 @@ export class StructItem extends LitElement {
   override render() {
     const {explore, path} = this;
     if (!explore) {
-      return;
+      return nothing;
     }
     const subtype = exploreSubtype(explore);
     const {queries, dimensions, measures, explores} = bucketFields(

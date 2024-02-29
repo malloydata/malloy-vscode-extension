@@ -45,4 +45,5 @@ export async function showSchemaFileCommand(
       {showSchemaOnly: true}
     );
   }
+  return undefined;
 }

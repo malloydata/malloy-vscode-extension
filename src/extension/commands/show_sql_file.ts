@@ -42,4 +42,5 @@ export async function showSQLFileCommand(
       {showSQLOnly: true}
     );
   }
+  return undefined;
 }

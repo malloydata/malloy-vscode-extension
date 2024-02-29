@@ -42,4 +42,5 @@ export async function showSQLNamedQueryCommand(
       {showSQLOnly: true}
     );
   }
+  return undefined;
 }
