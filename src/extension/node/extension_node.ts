@@ -42,7 +42,6 @@ import {MALLOY_EXTENSION_STATE} from '../state';
 import {WorkerConnectionNode} from './worker_connection_node';
 import {WorkerGetSecretMessage} from '../../common/types/worker_message_types';
 import {deletePassword, getPassword} from 'keytar';
-import {noAwait} from '../../util/no_await';
 
 let client: LanguageClient;
 
@@ -59,11 +58,7 @@ const cloudCodeEnv = () => {
   }
 };
 
-export function activate(context: vscode.ExtensionContext): void {
-  noAwait(asyncActivate(context));
-}
-
-async function asyncActivate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
   cloudCodeEnv();
   await setupLanguageServer(context);
   const worker = new WorkerConnectionNode(context, client, fileHandler);

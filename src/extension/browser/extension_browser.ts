@@ -38,14 +38,9 @@ import {editConnectionsCommand} from './commands/edit_connections';
 import {fileHandler} from '../utils/files';
 import {WorkerConnectionBrowser} from './worker_connection_browser';
 import {WorkerGetSecretMessage} from '../../common/types/worker_message_types';
-import {noAwait} from '../../util/no_await';
 let client: LanguageClient;
 
-export function activate(context: vscode.ExtensionContext): void {
-  noAwait(asyncActivate(context));
-}
-
-async function asyncActivate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
   await setupLanguageServer(context);
   const worker = new WorkerConnectionBrowser(context, client, fileHandler);
   setupSubscriptions(context, worker, client);
