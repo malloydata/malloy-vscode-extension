@@ -48,6 +48,7 @@ import './bigquery_connection_editor';
 import './duckdb_connection_editor';
 import './external_connection_editor';
 import './postgres_connection_editor';
+import './snowflake_connection_editor';
 
 provideVSCodeDesignSystem().register(
   vsCodeButton(),
@@ -101,6 +102,7 @@ export class ConnectionEditor extends LitElement {
     ConnectionBackend.BigQuery,
     ConnectionBackend.Postgres,
     ConnectionBackend.DuckDB,
+    ConnectionBackend.Snowflake,
     ConnectionBackend.External,
   ];
 
@@ -126,10 +128,11 @@ export class ConnectionEditor extends LitElement {
             <td>
               <vscode-dropdown
                 @change=${({target: {value}}: {target: HTMLInputElement}) => {
+                  const backend = value as ConnectionBackend;
                   this.setConfig({
                     ...this.config,
-                    backend: value as ConnectionBackend,
-                  });
+                    backend,
+                  } as ConnectionConfig);
                 }}
                 value=${this.config.backend}
               >
@@ -163,6 +166,12 @@ export class ConnectionEditor extends LitElement {
             .setConfig=${this.setConfig}
             .requestFilePath=${this.requestFilePath}
           ></duckdb-connection-editor>`
+        : this.config.backend === ConnectionBackend.Snowflake
+        ? html`<snowflake-connection-editor
+            .config=${this.config}
+            .setConfig=${this.setConfig}
+            .requestFilePath=${this.requestFilePath}
+          ></snowflake-connection-editor>`
         : this.config.backend === ConnectionBackend.External
         ? html`<external-connection-editor
             .config=${this.config}

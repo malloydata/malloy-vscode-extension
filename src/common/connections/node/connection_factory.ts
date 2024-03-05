@@ -31,6 +31,7 @@ import {
 import {createBigQueryConnection} from '../bigquery_connection';
 import {createDuckDbConnection} from '../duckdb_connection';
 import {createPostgresConnection} from '../postgres_connection';
+import {createSnowflakeConnection} from '../snowflake_connection';
 
 import {fileURLToPath} from 'url';
 import {ExternalConnectionFactory} from '../external_connection_factory';
@@ -77,6 +78,14 @@ export class NodeConnectionFactory implements ConnectionFactory {
       }
       case ConnectionBackend.DuckDB: {
         connection = await createDuckDbConnection(
+          this.client,
+          connectionConfig,
+          configOptions
+        );
+        break;
+      }
+      case ConnectionBackend.Snowflake: {
+        connection = await createSnowflakeConnection(
           this.client,
           connectionConfig,
           configOptions

@@ -11,6 +11,7 @@
       "@malloydata/db-bigquery",
       "@malloydata/db-duckdb",
       "@malloydata/db-postgres",
+      "@malloydata/db-snowflake",
       "@malloydata/render",
       "@malloydata/malloy-sql",
       "@malloydata/syntax-highlight"
@@ -462,6 +463,45 @@
                     "type": "string"
                   }
                 }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "backend": {
+                    "type": "string",
+                    "const": "snowflake"
+                  },
+                  "account": {
+                    "type": "string"
+                  },
+                  "username": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  },
+                  "warehouse": {
+                    "type": "string"
+                  },
+                  "database": {
+                    "type": "string"
+                  },
+                  "schema": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "isDefault": {
+                    "type": "boolean"
+                  },
+                  "timeoutMs": {
+                    "type": "number"
+                  }
+                }
               }
             ]
           },
@@ -540,13 +580,14 @@
   },
   "dependencies": {
     "@lit-labs/observers": "^2.0.2",
-    "@malloydata/db-bigquery": "0.0.125",
-    "@malloydata/db-duckdb": "0.0.125",
-    "@malloydata/db-postgres": "0.0.125",
-    "@malloydata/malloy": "0.0.125",
-    "@malloydata/malloy-sql": "0.0.125",
-    "@malloydata/render": "0.0.125",
-    "@malloydata/syntax-highlight": "0.0.125",
+    "@malloydata/db-bigquery": "0.0.126",
+    "@malloydata/db-duckdb": "0.0.126",
+    "@malloydata/db-postgres": "0.0.126",
+    "@malloydata/db-snowflake": "0.0.126",
+    "@malloydata/malloy": "0.0.126",
+    "@malloydata/malloy-sql": "0.0.126",
+    "@malloydata/render": "0.0.126",
+    "@malloydata/syntax-highlight": "0.0.126",
     "@vscode/webview-ui-toolkit": "^1.2.1",
     "duckdb": "0.9.2",
     "keytar": "7.7.0",
