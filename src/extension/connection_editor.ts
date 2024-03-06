@@ -47,13 +47,8 @@ export class EditConnectionPanel {
 
   constructor(
     connectionConfigManager: ConnectionConfigManager,
-    private worker: WorkerConnection,
-    handleConnectionsPreLoad: (
-      connections: ConnectionConfig[]
-    ) => Promise<ConnectionConfig[]>,
-    handleConnectionsPreSave: (
-      connections: ConnectionConfig[]
-    ) => Promise<ConnectionConfig[]>
+    private context: vscode.ExtensionContext,
+    private worker: WorkerConnection
   ) {
     this.panel = vscode.window.createWebviewPanel(
       'malloyConnections',
@@ -77,7 +72,7 @@ export class EditConnectionPanel {
     this.messageManager.onReceiveMessage(async message => {
       switch (message.type) {
         case ConnectionMessageType.SetConnections: {
-          const connections = await handleConnectionsPreSave(
+          const connections = await this.handleConnectionsPreSave(
             message.connections
           );
           const malloyConfig = getMalloyConfig();
@@ -173,7 +168,7 @@ export class EditConnectionPanel {
 
     const init = async () => {
       let connections = connectionConfigManager.getConnectionConfigs();
-      connections = await handleConnectionsPreLoad(connections);
+      connections = await this.handleConnectionsPreLoad(connections);
 
       this.messageManager.postMessage({
         type: ConnectionMessageType.SetConnections,
@@ -190,5 +185,94 @@ export class EditConnectionPanel {
       type: ConnectionMessageType.EditConnection,
       id,
     });
+  }
+
+  /**
+   * Perform setup on the connections being sent to the webview.
+   *
+   * @param connections The connection configs.
+   * @returns An updated list of connections
+   *
+   * - Handles retrieving passwords the keychain.
+   */
+  async handleConnectionsPreLoad(
+    connections: ConnectionConfig[]
+  ): Promise<ConnectionConfig[]> {
+    const modifiedConnections = [];
+    for (let connection of connections) {
+      if ('password' in connection && connection.password) {
+        const key = `connections.${connection.id}.password`;
+        const password = await this.context.secrets.get(key);
+        connection = {
+          ...connection,
+          password,
+        };
+      }
+      if ('motherDuckToken' in connection && connection.motherDuckToken) {
+        const key = `connections.${connection.id}.motherDuckToken`;
+        const motherDuckToken = await this.context.secrets.get(key);
+        connection = {
+          ...connection,
+          motherDuckToken,
+        };
+      }
+      modifiedConnections.push(connection);
+    }
+    return modifiedConnections;
+  }
+
+  /**
+   * Perform cleanup on the connections object received from the webview,
+   * and prepare to save the config.
+   *
+   * @param connections The connection configs received from the webview.
+   * @returns An updated list of connections
+   *
+   * - Handles scrubbing passwords and putting them in the keychain.
+   */
+  async handleConnectionsPreSave(
+    connections: ConnectionConfig[]
+  ): Promise<ConnectionConfig[]> {
+    const modifiedConnections = [];
+    for (let connection of connections) {
+      if ('password' in connection) {
+        const key = `connections.${connection.id}.password`;
+        if (connection.password) {
+          await this.context.secrets.store(key, connection.password);
+          connection = {
+            ...connection,
+            // Change the config to trigger a connection reload
+            password: `$secret-${Date.now().toString()}$`,
+          };
+        } else {
+          await this.context.secrets.delete(key);
+          connection = {
+            ...connection,
+            // Change the config to trigger a connection reload
+            password: '',
+          };
+        }
+      }
+      if ('motherDuckToken' in connection) {
+        const key = `connections.${connection.id}.motherDuckToken`;
+        if (connection.motherDuckToken) {
+          await this.context.secrets.store(key, connection.motherDuckToken);
+          connection = {
+            ...connection,
+            // Change the config to trigger a connection reload
+            motherDuckToken: `$secret-${Date.now().toString()}$`,
+          };
+        } else {
+          await this.context.secrets.delete(key);
+          connection = {
+            ...connection,
+            // Change the config to trigger a connection reload
+            motherDuckToken: '',
+          };
+        }
+      }
+      modifiedConnections.push(connection);
+    }
+    return modifiedConnections;
   }
 }

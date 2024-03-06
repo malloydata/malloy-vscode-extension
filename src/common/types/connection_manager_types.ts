@@ -71,7 +71,6 @@ export interface PostgresConnectionConfig extends BaseConnectionConfig {
   host?: string;
   port?: number;
   databaseName?: string;
-  useKeychainPassword?: boolean;
   connectionString?: string;
 }
 
@@ -87,7 +86,6 @@ export interface SnowflakeConnectionConfig extends BaseConnectionConfig {
   account?: string;
   username?: string;
   password?: string;
-  useKeychainPassword?: boolean;
   warehouse?: string;
   database?: string;
   schema?: string;

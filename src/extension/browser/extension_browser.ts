@@ -67,25 +67,6 @@ export async function activate(context: vscode.ExtensionContext) {
         editConnectionsCommand(context, worker, item?.id)
     )
   );
-  context.subscriptions.push(
-    client.onRequest(
-      'malloy/getSecret',
-      async ({key, promptIfMissing}: WorkerGetSecretMessage) => {
-        let secret = await context.secrets.get(key);
-        if (!secret && promptIfMissing) {
-          secret = await vscode.window.showInputBox({
-            title: promptIfMissing,
-            ignoreFocusOut: true,
-            password: true,
-          });
-          if (secret) {
-            await context.secrets.store(key, secret);
-          }
-        }
-        return secret;
-      }
-    )
-  );
 }
 
 export async function deactivate(): Promise<void | undefined> {

@@ -40,8 +40,6 @@ import {setupFileMessaging, setupSubscriptions} from '../subscriptions';
 import {fileHandler} from '../utils/files';
 import {MALLOY_EXTENSION_STATE} from '../state';
 import {WorkerConnectionNode} from './worker_connection_node';
-import {WorkerGetSecretMessage} from '../../common/types/worker_message_types';
-import {deletePassword, getPassword} from 'keytar';
 
 let client: LanguageClient;
 
@@ -92,36 +90,6 @@ export async function activate(context: vscode.ExtensionContext) {
         cloudCodeEnv();
       }
     })
-  );
-
-  context.subscriptions.push(
-    client.onRequest(
-      'malloy/getSecret',
-      async ({key, promptIfMissing}: WorkerGetSecretMessage) => {
-        // TODO(whscullin) Migrate old keytar values for now, remove with keytar
-        // Once keytar is removed this can move to common browser/node code
-        const value = await getPassword(
-          'com.malloy-lang.vscode-extension',
-          key
-        );
-        if (value) {
-          await deletePassword('com.malloy-lang.vscode-extension', key);
-          await context.secrets.store(key, value);
-        }
-        let secret = await context.secrets.get(key);
-        if (!secret && promptIfMissing) {
-          secret = await vscode.window.showInputBox({
-            title: promptIfMissing,
-            ignoreFocusOut: true,
-            password: true,
-          });
-          if (secret) {
-            await context.secrets.store(key, secret);
-          }
-        }
-        return secret;
-      }
-    )
   );
 }
 
