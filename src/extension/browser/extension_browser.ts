@@ -37,7 +37,6 @@ import {
 import {editConnectionsCommand} from './commands/edit_connections';
 import {fileHandler} from '../utils/files';
 import {WorkerConnectionBrowser} from './worker_connection_browser';
-import {WorkerGetSecretMessage} from '../../common/types/worker_message_types';
 let client: LanguageClient;
 
 export async function activate(context: vscode.ExtensionContext) {
