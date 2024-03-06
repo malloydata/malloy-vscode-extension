@@ -36,6 +36,7 @@ class ConnectionConfigManagerNode extends ConnectionConfigManagerBase {
     const available = [
       ConnectionBackend.BigQuery,
       ConnectionBackend.Postgres,
+      ConnectionBackend.Snowflake,
       ConnectionBackend.External,
     ];
     if (isDuckDBAvailable) {
