@@ -34,7 +34,7 @@ export const createDuckDbWasmConnection = async (
   {workingDirectory, rowLimit, useKeyStore}: ConfigOptions
 ) => {
   useKeyStore ??= true;
-  const {name} = connectionConfig;
+  const {name, additionalExtensions} = connectionConfig;
   const databasePath = connectionConfig.databasePath || ':memory:';
   workingDirectory = connectionConfig.workingDirectory || workingDirectory;
   if (workingDirectory?.startsWith('file:')) {
@@ -47,7 +47,7 @@ export const createDuckDbWasmConnection = async (
     });
   }
 
-  const options = {name, databasePath, workingDirectory};
+  const options = {name, additionalExtensions, databasePath, workingDirectory};
   console.info('Creating duckdb connection with', JSON.stringify(options));
   try {
     const connection = new DuckDBWASMConnection(
