@@ -21,9 +21,4 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-export {
-  TOKEN_TYPES,
-  TOKEN_MODIFIERS,
-  getMalloyHighlights,
-  stubMalloyHighlights,
-} from './highlights';
+export {TOKEN_TYPES, TOKEN_MODIFIERS, stubMalloyHighlights} from './highlights';

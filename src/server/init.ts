@@ -39,7 +39,6 @@ import debounce from 'lodash/debounce';
 import {TextDocument} from 'vscode-languageserver-textdocument';
 import {getMalloyDiagnostics} from './diagnostics';
 import {getMalloySymbols} from './symbols';
-import {TOKEN_TYPES, TOKEN_MODIFIERS, stubMalloyHighlights} from './highlights';
 import {getMalloyLenses} from './lenses';
 import {
   getCompletionItems,
@@ -50,6 +49,7 @@ import {getMalloyDefinitionReference} from './definitions/definitions';
 import {TranslateCache} from './translate_cache';
 import {ConnectionManager} from '../common/connection_manager';
 import {findMalloyLensesAt} from './lenses/lenses';
+import {TOKEN_MODIFIERS, TOKEN_TYPES, stubMalloyHighlights} from './highlights';
 
 export const initServer = (
   documents: TextDocuments<TextDocument>,
@@ -216,6 +216,7 @@ export const initServer = (
   connection.onDidChangeConfiguration(change => {
     onDidChangeConfiguration?.(change);
     connectionManager.setConnectionsConfig(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (change?.settings as any)?.malloy?.connections ?? []
     );
     haveConnectionsBeenSet = true;
