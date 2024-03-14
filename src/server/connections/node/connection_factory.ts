@@ -34,7 +34,7 @@ import {createPostgresConnection} from '../postgres_connection';
 import {createSnowflakeConnection} from '../snowflake_connection';
 
 import {fileURLToPath} from 'url';
-import {ExternalConnectionFactory} from '../external_connection_factory';
+import {ExternalConnectionFactory} from '../../../common/connections/external_connection_factory';
 import {GenericConnection} from '../../../common/types/worker_message_types';
 
 export class NodeConnectionFactory implements ConnectionFactory {

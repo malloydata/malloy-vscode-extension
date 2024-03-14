@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {ExternalConnectionFactory} from '../../server/connections/external_connection_factory';
+import {ExternalConnectionFactory} from '../../common/connections/external_connection_factory';
 import {isDuckDBAvailable} from '../../common/duckdb_availability';
 import {
   ConnectionBackend,
