@@ -21,47 +21,36 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {DuckDBConnection} from '@malloydata/db-duckdb';
+import {DuckDBWASMConnection} from '@malloydata/db-duckdb/wasm';
 import {
   ConfigOptions,
   DuckDBConnectionConfig,
-} from '../types/connection_manager_types';
-import {isDuckDBAvailable} from '../../common/duckdb_availability';
-import {GenericConnection} from '../types/worker_message_types';
+} from '../../common/types/connection_manager_types';
+import {GenericConnection} from '../../common/types/worker_message_types';
 
-export const createDuckDbConnection = async (
+export const createDuckDbWasmConnection = async (
   client: GenericConnection,
   connectionConfig: DuckDBConnectionConfig,
   {workingDirectory, rowLimit, useKeyStore}: ConfigOptions
 ) => {
   useKeyStore ??= true;
-  if (!isDuckDBAvailable) {
-    throw new Error('DuckDB is not available.');
+  const {name, additionalExtensions} = connectionConfig;
+  const databasePath = connectionConfig.databasePath || ':memory:';
+  workingDirectory = connectionConfig.workingDirectory || workingDirectory;
+  if (workingDirectory?.startsWith('file:')) {
+    workingDirectory = workingDirectory.substring(7);
   }
-  try {
-    const {name, additionalExtensions} = connectionConfig;
-    const databasePath = connectionConfig.databasePath || ':memory:';
-    const isMotherDuck =
-      databasePath.startsWith('md:') || databasePath.startsWith('motherduck:');
-    workingDirectory = connectionConfig.workingDirectory || workingDirectory;
-    let motherDuckToken = connectionConfig.motherDuckToken;
-    const hasEnv =
-      process.env['motherduck_token'] || process.env['MOTHERDUCK_TOKEN'];
-    if (isMotherDuck && useKeyStore) {
-      motherDuckToken = await client.sendRequest('malloy/getSecret', {
-        key: `connections.${connectionConfig.id}.motherDuckToken`,
-        promptIfMissing: hasEnv ? false : 'Enter your MotherDuck token:',
-      });
-    }
+  let motherDuckToken = connectionConfig.motherDuckToken;
+  if (motherDuckToken && useKeyStore) {
+    motherDuckToken = await client.sendRequest('malloy/getSecret', {
+      key: `connections.${connectionConfig.id}.motherDuckToken`,
+    });
+  }
 
-    const options = {
-      name,
-      additionalExtensions,
-      databasePath,
-      workingDirectory,
-    };
-    console.info('Creating duckdb connection with', JSON.stringify(options));
-    const connection = new DuckDBConnection(
+  const options = {name, additionalExtensions, databasePath, workingDirectory};
+  console.info('Creating duckdb connection with', JSON.stringify(options));
+  try {
+    const connection = new DuckDBWASMConnection(
       {
         ...options,
         motherDuckToken,
@@ -70,7 +59,7 @@ export const createDuckDbConnection = async (
     );
     return connection;
   } catch (error) {
-    console.error('Could not create DuckDB connection:', error);
+    console.error('Could not create DuckDB WASM connection:', error);
     throw error;
   }
 };

@@ -22,33 +22,46 @@
  */
 
 import {TestableConnection} from '@malloydata/malloy';
-import {ConnectionFactory} from '../types';
+import {ConnectionFactory} from '../../../common/connections/types';
 import {
   ConfigOptions,
   ConnectionBackend,
   ConnectionConfig,
-} from '../../types/connection_manager_types';
-import {createBigQueryConnection} from '../bigquery_connection';
-import {createDuckDbConnection} from '../duckdb_connection';
-import {createPostgresConnection} from '../postgres_connection';
-import {createSnowflakeConnection} from '../snowflake_connection';
+} from '../../../common/types/connection_manager_types';
+import {createDuckDbWasmConnection} from '../duckdb_wasm_connection';
+import {DuckDBWASMConnection} from '@malloydata/db-duckdb/wasm';
+import {GenericConnection} from '../../../common/types/worker_message_types';
+import {errorMessage} from '../../../common/errors';
 
-import {fileURLToPath} from 'url';
-import {ExternalConnectionFactory} from '../external_connection_factory';
-import {GenericConnection} from '../../types/worker_message_types';
+export type FetchCallback = (uri: string) => Promise<Uint8Array>;
 
-export class NodeConnectionFactory implements ConnectionFactory {
+export class WebConnectionFactory implements ConnectionFactory {
   connectionCache: Record<string, TestableConnection> = {};
-  externalConnectionFactory = new ExternalConnectionFactory();
 
   constructor(private client: GenericConnection) {}
 
-  reset() {
-    Object.values(this.connectionCache).forEach(connection =>
-      connection.close()
+  async reset() {
+    await Promise.all(
+      Object.values(this.connectionCache).map(connection => connection.close())
     );
     this.connectionCache = {};
   }
+
+  getAvailableBackends(): ConnectionBackend[] {
+    return [ConnectionBackend.DuckDB];
+  }
+
+  private fetchBinaryFile = async (uri: string): Promise<Uint8Array> => {
+    try {
+      console.info(`fetchBinaryFile requesting ${uri}`);
+      return await this.client.sendRequest('malloy/fetchBinaryFile', {uri});
+    } catch (error) {
+      console.error(errorMessage(error));
+      throw new Error(
+        `fetchBinaryFile: unable to load '${uri}': ${errorMessage(error)}`
+      );
+    }
+  };
 
   async getConnectionForConfig(
     connectionConfig: ConnectionConfig,
@@ -56,48 +69,27 @@ export class NodeConnectionFactory implements ConnectionFactory {
   ): Promise<TestableConnection> {
     const {useCache, workingDirectory} = configOptions;
     const cacheKey = `${connectionConfig.name}::${workingDirectory}`;
-
     let connection: TestableConnection | undefined;
     if (useCache && this.connectionCache[cacheKey]) {
       return this.connectionCache[cacheKey];
     }
     switch (connectionConfig.backend) {
-      case ConnectionBackend.BigQuery:
-        connection = await createBigQueryConnection(
-          connectionConfig,
-          configOptions
-        );
+      case ConnectionBackend.DuckDB:
+        {
+          const remoteTableCallback = async (tableName: string) => {
+            const url = new URL(tableName, workingDirectory);
+            return this.fetchBinaryFile(url.toString());
+          };
+          const duckDBConnection: DuckDBWASMConnection =
+            await createDuckDbWasmConnection(
+              this.client,
+              connectionConfig,
+              configOptions
+            );
+          duckDBConnection.registerRemoteTableCallback(remoteTableCallback);
+          connection = duckDBConnection;
+        }
         break;
-      case ConnectionBackend.Postgres: {
-        connection = await createPostgresConnection(
-          this.client,
-          connectionConfig,
-          configOptions
-        );
-        break;
-      }
-      case ConnectionBackend.DuckDB: {
-        connection = await createDuckDbConnection(
-          this.client,
-          connectionConfig,
-          configOptions
-        );
-        break;
-      }
-      case ConnectionBackend.Snowflake: {
-        connection = await createSnowflakeConnection(
-          this.client,
-          connectionConfig,
-          configOptions
-        );
-        break;
-      }
-      case ConnectionBackend.External: {
-        connection = await this.externalConnectionFactory.createOtherConnection(
-          connectionConfig
-        );
-        break;
-      }
     }
     if (useCache && connection) {
       this.connectionCache[cacheKey] = connection;
@@ -108,53 +100,25 @@ export class NodeConnectionFactory implements ConnectionFactory {
       );
     }
 
-    console.info(
-      'Created',
-      connectionConfig.backend,
-      'connection:',
-      connectionConfig.name
-    );
-
     return connection;
   }
 
   getWorkingDirectory(url: URL): string {
     try {
       const baseUrl = new URL('.', url);
-      const fileUrl = new URL(baseUrl.pathname, 'file:');
-      return fileURLToPath(fileUrl);
+      return baseUrl.toString();
     } catch {
-      return '.';
+      return url.toString();
     }
   }
 
   addDefaults(configs: ConnectionConfig[]): ConnectionConfig[] {
-    // Create a default bigquery connection if one isn't configured
-    if (
-      !configs.find(config => config.backend === ConnectionBackend.BigQuery)
-    ) {
-      configs.push({
-        name: 'bigquery',
-        backend: ConnectionBackend.BigQuery,
-        id: 'bigquery-default',
-      });
-    }
-
     // Create a default duckdb connection if one isn't configured
     if (!configs.find(config => config.name === 'duckdb')) {
       configs.push({
         name: 'duckdb',
         backend: ConnectionBackend.DuckDB,
         id: 'duckdb-default',
-      });
-    }
-
-    // Create a default motherduck connection if one isn't configured
-    if (!configs.find(config => config.name === 'md')) {
-      configs.push({
-        name: 'md',
-        backend: ConnectionBackend.DuckDB,
-        id: 'motherduck-default',
       });
     }
     return configs;
