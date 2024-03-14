@@ -22,12 +22,12 @@
  */
 
 import {TestableConnection} from '@malloydata/malloy';
-import {ConnectionFactory} from '../types';
+import {ConnectionFactory} from '../../../common/connections/types';
 import {
   ConfigOptions,
   ConnectionBackend,
   ConnectionConfig,
-} from '../../types/connection_manager_types';
+} from '../../../common/types/connection_manager_types';
 import {createBigQueryConnection} from '../bigquery_connection';
 import {createDuckDbConnection} from '../duckdb_connection';
 import {createPostgresConnection} from '../postgres_connection';
@@ -35,7 +35,7 @@ import {createSnowflakeConnection} from '../snowflake_connection';
 
 import {fileURLToPath} from 'url';
 import {ExternalConnectionFactory} from '../external_connection_factory';
-import {GenericConnection} from '../../types/worker_message_types';
+import {GenericConnection} from '../../../common/types/worker_message_types';
 
 export class NodeConnectionFactory implements ConnectionFactory {
   connectionCache: Record<string, TestableConnection> = {};

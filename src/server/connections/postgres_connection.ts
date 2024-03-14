@@ -25,8 +25,8 @@ import {PostgresConnection} from '@malloydata/db-postgres';
 import {
   PostgresConnectionConfig,
   ConfigOptions,
-} from '../types/connection_manager_types';
-import {GenericConnection} from '../types/worker_message_types';
+} from '../../common/types/connection_manager_types';
+import {GenericConnection} from '../../common/types/worker_message_types';
 
 export const createPostgresConnection = async (
   client: GenericConnection,

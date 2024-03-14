@@ -27,7 +27,7 @@ import {
   BrowserMessageWriter,
 } from 'vscode-languageserver/browser';
 import {ConnectionManager} from '../../common/connection_manager';
-import {WebConnectionFactory} from '../../common/connections/browser/connection_factory';
+import {WebConnectionFactory} from '../connections/browser/connection_factory';
 
 const messageReader = new BrowserMessageReader(self as unknown as Worker);
 const messageWriter = new BrowserMessageWriter(self as unknown as Worker);

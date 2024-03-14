@@ -25,8 +25,8 @@ import {BigQueryConnection} from '@malloydata/db-bigquery';
 import {
   ConfigOptions,
   BigQueryConnectionConfig,
-} from '../types/connection_manager_types';
-import {convertToBytes} from '../convert_to_bytes';
+} from '../../common/types/connection_manager_types';
+import {convertToBytes} from '../../common/convert_to_bytes';
 
 export const createBigQueryConnection = async (
   connectionConfig: BigQueryConnectionConfig,
