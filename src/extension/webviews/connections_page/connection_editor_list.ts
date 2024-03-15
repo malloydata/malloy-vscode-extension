@@ -132,7 +132,9 @@ export class ConnectionEditorList extends LitElement {
                 .setConfig=${(newConfig: ConnectionConfig) =>
                   this.setConfig(newConfig, index)}
                 .deleteConfig=${() => {
-                  this.setConnections(this.connections.splice(index, 1));
+                  const copy = [...this.connections];
+                  copy.splice(index, 1);
+                  this.setConnections(copy);
                   this.dirty = true;
                 }}
                 .testConfig=${() => {
