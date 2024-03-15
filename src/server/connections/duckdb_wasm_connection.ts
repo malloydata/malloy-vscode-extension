@@ -44,6 +44,7 @@ export const createDuckDbWasmConnection = async (
   if (motherDuckToken && useKeyStore) {
     motherDuckToken = await client.sendRequest('malloy/getSecret', {
       key: `connections.${connectionConfig.id}.motherDuckToken`,
+      promptIfMissing: 'Enter your MotherDuck token:',
     });
   }
 
