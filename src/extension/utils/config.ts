@@ -22,12 +22,6 @@
  */
 
 import * as vscode from 'vscode';
-import {
-  BigQueryConnectionConfig,
-  ConnectionBackend,
-  ConnectionConfig,
-} from '../../common/types/connection_manager_types';
-import {noAwait} from '../../util/no_await';
 
 /**
  * Centralized place to pull configuration for Malloy extension
@@ -35,49 +29,5 @@ import {noAwait} from '../../util/no_await';
  * @returns Malloy config (vscode.WorkspaceConfiguration)
  */
 export const getMalloyConfig = (): vscode.WorkspaceConfiguration => {
-  const malloyConfig = vscode.workspace.getConfiguration('malloy');
-
-  // possibly update bigquery config parameters
-  const connectionConfigs = malloyConfig.get(
-    'connections'
-  ) as ConnectionConfig[];
-
-  // if bigquery connection config still uses old "projectName" key,
-  // move over to "projectId", delete the "projectName" key, and save
-  connectionConfigs.forEach(connectionConfig => {
-    if (connectionConfig.backend === ConnectionBackend.BigQuery) {
-      const oldProjectNameValue = (
-        connectionConfig as BigQueryConnectionConfig & {projectName?: string}
-      ).projectName;
-
-      if (oldProjectNameValue) {
-        connectionConfig.projectId = oldProjectNameValue;
-        delete (
-          connectionConfig as BigQueryConnectionConfig & {projectName?: string}
-        ).projectName;
-
-        const hasWorkspaceConfig =
-          malloyConfig.inspect('connections')?.workspaceValue !== undefined;
-
-        noAwait(
-          malloyConfig.update(
-            'connections',
-            connectionConfigs,
-            vscode.ConfigurationTarget.Global
-          )
-        );
-        if (hasWorkspaceConfig) {
-          noAwait(
-            malloyConfig.update(
-              'connections',
-              connectionConfigs,
-              vscode.ConfigurationTarget.Workspace
-            )
-          );
-        }
-      }
-    }
-  });
-
-  return malloyConfig;
+  return vscode.workspace.getConfiguration('malloy');
 };
