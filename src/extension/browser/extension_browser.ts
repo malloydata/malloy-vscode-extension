@@ -37,7 +37,6 @@ import {
 import {editConnectionsCommand} from './commands/edit_connections';
 import {fileHandler} from '../utils/files';
 import {WorkerConnectionBrowser} from './worker_connection_browser';
-import {WorkerGetSecretMessage} from '../../common/types/worker_message_types';
 let client: LanguageClient;
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -65,25 +64,6 @@ export async function activate(context: vscode.ExtensionContext) {
       'malloy.editConnections',
       (item?: ConnectionItem) =>
         editConnectionsCommand(context, worker, item?.id)
-    )
-  );
-  context.subscriptions.push(
-    client.onRequest(
-      'malloy/getSecret',
-      async ({key, promptIfMissing}: WorkerGetSecretMessage) => {
-        let secret = await context.secrets.get(key);
-        if (!secret && promptIfMissing) {
-          secret = await vscode.window.showInputBox({
-            title: promptIfMissing,
-            ignoreFocusOut: true,
-            password: true,
-          });
-          if (secret) {
-            await context.secrets.store(key, secret);
-          }
-        }
-        return secret;
-      }
     )
   );
 }

@@ -58,6 +58,7 @@ import {
 import {
   GenericConnection,
   WorkerFetchMessage,
+  WorkerGetSecretMessage,
 } from '../common/types/worker_message_types';
 import {BaseLanguageClient} from 'vscode-languageclient';
 import {WorkerConnection} from './worker_connection';
@@ -309,5 +310,25 @@ export const setupFileMessaging = (
     vscode.window.onDidChangeTextEditorSelection(e => {
       MALLOY_EXTENSION_STATE.setActivePosition(e.selections[0].start);
     })
+  );
+
+  context.subscriptions.push(
+    client.onRequest(
+      'malloy/getSecret',
+      async ({key, promptIfMissing}: WorkerGetSecretMessage) => {
+        let secret = await context.secrets.get(key);
+        if (!secret && promptIfMissing) {
+          secret = await vscode.window.showInputBox({
+            title: promptIfMissing,
+            ignoreFocusOut: true,
+            password: true,
+          });
+          if (secret) {
+            await context.secrets.store(key, secret);
+          }
+        }
+        return secret;
+      }
+    )
   );
 };

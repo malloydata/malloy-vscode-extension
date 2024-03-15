@@ -28,36 +28,10 @@ import * as path from 'path';
 import {execSync} from 'child_process';
 import {noNodeModulesSourceMaps} from '../third_party/github.com/evanw/esbuild/no-node-modules-sourcemaps';
 import svgrPlugin from 'esbuild-plugin-svgr';
-import {fetchKeytar, targetKeytarMap} from './utils/fetch_keytar';
 import {fetchDuckDB, targetDuckDBMap} from './utils/fetch_duckdb';
 import {outDir, Target} from './constants';
 
 import {generateDisclaimer} from './license_disclaimer';
-
-// This plugin replaces keytar's attempt to load the keytar.node native binary (built in node_modules
-// on npm install) with a require function to load a .node file from the filesystem
-const keytarReplacerPlugin: Plugin = {
-  name: 'keytarReplacer',
-  setup(build) {
-    build.onResolve({filter: /build\/Release\/keytar.node/}, args => {
-      return {
-        path: args.path,
-        namespace: 'keytar-replacer',
-      };
-    });
-    build.onLoad(
-      {filter: /build\/Release\/keytar.node/, namespace: 'keytar-replacer'},
-      _args => {
-        return {
-          contents: /* javascript */ `
-            try { module.exports = require('./keytar-native.node')}
-            catch {}
-          `,
-        };
-      }
-    );
-  },
-};
 
 const litCssImporter: Plugin = {
   name: 'litCssImporter',
@@ -170,17 +144,13 @@ for (const variable of ENV_PASSTHROUGH) {
   );
 }
 
-// building without a target does a default build using whatever keytar native lib is in node_modules
+// building without a target does a default build
 export async function doBuild(
   development: boolean,
   target?: Target,
   metadata = false
 ): Promise<void> {
   development = development || process.env['NODE_ENV'] === 'development';
-
-  if (target && !targetKeytarMap[target] && target !== 'web') {
-    throw new Error(`Invalid target: ${target}`);
-  }
 
   fs.rmSync(outDir, {recursive: true, force: true});
   fs.mkdirSync(outDir, {recursive: true});
@@ -233,8 +203,6 @@ export async function doBuild(
   }
 
   if (target) {
-    const file = await fetchKeytar(target);
-    fs.copyFileSync(file, path.join(outDir, 'keytar-native.node'));
     const duckDBBinaryName = targetDuckDBMap[target];
     const isDuckDBAvailable = duckDBBinaryName !== undefined;
     if (isDuckDBAvailable) {
@@ -251,12 +219,7 @@ export async function doBuild(
   }
 
   const nodeExtensionPlugins = extensionPlugins;
-  // if we're building with a target, replace keytar imports using plugin that imports
-  // binary builds of keytar. if we're building for dev, use a .node plugin to
-  // ensure ketyar's node_modules .node file is in the build
-  if (target) {
-    nodeExtensionPlugins.push(keytarReplacerPlugin);
-  } else {
+  if (!target) {
     nodeExtensionPlugins.push(nativeNodeModulesPlugin);
   }
 
@@ -272,18 +235,13 @@ export async function doBuild(
   buildOptions['node'] = {
     ...commonNodeOptions,
     entryPoints: ['./src/extension/node/extension_node.ts'],
-    external: [
-      'vscode',
-      'pg-native',
-      './keytar-native.node',
-      './duckdb-native.node',
-    ],
+    external: ['vscode', 'pg-native', './duckdb-native.node'],
   };
 
   buildOptions['nodeServer'] = {
     ...commonNodeOptions,
     entryPoints: ['./src/server/node/server_node.ts'],
-    external: ['pg-native', './keytar-native.node', './duckdb-native.node'],
+    external: ['pg-native', './duckdb-native.node'],
   };
 
   nodeWebviewPlugins = [duckDBPlugin];
