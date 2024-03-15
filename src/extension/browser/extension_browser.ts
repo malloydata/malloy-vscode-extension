@@ -42,7 +42,7 @@ let client: LanguageClient;
 export async function activate(context: vscode.ExtensionContext) {
   await setupLanguageServer(context);
   const worker = new WorkerConnectionBrowser(context, client, fileHandler);
-  setupSubscriptions(context, worker, client);
+  await setupSubscriptions(context, worker, client);
 
   const connectionsTree = new ConnectionsProvider(
     context,

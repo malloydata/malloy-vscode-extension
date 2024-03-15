@@ -175,6 +175,11 @@
         "icon": "$(refresh)"
       },
       {
+        "command": "malloy.createDefaultConnections",
+        "title": "Create Default Connections",
+        "category": "Malloy"
+      },
+      {
         "command": "malloy.editConnections",
         "title": "Edit Connections",
         "category": "Malloy"

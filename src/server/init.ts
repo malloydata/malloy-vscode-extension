@@ -219,6 +219,7 @@ export const initServer = (
       (change?.settings as any)?.malloy?.connections ?? []
     );
     haveConnectionsBeenSet = true;
+    translateCache.cache.clear();
     documents.all().forEach(debouncedDiagnoseDocument);
   });
 
