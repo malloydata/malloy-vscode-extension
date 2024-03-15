@@ -36,12 +36,14 @@ export const createDuckDbWasmConnection = async (
   useKeyStore ??= true;
   const {name, additionalExtensions} = connectionConfig;
   const databasePath = connectionConfig.databasePath || ':memory:';
+  const isMotherDuck =
+    databasePath.startsWith('md:') || databasePath.startsWith('motherduck:');
   workingDirectory = connectionConfig.workingDirectory || workingDirectory;
   if (workingDirectory?.startsWith('file:')) {
     workingDirectory = workingDirectory.substring(7);
   }
   let motherDuckToken = connectionConfig.motherDuckToken;
-  if (motherDuckToken && useKeyStore) {
+  if (isMotherDuck && useKeyStore) {
     motherDuckToken = await client.sendRequest('malloy/getSecret', {
       key: `connections.${connectionConfig.id}.motherDuckToken`,
       promptIfMissing: 'Enter your MotherDuck token:',
