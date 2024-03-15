@@ -60,7 +60,7 @@ export async function activate(context: vscode.ExtensionContext) {
   cloudCodeEnv();
   await setupLanguageServer(context);
   const worker = new WorkerConnectionNode(context, client, fileHandler);
-  setupSubscriptions(context, worker, client);
+  await setupSubscriptions(context, worker, client);
   const connectionsTree = new ConnectionsProvider(
     context,
     connectionConfigManager
