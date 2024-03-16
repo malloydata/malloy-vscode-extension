@@ -26,7 +26,6 @@ import {
   InitializeParams,
   TextDocumentSyncKind,
   InitializeResult,
-  SemanticTokensBuilder,
   CompletionItem,
   HoverParams,
   Hover,
@@ -49,7 +48,6 @@ import {getMalloyDefinitionReference} from './definitions/definitions';
 import {TranslateCache} from './translate_cache';
 import {ConnectionManager} from '../common/connection_manager';
 import {findMalloyLensesAt} from './lenses/lenses';
-import {TOKEN_MODIFIERS, TOKEN_TYPES, stubMalloyHighlights} from './highlights';
 
 export const initServer = (
   documents: TextDocuments<TextDocument>,
@@ -73,14 +71,6 @@ export const initServer = (
           resolveProvider: true,
         },
         definitionProvider: true,
-        semanticTokensProvider: {
-          full: true,
-          range: false,
-          legend: {
-            tokenTypes: TOKEN_TYPES,
-            tokenModifiers: TOKEN_MODIFIERS,
-          },
-        },
         hoverProvider: true,
       },
     };
@@ -177,13 +167,6 @@ export const initServer = (
     return document && document.languageId === 'malloy'
       ? getMalloySymbols(document)
       : [];
-  });
-
-  connection.languages.semanticTokens.on(handler => {
-    const document = documents.get(handler.textDocument.uri);
-    return document && document.languageId === 'malloy'
-      ? stubMalloyHighlights(document)
-      : new SemanticTokensBuilder().build();
   });
 
   connection.onCodeLens(async handler => {
