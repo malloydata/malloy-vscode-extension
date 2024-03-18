@@ -21,13 +21,11 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {
-  DidChangeConfigurationParams,
-  TextDocuments,
-} from 'vscode-languageserver';
-import {TextDocument} from 'vscode-languageserver-textdocument';
-import {connection, connectionManager} from './connections_node';
+import {DidChangeConfigurationParams} from 'vscode-languageserver';
+import {createConnection, ProposedFeatures} from 'vscode-languageserver/node';
 import {initServer} from '../init';
+import {ConnectionManager} from '../../common/connection_manager';
+import {NodeConnectionFactory} from '../connections/node/connection_factory';
 import {NodeMessageHandler} from '../../worker/node/message_handler';
 
 export interface CloudCodeConfig {
@@ -36,8 +34,6 @@ export interface CloudCodeConfig {
     project?: string;
   };
 }
-
-const documents = new TextDocuments(TextDocument);
 
 const onDidChangeConfiguration = (change: DidChangeConfigurationParams) => {
   const cloudCodeConfig = change.settings.cloudcode as
@@ -55,9 +51,13 @@ const onDidChangeConfiguration = (change: DidChangeConfigurationParams) => {
   }
 };
 
-initServer(documents, connection, connectionManager, onDidChangeConfiguration);
+const connection = createConnection(ProposedFeatures.all);
+const connectionManager = new ConnectionManager(
+  new NodeConnectionFactory(connection)
+);
+
+initServer(connection, connectionManager, onDidChangeConfiguration);
 export const messageHandler = new NodeMessageHandler(
   connection,
   connectionManager
 );
-connection.console.info('Server loaded');

@@ -50,11 +50,11 @@ import {ConnectionManager} from '../common/connection_manager';
 import {findMalloyLensesAt} from './lenses/lenses';
 
 export const initServer = (
-  documents: TextDocuments<TextDocument>,
   connection: Connection,
   connectionManager: ConnectionManager,
   onDidChangeConfiguration?: (params: DidChangeConfigurationParams) => void
 ) => {
+  const documents = new TextDocuments(TextDocument);
   let haveConnectionsBeenSet = false;
   connection.onInitialize((params: InitializeParams) => {
     connection.console.info('onInitialize');
@@ -239,4 +239,6 @@ export const initServer = (
   documents.listen(connection);
 
   connection.listen();
+
+  connection.console.info('Server loaded');
 };
