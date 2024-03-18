@@ -26,7 +26,6 @@ import {
   InitializeParams,
   TextDocumentSyncKind,
   InitializeResult,
-  SemanticTokensBuilder,
   CompletionItem,
   HoverParams,
   Hover,
@@ -39,7 +38,6 @@ import debounce from 'lodash/debounce';
 import {TextDocument} from 'vscode-languageserver-textdocument';
 import {getMalloyDiagnostics} from './diagnostics';
 import {getMalloySymbols} from './symbols';
-import {TOKEN_TYPES, TOKEN_MODIFIERS, stubMalloyHighlights} from './highlights';
 import {getMalloyLenses} from './lenses';
 import {
   getCompletionItems,
@@ -73,14 +71,6 @@ export const initServer = (
           resolveProvider: true,
         },
         definitionProvider: true,
-        semanticTokensProvider: {
-          full: true,
-          range: false,
-          legend: {
-            tokenTypes: TOKEN_TYPES,
-            tokenModifiers: TOKEN_MODIFIERS,
-          },
-        },
         hoverProvider: true,
       },
     };
@@ -179,13 +169,6 @@ export const initServer = (
       : [];
   });
 
-  connection.languages.semanticTokens.on(handler => {
-    const document = documents.get(handler.textDocument.uri);
-    return document && document.languageId === 'malloy'
-      ? stubMalloyHighlights(document)
-      : new SemanticTokensBuilder().build();
-  });
-
   connection.onCodeLens(async handler => {
     const document = documents.get(handler.textDocument.uri);
     if (document && document.languageId === 'malloy') {
@@ -216,6 +199,7 @@ export const initServer = (
   connection.onDidChangeConfiguration(change => {
     onDidChangeConfiguration?.(change);
     connectionManager.setConnectionsConfig(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (change?.settings as any)?.malloy?.connections ?? []
     );
     haveConnectionsBeenSet = true;
