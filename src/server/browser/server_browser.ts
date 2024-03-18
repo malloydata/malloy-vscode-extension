@@ -21,13 +21,23 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {TextDocuments} from 'vscode-languageserver';
-import {TextDocument} from 'vscode-languageserver-textdocument';
-import {connection, connectionManager} from './connections_browser';
+import {
+  createConnection,
+  BrowserMessageReader,
+  BrowserMessageWriter,
+} from 'vscode-languageserver/browser';
 import {initServer} from '../init';
-import {BrowserMessageHandler} from './message_handler';
+import {ConnectionManager} from '../../common/connection_manager';
+import {WebConnectionFactory} from '../connections/browser/connection_factory';
+import {MessageHandler} from '../../worker/message_handler';
 
-const documents = new TextDocuments(TextDocument);
-initServer(documents, connection, connectionManager);
-new BrowserMessageHandler(connection, connectionManager);
-connection.console.info('Server loaded');
+const messageReader = new BrowserMessageReader(self as unknown as Worker);
+const messageWriter = new BrowserMessageWriter(self as unknown as Worker);
+
+const connection = createConnection(messageReader, messageWriter);
+const connectionManager = new ConnectionManager(
+  new WebConnectionFactory(connection)
+);
+
+initServer(connection, connectionManager);
+new MessageHandler(connection, connectionManager);
