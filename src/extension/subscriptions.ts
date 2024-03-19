@@ -28,6 +28,7 @@ import {
   copyToClipboardCommand,
   goToDefinitionFromSchemaCommand,
   newUntitledNotebookCommand,
+  openUrlInBrowser,
   previewFromSchemaCommand,
   runNamedQuery,
   runNamedQueryFromSchemaCommand,
@@ -168,6 +169,13 @@ export const setupSubscriptions = async (
     vscode.commands.registerCommand(
       'malloy.copyToClipboard',
       (val: string, type: string) => copyToClipboardCommand(val, type)
+    )
+  );
+
+  // source
+  context.subscriptions.push(
+    vscode.commands.registerCommand('malloy.openUrlInBrowser', (url: string) =>
+      openUrlInBrowser(url)
     )
   );
 
