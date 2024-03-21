@@ -27,7 +27,7 @@ export const createTrinoConnection = async (): Promise<TrinoConnection> => {
   try {
     // TODO: fill properly.
     return new TrinoConnection(
-      'trino', //dbName,
+      'trino',
       {},
       TrinoExecutor.getConnectionOptionsFromEnv()
     );
