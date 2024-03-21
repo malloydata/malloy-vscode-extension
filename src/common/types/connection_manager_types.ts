@@ -31,6 +31,7 @@ export enum ConnectionBackend {
   Postgres = 'postgres',
   DuckDB = 'duckdb',
   Snowflake = 'snowflake',
+  Trino = 'trino',
   External = 'external',
 }
 
@@ -40,6 +41,8 @@ export const ConnectionBackendNames: Record<ConnectionBackend, string> = {
   [ConnectionBackend.DuckDB]: 'DuckDB',
   // TODO(whscullin): Remove beta once ready.
   [ConnectionBackend.Snowflake]: 'Snowflake (Beta)',
+  // TODO(figutierrez): Remove beta once ready.
+  [ConnectionBackend.Trino]: 'Trino (Beta)',
   // TODO(figutierrez): Remove beta once ready.
   [ConnectionBackend.External]: 'External (Beta)',
 };
@@ -93,6 +96,11 @@ export interface SnowflakeConnectionConfig extends BaseConnectionConfig {
   timeoutMs?: number;
 }
 
+export interface TrinoConnectionConfig extends BaseConnectionConfig {
+  backend: ConnectionBackend.Trino;
+  // TODO(figutierrez): add options.
+}
+
 export interface ExternalConnectionPackageInfo {
   packageName: string;
   version: string;
@@ -125,6 +133,7 @@ export type ConnectionConfig =
   | PostgresConnectionConfig
   | DuckDBConnectionConfig
   | SnowflakeConnectionConfig
+  | TrinoConnectionConfig
   | ExternalConnectionConfig;
 
 export interface ConfigOptions {

@@ -37,6 +37,7 @@ class ConnectionConfigManagerNode extends ConnectionConfigManagerBase {
       ConnectionBackend.BigQuery,
       ConnectionBackend.Postgres,
       ConnectionBackend.Snowflake,
+      ConnectionBackend.Trino,
       ConnectionBackend.External,
     ];
     if (isDuckDBAvailable) {

@@ -32,10 +32,12 @@ import {createBigQueryConnection} from '../bigquery_connection';
 import {createDuckDbConnection} from '../duckdb_connection';
 import {createPostgresConnection} from '../postgres_connection';
 import {createSnowflakeConnection} from '../snowflake_connection';
+import {createTrinoConnection} from '../trino_connection';
 
 import {fileURLToPath} from 'url';
 import {ExternalConnectionFactory} from '../../../common/connections/external_connection_factory';
 import {GenericConnection} from '../../../common/types/worker_message_types';
+import {TrinoExecutor} from '@malloydata/db-trino';
 
 export class NodeConnectionFactory implements ConnectionFactory {
   connectionCache: Record<string, TestableConnection> = {};
@@ -90,6 +92,10 @@ export class NodeConnectionFactory implements ConnectionFactory {
           connectionConfig,
           configOptions
         );
+        break;
+      }
+      case ConnectionBackend.Trino: {
+        connection = await createTrinoConnection();
         break;
       }
       case ConnectionBackend.External: {
@@ -156,6 +162,24 @@ export class NodeConnectionFactory implements ConnectionFactory {
         backend: ConnectionBackend.DuckDB,
         id: 'motherduck-default',
       });
+    }
+
+    if (!configs.find(config => config.backend === ConnectionBackend.Trino)) {
+      try {
+        const trinoOptions = TrinoExecutor.getConnectionOptionsFromEnv();
+        if (trinoOptions !== null) {
+          // TODO(figutierrez): add default.
+          configs.push({
+            name: 'trino',
+            backend: ConnectionBackend.Trino,
+            id: 'trino-default',
+          });
+        }
+      } catch (error) {
+        console.info(
+          `Could not get connection options for Trino connection. ${error}`
+        );
+      }
     }
     return configs;
   }
