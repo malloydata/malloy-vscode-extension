@@ -1,0 +1,31 @@
+name: Publish Release Extension
+
+on: [workflow_dispatch]
+
+jobs:
+  test:
+    uses: './.github/workflows/test.yaml'
+
+  vsix-release:
+    needs:
+      - test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'true'
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+      - name: Publish
+        run: |
+          npm ci --loglevel error
+          npm run publish-extensions patch
+    env:
+      CI: true
+      VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      OVSX_TOKEN: ${{ secrets.OVSX_TOKEN }}
+      GA_API_SECRET: ${{ secrets.GA_API_SECRET }}
+      GA_MEASUREMENT_ID: ${{ secrets.GA_MEASUREMENT_ID }}
+      GHAPI_PAT: ${{ secrets.GHAPI_PAT }}

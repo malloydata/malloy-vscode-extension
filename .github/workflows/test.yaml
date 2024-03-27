@@ -1,0 +1,37 @@
+name: Test
+
+on: [pull_request, workflow_call]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'true'
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+      - name: Install and test
+        run: |
+          npm ci --loglevel error
+          npm run build
+          npm run test
+      - name: Start dbus
+        run: |
+          sudo service dbus start
+          export XDG_RUNTIME_DIR=/tmp/xdg_runtime
+          mkdir $XDG_RUNTIME_DIR
+          chmod 700 $XDG_RUNTIME_DIR
+          chown $(id -un):$(id -gn) $XDG_RUNTIME_DIR
+          export DBUS_SESSION_BUS_ADDRESS=unix:path=$XDG_RUNTIME_DIR/bus
+          echo "DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS" >> "$GITHUB_ENV"
+          dbus-daemon --session --address=$DBUS_SESSION_BUS_ADDRESS --nofork --nopidfile --syslog-only &
+      - name: Run integration test
+        uses: coactions/setup-xvfb@v1
+        with:
+          run: npm run integration
+    env:
+      CI: true
