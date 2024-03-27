@@ -24,7 +24,7 @@ jobs:
       - name: Publish
         run: |
           npm ci --loglevel error
-          npm run publish-extensions prerelease
+          npm run publish-extensions pre-release
     env:
       CI: true
       VSCE_PAT: ${{ secrets.VSCE_PAT }}
