@@ -65,6 +65,7 @@ export const fetchNode = async (
       }
     } else {
       console.error(`Failed to fetch ${url}: ${response.statusText}`);
+      process.exit(1);
     }
   });
   console.log('done');
