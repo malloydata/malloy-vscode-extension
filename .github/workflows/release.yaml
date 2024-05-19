@@ -20,6 +20,7 @@ jobs:
           node-version: '18.x'
       - name: Publish
         run: |
+          set -euxo pipefail
           npm ci --loglevel error
           npm run publish-extensions patch
     env:
