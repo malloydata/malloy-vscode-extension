@@ -30,16 +30,16 @@ import {fetchNode} from './fetch_node';
 const DUCKDB_VERSION = duckdbPackage.dependencies.duckdb;
 
 export const targetDuckDBMap: Record<string, string> = {
-  'darwin-arm64': `duckdb-v${DUCKDB_VERSION}-node-v93-darwin-arm64.node`,
-  'darwin-x64': `duckdb-v${DUCKDB_VERSION}-node-v93-darwin-x64.node`,
-  'linux-arm64': `duckdb-v${DUCKDB_VERSION}-node-v93-linux-arm64.node`,
-  'linux-x64': `duckdb-v${DUCKDB_VERSION}-node-v93-linux-x64.node`,
-  'win32-x64': `duckdb-v${DUCKDB_VERSION}-node-v93-win32-x64.node`,
+  'darwin-arm64': `duckdb-v${DUCKDB_VERSION}-node-v108-darwin-arm64.node`,
+  'darwin-x64': `duckdb-v${DUCKDB_VERSION}-node-v108-darwin-x64.node`,
+  'linux-arm64': `duckdb-v${DUCKDB_VERSION}-node-v108-linux-arm64.node`,
+  'linux-x64': `duckdb-v${DUCKDB_VERSION}-node-v108-linux-x64.node`,
+  'win32-x64': `duckdb-v${DUCKDB_VERSION}-node-v108-win32-x64.node`,
 };
 
 export const fetchDuckDB = async (target: string): Promise<string> => {
   const file = targetDuckDBMap[target];
-  const url = `https://duckdb-node.s3.amazonaws.com/duckdb-v${DUCKDB_VERSION}-node-v93-${target}.tar.gz`;
+  const url = `https://npm.duckdb.org/duckdb/duckdb-v${DUCKDB_VERSION}-node-v108-${target}.tar.gz`;
   const directoryPath = path.resolve(
     path.join('third_party', 'github.com', 'duckdb', 'duckdb')
   );
