@@ -25,7 +25,6 @@ import {
   ConnectionBackend,
   ConnectionConfig,
   ConnectionConfigManager,
-  ExternalConnectionConfig,
 } from '../common/types/connection_manager_types';
 import {noAwait} from '../util/no_await';
 import {getMalloyConfig} from './utils/config';
@@ -47,10 +46,6 @@ export abstract class ConnectionConfigManagerBase
   }
 
   public abstract getAvailableBackends(): ConnectionBackend[];
-
-  public abstract installExternalConnectionPackage(
-    connectionConfig: ExternalConnectionConfig
-  ): Promise<ExternalConnectionConfig>;
 
   public getAllConnectionConfigs() {
     return this.configList;

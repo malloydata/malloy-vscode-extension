@@ -31,12 +31,8 @@ import {
 import {
   ConnectionBackend,
   ConnectionConfig,
-  ExternalConnectionConfig,
 } from '../../../common/types/connection_manager_types';
-import {
-  ConnectionMessageInstallExternalConnection,
-  ConnectionMessageTest,
-} from '../../../common/types/message_types';
+import {ConnectionMessageTest} from '../../../common/types/message_types';
 import {chevronRightIcon} from '../components/icons';
 import './connection_editor/connection_editor';
 import {styles as editorStyles} from './connection_editor/connection_editor.css';
@@ -87,10 +83,6 @@ export class ConnectionEditorList extends LitElement {
   ) => void;
   @property({type: Array})
   availableBackends!: ConnectionBackend[];
-  @property()
-  installExternalConnection!: (config: ExternalConnectionConfig) => void;
-  @property({type: Array})
-  installExternalConnectionStatuses!: ConnectionMessageInstallExternalConnection[];
   @property({attribute: false})
   selectedId!: string | null;
 
@@ -145,12 +137,6 @@ export class ConnectionEditorList extends LitElement {
                   .find(message => message.connection.id === config.id)}
                 .requestFilePath=${this.requestFilePath}
                 .availableBackends=${this.availableBackends}
-                .installExternalConnection=${this.installExternalConnection}
-                .installExternalConnectionStatus=${[
-                  ...this.installExternalConnectionStatuses,
-                ]
-                  .reverse()
-                  .find(message => message.connection.id === config.id)}
                 .setSelectedId=${(selectedId: string | null) => {
                   this.selectedId = selectedId;
                 }}

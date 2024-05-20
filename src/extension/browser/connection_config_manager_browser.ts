@@ -21,24 +21,13 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {
-  ConnectionBackend,
-  ExternalConnectionConfig,
-} from '../../common/types/connection_manager_types';
+import {ConnectionBackend} from '../../common/types/connection_manager_types';
 import {ConnectionConfigManagerBase} from '../connection_config_manager';
 
 class ConnectionConfigManagerBrowser extends ConnectionConfigManagerBase {
   public getAvailableBackends(): ConnectionBackend[] {
     const available = [ConnectionBackend.DuckDB];
     return available;
-  }
-
-  public async installExternalConnectionPackage(
-    _connectionConfig: ExternalConnectionConfig
-  ): Promise<ExternalConnectionConfig> {
-    throw new Error(
-      'Can not install external packages in the browser for now.'
-    );
   }
 }
 

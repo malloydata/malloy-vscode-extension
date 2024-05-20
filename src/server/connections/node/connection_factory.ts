@@ -35,13 +35,11 @@ import {createSnowflakeConnection} from '../snowflake_connection';
 import {createTrinoConnection} from '../trino_connection';
 
 import {fileURLToPath} from 'url';
-import {ExternalConnectionFactory} from '../../../common/connections/external_connection_factory';
 import {GenericConnection} from '../../../common/types/worker_message_types';
 import {TrinoExecutor} from '@malloydata/db-trino';
 
 export class NodeConnectionFactory implements ConnectionFactory {
   connectionCache: Record<string, TestableConnection> = {};
-  externalConnectionFactory = new ExternalConnectionFactory();
 
   constructor(private client: GenericConnection) {}
 
@@ -96,12 +94,6 @@ export class NodeConnectionFactory implements ConnectionFactory {
       }
       case ConnectionBackend.Trino: {
         connection = await createTrinoConnection();
-        break;
-      }
-      case ConnectionBackend.External: {
-        connection = await this.externalConnectionFactory.createOtherConnection(
-          connectionConfig
-        );
         break;
       }
     }

@@ -28,7 +28,6 @@ import {
   ConnectionPanelMessage,
   ConnectionServiceFileRequestStatus,
   ConnectionTestStatus,
-  InstallExternalConnectionStatus,
 } from '../common/types/message_types';
 import {WebviewMessageManager} from './webview_message_manager';
 import {
@@ -139,27 +138,6 @@ export class EditConnectionPanel {
                 fsPath: result[0].fsPath,
               });
             }
-          }
-          break;
-        }
-        case ConnectionMessageType.InstallExternalConnection: {
-          try {
-            const installResult =
-              await connectionConfigManager.installExternalConnectionPackage(
-                message.connection
-              );
-            this.messageManager.postMessage({
-              type: ConnectionMessageType.InstallExternalConnection,
-              status: InstallExternalConnectionStatus.Success,
-              connection: {...installResult},
-            });
-          } catch (error) {
-            this.messageManager.postMessage({
-              type: ConnectionMessageType.InstallExternalConnection,
-              status: InstallExternalConnectionStatus.Error,
-              connection: message.connection,
-              error: errorMessage(error),
-            });
           }
           break;
         }
