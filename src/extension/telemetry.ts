@@ -22,8 +22,6 @@
  */
 
 import * as vscode from 'vscode';
-import {MALLOY_EXTENSION_STATE} from './state';
-import fetch from 'node-fetch';
 import {getMalloyConfig} from './utils/config';
 
 const telemetryLog = vscode.window.createOutputChannel('Malloy Telemetry');
@@ -34,34 +32,17 @@ function isTelemetryEnabled() {
   return vsCodeValue && configValue;
 }
 
-export interface GATrackingEvent {
+export interface TrackingEvent {
   name: string;
   params: Record<string, string>;
 }
 
-const MEASUREMENT_ID = process.env['GA_MEASUREMENT_ID'];
-const API_SECRET = process.env['GA_API_SECRET'];
-
-async function track(event: GATrackingEvent) {
+async function track(event: TrackingEvent) {
   if (!isTelemetryEnabled()) return;
 
   telemetryLog.appendLine(`Logging telemetry event: ${JSON.stringify(event)}.`);
 
-  try {
-    // process.env['NODE_DEBUG'] = "http";
-    await fetch(
-      `https://www.google-analytics.com/mp/collect?measurement_id=${MEASUREMENT_ID}&api_secret=${API_SECRET}`,
-      {
-        method: 'POST',
-        body: JSON.stringify({
-          client_id: MALLOY_EXTENSION_STATE.getClientId(),
-          events: [event],
-        }),
-      }
-    );
-  } catch (error) {
-    telemetryLog.appendLine(`Logging telemetry event failed: ${error}`);
-  }
+  // Telemetry disabled
 }
 
 export function trackQueryRun({
