@@ -42,12 +42,3 @@ launch profile from the "Run and Debug" panel.
 3. If you make changes to Malloy that are required by the extension, merges those into main, and that will trigger an automatic developer release of Malloy.
 4. Once that release completes, run `npm run malloy-update` to update dependencies to that release. This will break the link to your local version of Malloy, so if you want to resume local development, re-run `npm run malloy-link`
 5. To manually unlink without updating, you may run `npm run malloy-unlink`
-
-## Telemetry
-
-For telemetry to work in development, you need to have the `GA_MEASUREMENT_ID` and `GA_API_SECRET` environment variables set to appropriate values. In order for these to be populated when using the "Run Malloy Extension" VSCode launch configuration, they need to be in a `.env` file at the top level of the repo, like so:
-
-```
-GA_MEASUREMENT_ID='<id goes here>'
-GA_API_SECRET='<secret goes here>'
-```

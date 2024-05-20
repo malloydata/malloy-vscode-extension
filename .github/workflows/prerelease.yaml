@@ -30,6 +30,4 @@ jobs:
       CI: true
       VSCE_PAT: ${{ secrets.VSCE_PAT }}
       OVSX_TOKEN: ${{ secrets.OVSX_TOKEN }}
-      GA_API_SECRET: ${{ secrets.GA_API_SECRET }}
-      GA_MEASUREMENT_ID: ${{ secrets.GA_MEASUREMENT_ID }}
       GHAPI_PAT: ${{ secrets.GHAPI_PAT }}

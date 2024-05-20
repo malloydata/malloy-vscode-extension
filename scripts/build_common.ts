@@ -136,13 +136,13 @@ const DEFINITIONS: Record<string, string> = {
   'process.env.NODE_DEBUG': 'false', // TODO this is a hack because some package we include assumed process.env exists :(
 };
 
-const ENV_PASSTHROUGH = ['GA_API_SECRET', 'GA_MEASUREMENT_ID'];
+// const ENV_PASSTHROUGH = ['GA_API_SECRET', 'GA_MEASUREMENT_ID'];
 
-for (const variable of ENV_PASSTHROUGH) {
-  DEFINITIONS[`process.env.${variable}`] = JSON.stringify(
-    process.env[variable] || ''
-  );
-}
+// for (const variable of ENV_PASSTHROUGH) {
+//   DEFINITIONS[`process.env.${variable}`] = JSON.stringify(
+//     process.env[variable] || ''
+//   );
+// }
 
 // building without a target does a default build
 export async function doBuild(
