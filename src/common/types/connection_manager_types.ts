@@ -21,18 +21,12 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {
-  ConnectionConfigSchema,
-  ConnectionConfig as MalloyConnectionConfig,
-} from '@malloydata/malloy';
-
 export enum ConnectionBackend {
   BigQuery = 'bigquery',
   Postgres = 'postgres',
   DuckDB = 'duckdb',
   Snowflake = 'snowflake',
   Trino = 'trino',
-  External = 'external',
 }
 
 export const ConnectionBackendNames: Record<ConnectionBackend, string> = {
@@ -43,8 +37,6 @@ export const ConnectionBackendNames: Record<ConnectionBackend, string> = {
   [ConnectionBackend.Snowflake]: 'Snowflake (Beta)',
   // TODO(figutierrez): Remove beta once ready.
   [ConnectionBackend.Trino]: 'Trino (Beta)',
-  // TODO(figutierrez): Remove beta once ready.
-  [ConnectionBackend.External]: 'External (Beta)',
 };
 
 /*
@@ -101,40 +93,12 @@ export interface TrinoConnectionConfig extends BaseConnectionConfig {
   // TODO(figutierrez): add options.
 }
 
-export interface ExternalConnectionPackageInfo {
-  packageName: string;
-  version: string;
-}
-
-export enum ExternalConnectionSource {
-  NPM = 'npm',
-  LocalNPM = 'local_npm',
-}
-
-export const ExternalConnectionSourceNames: Record<
-  ExternalConnectionSource,
-  string
-> = {
-  [ExternalConnectionSource.NPM]: 'NPM package',
-  [ExternalConnectionSource.LocalNPM]: 'Local package',
-};
-
-export interface ExternalConnectionConfig extends BaseConnectionConfig {
-  backend: ConnectionBackend.External;
-  source?: ExternalConnectionSource;
-  path?: string;
-  packageInfo?: ExternalConnectionPackageInfo;
-  connectionSchema?: ConnectionConfigSchema;
-  configParameters?: MalloyConnectionConfig;
-}
-
 export type ConnectionConfig =
   | BigQueryConnectionConfig
   | PostgresConnectionConfig
   | DuckDBConnectionConfig
   | SnowflakeConnectionConfig
-  | TrinoConnectionConfig
-  | ExternalConnectionConfig;
+  | TrinoConnectionConfig;
 
 export interface ConfigOptions {
   workingDirectory?: string;
@@ -147,8 +111,5 @@ export interface ConnectionConfigManager {
   getAllConnectionConfigs(): ConnectionConfig[];
   getAvailableBackends(): ConnectionBackend[];
   getConnectionConfigs(): ConnectionConfig[];
-  installExternalConnectionPackage(
-    config: ExternalConnectionConfig
-  ): Promise<ExternalConnectionConfig>;
   onConfigurationUpdated(): Promise<void>;
 }

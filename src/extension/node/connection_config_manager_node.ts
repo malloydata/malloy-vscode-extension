@@ -21,46 +21,22 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {ExternalConnectionFactory} from '../../common/connections/external_connection_factory';
 import {isDuckDBAvailable} from '../../common/duckdb_availability';
-import {
-  ConnectionBackend,
-  ExternalConnectionConfig,
-} from '../../common/types/connection_manager_types';
+import {ConnectionBackend} from '../../common/types/connection_manager_types';
 import {ConnectionConfigManagerBase} from '../connection_config_manager';
 
 class ConnectionConfigManagerNode extends ConnectionConfigManagerBase {
-  private externalConnectionFactory = new ExternalConnectionFactory();
-
   getAvailableBackends(): ConnectionBackend[] {
     const available = [
       ConnectionBackend.BigQuery,
       ConnectionBackend.Postgres,
       ConnectionBackend.Snowflake,
       ConnectionBackend.Trino,
-      ConnectionBackend.External,
     ];
     if (isDuckDBAvailable) {
       available.push(ConnectionBackend.DuckDB);
     }
     return available;
-  }
-
-  public async installExternalConnectionPackage(
-    connectionConfig: ExternalConnectionConfig
-  ): Promise<ExternalConnectionConfig> {
-    const packageInfo =
-      await this.externalConnectionFactory.installExternalConnectionPackage(
-        connectionConfig
-      );
-    const connectionSpec =
-      await this.externalConnectionFactory.fetchConnectionFactory(packageInfo);
-    return {
-      ...connectionConfig,
-      packageInfo: packageInfo,
-      name: connectionSpec.connectionName,
-      connectionSchema: connectionSpec.configSchema,
-    };
   }
 }
 

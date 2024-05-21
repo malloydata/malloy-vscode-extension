@@ -35,18 +35,13 @@ import {
   ConnectionBackend,
   ConnectionBackendNames,
   ConnectionConfig,
-  ExternalConnectionConfig,
   PostgresConnectionConfig,
 } from '../../../../common/types/connection_manager_types';
-import {
-  ConnectionMessageInstallExternalConnection,
-  ConnectionMessageTest,
-} from '../../../../common/types/message_types';
+import {ConnectionMessageTest} from '../../../../common/types/message_types';
 import {chevronDownIcon} from '../../components/icons';
 import {styles} from './connection_editor.css';
 import './bigquery_connection_editor';
 import './duckdb_connection_editor';
-import './external_connection_editor';
 import './postgres_connection_editor';
 import './snowflake_connection_editor';
 
@@ -88,14 +83,6 @@ export class ConnectionEditor extends LitElement {
   availableBackends!: ConnectionBackend[];
 
   @property()
-  installExternalConnection!: (config: ExternalConnectionConfig) => void;
-
-  @property({type: Object})
-  installExternalConnectionStatus!:
-    | ConnectionMessageInstallExternalConnection
-    | undefined;
-
-  @property()
   setSelectedId!: (id: string | null) => void;
 
   allBackendOptions: ConnectionBackend[] = [
@@ -103,7 +90,6 @@ export class ConnectionEditor extends LitElement {
     ConnectionBackend.Postgres,
     ConnectionBackend.DuckDB,
     ConnectionBackend.Snowflake,
-    ConnectionBackend.External,
   ];
 
   override render() {
@@ -172,14 +158,6 @@ export class ConnectionEditor extends LitElement {
             .setConfig=${this.setConfig}
             .requestFilePath=${this.requestFilePath}
           ></snowflake-connection-editor>`
-        : this.config.backend === ConnectionBackend.External
-        ? html`<external-connection-editor
-            .config=${this.config}
-            .setConfig=${this.setConfig}
-            .installExternalConnection=${this.installExternalConnection}
-            .installExternalConnectionStatus=${this
-              .installExternalConnectionStatus}
-          ></external-connection-editor>`
         : html`<div>Unknown Connection Type</div>`}
       <vscode-divider></vscode-divider>
       <table>

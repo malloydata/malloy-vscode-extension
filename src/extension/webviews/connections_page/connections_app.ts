@@ -33,7 +33,6 @@ provideVSCodeDesignSystem().register(vsCodeProgressRing());
 import {
   ConnectionBackend,
   ConnectionConfig,
-  ExternalConnectionConfig,
 } from '../../../common/types/connection_manager_types';
 import {
   ConnectionMessageType,
@@ -41,8 +40,6 @@ import {
   ConnectionMessageTest,
   ConnectionTestStatus,
   ConnectionServiceFileRequestStatus,
-  InstallExternalConnectionStatus,
-  ConnectionMessageInstallExternalConnection,
 } from '../../../common/types/message_types';
 import './connection_editor_list';
 import {getVSCodeAPI} from '../vscode_wrapper';
@@ -59,10 +56,6 @@ export class ConnectionsApp extends LitElement {
 
   @property({attribute: false})
   testStatuses: ConnectionMessageTest[] = [];
-
-  @property({attribute: false})
-  installExternalConnectionStatuses: ConnectionMessageInstallExternalConnection[] =
-    [];
 
   @property({attribute: false})
   availableBackends: ConnectionBackend[] = [];
@@ -83,19 +76,6 @@ export class ConnectionsApp extends LitElement {
     };
     this.vscode.postMessage(message);
     this.testStatuses = [...this.testStatuses, message];
-  };
-
-  installExternalConnection = (connection: ExternalConnectionConfig) => {
-    const message: ConnectionMessageInstallExternalConnection = {
-      type: ConnectionMessageType.InstallExternalConnection,
-      connection,
-      status: InstallExternalConnectionStatus.Waiting,
-    };
-    this.vscode.postMessage(message);
-    this.installExternalConnectionStatuses = [
-      ...this.installExternalConnectionStatuses,
-      message,
-    ];
   };
 
   requestFilePath = (
@@ -125,12 +105,6 @@ export class ConnectionsApp extends LitElement {
         break;
       case ConnectionMessageType.TestConnection:
         this.testStatuses = [...this.testStatuses, message];
-        break;
-      case ConnectionMessageType.InstallExternalConnection:
-        this.installExternalConnectionStatuses = [
-          ...this.installExternalConnectionStatuses,
-          message,
-        ];
         break;
       case ConnectionMessageType.RequestFile: {
         if (message.status === ConnectionServiceFileRequestStatus.Success) {
@@ -180,9 +154,6 @@ export class ConnectionsApp extends LitElement {
               .testStatuses=${this.testStatuses}
               .requestFilePath=${this.requestFilePath}
               .availableBackends=${this.availableBackends}
-              .installExternalConnection=${this.installExternalConnection}
-              .installExternalConnectionStatuses=${this
-                .installExternalConnectionStatuses}
               .selectedId=${this.selectedId}
               .setSelectedId=${(selectedId: string | null) => {
                 this.selectedId = selectedId;

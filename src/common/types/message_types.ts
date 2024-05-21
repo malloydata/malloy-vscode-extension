@@ -22,11 +22,7 @@
  */
 
 import {NamedQuery, ResultJSON, SerializedExplore} from '@malloydata/malloy';
-import {
-  ConnectionBackend,
-  ConnectionConfig,
-  ExternalConnectionConfig,
-} from './connection_manager_types';
+import {ConnectionBackend, ConnectionConfig} from './connection_manager_types';
 import {ProgressType} from 'vscode-jsonrpc';
 
 /*
@@ -164,7 +160,6 @@ export enum ConnectionMessageType {
   AppReady = 'app-ready',
   TestConnection = 'test-connection',
   RequestFile = 'request-file',
-  InstallExternalConnection = 'install-external-connection',
 }
 
 interface ConnectionMessageEditConnection {
@@ -239,43 +234,12 @@ export type ConnectionMessageServiceAccountKeyRequest =
   | ConnectionMessageServiceFileRequestWaiting
   | ConnectionMessageServiceFileRequestSuccess;
 
-export enum InstallExternalConnectionStatus {
-  Waiting = 'waiting',
-  Success = 'success',
-  Error = 'error',
-}
-
-interface ConnectionMessageInstallExternalConnectionWaiting {
-  type: ConnectionMessageType.InstallExternalConnection;
-  status: InstallExternalConnectionStatus.Waiting;
-  connection: ExternalConnectionConfig;
-}
-
-interface ConnectionMessageInstallExternalConnectionSuccess {
-  type: ConnectionMessageType.InstallExternalConnection;
-  status: InstallExternalConnectionStatus.Success;
-  connection: ExternalConnectionConfig;
-}
-
-interface ConnectionMessageInstallExternalConnectionError {
-  type: ConnectionMessageType.InstallExternalConnection;
-  status: InstallExternalConnectionStatus.Error;
-  error: string;
-  connection: ExternalConnectionConfig;
-}
-
-export type ConnectionMessageInstallExternalConnection =
-  | ConnectionMessageInstallExternalConnectionWaiting
-  | ConnectionMessageInstallExternalConnectionSuccess
-  | ConnectionMessageInstallExternalConnectionError;
-
 export type ConnectionPanelMessage =
   | ConnectionMessageAppReady
   | ConnectionMessageEditConnection
   | ConnectionMessageSetConnections
   | ConnectionMessageTest
-  | ConnectionMessageServiceAccountKeyRequest
-  | ConnectionMessageInstallExternalConnection;
+  | ConnectionMessageServiceAccountKeyRequest;
 
 export enum HelpMessageType {
   AppReady = 'app-ready',
