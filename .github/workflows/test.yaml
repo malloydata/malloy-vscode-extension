@@ -30,7 +30,7 @@ jobs:
           echo "DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS" >> "$GITHUB_ENV"
           dbus-daemon --session --address=$DBUS_SESSION_BUS_ADDRESS --nofork --nopidfile --syslog-only &
       - name: Run integration test
-        uses: coactions/setup-xvfb@v1
+        uses: coactions/setup-xvfb@v6b00cf1889f4e1d5a48635647013c0508128ee1a
         with:
           run: npm run integration
     env:
