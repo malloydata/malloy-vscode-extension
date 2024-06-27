@@ -97,9 +97,11 @@ export class NodeConnectionFactory implements ConnectionFactory {
         break;
       }
     }
+
     if (useCache && connection) {
       this.connectionCache[cacheKey] = connection;
     }
+
     if (!connection) {
       throw new Error(
         `Unsupported connection back end "${connectionConfig.backend}"`
