@@ -68,16 +68,16 @@ export class NodeConnectionFactory implements ConnectionFactory {
           configOptions
         );
         break;
-      case ConnectionBackend.DuckDB: {
-        connection = await createDuckDbConnection(
+      case ConnectionBackend.Postgres: {
+        connection = await createPostgresConnection(
           this.client,
           connectionConfig,
           configOptions
         );
         break;
       }
-      case ConnectionBackend.Postgres: {
-        connection = await createPostgresConnection(
+      case ConnectionBackend.DuckDB: {
+        connection = await createDuckDbConnection(
           this.client,
           connectionConfig,
           configOptions
@@ -97,11 +97,9 @@ export class NodeConnectionFactory implements ConnectionFactory {
         break;
       }
     }
-
     if (useCache && connection) {
       this.connectionCache[cacheKey] = connection;
     }
-
     if (!connection) {
       throw new Error(
         `Unsupported connection back end "${connectionConfig.backend}"`
