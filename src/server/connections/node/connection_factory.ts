@@ -158,15 +158,15 @@ export class NodeConnectionFactory implements ConnectionFactory {
 
     if (!configs.find(config => config.backend === ConnectionBackend.Trino)) {
       try {
-        const trinoOptions = TrinoExecutor.getConnectionOptionsFromEnv();
-        if (trinoOptions !== null) {
-          // TODO(figutierrez): add default.
-          configs.push({
-            name: 'trino',
-            backend: ConnectionBackend.Trino,
-            id: 'trino-default',
-          });
-        }
+        /*const trinoOptions = TrinoExecutor.getConnectionOptionsFromEnv();
+        if (trinoOptions !== null) {*/
+        // TODO(figutierrez): add default.
+        configs.push({
+          name: 'trino',
+          backend: ConnectionBackend.Trino,
+          id: 'trino-default',
+        });
+        //}
       } catch (error) {
         console.info(
           `Could not get connection options for Trino connection. ${error}`
