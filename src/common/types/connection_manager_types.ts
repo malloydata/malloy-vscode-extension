@@ -27,6 +27,7 @@ export enum ConnectionBackend {
   DuckDB = 'duckdb',
   Snowflake = 'snowflake',
   Trino = 'trino',
+  Presto = 'presto',
 }
 
 export const ConnectionBackendNames: Record<ConnectionBackend, string> = {
@@ -37,6 +38,7 @@ export const ConnectionBackendNames: Record<ConnectionBackend, string> = {
   [ConnectionBackend.Snowflake]: 'Snowflake (Beta)',
   // TODO(figutierrez): Remove beta once ready.
   [ConnectionBackend.Trino]: 'Trino (Beta)',
+  [ConnectionBackend.Presto]: 'Presto (Beta)',
 };
 
 /*
@@ -93,12 +95,17 @@ export interface TrinoConnectionConfig extends BaseConnectionConfig {
   // TODO(figutierrez): add options.
 }
 
+export interface PrestoConnectionConfig extends BaseConnectionConfig {
+  backend: ConnectionBackend.Presto;
+  // TODO(figutierrez): add options.
+}
 export type ConnectionConfig =
   | BigQueryConnectionConfig
   | PostgresConnectionConfig
   | DuckDBConnectionConfig
   | SnowflakeConnectionConfig
-  | TrinoConnectionConfig;
+  | TrinoConnectionConfig
+  | PrestoConnectionConfig;
 
 export interface ConfigOptions {
   workingDirectory?: string;
