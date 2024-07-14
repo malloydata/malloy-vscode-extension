@@ -21,17 +21,17 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {TrinoConnection, TrinoExecutor} from '@malloydata/db-trino';
+import {PrestoConnection, TrinoExecutor} from '@malloydata/db-trino';
 
-export const createTrinoConnection = async (): Promise<TrinoConnection> => {
+export const createPrestoConnection = async (): Promise<PrestoConnection> => {
   try {
     // TODO: fill properly.
-    return new TrinoConnection(
-      'trino',
+    return new PrestoConnection(
+      'presto',
       {},
-      TrinoExecutor.getConnectionOptionsFromEnv('trino')
+      TrinoExecutor.getConnectionOptionsFromEnv('presto')
     );
   } catch (error) {
-    throw Error(`Failed to instantiate Trino connection: ${error}`);
+    throw Error(`Failed to instantiate Presto connection: ${error}`);
   }
 };

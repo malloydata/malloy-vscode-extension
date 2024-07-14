@@ -37,6 +37,7 @@ import {createTrinoConnection} from '../trino_connection';
 import {fileURLToPath} from 'url';
 import {GenericConnection} from '../../../common/types/worker_message_types';
 import {TrinoExecutor} from '@malloydata/db-trino';
+import {createPrestoConnection} from '../presto_connection';
 
 export class NodeConnectionFactory implements ConnectionFactory {
   connectionCache: Record<string, TestableConnection> = {};
@@ -94,6 +95,10 @@ export class NodeConnectionFactory implements ConnectionFactory {
       }
       case ConnectionBackend.Trino: {
         connection = await createTrinoConnection();
+        break;
+      }
+      case ConnectionBackend.Presto: {
+        connection = await createPrestoConnection();
         break;
       }
     }
@@ -158,7 +163,7 @@ export class NodeConnectionFactory implements ConnectionFactory {
 
     if (!configs.find(config => config.backend === ConnectionBackend.Trino)) {
       try {
-        const trinoOptions = TrinoExecutor.getConnectionOptionsFromEnv();
+        const trinoOptions = TrinoExecutor.getConnectionOptionsFromEnv('trino');
         if (trinoOptions !== null) {
           // TODO(figutierrez): add default.
           configs.push({
@@ -170,6 +175,26 @@ export class NodeConnectionFactory implements ConnectionFactory {
       } catch (error) {
         console.info(
           `Could not get connection options for Trino connection. ${error}`
+        );
+      }
+    }
+
+    if (!configs.find(config => config.backend === ConnectionBackend.Presto)) {
+      try {
+        const prestoOptions =
+          // this serves both Trino and Presto
+          TrinoExecutor.getConnectionOptionsFromEnv('presto');
+        if (prestoOptions !== null) {
+          // TODO(figutierrez): add default.
+          configs.push({
+            name: 'presto',
+            backend: ConnectionBackend.Presto,
+            id: 'presto-default',
+          });
+        }
+      } catch (error) {
+        console.info(
+          `Could not get connection options for Presto connection. ${error}`
         );
       }
     }
