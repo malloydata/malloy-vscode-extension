@@ -67,7 +67,7 @@ export async function getCompletionItems(
 
 export function resolveCompletionItem(item: CompletionItem): CompletionItem {
   if (item.data) {
-    const data = item.data as any;
+    const data = item.data;
     item.detail = data.property;
     const docs = (COMPLETION_DOCS[data.type] || {})[data.property];
     if (docs) {
