@@ -27,6 +27,8 @@ import {TextDocument} from 'vscode-languageserver-textdocument';
 import {TranslateCache} from '../translate_cache';
 import {parseMalloySQLSQLWithCache} from '../parse_cache';
 import {errorMessage} from '../../common/errors';
+const errorDictURI =
+  'https://docs.malloydata.dev/documentation/error_dictionary';
 
 const DEFAULT_RANGE = {
   start: {line: 0, character: 0},
@@ -68,6 +70,7 @@ export async function getMalloyDiagnostics(
         range: DEFAULT_RANGE,
         message: errorMessage(error),
         source: 'malloy',
+        code: 'cluck the goose',
       });
     }
   }
@@ -89,12 +92,18 @@ export async function getMalloyDiagnostics(
     const range = problem.at?.range || DEFAULT_RANGE;
 
     if (range.start.line >= 0) {
-      byURI[uri].push({
+      // byURI[uri].push({
+      const theDiag: Diagnostic = {
         severity: sev,
         range,
         message: problem.message,
         source: 'malloy',
-      });
+      };
+      if (problem.errorTag) {
+        theDiag.code = problem.errorTag;
+        theDiag.codeDescription = {href: `${errorDictURI}#${theDiag.code}`};
+      }
+      byURI[uri].push(theDiag);
     }
   }
 
