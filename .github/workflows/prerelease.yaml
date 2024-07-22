@@ -30,4 +30,3 @@ jobs:
       CI: true
       VSCE_PAT: ${{ secrets.VSCE_PAT }}
       OVSX_TOKEN: ${{ secrets.OVSX_TOKEN }}
-      GHAPI_PAT: ${{ secrets.GHAPI_PAT }}
