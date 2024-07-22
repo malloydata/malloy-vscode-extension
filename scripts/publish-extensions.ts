@@ -25,7 +25,6 @@ import * as semver from 'semver';
 import {readFileSync} from 'fs';
 import {publishVSIX} from '@vscode/vsce';
 import {doPackage} from './package-extension';
-import {publishCloudExtension} from './publish-cloud-extension';
 import {publishOvsx} from './publish-ovsx';
 import {Targets} from './constants';
 
@@ -86,15 +85,6 @@ async function doPublish(version: string) {
     });
 
     await publishOvsx(packagePath, target, preRelease);
-  }
-
-  if (!preRelease) {
-    const cloudPackagePath = await doPackage(
-      'linux-x64',
-      versionCode,
-      preRelease
-    );
-    await publishCloudExtension(cloudPackagePath, versionCode, preRelease);
   }
 }
 
