@@ -70,7 +70,6 @@ export async function getMalloyDiagnostics(
         range: DEFAULT_RANGE,
         message: errorMessage(error),
         source: 'malloy',
-        code: 'cluck the goose',
       });
     }
   }
@@ -92,7 +91,6 @@ export async function getMalloyDiagnostics(
     const range = problem.at?.range || DEFAULT_RANGE;
 
     if (range.start.line >= 0) {
-      // byURI[uri].push({
       const theDiag: Diagnostic = {
         severity: sev,
         range,
