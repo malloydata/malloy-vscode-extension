@@ -21,12 +21,11 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {DuckDBConnection} from '@malloydata/db-duckdb';
+import {DuckDBWASMConnection} from '@malloydata/db-duckdb/wasm';
 import {
   ConfigOptions,
   DuckDBConnectionConfig,
 } from '../../common/types/connection_manager_types';
-import {isDuckDBAvailable} from '../../common/duckdb_availability';
 import {GenericConnection} from '../../common/types/worker_message_types';
 
 export const createDuckDbConnection = async (
@@ -35,9 +34,6 @@ export const createDuckDbConnection = async (
   {workingDirectory, rowLimit, useKeyStore}: ConfigOptions
 ) => {
   useKeyStore ??= true;
-  if (!isDuckDBAvailable) {
-    throw new Error('DuckDB is not available.');
-  }
   try {
     const {name, additionalExtensions} = connectionConfig;
     const databasePath = connectionConfig.databasePath || ':memory:';
@@ -61,7 +57,7 @@ export const createDuckDbConnection = async (
       workingDirectory,
     };
     console.info('Creating duckdb connection with', JSON.stringify(options));
-    const connection = new DuckDBConnection(
+    const connection = new DuckDBWASMConnection(
       {
         ...options,
         motherDuckToken,

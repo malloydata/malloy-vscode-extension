@@ -21,18 +21,4 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-export const Targets = [
-  'linux-x64',
-  'linux-arm64',
-  'linux-armhf',
-  'alpine-x64',
-  'alpine-arm64',
-  'darwin-x64',
-  'darwin-arm64',
-  'win32-x64',
-  'web',
-] as const;
-
-export type Target = (typeof Targets)[number];
-
 export const outDir = 'dist/';
