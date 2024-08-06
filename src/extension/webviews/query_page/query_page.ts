@@ -29,6 +29,7 @@ import {
   Result,
 } from '@malloydata/malloy';
 import {HTMLView} from '@malloydata/render';
+import '@malloydata/render/webcomponent';
 import {css, html, LitElement, nothing} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
 import {when} from 'lit/directives/when.js';
