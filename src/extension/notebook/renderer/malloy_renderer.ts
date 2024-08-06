@@ -26,6 +26,7 @@ import {customElement, property} from 'lit/decorators.js';
 import {until} from 'lit/directives/until.js';
 import {Result} from '@malloydata/malloy';
 import {HTMLView} from '@malloydata/render';
+import '@malloydata/render/webcomponent';
 import {MalloyRendererMessage} from '../types';
 
 const styles = css`
