@@ -41,12 +41,24 @@ export class ErrorPanel extends LitElement {
   `;
 
   override render() {
-    const multiLine = this.message?.indexOf('\n') ?? -1 >= 0;
+    if (!this.message) {
+      return html``;
+    }
+    const multiLine = this.message.indexOf('\n') ?? -1 >= 0;
     const multilineStyles = {
-      'white-space': multiLine ? 'pre' : 'normal',
+      'white-space': multiLine ? 'pre-wrap' : 'normal',
       'font-family': multiLine ? 'monospace' : 'inherit',
+      'word-wrap': 'break-word',
     };
-    return html` <div style=${styleMap(multilineStyles)}>${this.message}</div>`;
+    const parts = this.message.split(/(https?:\/\/\S*)\b/);
+    const formatted = parts.map(part => {
+      if (part.match(/^https?:/)) {
+        return html`<a href="${part}">${part}</a>`;
+      } else {
+        return part;
+      }
+    });
+    return html`<div style=${styleMap(multilineStyles)}>${formatted}</div>`;
   }
 }
 
