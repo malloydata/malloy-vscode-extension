@@ -21,16 +21,12 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {BigQueryConnection} from '@malloydata/db-bigquery';
 import {Connection} from '@malloydata/malloy';
 
-export function getSourceUrl(
+export async function getSourceUrl(
   tablePath: string,
   connection: Connection
-): string | undefined {
-  if (connection instanceof BigQueryConnection) {
-    const tablePathInfo = tablePath.split('.');
-    return `https://console.cloud.google.com/bigquery?ws=!1m5!1m4!4m3!1s${tablePathInfo[0]}!2s${tablePathInfo[1]}!3s${tablePathInfo[2]}`;
-  }
-  return undefined;
+): Promise<string | undefined> {
+  const metadata = await connection.fetchTableMetadata(tablePath);
+  return metadata.url;
 }

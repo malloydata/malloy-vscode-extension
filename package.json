@@ -76,6 +76,12 @@
     },
     "commands": [
       {
+        "command": "malloy.openUrlInBrowser",
+        "title": "Open a URL in a browser",
+        "category": "Malloy",
+        "enablement": "false"
+      },
+      {
         "command": "malloy.showLicenses",
         "title": "Show Licenses",
         "category": "Malloy"

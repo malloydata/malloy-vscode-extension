@@ -85,8 +85,8 @@ export async function getMalloyLenses(
     const conn = await connectionManager
       .getConnectionLookup(new URL(document.uri))
       .lookupConnection(table.connectionId);
-    const tableUrl = getSourceUrl(table.tablePath, conn);
-    if (tableUrl !== undefined) {
+    const tableUrl = await getSourceUrl(table.tablePath, conn);
+    if (tableUrl) {
       lenses.push({
         range: table.range,
         command: {
