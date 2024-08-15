@@ -48,6 +48,7 @@ import {getMalloyDefinitionReference} from './definitions/definitions';
 import {TranslateCache} from './translate_cache';
 import {ConnectionManager} from '../common/connection_manager';
 import {findMalloyLensesAt} from './lenses/lenses';
+import {prettyLogUri} from '../common/log';
 
 export const initServer = (
   connection: Connection,
@@ -93,8 +94,20 @@ export const initServer = (
   );
 
   async function diagnoseDocument(document: TextDocument) {
+    const prettyUri = prettyLogUri(document.uri);
+
+    const eject = (key: string) => {
+      if (translateCache.cache.delete(key)) {
+        const document = documents.get(key);
+        if (document) {
+          connection.console.info(`diagnoseDocument ejecting ${prettyUri}`);
+          debouncedDiagnoseDocument(document);
+        }
+      }
+    };
+
     if (haveConnectionsBeenSet) {
-      connection.console.info(`diagnoseDocument ${document.uri} start`);
+      connection.console.info(`diagnoseDocument ${prettyUri} start`);
       // Necessary to copy the versions, because they're mutated in the same document object
       const versionsAtRequestTime = new Map(
         documents.all().map(document => [document.uri, document.version])
@@ -118,24 +131,22 @@ export const initServer = (
 
       // Trigger diagnostics for all documents we know that import this one,
       // too.
+      const [base, hash] = document.uri.split('#');
       translateCache.cache.forEach((entry, key) => {
         // Don't re-eject the current document
         if (documents.get(key)?.uri === document.uri) {
           return;
         }
         if (entry.model.fromSources.includes(document.uri)) {
-          if (translateCache.cache.delete(key)) {
-            const document = documents.get(key);
-            if (document) {
-              connection.console.info(
-                `diagnoseDocument ejecting ${document.uri}`
-              );
-              debouncedDiagnoseDocument(document);
-            }
+          eject(key);
+        } else if (key.startsWith(base)) {
+          const [_, keyHash] = key.split('#');
+          if (keyHash > hash) {
+            eject(key);
           }
         }
       });
-      connection.console.info(`diagnoseDocument ${document.uri} end`);
+      connection.console.info(`diagnoseDocument ${prettyUri} end`);
     }
   }
 

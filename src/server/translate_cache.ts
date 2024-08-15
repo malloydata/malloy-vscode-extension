@@ -35,6 +35,7 @@ import {BuildModelRequest, CellData} from '../common/types/file_handler';
 import {MalloySQLSQLParser} from '@malloydata/malloy-sql';
 import {FetchModelMessage} from '../common/types/message_types';
 import {fixLogRange} from '../common/malloy_sql';
+import {prettyLogUri} from '../common/log';
 
 export class TranslateCache {
   // Cache for truncated documents used for providing schema suggestions
@@ -94,7 +95,8 @@ export class TranslateCache {
     runtime: Runtime,
     refreshSchemaCache?: boolean | number
   ): Promise<ModelMaterializer | null> {
-    this.connection.console.info(`createModelMaterializer ${uri} start`);
+    const prettyUri = prettyLogUri(uri);
+    this.connection.console.info(`createModelMaterializer ${prettyUri} start`);
     let modelMaterializer: ModelMaterializer | null = null;
     const queryFileURL = new URL(uri);
     if (queryFileURL.protocol === 'vscode-notebook-cell:') {
@@ -136,7 +138,7 @@ export class TranslateCache {
         noThrowOnError: true,
       });
     }
-    this.connection.console.info(`createModelMaterializer ${uri} end`);
+    this.connection.console.info(`createModelMaterializer ${prettyUri} end`);
     return modelMaterializer;
   }
 
@@ -206,17 +208,18 @@ export class TranslateCache {
     languageId: string,
     refreshSchemaCache?: boolean
   ): Promise<Model | undefined> {
-    this.connection.console.info(
-      `translateWithCache ${uri} ${currentVersion} start`
-    );
+    const prettyUri = prettyLogUri(uri);
     const entry = this.cache.get(uri);
     if (entry && entry.version === currentVersion && !refreshSchemaCache) {
       const {model} = entry;
       this.connection.console.info(
-        `translateWithCache ${uri} ${currentVersion} hit`
+        `translateWithCache ${prettyUri} v${currentVersion} hit`
       );
       return model;
     }
+    this.connection.console.info(
+      `translateWithCache ${prettyUri} v${currentVersion} miss`
+    );
 
     const text = await this.getDocumentText(this.documents, new URL(uri));
     if (languageId === 'malloy-sql') {
@@ -259,7 +262,7 @@ export class TranslateCache {
         this.cache.set(uri, {version: currentVersion, model});
       }
       this.connection.console.info(
-        `translateWithCache ${uri} ${currentVersion} miss`
+        `translateWithCache ${prettyUri} v${currentVersion} set`
       );
       return model;
     } else {
@@ -279,10 +282,10 @@ export class TranslateCache {
       const model = await modelMaterializer?.getModel();
       if (model) {
         this.cache.set(uri, {version: currentVersion, model});
+        this.connection.console.info(
+          `translateWithCache ${prettyUri} v${currentVersion} set`
+        );
       }
-      this.connection.console.info(
-        `translateWithCache ${uri} ${currentVersion} miss`
-      );
       return model;
     }
   }

@@ -27,6 +27,7 @@ import {TextDocument} from 'vscode-languageserver-textdocument';
 import {TranslateCache} from '../translate_cache';
 import {parseMalloySQLSQLWithCache} from '../parse_cache';
 import {errorMessage} from '../../common/errors';
+import {prettyLogUri} from '../../common/log';
 const errorDictURI =
   'https://docs.malloydata.dev/documentation/error_dictionary';
 
@@ -104,6 +105,12 @@ export async function getMalloyDiagnostics(
       byURI[uri].push(theDiag);
     }
   }
+
+  console.info(
+    `getMalloyDiagnostics: ${prettyLogUri(document.uri)} found ${
+      problems.length
+    } problems`
+  );
 
   return byURI;
 }
