@@ -24,6 +24,8 @@
 import {CodeLens, Connection, Position, Range} from 'vscode-languageserver';
 import {TextDocument} from 'vscode-languageserver-textdocument';
 import {parseWithCache} from '../parse_cache';
+import {ConnectionManager} from '../../common/connection_manager';
+import {getSourceUrl} from './utils';
 
 // const explain = `
 //   index
@@ -71,10 +73,30 @@ const fixNotebookUrl = async (connection: Connection, url: URL) => {
 
 export async function getMalloyLenses(
   connection: Connection,
-  document: TextDocument
+  document: TextDocument,
+  connectionManager: ConnectionManager
 ): Promise<CodeLens[]> {
   const lenses: CodeLens[] = [];
-  const symbols = parseWithCache(document).symbols;
+  const parse = parseWithCache(document);
+  const symbols = parse.symbols;
+
+  const tablepaths = parse.tablePathInfo;
+  for (const table of tablepaths) {
+    const conn = await connectionManager
+      .getConnectionLookup(new URL(document.uri))
+      .lookupConnection(table.connectionId);
+    const tableUrl = await getSourceUrl(table.tablePath, conn);
+    if (tableUrl) {
+      lenses.push({
+        range: table.range,
+        command: {
+          title: 'Table',
+          command: 'malloy.openUrlInBrowser',
+          arguments: [tableUrl],
+        },
+      });
+    }
+  }
 
   let currentUnnamedQueryIndex = 0;
   let currentUnnamedSQLBlockIndex = 0;
@@ -272,9 +294,10 @@ function inRange(range: Range, position: Position): boolean {
 export async function findMalloyLensesAt(
   connection: Connection,
   document: TextDocument,
-  position: Position
+  position: Position,
+  connectionManager: ConnectionManager
 ): Promise<CodeLens[]> {
-  const lenses = await getMalloyLenses(connection, document);
+  const lenses = await getMalloyLenses(connection, document, connectionManager);
 
   return lenses.filter(lens => inRange(lens.range, position));
 }

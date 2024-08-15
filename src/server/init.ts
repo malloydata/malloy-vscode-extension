@@ -172,7 +172,7 @@ export const initServer = (
   connection.onCodeLens(async handler => {
     const document = documents.get(handler.textDocument.uri);
     if (document && document.languageId === 'malloy') {
-      return await getMalloyLenses(connection, document);
+      return await getMalloyLenses(connection, document, connectionManager);
     }
     return [];
   });
@@ -182,7 +182,12 @@ export const initServer = (
     async ({uri, position}: {uri: string; position: Position}) => {
       const document = documents.get(uri);
       if (document && position) {
-        return await findMalloyLensesAt(connection, document, position);
+        return await findMalloyLensesAt(
+          connection,
+          document,
+          position,
+          connectionManager
+        );
       } else {
         return [];
       }

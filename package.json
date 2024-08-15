@@ -76,6 +76,12 @@
     },
     "commands": [
       {
+        "command": "malloy.openUrlInBrowser",
+        "title": "Open a URL in a browser",
+        "category": "Malloy",
+        "enablement": "false"
+      },
+      {
         "command": "malloy.showLicenses",
         "title": "Show Licenses",
         "category": "Malloy"
@@ -582,15 +588,15 @@
   },
   "dependencies": {
     "@lit-labs/observers": "^2.0.2",
-    "@malloydata/db-bigquery": "0.0.160",
-    "@malloydata/db-duckdb": "0.0.160",
-    "@malloydata/db-postgres": "0.0.160",
-    "@malloydata/db-snowflake": "0.0.160",
-    "@malloydata/db-trino": "0.0.160",
-    "@malloydata/malloy": "0.0.160",
-    "@malloydata/malloy-sql": "0.0.160",
-    "@malloydata/render": "0.0.160",
-    "@malloydata/syntax-highlight": "0.0.160",
+    "@malloydata/db-bigquery": "0.0.166",
+    "@malloydata/db-duckdb": "0.0.166",
+    "@malloydata/db-postgres": "0.0.166",
+    "@malloydata/db-snowflake": "0.0.166",
+    "@malloydata/db-trino": "0.0.166",
+    "@malloydata/malloy": "0.0.166",
+    "@malloydata/malloy-sql": "0.0.166",
+    "@malloydata/render": "0.0.166",
+    "@malloydata/syntax-highlight": "0.0.166",
     "@vscode/webview-ui-toolkit": "^1.2.1",
     "duckdb": "1.0.0",
     "lit": "^3.0.2",
