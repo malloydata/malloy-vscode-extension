@@ -24,5 +24,5 @@
 import * as vscode from 'vscode';
 
 export function openUrlInBrowser(url: string): void {
-  vscode.env.openExternal(vscode.Uri.parse(url));
+  void vscode.env.openExternal(vscode.Uri.parse(url));
 }
