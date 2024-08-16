@@ -39,14 +39,5 @@ const connectionManager = new ConnectionManager(
   new WebConnectionFactory(connection)
 );
 
-interface DocumentShim {
-  document: unknown;
-}
-
-// Hack to support the MotherDuck wasm bundle which uses document.postMessage()
-if (typeof globalThis !== 'undefined' && typeof document === 'undefined') {
-  (globalThis as DocumentShim).document = globalThis;
-}
-
 initServer(connection, connectionManager);
 new MessageHandler(connection, connectionManager);
