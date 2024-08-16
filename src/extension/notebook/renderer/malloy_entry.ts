@@ -24,43 +24,52 @@
 import {html, render} from 'lit';
 import {ActivationFunction} from 'vscode-notebook-renderer';
 import './malloy_renderer';
+import '@malloydata/render/webcomponent';
 import {Result} from '@malloydata/malloy';
-
-const mousewheelHandler = (evt: Event) => {
-  evt.stopPropagation();
-};
 
 export const activate: ActivationFunction = ({postMessage}) => {
   return {
     renderOutputItem(info, element) {
-      let shadow = element.shadowRoot;
-      if (!shadow) {
-        shadow = element.attachShadow({mode: 'open'});
-        const root = document.createElement('div');
-        root.id = 'root';
-        shadow.append(root);
-      }
-      const root = shadow.querySelector<HTMLElement>('#root');
-      if (!root) {
-        throw new Error('Element #root not found');
-      }
       const result = Result.fromJSON(info.json());
-      if (result.resultExplore.modelTag.has('renderer_next')) {
-        root.style.border = '1px solid #e5e7eb';
-        root.style.padding = '10px';
-        root.addEventListener('mousewheel', mousewheelHandler);
+      if (result.modelTag.has('renderer_next')) {
+        const root = element;
+        const parent = document.createElement('div');
+        parent.style.maxHeight = '400px';
+        parent.style.border = '1px solid #e5e7eb';
+        parent.style.overflow = 'auto';
+
+        const malloyRender = document.createElement('malloy-render');
+        // @ts-ignore
+        malloyRender.result = result;
+        const style = document.createElement('style');
+        style.innerHTML = `
+          malloy-render::part(table-container) {
+            overflow: visible;
+          }
+        `;
+        parent.appendChild(malloyRender);
+        parent.appendChild(style);
+        root.replaceChildren(parent);
       } else {
-        root.style.border = '';
-        root.style.padding = '';
-        root.removeEventListener('mousewheel', mousewheelHandler);
+        let shadow = element.shadowRoot;
+        if (!shadow) {
+          shadow = element.attachShadow({mode: 'open'});
+          const root = document.createElement('div');
+          root.id = 'root';
+          shadow.append(root);
+        }
+        const root = shadow.querySelector<HTMLElement>('#root');
+        if (!root) {
+          throw new Error('Element #root not found');
+        }
+        render(
+          html`<malloy-renderer
+            .result=${result}
+            .postMessage=${postMessage}
+          ></malloy-renderer>`,
+          root
+        );
       }
-      render(
-        html`<malloy-renderer
-          .result=${result}
-          .postMessage=${postMessage}
-        ></malloy-renderer>`,
-        root
-      );
     },
   };
 };
