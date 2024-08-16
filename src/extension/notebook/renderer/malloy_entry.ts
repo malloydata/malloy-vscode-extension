@@ -26,6 +26,14 @@ import {ActivationFunction} from 'vscode-notebook-renderer';
 import './malloy_renderer';
 import '@malloydata/render/webcomponent';
 import {Result} from '@malloydata/malloy';
+import {MalloyRenderProps} from '@malloydata/render';
+
+// TODO: Figure out how to make this part of @malloydata/render/webcomponent export
+declare global {
+  interface HTMLElementTagNameMap {
+    'malloy-render': HTMLElement & MalloyRenderProps;
+  }
+}
 
 export const activate: ActivationFunction = ({postMessage}) => {
   return {
@@ -39,7 +47,6 @@ export const activate: ActivationFunction = ({postMessage}) => {
         parent.style.overflow = 'auto';
 
         const malloyRender = document.createElement('malloy-render');
-        // @ts-ignore
         malloyRender.result = result;
         const style = document.createElement('style');
         style.innerHTML = `
