@@ -25,3 +25,18 @@ export const logPrefix = (level: string) => {
   const stamp = new Date().toLocaleTimeString();
   return `[${level} - ${stamp}]`;
 };
+
+const CELL_HASH = /^W(\d+)s(.*)$/;
+
+export const prettyLogUri = (uri: string): string => {
+  const [base, hash] = uri.split('#');
+
+  let pretty = base.split('/').pop() || '';
+  if (hash) {
+    const match = CELL_HASH.exec(hash);
+    if (match) {
+      pretty += `:${match[1]}`;
+    }
+  }
+  return pretty;
+};
