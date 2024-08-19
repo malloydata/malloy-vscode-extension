@@ -39,7 +39,8 @@ export const activate: ActivationFunction = ({postMessage}) => {
   return {
     renderOutputItem(info, element) {
       const result = Result.fromJSON(info.json());
-      if (result.modelTag.has('renderer_next')) {
+      const isNextRenderer = !result.modelTag.has('renderer_legacy');
+      if (isNextRenderer) {
         const root = element;
         const parent = document.createElement('div');
         parent.style.maxHeight = '400px';
