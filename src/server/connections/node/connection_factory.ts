@@ -28,16 +28,16 @@ import {
   ConnectionBackend,
   ConnectionConfig,
 } from '../../../common/types/connection_manager_types';
-import {createBigQueryConnection} from '../bigquery_connection';
-import {createDuckDbConnection} from '../duckdb_connection';
-import {createPostgresConnection} from '../postgres_connection';
-import {createSnowflakeConnection} from '../snowflake_connection';
-import {createTrinoConnection} from '../trino_connection';
+import {createBigQueryConnection} from './bigquery_connection';
+import {createDuckDbConnection} from './duckdb_connection';
+import {createPostgresConnection} from './postgres_connection';
+import {createSnowflakeConnection} from './snowflake_connection';
+import {createTrinoConnection} from './trino_connection';
 
 import {fileURLToPath} from 'url';
 import {GenericConnection} from '../../../common/types/worker_message_types';
 import {TrinoExecutor} from '@malloydata/db-trino';
-import {createPrestoConnection} from '../presto_connection';
+import {createPrestoConnection} from './presto_connection';
 
 export class NodeConnectionFactory implements ConnectionFactory {
   connectionCache: Record<string, TestableConnection> = {};
