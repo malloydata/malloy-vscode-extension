@@ -25,8 +25,8 @@ import {DuckDBWASMConnection} from '@malloydata/db-duckdb/wasm';
 import {
   ConfigOptions,
   DuckDBConnectionConfig,
-} from '../../common/types/connection_manager_types';
-import {GenericConnection} from '../../common/types/worker_message_types';
+} from '../../../common/types/connection_manager_types';
+import {GenericConnection} from '../../../common/types/worker_message_types';
 
 export const createDuckDbWasmConnection = async (
   client: GenericConnection,

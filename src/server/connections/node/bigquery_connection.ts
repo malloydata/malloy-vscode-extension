@@ -21,47 +21,34 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {PostgresConnection} from '@malloydata/db-postgres';
+import {BigQueryConnection} from '@malloydata/db-bigquery';
 import {
-  PostgresConnectionConfig,
   ConfigOptions,
-} from '../../common/types/connection_manager_types';
-import {GenericConnection} from '../../common/types/worker_message_types';
+  BigQueryConnectionConfig,
+} from '../../../common/types/connection_manager_types';
+import {convertToBytes} from '../../../common/convert_to_bytes';
 
-export const createPostgresConnection = async (
-  client: GenericConnection,
-  connectionConfig: PostgresConnectionConfig,
-  {rowLimit, useKeyStore}: ConfigOptions
-): Promise<PostgresConnection> => {
-  useKeyStore ??= true;
-  const {username, host, port, databaseName, connectionString} =
-    connectionConfig;
+export const createBigQueryConnection = async (
+  connectionConfig: BigQueryConnectionConfig,
+  {rowLimit}: ConfigOptions
+): Promise<BigQueryConnection> => {
   const options = {
-    username,
-    host,
-    port,
-    databaseName,
-    connectionString,
+    projectId: connectionConfig.projectId,
+    billingProjectId: connectionConfig.billingProjectId,
+    serviceAccountKeyPath: connectionConfig.serviceAccountKeyPath,
+    location: connectionConfig.location,
+    maximumBytesBilled: convertToBytes(
+      connectionConfig.maximumBytesBilled || ''
+    ),
+    timeoutMs: connectionConfig.timeoutMs,
   };
-  const configReader = async () => {
-    let password: string | undefined;
-    if (useKeyStore) {
-      password = await client.sendRequest('malloy/getSecret', {
-        key: `connections.${connectionConfig.id}.password`,
-      });
-    } else if (connectionConfig.password !== undefined) {
-      password = connectionConfig.password;
-    }
-    return {
-      ...options,
-      password,
-    };
-  };
-  console.info('Creating postgres connection with', JSON.stringify(options));
-  const connection = new PostgresConnection(
+  console.info('Creating bigquery connection with', JSON.stringify(options));
+  const connection = new BigQueryConnection(
     connectionConfig.name,
-    () => ({rowLimit}),
-    configReader
+    () => ({
+      rowLimit,
+    }),
+    options
   );
   return connection;
 };

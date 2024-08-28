@@ -28,7 +28,7 @@ import {
   ConnectionBackend,
   ConnectionConfig,
 } from '../../../common/types/connection_manager_types';
-import {createDuckDbWasmConnection} from '../duckdb_wasm_connection';
+import {createDuckDbWasmConnection} from './duckdb_wasm_connection';
 import {DuckDBWASMConnection} from '@malloydata/db-duckdb/wasm';
 import {GenericConnection} from '../../../common/types/worker_message_types';
 import {errorMessage} from '../../../common/errors';

@@ -21,34 +21,47 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {BigQueryConnection} from '@malloydata/db-bigquery';
+import {PostgresConnection} from '@malloydata/db-postgres';
 import {
+  PostgresConnectionConfig,
   ConfigOptions,
-  BigQueryConnectionConfig,
-} from '../../common/types/connection_manager_types';
-import {convertToBytes} from '../../common/convert_to_bytes';
+} from '../../../common/types/connection_manager_types';
+import {GenericConnection} from '../../../common/types/worker_message_types';
 
-export const createBigQueryConnection = async (
-  connectionConfig: BigQueryConnectionConfig,
-  {rowLimit}: ConfigOptions
-): Promise<BigQueryConnection> => {
+export const createPostgresConnection = async (
+  client: GenericConnection,
+  connectionConfig: PostgresConnectionConfig,
+  {rowLimit, useKeyStore}: ConfigOptions
+): Promise<PostgresConnection> => {
+  useKeyStore ??= true;
+  const {username, host, port, databaseName, connectionString} =
+    connectionConfig;
   const options = {
-    projectId: connectionConfig.projectId,
-    billingProjectId: connectionConfig.billingProjectId,
-    serviceAccountKeyPath: connectionConfig.serviceAccountKeyPath,
-    location: connectionConfig.location,
-    maximumBytesBilled: convertToBytes(
-      connectionConfig.maximumBytesBilled || ''
-    ),
-    timeoutMs: connectionConfig.timeoutMs,
+    username,
+    host,
+    port,
+    databaseName,
+    connectionString,
   };
-  console.info('Creating bigquery connection with', JSON.stringify(options));
-  const connection = new BigQueryConnection(
+  const configReader = async () => {
+    let password: string | undefined;
+    if (useKeyStore) {
+      password = await client.sendRequest('malloy/getSecret', {
+        key: `connections.${connectionConfig.id}.password`,
+      });
+    } else if (connectionConfig.password !== undefined) {
+      password = connectionConfig.password;
+    }
+    return {
+      ...options,
+      password,
+    };
+  };
+  console.info('Creating postgres connection with', JSON.stringify(options));
+  const connection = new PostgresConnection(
     connectionConfig.name,
-    () => ({
-      rowLimit,
-    }),
-    options
+    () => ({rowLimit}),
+    configReader
   );
   return connection;
 };
