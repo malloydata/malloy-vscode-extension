@@ -49,6 +49,7 @@ export const activate: ActivationFunction = ({postMessage}) => {
 
         const malloyRender = document.createElement('malloy-render');
         malloyRender.result = result;
+        malloyRender.scrollEl = parent;
         const style = document.createElement('style');
         style.innerHTML = `
           malloy-render::part(table-container) {
