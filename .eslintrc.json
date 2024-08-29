@@ -1,11 +1,14 @@
 {
-  "extends": ["./node_modules/gts/", "plugin:lit/recommended"],
-  "ignorePatterns": [
-    "*.d.ts",
-    "node_modules/",
-    "packages/malloy/src/lang/lib/Malloy",
-    "dist/"
+  "plugins": ["@typescript-eslint", "prettier"],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/eslint-recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:lit/recommended",
+    "prettier",
+    "plugin:prettier/recommended"
   ],
+  "ignorePatterns": ["*.d.ts", "node_modules/", "dist/"],
   "rules": {
     "consistent-return": "error",
     "no-console": [
@@ -34,6 +37,8 @@
       "error",
       {"prefer": "no-type-imports"}
     ],
+    "@typescript-eslint/no-empty-function": "off",
+    "@typescript-eslint/no-non-null-assertion": "off",
     "@typescript-eslint/no-unused-vars": [
       "error",
       {"argsIgnorePattern": "^_", "varsIgnorePattern": "^_"}
