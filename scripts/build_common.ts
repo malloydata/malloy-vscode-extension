@@ -191,7 +191,6 @@ export async function doBuild(
     outdir: outDir,
     metafile: metadata,
     logLevel: 'info',
-    target: 'node12.22',
     define: DEFINITIONS,
   };
 
