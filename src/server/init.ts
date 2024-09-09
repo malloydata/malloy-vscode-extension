@@ -194,7 +194,7 @@ export const initServer = (
 
   connection.onCodeAction(async handler => {
     const document = documents.get(handler.textDocument.uri);
-    if (document && document.languageId === 'malloy') {
+    if (document) {
       return getMalloyCodeAction(translateCache, document, handler.range);
     }
     return null;

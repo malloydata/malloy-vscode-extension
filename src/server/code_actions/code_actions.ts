@@ -28,8 +28,8 @@ export async function getMalloyCodeAction(
       problems.push(...error.problems);
     }
   }
+  const actions: CodeAction[] = [];
   for (const problem of problems) {
-    const actions: CodeAction[] = [];
     if (problem.at?.range) {
       const par = problem.at.range;
       if (
@@ -57,7 +57,6 @@ export async function getMalloyCodeAction(
         actions.push(codeAction);
       }
     }
-    return actions;
   }
-  return null;
+  return actions;
 }
