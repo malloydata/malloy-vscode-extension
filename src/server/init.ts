@@ -49,6 +49,7 @@ import {TranslateCache} from './translate_cache';
 import {ConnectionManager} from '../common/connection_manager';
 import {findMalloyLensesAt} from './lenses/lenses';
 import {prettyLogUri} from '../common/log';
+import {getMalloyCodeAction} from './code_actions/code_actions';
 
 export const initServer = (
   connection: Connection,
@@ -70,6 +71,9 @@ export const initServer = (
         },
         completionProvider: {
           resolveProvider: true,
+        },
+        codeActionProvider: {
+          resolveProvider: false,
         },
         definitionProvider: true,
         hoverProvider: true,
@@ -186,6 +190,14 @@ export const initServer = (
       return await getMalloyLenses(connection, document, connectionManager);
     }
     return [];
+  });
+
+  connection.onCodeAction(async handler => {
+    const document = documents.get(handler.textDocument.uri);
+    if (document && document.languageId === 'malloy') {
+      return getMalloyCodeAction(translateCache, document, handler.range);
+    }
+    return null;
   });
 
   connection.onRequest(
