@@ -112,12 +112,17 @@ async function setupLanguageServer(
     ],
   };
 
+  const runtime = vscode.workspace
+    .getConfiguration('malloy')
+    .get<string>('nodePath');
+
   const serverOptions: ServerOptions = {
-    run: {module: serverModule, transport: TransportKind.ipc},
+    run: {module: serverModule, transport: TransportKind.ipc, runtime},
     debug: {
       module: serverModule,
       transport: TransportKind.ipc,
       options: debugOptions,
+      runtime,
     },
   };
 
