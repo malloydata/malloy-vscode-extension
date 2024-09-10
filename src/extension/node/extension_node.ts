@@ -134,8 +134,8 @@ async function setupLanguageServer(
     connectionOptions: {
       // If the server crashes X times in Y mins(e.g., 3 min), it won't get
       // restarted again(https://github.com/microsoft/vscode-languageserver-node/blob/1320922f95ef182df2cf76b7c96b1a2d3ba14c2a/client/src/common/client.ts#L438).
-      // We can be overly confident and set it to a large number. For now, set the max restart count to Number.MAX_SAFE_INTEGER.
-      maxRestartCount: Number.MAX_SAFE_INTEGER,
+      // We can be overly confident and set it to a large number.
+      maxRestartCount: 16,
     },
   };
 
