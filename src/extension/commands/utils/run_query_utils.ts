@@ -180,7 +180,9 @@ export async function runMalloyQuery(
           'The worker process has died, and has been restarted. ' +
           'This is possibly the result of a database bug. ' +
           'Please consider filing an issue with as much detail as possible at ' +
-          'https://github.com/malloydata/malloy-vscode-extension/issues.';
+          'https://github.com/malloydata/malloy-vscode-extension/issues. ' +
+          'You many want to use an external NodeJS process to increase the ' +
+          'amount of available memory by setting vscode://settings/malloy.nodePath';
         current?.messages.postMessage({
           status: QueryRunStatus.Error,
           error,

@@ -50,9 +50,9 @@ export class ErrorPanel extends LitElement {
       'font-family': multiLine ? 'monospace' : 'inherit',
       'word-wrap': 'break-word',
     };
-    const parts = this.message.split(/(https?:\/\/\S*)\b/);
+    const parts = this.message.split(/((?:http|https|vscode):\/\/\S*)\b/);
     const formatted = parts.map(part => {
-      if (part.match(/^https?:/)) {
+      if (part.match(/^(http|https|vscode):/)) {
         return html`<a href="${part}">${part}</a>`;
       } else {
         return part;
