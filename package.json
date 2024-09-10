@@ -381,6 +381,10 @@
           "description": "Whether telemetry is enabled for the Malloy extension. Used in conjunction with the `telemetry.telemetryLevel` setting and the --disable-telemetry CLI flag.",
           "default": true
         },
+        "malloy.nodePath": {
+          "type": "string",
+          "description": "Path to a Node.js executable to use for running the language server. Set this option if you're having trouble with Malloy running out of memory. Node version >= 20 recommended."
+        },
         "malloy.connections": {
           "type": "array",
           "items": {
