@@ -182,18 +182,6 @@
         "category": "Malloy"
       },
       {
-        "command": "malloy.runNamedSQLBlock",
-        "title": "Run Named SQL Block",
-        "category": "Malloy",
-        "enablement": "false"
-      },
-      {
-        "command": "malloy.runUnnamedSQLBlock",
-        "title": "Run Unnamed SQL Block",
-        "category": "Malloy",
-        "enablement": "false"
-      },
-      {
         "category": "Create",
         "command": "malloy.newUntitledNotebook",
         "title": "Malloy Notebook"
