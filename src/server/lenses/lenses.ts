@@ -99,7 +99,6 @@ export async function getMalloyLenses(
   }
 
   let currentUnnamedQueryIndex = 0;
-  let currentUnnamedSQLBlockIndex = 0;
   for (const symbol of symbols) {
     switch (symbol.type) {
       case 'query':
@@ -212,33 +211,6 @@ export async function getMalloyLenses(
             }
           });
         }
-        break;
-      case 'sql':
-        lenses.push({
-          range: symbol.lensRange.toJSON(),
-          command: {
-            title: 'Run',
-            command: 'malloy.runNamedSQLBlock',
-            arguments: [symbol.name],
-          },
-        });
-        // TODO feature-sql-block Currently, named SQL blocks are not in the model, but stored
-        //      in the same list alongside unnamed SQL blocks. This is unlike the way queries work:
-        //      named queries exist in the model, and unnamed queries exist outside the model in
-        //      a separate list. Anyway, this means that at the moment, _named_ SQL blocks are also
-        //      indexable.
-        currentUnnamedSQLBlockIndex++;
-        break;
-      case 'unnamed_sql':
-        lenses.push({
-          range: symbol.lensRange.toJSON(),
-          command: {
-            title: 'Run',
-            command: 'malloy.runUnnamedSQLBlock',
-            arguments: [currentUnnamedSQLBlockIndex],
-          },
-        });
-        currentUnnamedSQLBlockIndex++;
         break;
       case 'import':
         try {

@@ -25,7 +25,6 @@ import {
   ModelMaterializer,
   QueryMaterializer,
   Runtime,
-  SQLBlockMaterializer,
 } from '@malloydata/malloy';
 import {CellData} from '../common/types/file_handler';
 import {QuerySpec} from '../common/types/query_spec';
@@ -74,12 +73,12 @@ export const createRunnable = async (
   runtime: Runtime,
   cellData: CellData | null,
   workspaceFolders: string[]
-): Promise<SQLBlockMaterializer | QueryMaterializer> => {
+): Promise<QueryMaterializer> => {
   const {
     documentMeta: {uri},
   } = query;
   console.debug('createRunnable', uri, 'begin');
-  let runnable: QueryMaterializer | SQLBlockMaterializer;
+  let runnable: QueryMaterializer;
   const mm = await createModelMaterializer(
     uri,
     runtime,
@@ -96,19 +95,14 @@ export const createRunnable = async (
     case 'named':
       runnable = mm.loadQueryByName(query.name);
       break;
-    case 'file':
+    case 'file': {
       if (query.index === -1) {
         runnable = mm.loadFinalQuery();
       } else {
         runnable = mm.loadQueryByIndex(query.index);
       }
       break;
-    case 'named_sql':
-      runnable = mm.loadSQLBlockByName(query.name);
-      break;
-    case 'unnamed_sql':
-      runnable = mm.loadSQLBlockByIndex(query.index);
-      break;
+    }
     default:
       throw new Error('Internal Error: Unexpected query type');
   }
