@@ -45,8 +45,6 @@ export async function runQueryAtCursorCommand(
           'malloy.runQuery',
           'malloy.runQueryFile',
           'malloy.runNamedQuery',
-          'malloy.runNamedSQLBlock',
-          'malloy.runUnnamedSQLBlock',
         ].includes(current.command?.command || '')
       ) {
         if (deepest) {
