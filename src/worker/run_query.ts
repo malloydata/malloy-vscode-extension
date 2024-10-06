@@ -22,6 +22,7 @@
  */
 
 import {
+  isSourceDef,
   MalloyError,
   MalloyQueryData,
   QueryMaterializer,
@@ -69,7 +70,7 @@ const fakeMalloyResult = (
 ): Result => {
   return new Result(
     {
-      structs: structDef ? [structDef] : [],
+      structs: structDef && isSourceDef(structDef) ? [structDef] : [],
       sql,
       result,
       totalRows,
@@ -209,13 +210,16 @@ const runMSQLCell = async (
 
   // rendering is nice if we can do it. try to get a structdef for the last query,
   // and if we get one, return Result object for rendering
-  const structDefAttempt = await connection.fetchSchemaForSQLBlock(
+  const structDefAttempt = await connection.fetchSchemaForSQLStruct(
     {
-      type: 'sqlBlock',
+      type: 'sql_select',
       selectStr: compiledStatement
         .replaceAll(/^--[^\n]*$/gm, '') // Remove comments
         .replace(/;\s*$/, ''), // Remove trailing `;`
       name: compiledStatement,
+      connection: connection.name,
+      fields: [],
+      dialect: connection.dialectName,
     },
     {}
   );
