@@ -210,16 +210,17 @@ const runMSQLCell = async (
 
   // rendering is nice if we can do it. try to get a structdef for the last query,
   // and if we get one, return Result object for rendering
+  const sql = compiledStatement
+    .replaceAll(/^--[^\n]*$/gm, '') // Remove comments
+    .replace(/;\s*$/, ''), // Remove trailing `;`
   const structDefAttempt = await connection.fetchSchemaForSQLStruct(
     {
       type: 'sql_select',
-      selectStr: compiledStatement
-        .replaceAll(/^--[^\n]*$/gm, '') // Remove comments
-        .replace(/;\s*$/, ''), // Remove trailing `;`
-      name: compiledStatement,
+      selectStr: sql,
+      name: `${connection.name}.describe ${sql}`,
       connection: connection.name,
-      fields: [],
       dialect: connection.dialectName,
+      fields: [],
     },
     {}
   );
