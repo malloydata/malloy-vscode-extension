@@ -32,11 +32,9 @@ import {
   previewFromSchemaCommand,
   runNamedQuery,
   runNamedQueryFromSchemaCommand,
-  runNamedSQLBlock,
   runQueryCommand,
   runQueryFileCommand,
   runTurtleFromSchemaCommand,
-  runUnnamedSQLBlock,
   showLicensesCommand,
   showSQLCommand,
   showSQLFileCommand,
@@ -138,21 +136,6 @@ export const setupSubscriptions = async (
     vscode.commands.registerCommand(
       'malloy.showSQLNamedQuery',
       (name: string) => showSQLNamedQueryCommand(worker, name)
-    )
-  );
-
-  // Run named SQL block
-  context.subscriptions.push(
-    vscode.commands.registerCommand('malloy.runNamedSQLBlock', (name: string) =>
-      runNamedSQLBlock(worker, name)
-    )
-  );
-
-  // Run unnamed SQL block
-  context.subscriptions.push(
-    vscode.commands.registerCommand(
-      'malloy.runUnnamedSQLBlock',
-      (index: number) => runUnnamedSQLBlock(worker, index)
     )
   );
 
