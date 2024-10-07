@@ -212,7 +212,7 @@ const runMSQLCell = async (
   // and if we get one, return Result object for rendering
   const sql = compiledStatement
     .replaceAll(/^--[^\n]*$/gm, '') // Remove comments
-    .replace(/;\s*$/, ''), // Remove trailing `;`
+    .replace(/;\s*$/, ''); // Remove trailing `;`
   const structDefAttempt = await connection.fetchSchemaForSQLStruct(
     {
       type: 'sql_select',
