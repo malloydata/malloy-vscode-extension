@@ -21,25 +21,35 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {ResultJSON} from '@malloydata/malloy';
-import {WorkerConnection} from '../worker_connection';
-import {
-  getActiveDocumentMetadata,
-  runMalloyQueryWithProgress,
-} from './utils/run_query_utils';
+import styled from 'styled-components';
 
-export async function runNamedSQLBlock(
-  worker: WorkerConnection,
-  name: string
-): Promise<ResultJSON | undefined> {
-  const documentMeta = getActiveDocumentMetadata();
-  if (documentMeta) {
-    return runMalloyQueryWithProgress(
-      worker,
-      {type: 'named_sql', name, documentMeta},
-      `${documentMeta.uri} ${name}`,
-      name
-    );
-  }
-  return undefined;
+const SimpleErrorMessage = styled.div`
+  padding: 5px;
+  background-color: #fbb;
+  font-family: Arial, Helvetica, sans-serif, sans-serif;
+  font-size: 12px;
+  color: #4b4c50;
+  border-radius: 5px;
+`;
+
+const MultiLineErrorMessage = styled(SimpleErrorMessage)`
+  white-space: pre-wrap;
+  font-family: Courier, Menlo, monspace, monospace;
+`;
+
+export interface ErrorMessageProps {
+  error: string | null | undefined;
 }
+
+export const ErrorMessage = ({
+  error,
+}: ErrorMessageProps): React.ReactElement | null => {
+  if (error) {
+    if (error.split('\n').length > 1) {
+      return <MultiLineErrorMessage>{error}</MultiLineErrorMessage>;
+    } else {
+      return <SimpleErrorMessage>{error}</SimpleErrorMessage>;
+    }
+  }
+  return null;
+};

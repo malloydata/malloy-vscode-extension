@@ -32,11 +32,9 @@ import {
   previewFromSchemaCommand,
   runNamedQuery,
   runNamedQueryFromSchemaCommand,
-  runNamedSQLBlock,
   runQueryCommand,
   runQueryFileCommand,
   runTurtleFromSchemaCommand,
-  runUnnamedSQLBlock,
   showLicensesCommand,
   showSQLCommand,
   showSQLFileCommand,
@@ -67,6 +65,7 @@ import {runQueryAtCursorCommand} from './commands/run_query_at_cursor';
 import {showSchemaFileCommand} from './commands/show_schema_file';
 import {noAwait} from '../util/no_await';
 import {createDefaultConnections} from './commands/create_default_connections';
+import {openComposer} from './commands/open_composer';
 
 function getNewClientId(): string {
   return uuid();
@@ -78,6 +77,15 @@ export const setupSubscriptions = async (
   client: BaseLanguageClient
 ) => {
   MALLOY_EXTENSION_STATE.setExtensionUri(context.extensionUri);
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      'malloy.openComposer',
+      async (sourceName: string) => {
+        return openComposer(worker, sourceName);
+      }
+    )
+  );
 
   // Run Query (whole file)
   context.subscriptions.push(
@@ -138,21 +146,6 @@ export const setupSubscriptions = async (
     vscode.commands.registerCommand(
       'malloy.showSQLNamedQuery',
       (name: string) => showSQLNamedQueryCommand(worker, name)
-    )
-  );
-
-  // Run named SQL block
-  context.subscriptions.push(
-    vscode.commands.registerCommand('malloy.runNamedSQLBlock', (name: string) =>
-      runNamedSQLBlock(worker, name)
-    )
-  );
-
-  // Run unnamed SQL block
-  context.subscriptions.push(
-    vscode.commands.registerCommand(
-      'malloy.runUnnamedSQLBlock',
-      (index: number) => runUnnamedSQLBlock(worker, index)
     )
   );
 

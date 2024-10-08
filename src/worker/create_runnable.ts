@@ -103,12 +103,6 @@ export const createRunnable = async (
         runnable = mm.loadQueryByIndex(query.index);
       }
       break;
-    case 'named_sql':
-      runnable = mm.loadSQLBlockByName(query.name);
-      break;
-    case 'unnamed_sql':
-      runnable = mm.loadSQLBlockByIndex(query.index);
-      break;
     default:
       throw new Error('Internal Error: Unexpected query type');
   }

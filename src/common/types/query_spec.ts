@@ -46,21 +46,4 @@ export interface QueryFileSpec {
   documentMeta: DocumentMetadata;
 }
 
-export interface NamedSQLQuerySpec {
-  type: 'named_sql';
-  name: string;
-  documentMeta: DocumentMetadata;
-}
-
-export interface UnnamedSQLQuerySpec {
-  type: 'unnamed_sql';
-  index: number;
-  documentMeta: DocumentMetadata;
-}
-
-export type QuerySpec =
-  | NamedQuerySpec
-  | QueryStringSpec
-  | QueryFileSpec
-  | NamedSQLQuerySpec
-  | UnnamedSQLQuerySpec;
+export type QuerySpec = NamedQuerySpec | QueryStringSpec | QueryFileSpec;
