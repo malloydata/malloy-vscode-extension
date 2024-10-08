@@ -170,6 +170,14 @@ export async function getMalloyLenses(
               ],
             },
           });
+          lenses.push({
+            range: symbol.lensRange.toJSON(),
+            command: {
+              title: 'Composer',
+              command: 'malloy.openComposer',
+              arguments: [exploreName],
+            },
+          });
           // lenses.push({
           //   range: symbol.range.toJSON(),
           //   command: {
