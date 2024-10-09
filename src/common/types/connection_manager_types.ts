@@ -28,6 +28,7 @@ export enum ConnectionBackend {
   Snowflake = 'snowflake',
   Trino = 'trino',
   Presto = 'presto',
+  MySQL = 'mysql',
 }
 
 export const ConnectionBackendNames: Record<ConnectionBackend, string> = {
@@ -39,6 +40,7 @@ export const ConnectionBackendNames: Record<ConnectionBackend, string> = {
   // TODO(figutierrez): Remove beta once ready.
   [ConnectionBackend.Trino]: 'Trino (Beta)',
   [ConnectionBackend.Presto]: 'Presto (Beta)',
+  [ConnectionBackend.MySQL]: 'MySQL',
 };
 
 /*
@@ -99,12 +101,18 @@ export interface PrestoConnectionConfig extends BaseConnectionConfig {
   backend: ConnectionBackend.Presto;
   // TODO(figutierrez): add options.
 }
+
+export interface MySQLConnectionConfig extends BaseConnectionConfig {
+  backend: ConnectionBackend.MySQL;
+  // TODO(figutierrez): add options.
+}
 export type ConnectionConfig =
   | BigQueryConnectionConfig
   | PostgresConnectionConfig
   | DuckDBConnectionConfig
   | SnowflakeConnectionConfig
   | TrinoConnectionConfig
+  | MySQLConnectionConfig
   | PrestoConnectionConfig;
 
 export interface ConfigOptions {

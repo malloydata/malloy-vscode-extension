@@ -38,6 +38,8 @@ import {fileURLToPath} from 'url';
 import {GenericConnection} from '../../../common/types/worker_message_types';
 import {TrinoExecutor} from '@malloydata/db-trino';
 import {createPrestoConnection} from './presto_connection';
+import {MySQLExecutor} from '@malloydata/db-mysql';
+import {createMySQLConnection} from './mysql_connection';
 
 export class NodeConnectionFactory implements ConnectionFactory {
   connectionCache: Record<string, TestableConnection> = {};
@@ -99,6 +101,10 @@ export class NodeConnectionFactory implements ConnectionFactory {
       }
       case ConnectionBackend.Presto: {
         connection = await createPrestoConnection();
+        break;
+      }
+      case ConnectionBackend.MySQL: {
+        connection = await createMySQLConnection();
         break;
       }
     }
@@ -190,6 +196,24 @@ export class NodeConnectionFactory implements ConnectionFactory {
             name: 'presto',
             backend: ConnectionBackend.Presto,
             id: 'presto-default',
+          });
+        }
+      } catch (error) {
+        console.info(
+          `Could not get connection options for Presto connection. ${error}`
+        );
+      }
+    }
+
+    if (!configs.find(config => config.backend === ConnectionBackend.MySQL)) {
+      try {
+        const mySQLOptions = MySQLExecutor.getConnectionOptionsFromEnv();
+        if (mySQLOptions !== null) {
+          // TODO(figutierrez): add default.
+          configs.push({
+            name: 'mysql',
+            backend: ConnectionBackend.MySQL,
+            id: 'mysql-default',
           });
         }
       } catch (error) {
