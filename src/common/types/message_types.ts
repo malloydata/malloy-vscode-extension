@@ -294,6 +294,7 @@ export interface ComposerMessageNewModel {
   documentMeta: DocumentMetadata;
   modelDef: ModelDef;
   sourceName: string;
+  viewName?: string;
 }
 
 export interface ComposerMessageResultSuccess {

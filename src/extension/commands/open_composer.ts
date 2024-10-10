@@ -27,14 +27,15 @@ const icon = 'turtle.svg';
 
 export async function openComposer(
   worker: WorkerConnection,
-  sourceName?: string
+  sourceName?: string,
+  viewName?: string
 ) {
   const documentMeta = getActiveDocumentMetadata();
   if (documentMeta) {
     const basename = Utils.basename(vscode.Uri.parse(documentMeta.uri));
     const composerPanel = vscode.window.createWebviewPanel(
       'malloyComposer',
-      `Malloy Composer: ${basename} - ${sourceName || '*'}`,
+      `Explore: ${basename} - ${sourceName || '*'}`,
       {viewColumn: vscode.ViewColumn.Beside, preserveFocus: true},
       {enableScripts: true, retainContextWhenHidden: true}
     );
@@ -65,6 +66,7 @@ export async function openComposer(
       documentMeta,
       modelDef,
       sourceName,
+      viewName,
     });
     messages.onReceiveMessage(message => {
       switch (message.type) {

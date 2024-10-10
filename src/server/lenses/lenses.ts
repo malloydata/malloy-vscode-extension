@@ -173,7 +173,7 @@ export async function getMalloyLenses(
           lenses.push({
             range: symbol.lensRange.toJSON(),
             command: {
-              title: 'Composer',
+              title: 'Explore',
               command: 'malloy.openComposer',
               arguments: [exploreName],
             },
