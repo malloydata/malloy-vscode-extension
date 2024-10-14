@@ -25,7 +25,6 @@ export interface ComposerProps {
 const topValues: SearchValueMapResult[] = [];
 
 const nullUpdateQueryInUrl = () => {};
-const emptyDataStyles = {}; // dataStyles
 
 export const Composer: React.FC<ComposerProps> = ({
   documentMeta,
@@ -40,7 +39,6 @@ export const Composer: React.FC<ComposerProps> = ({
     isRunning,
     queryModifiers,
     querySummary,
-    dataStyles,
     result,
     registerNewSource,
     runQuery,
@@ -52,7 +50,6 @@ export const Composer: React.FC<ComposerProps> = ({
     modelDef,
     documentMeta.uri,
     nullUpdateQueryInUrl,
-    emptyDataStyles,
     runQueryExternal
   );
 
@@ -73,7 +70,6 @@ export const Composer: React.FC<ComposerProps> = ({
       queryName={queryName}
       querySummary={querySummary}
       queryMalloy={queryMalloy}
-      dataStyles={dataStyles}
       result={result}
       isRunning={isRunning}
       runQuery={runQuery}
