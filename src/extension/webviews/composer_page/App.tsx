@@ -18,7 +18,6 @@ import {Composer} from './Composer';
 import {DocumentMetadata} from '../../../common/types/query_spec';
 import {ModelDef, Result} from '@malloydata/malloy';
 import {RunQuery} from '@malloydata/query-composer';
-import {ErrorMessage} from './Error';
 
 export interface AppProps {
   vscode: VsCodeApi<ComposerPageMessage, void>;
@@ -35,7 +34,6 @@ export const App: React.FC<AppProps> = ({vscode}) => {
   const [documentMeta, setDocumentMeta] = React.useState<DocumentMetadata>();
   const [modelDef, setModelDef] = React.useState<ModelDef>();
   const [sourceName, setSourceName] = React.useState<string>();
-  const [error, setError] = React.useState<string>();
 
   React.useEffect(() => {
     const messageHandler = ({data}: MessageEvent<ComposerMessage>) => {
@@ -65,7 +63,6 @@ export const App: React.FC<AppProps> = ({vscode}) => {
             QueriesInFlight[id]?.reject(new Error(error));
             delete QueriesInFlight[id];
           }
-          setError(error);
         }
       }
     };
@@ -75,7 +72,7 @@ export const App: React.FC<AppProps> = ({vscode}) => {
     return () => {
       window.removeEventListener('message', messageHandler);
     };
-  }, []);
+  }, [vscode]);
 
   const runQuery = React.useCallback<RunQuery>(
     (query: string, model: ModelDef, modelPath: string, queryName: string) => {
@@ -100,7 +97,6 @@ export const App: React.FC<AppProps> = ({vscode}) => {
   if (documentMeta && modelDef && sourceName) {
     return (
       <div style={{height: '100%'}}>
-        <ErrorMessage error={error} />
         <Composer
           documentMeta={documentMeta}
           modelDef={modelDef}
@@ -110,6 +106,6 @@ export const App: React.FC<AppProps> = ({vscode}) => {
       </div>
     );
   } else {
-    return <h1>Watch this space</h1>;
+    return <h1>Loading</h1>;
   }
 };

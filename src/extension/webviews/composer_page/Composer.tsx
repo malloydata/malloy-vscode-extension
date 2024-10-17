@@ -9,11 +9,13 @@ import * as React from 'react';
 import {
   ExploreQueryEditor,
   useQueryBuilder,
+  useRunQuery,
   RunQuery,
 } from '@malloydata/query-composer';
 import {ModelDef, SearchValueMapResult, SourceDef} from '@malloydata/malloy';
 
 import {DocumentMetadata} from '../../../common/types/query_spec';
+import {ErrorMessage} from './Error';
 
 export interface ComposerProps {
   documentMeta: DocumentMetadata;
@@ -30,53 +32,40 @@ export const Composer: React.FC<ComposerProps> = ({
   documentMeta,
   modelDef,
   sourceName,
-  runQuery: runQueryExternal,
+  runQuery: runQueryImp,
 }) => {
-  const {
-    dirty,
-    queryMalloy,
-    queryName,
-    isRunning,
-    queryModifiers,
-    querySummary,
-    result,
-    registerNewSource,
-    runQuery,
-    canUndo,
-    undo,
-    isQueryEmpty,
-    canQueryRun,
-  } = useQueryBuilder(
+  const {queryMalloy, queryName, queryModifiers, querySummary} =
+    useQueryBuilder(
+      modelDef,
+      sourceName,
+      documentMeta.uri,
+      nullUpdateQueryInUrl
+    );
+
+  const {isRunning, error, result, runQuery} = useRunQuery(
     modelDef,
     documentMeta.uri,
-    nullUpdateQueryInUrl,
-    runQueryExternal
+    runQueryImp
   );
 
   const source = modelDef.contents[sourceName] as SourceDef;
 
-  React.useEffect(() => {
-    registerNewSource(source);
-  }, [source]);
-
   return (
-    <ExploreQueryEditor
-      dirty={dirty}
-      model={modelDef}
-      modelPath={documentMeta.fileName}
-      source={source}
-      queryModifiers={queryModifiers}
-      topValues={topValues}
-      queryName={queryName}
-      querySummary={querySummary}
-      queryMalloy={queryMalloy}
-      result={result}
-      isRunning={isRunning}
-      runQuery={runQuery}
-      canUndo={canUndo}
-      undo={undo}
-      isQueryEmpty={isQueryEmpty}
-      canQueryRun={canQueryRun}
-    />
+    <>
+      <ExploreQueryEditor
+        model={modelDef}
+        modelPath={documentMeta.fileName}
+        source={source}
+        queryModifiers={queryModifiers}
+        topValues={topValues}
+        queryName={queryName}
+        querySummary={querySummary}
+        queryMalloy={queryMalloy}
+        result={result}
+        isRunning={isRunning}
+        runQuery={runQuery}
+      />
+      <ErrorMessage error={error?.message} />
+    </>
   );
 };
