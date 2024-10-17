@@ -21,9 +21,15 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {NamedQuery, ResultJSON, SerializedExplore} from '@malloydata/malloy';
+import {
+  ModelDef,
+  NamedQuery,
+  ResultJSON,
+  SerializedExplore,
+} from '@malloydata/malloy';
 import {ConnectionBackend, ConnectionConfig} from './connection_manager_types';
 import {ProgressType} from 'vscode-jsonrpc';
+import {DocumentMetadata} from './query_spec';
 
 /*
  * These messages are used to pass status back from the worker to
@@ -154,6 +160,10 @@ export type QueryDownloadMessage =
   | QueryDownloadStatusCompiling
   | QueryDownloadStatusRunning;
 
+/**
+ * Edit Connections webview messages
+ */
+
 export enum ConnectionMessageType {
   EditConnection = 'edit-connection',
   SetConnections = 'set-connections',
@@ -241,6 +251,10 @@ export type ConnectionPanelMessage =
   | ConnectionMessageTest
   | ConnectionMessageServiceAccountKeyRequest;
 
+/**
+ * Help panel messages
+ */
+
 export enum HelpMessageType {
   AppReady = 'app-ready',
   EditConnections = 'edit-connections',
@@ -264,3 +278,58 @@ export interface FetchModelMessage {
   explores: SerializedExplore[];
   queries: NamedQuery[];
 }
+
+/**
+ * Composer messages
+ */
+
+export enum ComposerMessageType {
+  NewModel = 'new-model',
+  ResultSuccess = 'result-success',
+  ResultError = 'result-error',
+}
+
+export interface ComposerMessageNewModel {
+  type: ComposerMessageType.NewModel;
+  documentMeta: DocumentMetadata;
+  modelDef: ModelDef;
+  sourceName: string;
+  viewName?: string;
+}
+
+export interface ComposerMessageResultSuccess {
+  type: ComposerMessageType.ResultSuccess;
+  id: string;
+  result: ResultJSON;
+}
+
+export interface ComposerMessageResultError {
+  type: ComposerMessageType.ResultError;
+  id: string;
+  error: string;
+}
+
+export type ComposerMessage =
+  | ComposerMessageNewModel
+  | ComposerMessageResultSuccess
+  | ComposerMessageResultError;
+
+export enum ComposerPageMessageType {
+  Ready = 'ready',
+  RunQuery = 'run-query',
+}
+
+export interface ComposerPageMessageReady {
+  type: ComposerPageMessageType.Ready;
+}
+
+export interface ComposerPageMessageRunQuery {
+  type: ComposerPageMessageType.RunQuery;
+  id: string;
+  query: string;
+  queryName: string;
+}
+
+export type ComposerPageMessage =
+  | ComposerPageMessageReady
+  | ComposerPageMessageRunQuery;
