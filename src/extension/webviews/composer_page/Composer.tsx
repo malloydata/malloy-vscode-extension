@@ -6,6 +6,7 @@
  */
 
 import * as React from 'react';
+import {useEffect} from 'react';
 import {
   ExploreQueryEditor,
   useQueryBuilder,
@@ -21,6 +22,7 @@ export interface ComposerProps {
   documentMeta: DocumentMetadata;
   modelDef: ModelDef;
   sourceName: string;
+  viewName?: string;
   runQuery: RunQuery;
 }
 
@@ -32,6 +34,7 @@ export const Composer: React.FC<ComposerProps> = ({
   documentMeta,
   modelDef,
   sourceName,
+  viewName,
   runQuery: runQueryImp,
 }) => {
   const {queryMalloy, queryName, queryModifiers, querySummary} =
@@ -49,6 +52,12 @@ export const Composer: React.FC<ComposerProps> = ({
   );
 
   const source = modelDef.contents[sourceName] as SourceDef;
+
+  useEffect(() => {
+    if (viewName) {
+      queryModifiers.loadQuery(viewName);
+    }
+  }, [queryModifiers, viewName]);
 
   return (
     <>

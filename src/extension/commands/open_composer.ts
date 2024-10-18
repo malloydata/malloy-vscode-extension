@@ -33,9 +33,11 @@ export async function openComposer(
   const documentMeta = getActiveDocumentMetadata();
   if (documentMeta) {
     const basename = Utils.basename(vscode.Uri.parse(documentMeta.uri));
+    const sourcePart = sourceName || '*';
+    const viewPart = viewName ? ` -> ${viewName}` : '';
     const composerPanel = vscode.window.createWebviewPanel(
       'malloyComposer',
-      `Explore: ${basename} - ${sourceName || '*'}`,
+      `Explore: ${basename} - ${sourcePart}${viewPart}`,
       {viewColumn: vscode.ViewColumn.Beside, preserveFocus: true},
       {enableScripts: true, retainContextWhenHidden: true}
     );

@@ -34,6 +34,7 @@ export const App: React.FC<AppProps> = ({vscode}) => {
   const [documentMeta, setDocumentMeta] = React.useState<DocumentMetadata>();
   const [modelDef, setModelDef] = React.useState<ModelDef>();
   const [sourceName, setSourceName] = React.useState<string>();
+  const [viewName, setViewName] = React.useState<string>();
 
   React.useEffect(() => {
     const messageHandler = ({data}: MessageEvent<ComposerMessage>) => {
@@ -41,11 +42,12 @@ export const App: React.FC<AppProps> = ({vscode}) => {
       switch (type) {
         case ComposerMessageType.NewModel:
           {
-            const {documentMeta, modelDef, sourceName} = data;
+            const {documentMeta, modelDef, sourceName, viewName} = data;
             console.info(JSON.stringify(documentMeta, null, 2));
             setDocumentMeta(documentMeta);
             setModelDef(modelDef);
             setSourceName(sourceName);
+            setViewName(viewName);
           }
           break;
         case ComposerMessageType.ResultSuccess:
@@ -101,6 +103,7 @@ export const App: React.FC<AppProps> = ({vscode}) => {
           documentMeta={documentMeta}
           modelDef={modelDef}
           sourceName={sourceName}
+          viewName={viewName}
           runQuery={runQuery}
         />
       </div>

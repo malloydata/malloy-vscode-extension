@@ -214,6 +214,14 @@ export async function getMalloyLenses(
                       `${exploreName}->${queryName}`,
                     ],
                   },
+                },
+                {
+                  range: child.lensRange.toJSON(),
+                  command: {
+                    title: 'Explore',
+                    command: 'malloy.openComposer',
+                    arguments: [exploreName, queryName],
+                  },
                 }
               );
             }

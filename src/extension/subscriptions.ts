@@ -81,8 +81,8 @@ export const setupSubscriptions = async (
   context.subscriptions.push(
     vscode.commands.registerCommand(
       'malloy.openComposer',
-      async (sourceName: string) => {
-        return openComposer(worker, sourceName);
+      async (sourceName: string, viewName?: string) => {
+        return openComposer(worker, sourceName, viewName);
       }
     )
   );
