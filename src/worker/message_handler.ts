@@ -29,12 +29,14 @@ import {
   WorkerMessageHandler,
   MessageMap,
   WorkerMessageMap,
+  WorkerMessageResponseMap,
 } from '../common/types/worker_message_types';
 import {ConnectionManager} from '../common/connection_manager';
 import {RpcFileHandler} from './file_handler';
 import {FileHandler} from '../common/types/file_handler';
 import {ProgressType} from 'vscode-jsonrpc';
 import {errorMessage} from '../common/errors';
+import {compileQuery} from './compile_query';
 
 export class MessageHandler implements WorkerMessageHandler {
   public fileHandler: FileHandler;
@@ -44,6 +46,10 @@ export class MessageHandler implements WorkerMessageHandler {
     isBrowser = false
   ) {
     this.fileHandler = new RpcFileHandler(this);
+
+    this.onRequest('malloy/compile', message =>
+      compileQuery(this.fileHandler, connectionManager, message.documentMeta)
+    );
 
     this.onRequest('malloy/run', (message, cancellationToken) =>
       runQuery(
@@ -73,10 +79,10 @@ export class MessageHandler implements WorkerMessageHandler {
     return this.connection.onRequest(type, message);
   }
 
-  sendRequest<R, K extends keyof WorkerMessageMap>(
+  sendRequest<K extends keyof WorkerMessageMap>(
     type: K,
     message: WorkerMessageMap[K]
-  ): Promise<R> {
+  ): Promise<WorkerMessageResponseMap[K]> {
     return this.connection.sendRequest(type, message);
   }
 

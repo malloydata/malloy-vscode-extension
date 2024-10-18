@@ -158,7 +158,7 @@ export async function runMalloyQuery(
         query.documentMeta
       );
       loadQueryWebview(current, 'query_page');
-      showSchemaTreeViewWhenFocused(current.panel, panelId);
+      subscriptions.push(showSchemaTreeViewWhenFocused(current.panel, panelId));
     }
 
     worker

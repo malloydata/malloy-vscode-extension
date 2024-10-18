@@ -104,22 +104,18 @@ export function disposeWebviewPanel(current: RunState) {
 export function showSchemaTreeViewWhenFocused(
   panel: vscode.WebviewPanel,
   panelId: string
-): void {
-  panel.onDidChangeViewState(event => {
+): vscode.Disposable {
+  return panel.onDidChangeViewState(event => {
     if (event.webviewPanel.active) {
       MALLOY_EXTENSION_STATE.setActiveWebviewPanelId(panelId);
       noAwait(vscode.commands.executeCommand('malloy.refreshSchema'));
     }
-  });
-
-  panel.onDidChangeViewState(
-    (e: vscode.WebviewPanelOnDidChangeViewStateEvent) =>
-      noAwait(
-        vscode.commands.executeCommand(
-          'setContext',
-          'malloy.webviewPanelFocused',
-          e.webviewPanel.active
-        )
+    noAwait(
+      vscode.commands.executeCommand(
+        'setContext',
+        'malloy.webviewPanelFocused',
+        event.webviewPanel.active
       )
-  );
+    );
+  });
 }

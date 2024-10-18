@@ -170,6 +170,14 @@ export async function getMalloyLenses(
               ],
             },
           });
+          lenses.push({
+            range: symbol.lensRange.toJSON(),
+            command: {
+              title: 'Explore',
+              command: 'malloy.openComposer',
+              arguments: [exploreName],
+            },
+          });
           // lenses.push({
           //   range: symbol.range.toJSON(),
           //   command: {
@@ -205,6 +213,14 @@ export async function getMalloyLenses(
                       `run: ${exploreName}->${queryName}`,
                       `${exploreName}->${queryName}`,
                     ],
+                  },
+                },
+                {
+                  range: child.lensRange.toJSON(),
+                  command: {
+                    title: 'Explore',
+                    command: 'malloy.openComposer',
+                    arguments: [exploreName, queryName],
                   },
                 }
               );

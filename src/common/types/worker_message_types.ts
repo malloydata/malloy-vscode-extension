@@ -30,12 +30,17 @@ import {
 } from 'vscode-jsonrpc';
 import {QueryDownloadOptions} from './message_types';
 import {CellData} from './file_handler';
-import {QuerySpec} from './query_spec';
+import {DocumentMetadata, QuerySpec} from './query_spec';
 import {ConnectionConfig} from './connection_manager_types';
+import {ModelDef} from '@malloydata/malloy';
 
 /*
  * Incoming messages
  */
+
+export interface MessageCompile {
+  documentMeta: DocumentMetadata;
+}
 
 export interface MessageRun {
   query: QuerySpec;
@@ -96,18 +101,26 @@ export type FetchMessage =
  * Type map of extension message types to message interfaces.
  */
 export interface MessageMap {
-  'malloy/fetch': MessageFetch;
-  'malloy/fetchBinary': MessageFetchBinary;
-  'malloy/fetchCellData': MessageFetchCellData;
-  'malloy/fetchWorkspaceFolders': MessageFetchCellData;
+  'malloy/compile': MessageCompile;
   'malloy/run': MessageRun;
   'malloy/download': MessageDownload;
   'malloy/testConnection': MessageTest;
 }
 
+export interface MessageResponseMap {
+  'malloy/compile': ModelDef;
+  'malloy/run': void;
+  'malloy/download': void;
+  'malloy/testConnection': string;
+}
+
 /**
  * Outgoing messages
  */
+
+export interface WorkerCompileMessage {
+  modelDef: ModelDef;
+}
 
 export interface WorkerDownloadMessage {
   name: string;
@@ -143,12 +156,19 @@ export interface WorkerGetSecretMessage {
  * Map of worker message types to worker message interfaces.
  */
 export interface WorkerMessageMap {
-  'malloy/download': WorkerDownloadMessage;
   'malloy/fetchBinary': WorkerFetchBinaryMessage;
   'malloy/fetch': WorkerFetchMessage;
   'malloy/fetchCellData': WorkerFetchCellDataMessage;
   'malloy/fetchWorkspaceFolders': WorkerFetchWorkspaceFoldersMessage;
   'malloy/getSecret': WorkerGetSecretMessage;
+}
+
+export interface WorkerMessageResponseMap {
+  'malloy/fetchBinary': Uint8Array;
+  'malloy/fetch': string;
+  'malloy/fetchCellData': CellData;
+  'malloy/fetchWorkspaceFolders': string[];
+  'malloy/getSecret': string;
 }
 
 /**
@@ -166,10 +186,10 @@ export interface WorkerMessageHandler {
     value: P
   ): Promise<void>;
 
-  sendRequest<R, K extends keyof WorkerMessageMap>(
+  sendRequest<K extends keyof WorkerMessageMap>(
     type: K,
     message: WorkerMessageMap[K]
-  ): Promise<R>;
+  ): Promise<WorkerMessageResponseMap[K]>;
 
   log(message: string): void;
 }
@@ -183,10 +203,10 @@ export interface ExtensionMessageHandler {
     message: ListenerType<WorkerMessageMap[K]>
   ): Disposable;
 
-  sendRequest<R, K extends keyof MessageMap>(
+  sendRequest<K extends keyof MessageMap>(
     type: K,
     message: MessageMap[K]
-  ): Promise<R>;
+  ): Promise<MessageResponseMap[K]>;
 }
 
 /**

@@ -24,9 +24,9 @@
 import {WebviewPanel, WebviewView} from 'vscode';
 import {noAwait} from '../util/no_await';
 
-export class WebviewMessageManager<T> {
+export class WebviewMessageManager<S, R = S> {
   constructor(private panel: WebviewPanel | WebviewView) {
-    this.panel.webview.onDidReceiveMessage((message: T) => {
+    this.panel.webview.onDidReceiveMessage((message: R) => {
       if (!this.clientCanReceiveMessages) {
         this.onClientCanReceiveMessages();
       }
@@ -43,14 +43,14 @@ export class WebviewMessageManager<T> {
     }
   }
 
-  private pendingMessages: T[] = [];
+  private pendingMessages: S[] = [];
   private panelCanReceiveMessages = true;
   private clientCanReceiveMessages = false;
-  private callback: (message: T) => void = () => {
+  private callback: (message: R) => void = () => {
     /* Do nothing by default */
   };
 
-  public postMessage(message: T): void {
+  public postMessage(message: S): void {
     if (this.canSendMessages) {
       noAwait(this.panel.webview.postMessage(message));
     } else {
@@ -58,7 +58,7 @@ export class WebviewMessageManager<T> {
     }
   }
 
-  public onReceiveMessage(callback: (message: T) => void): void {
+  public onReceiveMessage(callback: (message: R) => void): void {
     this.callback = callback;
   }
 
