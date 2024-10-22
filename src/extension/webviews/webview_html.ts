@@ -57,6 +57,17 @@ export function getWebviewHtml(
       --malloy-border-color: var(--vscode-notifications-border);
       --malloy-tile-background-color: var(--vscode-notifications-background);
     }
+    .vscode-dark .shiki, .vscode-dark .shiki span {
+      color: var(--shiki-dark) !important;
+      background-color: var(--shiki-dark-bg) !important;
+    }
+    .shiki span {
+      font-size: var(--vscode-editor-font-size);
+      font-family: var(--vscode-editor-font-family);
+    }
+    .shiki code {
+      background-color: var(--vscode-editor-background);
+    }
     html,body,#app {
       height: 100%;
       margin: 0;

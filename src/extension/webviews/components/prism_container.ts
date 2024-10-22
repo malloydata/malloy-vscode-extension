@@ -48,6 +48,7 @@ export class PrismContainer extends LitElement {
       font-family: var(--vscode-editor-font-family);
       font-size: var(--vscode-editor-font-size);
       margin: 10px;
+      white-space: pre-wrap;
     }
 
     .dark > pre {
