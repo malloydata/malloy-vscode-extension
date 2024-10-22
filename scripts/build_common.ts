@@ -26,7 +26,7 @@ import {build, BuildOptions, context, Plugin} from 'esbuild';
 import {nativeNodeModulesPlugin} from '../third_party/github.com/evanw/esbuild/native-modules-plugin';
 import * as path from 'path';
 import {execSync} from 'child_process';
-import {noNodeModulesSourceMaps} from '../third_party/github.com/evanw/esbuild/no-node-modules-sourcemaps';
+// import {noNodeModulesSourceMaps} from '../third_party/github.com/evanw/esbuild/no-node-modules-sourcemaps';
 import svgrPlugin from 'esbuild-plugin-svgr';
 import {fetchDuckDB, targetDuckDBMap} from './utils/fetch_duckdb';
 import {outDir, Target} from './constants';
@@ -213,7 +213,7 @@ export async function doBuild(
   const extensionPlugins = [duckDBPlugin];
 
   if (development) {
-    extensionPlugins.push(noNodeModulesSourceMaps);
+    // extensionPlugins.push(noNodeModulesSourceMaps);
     console.log('Entering watch mode');
   }
 
@@ -253,9 +253,9 @@ export async function doBuild(
     ...nodeWebviewPlugins,
   ];
 
-  if (development) {
-    webviewPlugins.push(noNodeModulesSourceMaps);
-  }
+  // if (development) {
+  //   webviewPlugins.push(noNodeModulesSourceMaps);
+  // }
 
   // build the webviews
   buildOptions['webview'] = {

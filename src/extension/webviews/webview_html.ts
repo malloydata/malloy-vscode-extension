@@ -51,22 +51,44 @@ export function getWebviewHtml(
   </head>
   <style>
     :root {
-      --malloy-font-family: var(--vscode-font-family, Roboto);
+      --malloy-font-family: var(--vscode-font-family, Arial);
       --malloy-title-color: var(--vscode-titleBar-activeForeground);
       --malloy-label-color: var(--vscode-tab-activeForeground);
       --malloy-border-color: var(--vscode-notifications-border);
       --malloy-tile-background-color: var(--vscode-notifications-background);
+
+      --malloy-composer-fontSize: var(--vscode-font-size);
+      --malloy-composer-fontFamily: var(--vscode-font-family, Arial);
+      --malloy-composer-background: var(--vscode-editor-background);
+      --malloy-composer-foreground: var(--vscode-editor-foreground);
+
+      --malloy-composer-ruler: var(--vscode-editorWidget-border);
+
+      --malloy-composer-header-background: var(--vscode-notifications-background);
+
+      --malloy-composer-code-fontSize: var(--vscode-editor-font-size);
+      --malloy-composer-code-fontFamily: var(--vscode-editor-font-family, monospace);
+
+      --malloy-composer-form-background: var(--vscode-editor-background);
+      --malloy-composer-form-foreground:  var(--vscode-editor-foreground);
+      --malloy-composer-form-fontFamily: var(--vscode-font-family, Arial);
+      --malloy-composer-form-fontSize: var(--vscode-font-size);
+
+      --malloy-composer-menu-background: var(--vscode-menu-background);
+      --malloy-composer-menu-foreground: var(--vscode-menu-foreground);
+      --malloy-composer-menu-border: var(--vscode-menu-border);
+      --malloy-composer-menu-fontFamily: var(--vscode-menu-font);
+      --malloy-composer-menu-fontSize: var(--vscode-font-size);
     }
     .vscode-dark .shiki, .vscode-dark .shiki span {
       color: var(--shiki-dark) !important;
-      background-color: var(--shiki-dark-bg) !important;
     }
     .shiki span {
       font-size: var(--vscode-editor-font-size);
       font-family: var(--vscode-editor-font-family);
     }
-    .shiki code {
-      background-color: var(--vscode-editor-background);
+    .shiki, .shiki code {
+      background-color: var(--vscode-editor-background) !important;
     }
     html,body,#app {
       height: 100%;
