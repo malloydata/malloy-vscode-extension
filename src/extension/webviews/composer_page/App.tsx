@@ -16,7 +16,7 @@ import {
 } from '../../../common/types/message_types';
 import {Composer} from './Composer';
 import {DocumentMetadata} from '../../../common/types/query_spec';
-import {ModelDef, Result} from '@malloydata/malloy';
+import {ModelDef, Result, SearchValueMapResult} from '@malloydata/malloy';
 import {RunQuery} from '@malloydata/query-composer';
 
 export interface AppProps {
@@ -35,6 +35,7 @@ export const App: React.FC<AppProps> = ({vscode}) => {
   const [modelDef, setModelDef] = React.useState<ModelDef>();
   const [sourceName, setSourceName] = React.useState<string>();
   const [viewName, setViewName] = React.useState<string>();
+  const [topValues, setTopValues] = React.useState<SearchValueMapResult[]>();
 
   React.useEffect(() => {
     const messageHandler = ({data}: MessageEvent<ComposerMessage>) => {
@@ -59,13 +60,23 @@ export const App: React.FC<AppProps> = ({vscode}) => {
             }
           }
           break;
-        case ComposerMessageType.ResultError: {
-          const {id, error} = data;
-          if (QueriesInFlight[id]) {
-            QueriesInFlight[id]?.reject(new Error(error));
-            delete QueriesInFlight[id];
+        case ComposerMessageType.ResultError:
+          {
+            const {id, error} = data;
+            if (QueriesInFlight[id]) {
+              QueriesInFlight[id]?.reject(new Error(error));
+              delete QueriesInFlight[id];
+            }
           }
-        }
+          break;
+        case ComposerMessageType.SearchIndex:
+          {
+            const result = Result.fromJSON(data.result);
+            setTopValues(
+              result._queryResult.result as unknown as SearchValueMapResult[]
+            );
+          }
+          break;
       }
     };
     window.addEventListener('message', messageHandler);
@@ -105,6 +116,7 @@ export const App: React.FC<AppProps> = ({vscode}) => {
           sourceName={sourceName}
           viewName={viewName}
           runQuery={runQuery}
+          topValues={topValues}
         />
       </div>
     );

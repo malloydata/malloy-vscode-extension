@@ -7,21 +7,11 @@
 
 import * as vscode from 'vscode';
 import {getWebviewHtml} from '../webviews';
-import {
-  ComposerMessage,
-  ComposerMessageType,
-  ComposerPageMessage,
-  ComposerPageMessageType,
-} from '../../common/types/message_types';
-import {
-  getActiveDocumentMetadata,
-  runMalloyQuery,
-} from './utils/run_query_utils';
+import {getActiveDocumentMetadata} from './utils/run_query_utils';
 import {Utils} from 'vscode-uri';
 import {MALLOY_EXTENSION_STATE} from '../state';
 import {WorkerConnection} from '../worker_connection';
-import {WebviewMessageManager} from '../webview_message_manager';
-import {QuerySpec} from '../../common/types/query_spec';
+import {ComposerMessageManager} from './utils/composer_message_manager';
 
 const icon = 'turtle.svg';
 
@@ -59,74 +49,17 @@ export async function openComposer(
 
     sourceName ??= Object.keys(modelDef.contents)[0];
 
-    const messages = new WebviewMessageManager<
-      ComposerMessage,
-      ComposerPageMessage
-    >(composerPanel);
-    messages.postMessage({
-      type: ComposerMessageType.NewModel,
+    const messageManager = new ComposerMessageManager(
+      worker,
+      composerPanel,
       documentMeta,
       modelDef,
       sourceName,
-      viewName,
-    });
-    messages.onReceiveMessage(message => {
-      switch (message.type) {
-        case ComposerPageMessageType.RunQuery:
-          {
-            const {id, query, queryName} = message;
-            vscode.window
-              .withProgress(
-                {
-                  location: vscode.ProgressLocation.Notification,
-                  title: `Running ${queryName}`,
-                  cancellable: true,
-                },
-                async (progress, cancellationToken) => {
-                  const querySpec: QuerySpec = {
-                    type: 'string',
-                    text: query,
-                    documentMeta,
-                  };
-                  const result = await runMalloyQuery(
-                    worker,
-                    querySpec,
-                    id,
-                    queryName,
-                    {withWebview: false},
-                    cancellationToken,
-                    progress
-                  );
-                  return result;
-                }
-              )
-              .then(
-                result => {
-                  if (result) {
-                    messages.postMessage({
-                      type: ComposerMessageType.ResultSuccess,
-                      id,
-                      result,
-                    });
-                  } else {
-                    messages.postMessage({
-                      type: ComposerMessageType.ResultError,
-                      id,
-                      error: 'No results',
-                    });
-                  }
-                },
-                error => {
-                  messages.postMessage({
-                    type: ComposerMessageType.ResultError,
-                    id,
-                    error: error instanceof Error ? error.message : `${error}`,
-                  });
-                }
-              );
-          }
-          break;
-      }
+      viewName
+    );
+
+    composerPanel.onDidDispose(() => {
+      messageManager.dispose();
     });
   }
 }

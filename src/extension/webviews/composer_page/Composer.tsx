@@ -24,9 +24,8 @@ export interface ComposerProps {
   sourceName: string;
   viewName?: string;
   runQuery: RunQuery;
+  topValues: SearchValueMapResult[] | undefined;
 }
-
-const topValues: SearchValueMapResult[] = [];
 
 const nullUpdateQueryInUrl = () => {};
 
@@ -36,6 +35,7 @@ export const Composer: React.FC<ComposerProps> = ({
   sourceName,
   viewName,
   runQuery: runQueryImp,
+  topValues,
 }) => {
   const {queryMalloy, queryName, queryModifiers, querySummary} =
     useQueryBuilder(

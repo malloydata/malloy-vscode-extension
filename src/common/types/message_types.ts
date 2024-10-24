@@ -287,6 +287,7 @@ export enum ComposerMessageType {
   NewModel = 'new-model',
   ResultSuccess = 'result-success',
   ResultError = 'result-error',
+  SearchIndex = 'search-index',
 }
 
 export interface ComposerMessageNewModel {
@@ -309,10 +310,16 @@ export interface ComposerMessageResultError {
   error: string;
 }
 
+export interface ComposerMessageSearchIndex {
+  type: ComposerMessageType.SearchIndex;
+  result: ResultJSON;
+}
+
 export type ComposerMessage =
   | ComposerMessageNewModel
   | ComposerMessageResultSuccess
-  | ComposerMessageResultError;
+  | ComposerMessageResultError
+  | ComposerMessageSearchIndex;
 
 export enum ComposerPageMessageType {
   Ready = 'ready',

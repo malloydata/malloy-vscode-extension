@@ -21,7 +21,13 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {Explore, Field, JoinRelationship} from '@malloydata/malloy';
+import {
+  Explore,
+  Field,
+  JoinRelationship,
+  ModelDef,
+  isSourceDef,
+} from '@malloydata/malloy';
 
 export function isFieldAggregate(field: Field) {
   return field.isAtomicField() && field.isCalculation();
@@ -112,6 +118,22 @@ export const quoteIfNecessary = (element: string) => {
     return `\`${element}\``;
   }
   return element;
+};
+
+/**
+ * Retrieve a source from a model safely
+ *
+ * @param modelDef Model definition
+ * @param sourceName Source name
+ * @returns SourceDef for given name, or throws if not a source
+ */
+
+export const getSourceDef = (modelDef: ModelDef, sourceName: string) => {
+  const result = modelDef.contents[sourceName];
+  if (isSourceDef(result)) {
+    return result;
+  }
+  throw new Error(`Not a source: ${sourceName}`);
 };
 
 const RESERVED: string[] = [
