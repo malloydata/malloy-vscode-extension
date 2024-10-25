@@ -69,14 +69,18 @@ export function getWebviewHtml(
       --malloy-composer-code-fontSize: var(--vscode-editor-font-size);
       --malloy-composer-code-fontFamily: var(--vscode-editor-font-family, monospace);
 
-      --malloy-composer-form-background: var(--vscode-editor-background);
-      --malloy-composer-form-foreground:  var(--vscode-editor-foreground);
+      --malloy-composer-form-background: var(--vscode-editorWidget-background);
+      --malloy-composer-form-foreground:  var(--vscode-editorWidget-foreground);
+      --malloy-composer-form-border: var(--vscode-editorWidget-border)
       --malloy-composer-form-fontFamily: var(--vscode-font-family, Arial);
       --malloy-composer-form-fontSize: var(--vscode-font-size);
+      --malloy-composer-form-focus: var(--vscode-focusBorder);
+      --malloy-composer-form-focusBackground: var(--vscode-list-hoverBackground);
 
       --malloy-composer-menu-background: var(--vscode-menu-background);
       --malloy-composer-menu-foreground: var(--vscode-menu-foreground);
       --malloy-composer-menu-border: var(--vscode-menu-border);
+      --malloy-composer-menu-title: var(--vscode-menu-foreground);
       --malloy-composer-menu-fontFamily: var(--vscode-menu-font);
       --malloy-composer-menu-fontSize: var(--vscode-font-size);
     }
