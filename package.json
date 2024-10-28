@@ -593,7 +593,7 @@
     "@malloydata/db-trino": "0.0.204",
     "@malloydata/malloy": "0.0.204",
     "@malloydata/malloy-sql": "0.0.204",
-    "@malloydata/query-composer": "0.0.203-dev241025235845",
+    "@malloydata/query-composer": "0.0.203-dev241028191214",
     "@malloydata/render": "0.0.204",
     "@malloydata/syntax-highlight": "0.0.204",
     "@vscode/webview-ui-toolkit": "^1.2.1",
