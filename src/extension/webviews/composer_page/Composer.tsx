@@ -6,7 +6,7 @@
  */
 
 import * as React from 'react';
-import {useEffect} from 'react';
+import {useEffect, useState} from 'react';
 import {
   ExploreQueryEditor,
   useQueryBuilder,
@@ -16,7 +16,6 @@ import {
 import {ModelDef, SearchValueMapResult, SourceDef} from '@malloydata/malloy';
 
 import {DocumentMetadata} from '../../../common/types/query_spec';
-import {ErrorMessage} from './Error';
 
 export interface ComposerProps {
   documentMeta: DocumentMetadata;
@@ -37,19 +36,36 @@ export const Composer: React.FC<ComposerProps> = ({
   runQuery: runQueryImp,
   topValues,
 }) => {
-  const {queryMalloy, queryName, queryModifiers, querySummary} =
-    useQueryBuilder(
-      modelDef,
-      sourceName,
-      documentMeta.uri,
-      nullUpdateQueryInUrl
-    );
-
-  const {isRunning, error, result, runQuery} = useRunQuery(
+  const [error, setError] = useState<Error>();
+  const {
+    error: queryError,
+    queryMalloy,
+    queryName,
+    queryModifiers,
+    querySummary,
+  } = useQueryBuilder(
     modelDef,
+    sourceName,
     documentMeta.uri,
-    runQueryImp
+    nullUpdateQueryInUrl
   );
+
+  const {
+    isRunning,
+    error: runtimeError,
+    result,
+    runQuery,
+  } = useRunQuery(modelDef, documentMeta.uri, runQueryImp);
+
+  useEffect(() => {
+    if (queryError) {
+      setError(queryError);
+    } else if (runtimeError) {
+      setError(runtimeError);
+    } else {
+      setError(undefined);
+    }
+  }, [queryError, runtimeError]);
 
   const source = modelDef.contents[sourceName] as SourceDef;
 
@@ -70,11 +86,10 @@ export const Composer: React.FC<ComposerProps> = ({
         queryName={queryName}
         querySummary={querySummary}
         queryMalloy={queryMalloy}
-        result={result}
+        result={result || error}
         isRunning={isRunning}
         runQuery={runQuery}
       />
-      <ErrorMessage error={error?.message} />
     </>
   );
 };
