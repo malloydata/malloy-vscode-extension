@@ -6,7 +6,7 @@
  */
 
 import {ConnectionManager} from '../common/connection_manager';
-import {FileHandler} from '../common/types/file_handler';
+import {CellData, FileHandler} from '../common/types/file_handler';
 import {createModelMaterializer} from './create_runnable';
 import {DocumentMetadata} from '../common/types/query_spec';
 import {ModelDef, Runtime} from '@malloydata/malloy';
@@ -26,10 +26,16 @@ export const compileQuery = async (
     workspaceFolders = await fileHandler.fetchWorkspaceFolders(uri);
   }
 
+  let cellData: CellData | null = null;
+
+  if (url.protocol === 'vscode-notebook-cell:') {
+    cellData = await fileHandler.fetchCellData(uri);
+  }
+
   const modelMaterializer = await createModelMaterializer(
     uri,
     runtime,
-    null,
+    cellData,
     workspaceFolders
   );
 
