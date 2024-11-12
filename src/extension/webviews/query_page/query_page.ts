@@ -28,7 +28,7 @@ import {
   QueryField,
   Result,
 } from '@malloydata/malloy';
-import {HTMLView} from '@malloydata/render';
+import {HTMLView, getMalloyRenderHTML} from '@malloydata/render';
 import '@malloydata/render/webcomponent';
 import {css, html, LitElement, nothing} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
@@ -425,11 +425,14 @@ export class QueryPage extends LitElement {
             html`<div class="scroll result-container">
               ${this.results.html}
               <copy-button
-                .onCopy=${() =>
-                  this.copyToClipboard(
-                    this.getStyledHTML(this.results.html!),
-                    'HTML Results'
-                  )}
+                .onCopy=${async () => {
+                  if (this.results.html) {
+                    const copiedHtml = await getMalloyRenderHTML(
+                      this.results.html
+                    );
+                    this.copyToClipboard(copiedHtml, 'HTML Results');
+                  }
+                }}
               >
               </copy-button>
             </div>`
