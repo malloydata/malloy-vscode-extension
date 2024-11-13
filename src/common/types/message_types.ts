@@ -324,6 +324,7 @@ export type ComposerMessage =
 export enum ComposerPageMessageType {
   Ready = 'ready',
   RunQuery = 'run-query',
+  RefreshModel = 'refresh-model',
 }
 
 export interface ComposerPageMessageReady {
@@ -337,6 +338,12 @@ export interface ComposerPageMessageRunQuery {
   queryName: string;
 }
 
+export interface ComposerPageMessageRefreshModel {
+  type: ComposerPageMessageType.RefreshModel;
+  query: string;
+}
+
 export type ComposerPageMessage =
   | ComposerPageMessageReady
-  | ComposerPageMessageRunQuery;
+  | ComposerPageMessageRunQuery
+  | ComposerPageMessageRefreshModel;

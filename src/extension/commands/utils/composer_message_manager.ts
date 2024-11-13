@@ -12,6 +12,7 @@ import {
   ComposerMessage,
   ComposerMessageType,
   ComposerPageMessage,
+  ComposerPageMessageRefreshModel,
   ComposerPageMessageRunQuery,
   ComposerPageMessageType,
 } from '../../../common/types/message_types';
@@ -47,6 +48,9 @@ export class ComposerMessageManager
       switch (message.type) {
         case ComposerPageMessageType.RunQuery:
           await this.runQuery(message);
+          break;
+        case ComposerPageMessageType.RefreshModel:
+          await this.refreshModel(message);
           break;
       }
     });
@@ -145,6 +149,34 @@ export class ComposerMessageManager
         return result;
       }
     );
+  }
+
+  async refreshModel({query}: ComposerPageMessageRefreshModel): Promise<void> {
+    try {
+      const modelDef = await this.worker.sendRequest('malloy/compile', {
+        documentMeta: this.documentMeta,
+        query,
+      });
+      this.postMessage({
+        type: ComposerMessageType.NewModel,
+        documentMeta: this.documentMeta,
+        modelDef,
+        sourceName: this.sourceName,
+      });
+      void vscode.window.showInformationMessage('Model refreshed');
+    } catch (error) {
+      const message = `${error instanceof Error ? error.message : error}`;
+      const match = message.match(/FILE: internal:\/\/internal\.malloy\n(.*)/m);
+      let errorMessage: string;
+      if (match) {
+        errorMessage = `Query is incompatible:\n${match[1]}`;
+      } else {
+        errorMessage = 'Model does not compile';
+      }
+      void vscode.window.showErrorMessage(
+        `Could not refresh model: ${errorMessage}`
+      );
+    }
   }
 
   dispose() {}
