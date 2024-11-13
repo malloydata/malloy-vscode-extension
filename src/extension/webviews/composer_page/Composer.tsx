@@ -23,6 +23,7 @@ export interface ComposerProps {
   sourceName: string;
   viewName?: string;
   runQuery: RunQuery;
+  refreshModel: (query: string) => void;
   topValues: SearchValueMapResult[] | undefined;
 }
 
@@ -34,11 +35,13 @@ export const Composer: React.FC<ComposerProps> = ({
   sourceName,
   viewName,
   runQuery: runQueryImp,
+  refreshModel,
   topValues,
 }) => {
   const [error, setError] = useState<Error>();
   const {
     error: queryError,
+    query,
     queryMalloy,
     queryName,
     queryModifiers,
@@ -89,6 +92,7 @@ export const Composer: React.FC<ComposerProps> = ({
         result={result || error}
         isRunning={isRunning}
         runQuery={runQuery}
+        refreshModel={() => refreshModel(query)}
       />
     </>
   );
