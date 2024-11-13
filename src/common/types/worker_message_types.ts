@@ -40,7 +40,6 @@ import {ModelDef} from '@malloydata/malloy';
 
 export interface MessageCompile {
   documentMeta: DocumentMetadata;
-  query?: string;
 }
 
 export interface MessageRun {
