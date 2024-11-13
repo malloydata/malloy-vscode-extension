@@ -47,8 +47,8 @@ export class MessageHandler implements WorkerMessageHandler {
   ) {
     this.fileHandler = new RpcFileHandler(this);
 
-    this.onRequest('malloy/compile', ({documentMeta, query}) =>
-      compileQuery(this.fileHandler, connectionManager, documentMeta, query)
+    this.onRequest('malloy/compile', message =>
+      compileQuery(this.fileHandler, connectionManager, message.documentMeta)
     );
 
     this.onRequest('malloy/run', (message, cancellationToken) =>
