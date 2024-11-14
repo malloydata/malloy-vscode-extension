@@ -14,7 +14,8 @@ import {ModelDef, Runtime} from '@malloydata/malloy';
 export const compileQuery = async (
   fileHandler: FileHandler,
   connectionManager: ConnectionManager,
-  documentMeta: DocumentMetadata
+  documentMeta: DocumentMetadata,
+  query?: string
 ): Promise<ModelDef | undefined> => {
   const {uri} = documentMeta;
   const url = new URL(uri);
@@ -38,6 +39,10 @@ export const compileQuery = async (
     cellData,
     workspaceFolders
   );
+
+  if (query && modelMaterializer) {
+    await modelMaterializer.loadQuery(query).getPreparedQuery();
+  }
 
   const model = await modelMaterializer?.getModel();
   return model?._modelDef;

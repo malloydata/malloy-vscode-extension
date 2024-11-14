@@ -107,6 +107,15 @@ export const App: React.FC<AppProps> = ({vscode}) => {
     [vscode]
   );
 
+  const refreshModel = React.useCallback(
+    (query: string) =>
+      vscode.postMessage({
+        type: ComposerPageMessageType.RefreshModel,
+        query,
+      }),
+    [vscode]
+  );
+
   if (documentMeta && modelDef && sourceName) {
     return (
       <div style={{height: '100%'}}>
@@ -116,6 +125,7 @@ export const App: React.FC<AppProps> = ({vscode}) => {
           sourceName={sourceName}
           viewName={viewName}
           runQuery={runQuery}
+          refreshModel={refreshModel}
           topValues={topValues}
         />
       </div>
