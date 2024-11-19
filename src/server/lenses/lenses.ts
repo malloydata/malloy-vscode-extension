@@ -258,6 +258,16 @@ export async function getMalloyLenses(
               },
             });
           }
+          symbol.children.forEach((child, idx) => {
+            lenses.push({
+              range: child.lensRange.toJSON(),
+              command: {
+                title: idx === 0 ? `Explore: ${child.name}` : child.name,
+                command: 'malloy.openComposer',
+                arguments: [child.name],
+              },
+            });
+          });
         } catch (e) {
           console.error('import code lens failed with', e);
         }
