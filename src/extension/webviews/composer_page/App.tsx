@@ -18,6 +18,7 @@ import {Composer} from './Composer';
 import {DocumentMetadata} from '../../../common/types/query_spec';
 import {ModelDef, Result, SearchValueMapResult} from '@malloydata/malloy';
 import {RunQuery} from '@malloydata/query-composer';
+import {LabeledSpinner} from '../components/LabeledSpinner';
 
 export interface AppProps {
   vscode: VsCodeApi<ComposerPageMessage, void>;
@@ -131,6 +132,6 @@ export const App: React.FC<AppProps> = ({vscode}) => {
       </div>
     );
   } else {
-    return <h1>Loading</h1>;
+    return <LabeledSpinner text="Loading Data" />;
   }
 };
