@@ -21,16 +21,29 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {Hover, HoverParams, MarkupKind} from 'vscode-languageserver';
+import {
+  Hover,
+  HoverParams,
+  MarkupContent,
+  MarkupKind,
+  TextDocuments,
+} from 'vscode-languageserver';
 import {TextDocument} from 'vscode-languageserver-textdocument';
+import {DocumentLocation, Model} from '@malloydata/malloy';
 
 import {COMPLETION_DOCS} from '../../common/completion_docs';
 import {parseWithCache} from '../parse_cache';
+import {TranslateCache} from '../translate_cache';
 
-export const getHover = (
+// TODO: export from Malloy
+type ImportLocation = Exclude<ReturnType<Model['getImport']>, undefined>;
+
+export const getHover = async (
   document: TextDocument,
+  documents: TextDocuments<TextDocument>,
+  translateCache: TranslateCache,
   {position}: HoverParams
-): Hover | null => {
+): Promise<Hover | null> => {
   const context = parseWithCache(document).helpContext(position);
 
   if (context?.token) {
@@ -38,14 +51,79 @@ export const getHover = (
 
     if (name) {
       const value = COMPLETION_DOCS[context.type][name];
-      return {
-        contents: {
-          kind: MarkupKind.Markdown,
-          value,
-        },
-      };
+      if (value) {
+        return {
+          contents: {
+            kind: MarkupKind.Markdown,
+            value,
+          },
+        };
+      } else if (context.type === 'model_property') {
+        const model = await translateCache.translateWithCache(
+          document.uri,
+          document.version,
+          document.languageId
+        );
+        const importLocation = model?.getImport(position);
+        if (importLocation) {
+          return getImportHover(translateCache, documents, importLocation);
+        }
+
+        return null;
+      }
     }
   }
 
   return null;
 };
+
+async function getImportHover(
+  translateCache: TranslateCache,
+  documents: TextDocuments<TextDocument>,
+  importLocation: ImportLocation
+): Promise<Hover | null> {
+  const importedDocument = documents.get(importLocation.importURL) ?? {
+    uri: importLocation.importURL,
+    version: 0,
+    languageId: 'malloy',
+  };
+  const importedModel = await translateCache.translateWithCache(
+    importedDocument.uri,
+    importedDocument.version,
+    importedDocument.languageId
+  );
+  if (importedModel) {
+    const sources = bulletedList('Sources', importedModel.exportedExplores);
+    const queries = bulletedList('Queries', importedModel.namedQueries);
+    const markdown = `${sources}\n${queries}`;
+    const contents: MarkupContent = {
+      kind: MarkupKind.Markdown,
+      value: markdown,
+    };
+    return {
+      contents,
+    };
+  }
+  return null;
+}
+
+function bulletedList(
+  heading: string,
+  elements: {name: string; location?: DocumentLocation}[]
+): string {
+  if (elements.length) {
+    return (
+      `* ${heading}\n` +
+      elements
+        .map(query => {
+          const name = query.name;
+          const uri = query.location
+            ? `${query.location.url}#${query.location.range.start.line + 1}`
+            : '';
+          return `  * [${name}](${uri})`;
+        })
+        .join('\n')
+    );
+  }
+  return '';
+}

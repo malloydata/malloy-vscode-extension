@@ -256,11 +256,11 @@ export const initServer = (
     return resolveCompletionItem(item);
   });
 
-  connection.onHover((params: HoverParams): Hover | null => {
+  connection.onHover(async (params: HoverParams): Promise<Hover | null> => {
     const document = documents.get(params.textDocument.uri);
 
     return document && document.languageId === 'malloy'
-      ? getHover(document, params)
+      ? getHover(document, documents, translateCache, params)
       : null;
   });
 
