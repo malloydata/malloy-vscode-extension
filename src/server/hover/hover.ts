@@ -29,7 +29,7 @@ import {
   TextDocuments,
 } from 'vscode-languageserver';
 import {TextDocument} from 'vscode-languageserver-textdocument';
-import {DocumentLocation, Model} from '@malloydata/malloy';
+import {DocumentLocation, Model, Tag} from '@malloydata/malloy';
 
 import {COMPLETION_DOCS} from '../../common/completion_docs';
 import {parseWithCache} from '../parse_cache';
@@ -37,6 +37,7 @@ import {TranslateCache} from '../translate_cache';
 
 // TODO: export from Malloy
 type ImportLocation = Exclude<ReturnType<Model['getImport']>, undefined>;
+type DocumentReference = Exclude<ReturnType<Model['getReference']>, undefined>;
 
 export const getHover = async (
   document: TextDocument,
@@ -70,6 +71,16 @@ export const getHover = async (
         }
 
         return null;
+      } else {
+        const model = await translateCache.translateWithCache(
+          document.uri,
+          document.version,
+          document.languageId
+        );
+        const reference = model?.getReference(position);
+        if (reference) {
+          return getReferenceHover(translateCache, documents, reference);
+        }
       }
     }
   }
@@ -126,4 +137,22 @@ function bulletedList(
     );
   }
   return '';
+}
+
+function getReferenceHover(
+  _translateCache: TranslateCache,
+  _documents: TextDocuments<TextDocument>,
+  {text, definition}: DocumentReference
+) {
+  const tags = Tag.annotationToTaglines(definition.annotation).join('');
+  const markdown = `\`\`\`
+${tags}${text}: ${definition.type}
+\`\`\``;
+  const contents: MarkupContent = {
+    kind: MarkupKind.Markdown,
+    value: markdown,
+  };
+  return {
+    contents,
+  };
 }
