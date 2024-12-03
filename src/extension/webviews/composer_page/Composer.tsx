@@ -41,9 +41,7 @@ export const Composer: React.FC<ComposerProps> = ({
   const [error, setError] = useState<Error>();
   const {
     error: queryError,
-    query,
-    queryMalloy,
-    queryName,
+    queryWriter,
     queryModifiers,
     querySummary,
   } = useQueryBuilder(
@@ -59,6 +57,8 @@ export const Composer: React.FC<ComposerProps> = ({
     result,
     runQuery,
   } = useRunQuery(modelDef, documentMeta.uri, runQueryImp);
+
+  const query = queryWriter.getQueryStringForNotebook();
 
   useEffect(() => {
     if (queryError) {
@@ -86,9 +86,8 @@ export const Composer: React.FC<ComposerProps> = ({
         source={source}
         queryModifiers={queryModifiers}
         topValues={topValues}
-        queryName={queryName}
         querySummary={querySummary}
-        queryMalloy={queryMalloy}
+        queryWriter={queryWriter}
         result={result || error}
         isRunning={isRunning}
         runQuery={runQuery}

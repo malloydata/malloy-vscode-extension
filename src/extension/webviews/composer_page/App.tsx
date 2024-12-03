@@ -89,7 +89,7 @@ export const App: React.FC<AppProps> = ({vscode}) => {
   }, [vscode]);
 
   const runQuery = React.useCallback<RunQuery>(
-    (query: string, model: ModelDef, modelPath: string, queryName: string) => {
+    (query: string, model: ModelDef, modelPath: string, queryName?: string) => {
       const id = uuid();
       const promise = new Promise<Result>((resolve, reject) => {
         QueriesInFlight[id] = {
@@ -97,6 +97,7 @@ export const App: React.FC<AppProps> = ({vscode}) => {
           reject,
         };
       });
+      queryName ??= 'untitled';
       vscode.postMessage({
         type: ComposerPageMessageType.RunQuery,
         id,
