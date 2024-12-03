@@ -378,6 +378,11 @@
           "type": "string",
           "description": "Path to a Node.js executable to use for running the language server. Set this option if you're having trouble with Malloy running out of memory. Node version >= 20 recommended."
         },
+        "malloy.indexSearchLimit": {
+          "type": "number",
+          "default": 100,
+          "description": "Number of top values to fetch for index."
+        },
         "malloy.connections": {
           "type": "array",
           "items": {
