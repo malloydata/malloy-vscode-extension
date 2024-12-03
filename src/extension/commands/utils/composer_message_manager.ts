@@ -91,7 +91,10 @@ export class ComposerMessageManager
     const indexQuery = sourceDef.fields.find(
       ({name, as}) => (as || name) === 'search_index'
     );
-    const limit = 10;
+    const limit =
+      vscode.workspace
+        .getConfiguration('malloy')
+        .get<number>('indexSearchLimit') ?? 100;
 
     if (indexQuery) {
       const searchMapMalloy = `
