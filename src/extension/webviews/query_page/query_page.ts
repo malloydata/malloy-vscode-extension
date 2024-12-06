@@ -316,7 +316,6 @@ export class QueryPage extends LitElement {
         };
 
         this.progressMessage = 'Rendering';
-
         new HTMLView(document)
           .render(result, {
             dataStyles: {},
@@ -327,6 +326,11 @@ export class QueryPage extends LitElement {
               _drillFilters: string[]
             ) => {
               this.copyToClipboard(drillQuery, 'Drill Query');
+            },
+            nextRendererOptions: {
+              tableConfig: {
+                enableDrill: true,
+              },
             },
           })
           .then(html => {
