@@ -50,6 +50,14 @@ export const activate: ActivationFunction = ({postMessage}) => {
         const malloyRender = document.createElement('malloy-render');
         malloyRender.result = result;
         malloyRender.scrollEl = parent;
+        malloyRender.tableConfig = {
+          enableDrill: true,
+        };
+        malloyRender.onDrill = drillData => {
+          const command = 'malloy.copyToClipboard';
+          const args = [drillData.query, 'Query'];
+          postMessage?.({command, args});
+        };
         const style = document.createElement('style');
         style.innerHTML = `
           malloy-render::part(table-container) {

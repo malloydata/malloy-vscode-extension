@@ -64,6 +64,11 @@ export class MalloyRenderer extends LitElement {
         const args = [drillQuery, 'Query'];
         this.postMessage?.({command, args});
       },
+      nextRendererOptions: {
+        tableConfig: {
+          enableDrill: true,
+        },
+      },
     });
     return html`<link rel="preconnect" href="https://rsms.me/" />
       <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
