@@ -30,20 +30,10 @@ export class ComposerMessageManager
     private worker: WorkerConnection,
     composerPanel: vscode.WebviewPanel,
     private documentMeta: DocumentMetadata,
-    private modelDef: ModelDef,
-    private sourceName: string,
-    viewName?: string
+    private sourceName?: string,
+    private viewName?: string
   ) {
     super(composerPanel);
-
-    this.postMessage({
-      type: ComposerMessageType.NewModel,
-      documentMeta,
-      modelDef,
-      sourceName,
-      viewName,
-    });
-
     this.onReceiveMessage(async message => {
       switch (message.type) {
         case ComposerPageMessageType.RunQuery:
@@ -54,8 +44,6 @@ export class ComposerMessageManager
           break;
       }
     });
-
-    void this.initializeIndex();
   }
 
   async runQuery(message: ComposerPageMessageRunQuery) {
@@ -86,8 +74,11 @@ export class ComposerMessageManager
     }
   }
 
-  async initializeIndex(): Promise<SearchValueMapResult[] | undefined> {
-    const sourceDef = getSourceDef(this.modelDef, this.sourceName);
+  async initializeIndex(
+    modelDef: ModelDef,
+    sourceName: string
+  ): Promise<SearchValueMapResult[] | undefined> {
+    const sourceDef = getSourceDef(modelDef, sourceName);
     const indexQuery = sourceDef.fields.find(
       ({name, as}) => (as || name) === 'search_index'
     );
@@ -98,7 +89,7 @@ export class ComposerMessageManager
 
     if (indexQuery) {
       const searchMapMalloy = `
-        run: ${this.sourceName}
+        run: ${sourceName}
           -> ${indexQuery.as || indexQuery.name}
           -> {
             where: fieldType = 'string'
@@ -114,7 +105,7 @@ export class ComposerMessageManager
       `;
       const result = await this.runQueryWithProgress(
         uuid(),
-        `Search index for ${this.sourceName}`,
+        `Search index for ${sourceName}`,
         searchMapMalloy
       );
       if (result) {
@@ -160,11 +151,12 @@ export class ComposerMessageManager
         documentMeta: this.documentMeta,
         query,
       });
+      const sourceName = this.sourceName ?? Object.keys(modelDef.contents)[0];
       this.postMessage({
         type: ComposerMessageType.NewModel,
         documentMeta: this.documentMeta,
         modelDef,
-        sourceName: this.sourceName,
+        sourceName,
       });
       void vscode.window.showInformationMessage('Model refreshed');
     } catch (error) {
@@ -180,6 +172,24 @@ export class ComposerMessageManager
         `Could not refresh model: ${errorMessage}`
       );
     }
+  }
+
+  async newModel(): Promise<void> {
+    const modelDef = await this.worker.sendRequest('malloy/compile', {
+      documentMeta: this.documentMeta,
+    });
+
+    const sourceName = this.sourceName ?? Object.keys(modelDef.contents)[0];
+
+    this.postMessage({
+      type: ComposerMessageType.NewModel,
+      documentMeta: this.documentMeta,
+      modelDef,
+      sourceName,
+      viewName: this.viewName,
+    });
+
+    void this.initializeIndex(modelDef, sourceName);
   }
 
   dispose() {}
