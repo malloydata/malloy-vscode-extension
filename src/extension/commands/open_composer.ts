@@ -38,25 +38,20 @@ export async function openComposer(
       icon
     );
 
+    const messageManager = new ComposerMessageManager(
+      worker,
+      composerPanel,
+      documentMeta,
+      sourceName,
+      viewName
+    );
+
     composerPanel.webview.html = getWebviewHtml(
       'composer_page',
       composerPanel.webview
     );
 
-    const modelDef = await worker.sendRequest('malloy/compile', {
-      documentMeta,
-    });
-
-    sourceName ??= Object.keys(modelDef.contents)[0];
-
-    const messageManager = new ComposerMessageManager(
-      worker,
-      composerPanel,
-      documentMeta,
-      modelDef,
-      sourceName,
-      viewName
-    );
+    void messageManager.newModel();
 
     composerPanel.onDidDispose(() => {
       messageManager.dispose();

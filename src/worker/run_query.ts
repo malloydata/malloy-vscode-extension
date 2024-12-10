@@ -25,7 +25,6 @@ import {
   isSourceDef,
   MalloyError,
   MalloyQueryData,
-  QueryMaterializer,
   Result,
   Runtime,
   SerializedExplore,
@@ -350,16 +349,12 @@ export const runQuery = async (
       return;
     }
 
-    // Set the row limit to the limit provided in the final stage of the query, if present
-    const rowLimit =
-      runnable instanceof QueryMaterializer
-        ? (await runnable.getPreparedResult()).resultExplore.limit
-        : undefined;
+    const preparedQuery = await runnable.getPreparedQuery();
+    const {preparedResult} = preparedQuery;
 
-    const dialect =
-      (runnable instanceof QueryMaterializer
-        ? (await runnable.getPreparedQuery()).dialect
-        : undefined) || 'unknown';
+    // Set the row limit to the limit provided in the final stage of the query, if present
+    const rowLimit = preparedResult.resultExplore.limit;
+    const dialect = preparedQuery.dialect;
 
     const sql = await runnable.getSQL();
     if (cancellationToken.isCancellationRequested) return;
@@ -374,10 +369,7 @@ export const runQuery = async (
 
     if (showSQLOnly) {
       const schema: SerializedExplore[] = [];
-      if ('getPreparedQuery' in runnable) {
-        const query = await runnable.getPreparedQuery();
-        schema.push(query.preparedResult.resultExplore.toJSON());
-      }
+      schema.push(preparedResult.resultExplore.toJSON());
       const estimatedRunStats = await runnable.estimateQueryCost();
       sendMessage({
         status: QueryRunStatus.EstimatedCost,
