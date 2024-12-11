@@ -30,3 +30,9 @@ export async function getSourceUrl(
   const metadata = await connection.fetchTableMetadata(tablePath);
   return metadata.url;
 }
+
+export const unquoteIdentifier = (identifier: string): string =>
+  identifier
+    .split('.')
+    .map(part => part.replace(/(^`|`$)/g, ''))
+    .join('.');

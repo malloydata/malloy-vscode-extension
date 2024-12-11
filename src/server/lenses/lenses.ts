@@ -25,7 +25,7 @@ import {CodeLens, Connection, Position, Range} from 'vscode-languageserver';
 import {TextDocument} from 'vscode-languageserver-textdocument';
 import {parseWithCache} from '../parse_cache';
 import {ConnectionManager} from '../../common/connection_manager';
-import {getSourceUrl} from './utils';
+import {getSourceUrl, unquoteIdentifier} from './utils';
 
 // const explain = `
 //   index
@@ -175,7 +175,7 @@ export async function getMalloyLenses(
             command: {
               title: 'Explore',
               command: 'malloy.openComposer',
-              arguments: [exploreName],
+              arguments: [unquoteIdentifier(exploreName)],
             },
           });
           // lenses.push({
@@ -220,7 +220,7 @@ export async function getMalloyLenses(
                   command: {
                     title: 'Explore',
                     command: 'malloy.openComposer',
-                    arguments: [exploreName, queryName],
+                    arguments: [unquoteIdentifier(exploreName), queryName],
                   },
                 }
               );
@@ -264,7 +264,7 @@ export async function getMalloyLenses(
               command: {
                 title: idx === 0 ? `Explore: ${child.name}` : child.name,
                 command: 'malloy.openComposer',
-                arguments: [child.name],
+                arguments: [unquoteIdentifier(child.name)],
               },
             });
           });
