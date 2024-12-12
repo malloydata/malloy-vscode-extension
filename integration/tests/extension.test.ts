@@ -28,6 +28,10 @@ import * as path from 'path';
 
 import {ResultJSON} from '@malloydata/malloy';
 
+interface RunMalloyQueryResult {
+  resultJson: ResultJSON;
+}
+
 describe('Smoke tests', function () {
   this.timeout(20000);
 
@@ -35,9 +39,9 @@ describe('Smoke tests', function () {
     const filePath = path.resolve(__dirname, '../../tests/data/test.malloy');
     const document = await vscode.workspace.openTextDocument(filePath);
     await vscode.window.showTextDocument(document);
-    const resultJson = await vscode.commands.executeCommand<
-      ResultJSON | undefined
+    const result = await vscode.commands.executeCommand<
+      RunMalloyQueryResult | undefined
     >('malloy.runQueryFile');
-    assert.deepStrictEqual(resultJson?.queryResult.result, [{one: 1}]);
+    assert.deepStrictEqual(result?.resultJson.queryResult.result, [{one: 1}]);
   });
 });

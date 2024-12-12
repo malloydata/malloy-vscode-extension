@@ -6,23 +6,37 @@
  */
 
 import * as React from 'react';
-import {useEffect, useState} from 'react';
+import {useCallback, useEffect, useState} from 'react';
 import {
   ExploreQueryEditor,
   useQueryBuilder,
   useRunQuery,
   RunQuery,
 } from '@malloydata/query-composer';
-import {ModelDef, SearchValueMapResult, SourceDef} from '@malloydata/malloy';
+import {
+  ModelDef,
+  Result,
+  SearchValueMapResult,
+  SourceDef,
+} from '@malloydata/malloy';
 
 import {DocumentMetadata} from '../../../common/types/query_spec';
+import {
+  QueryRunStats,
+  RunMalloyQueryResult,
+} from '../../../common/types/message_types';
+import styled from 'styled-components';
+import {convertFromBytes} from '../../../common/convert_to_bytes';
 
 export interface ComposerProps {
   documentMeta: DocumentMetadata;
   modelDef: ModelDef;
   sourceName: string;
   viewName?: string;
-  runQuery: RunQuery;
+  runQuery: (
+    query: string,
+    queryName: string | undefined
+  ) => Promise<RunMalloyQueryResult>;
   refreshModel: (query: string) => void;
   topValues: SearchValueMapResult[] | undefined;
 }
@@ -51,12 +65,39 @@ export const Composer: React.FC<ComposerProps> = ({
     nullUpdateQueryInUrl
   );
 
+  const [stats, setStats] = useState<QueryRunStats>();
+  const [profilingUrl, setProfilingUrl] = useState<string>();
+  const [queryCostBytes, setQueryCostBytes] = useState<number>();
+
+  const runQueryWrapper = useCallback<RunQuery>(
+    async (
+      query: string,
+      _modelDef: ModelDef,
+      _modelPath: string,
+      queryName: string | undefined
+    ): Promise<Result> => {
+      setStats(undefined);
+      setProfilingUrl(undefined);
+      setQueryCostBytes(undefined);
+      const {profilingUrl, resultJson, stats} = await runQueryImp(
+        query,
+        queryName
+      );
+      const result = Result.fromJSON(resultJson);
+      setStats(stats);
+      setProfilingUrl(profilingUrl);
+      setQueryCostBytes(result.runStats?.queryCostBytes);
+      return result;
+    },
+    [runQueryImp]
+  );
+
   const {
     isRunning,
     error: runtimeError,
     result,
     runQuery,
-  } = useRunQuery(modelDef, documentMeta.uri, runQueryImp);
+  } = useRunQuery(modelDef, documentMeta.uri, runQueryWrapper);
 
   useEffect(() => {
     if (queryError) {
@@ -79,20 +120,80 @@ export const Composer: React.FC<ComposerProps> = ({
   const query = queryWriter.getQueryStringForNotebook();
 
   return (
-    <>
-      <ExploreQueryEditor
-        model={modelDef}
-        modelPath={documentMeta.fileName}
-        source={source}
-        queryModifiers={queryModifiers}
-        topValues={topValues}
-        querySummary={querySummary}
-        queryWriter={queryWriter}
-        result={result || error}
-        isRunning={isRunning}
-        runQuery={runQuery}
-        refreshModel={() => refreshModel(query)}
-      />
-    </>
+    <Outer>
+      <Editor>
+        <ExploreQueryEditor
+          model={modelDef}
+          modelPath={documentMeta.fileName}
+          source={source}
+          queryModifiers={queryModifiers}
+          topValues={topValues}
+          querySummary={querySummary}
+          queryWriter={queryWriter}
+          result={result || error}
+          isRunning={isRunning}
+          runQuery={runQuery}
+          refreshModel={() => refreshModel(query)}
+        />
+      </Editor>
+      <Stats>{getStats(stats, profilingUrl, queryCostBytes)}</Stats>
+    </Outer>
   );
 };
+
+function getStats(
+  stats?: QueryRunStats,
+  profilingUrl?: string,
+  queryCostBytes?: number
+) {
+  return (
+    <span>
+      {stats
+        ? `Compile Time: ${stats.compileTime.toLocaleString()}s, Run Time:
+      ${stats.runTime.toLocaleString()}s, Total Time:
+      ${stats.totalTime.toLocaleString()}s.`
+        : ''}
+      {getQueryCostStats(queryCostBytes) ?? ''}
+      {getProfilingUrlLink(profilingUrl)}
+    </span>
+  );
+}
+
+function getQueryCostStats(queryCostBytes?: number, isEstimate?: boolean) {
+  if (typeof queryCostBytes !== 'number') {
+    return null;
+  }
+
+  if (queryCostBytes) {
+    return `${isEstimate ? 'Will process' : 'Processed'} ${convertFromBytes(
+      queryCostBytes
+    )}`;
+  } else {
+    return 'From cache.';
+  }
+}
+
+function getProfilingUrlLink(profilingUrl?: string) {
+  return profilingUrl ? <a href="${profilingUrl}">Query Profile Page</a> : null;
+}
+
+const Outer = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+`;
+
+const Editor = styled.div`
+  display: flex;
+  flex-grow: 1;
+  overflow: automatic;
+`;
+
+const Stats = styled.div`
+  display: flex;
+  color: var(--vscode-editorWidget-Foreground);
+  background-color: var(--vscode-editorWidget-background);
+  font-size: 12px;
+  padding: 5px;
+  flex-grow: 0;
+`;

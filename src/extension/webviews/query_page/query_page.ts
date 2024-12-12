@@ -328,6 +328,9 @@ export class QueryPage extends LitElement {
               this.copyToClipboard(drillQuery, 'Drill Query');
             },
             nextRendererOptions: {
+              onDrill: drillData => {
+                this.copyToClipboard(drillData.query, 'Drill Query');
+              },
               tableConfig: {
                 enableDrill: true,
               },

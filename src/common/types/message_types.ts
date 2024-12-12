@@ -31,6 +31,12 @@ import {ConnectionBackend, ConnectionConfig} from './connection_manager_types';
 import {ProgressType} from 'vscode-jsonrpc';
 import {DocumentMetadata} from './query_spec';
 
+export interface RunMalloyQueryResult {
+  profilingUrl: string | undefined;
+  resultJson: ResultJSON;
+  stats: QueryRunStats;
+}
+
 /*
  * These messages are used to pass status back from the worker to
  * the query result web view
@@ -301,7 +307,7 @@ export interface ComposerMessageNewModel {
 export interface ComposerMessageResultSuccess {
   type: ComposerMessageType.ResultSuccess;
   id: string;
-  result: ResultJSON;
+  result: RunMalloyQueryResult;
 }
 
 export interface ComposerMessageResultError {
@@ -312,7 +318,7 @@ export interface ComposerMessageResultError {
 
 export interface ComposerMessageSearchIndex {
   type: ComposerMessageType.SearchIndex;
-  result: ResultJSON;
+  result: RunMalloyQueryResult;
 }
 
 export type ComposerMessage =

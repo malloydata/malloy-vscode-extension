@@ -21,13 +21,13 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import {RunMalloyQueryResult} from '../../common/types/message_types';
 import {WorkerConnection} from '../worker_connection';
 import {
   getActiveDocumentMetadata,
   getDocumentMetadataFromUri,
   runMalloyQueryWithProgress,
 } from './utils/run_query_utils';
-import {ResultJSON} from '@malloydata/malloy';
 
 export async function runQueryCommand(
   worker: WorkerConnection,
@@ -35,7 +35,7 @@ export async function runQueryCommand(
   name?: string,
   defaultTab?: string,
   uri?: string
-): Promise<ResultJSON | undefined> {
+): Promise<RunMalloyQueryResult | undefined> {
   const documentMeta = uri
     ? getDocumentMetadataFromUri(uri)
     : getActiveDocumentMetadata();

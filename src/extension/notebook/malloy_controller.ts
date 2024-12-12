@@ -193,7 +193,7 @@ class MalloyController {
       this.statusBarProvider.update();
 
       const documentMeta = getDocumentMetadata(document);
-      const jsonResults = await runMalloyQuery(
+      const result = await runMalloyQuery(
         this.worker,
         {type: 'file', index: -1, documentMeta},
         uri,
@@ -201,6 +201,7 @@ class MalloyController {
         {withWebview: false},
         execution.token
       );
+      const jsonResults = result ? result.resultJson : undefined;
 
       const output: vscode.NotebookCellOutput[] = [];
       if (jsonResults) {
