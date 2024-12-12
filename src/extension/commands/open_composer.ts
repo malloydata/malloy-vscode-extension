@@ -12,6 +12,7 @@ import {Utils} from 'vscode-uri';
 import {MALLOY_EXTENSION_STATE} from '../state';
 import {WorkerConnection} from '../worker_connection';
 import {ComposerMessageManager} from './utils/composer_message_manager';
+import {errorMessage} from '../../common/errors';
 
 const icon = 'turtle.svg';
 
@@ -51,10 +52,15 @@ export async function openComposer(
       composerPanel.webview
     );
 
-    void messageManager.newModel();
-
     composerPanel.onDidDispose(() => {
       messageManager.dispose();
     });
+
+    try {
+      await messageManager.newModel();
+    } catch (error) {
+      void vscode.window.showErrorMessage(errorMessage(error));
+      composerPanel.dispose();
+    }
   }
 }
