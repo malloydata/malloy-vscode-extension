@@ -24,10 +24,11 @@
 import * as vscode from 'vscode';
 
 import {MALLOY_EXTENSION_STATE, RunState} from '../../state';
-import {Result, ResultJSON} from '@malloydata/malloy';
+import {Result} from '@malloydata/malloy';
 import {
   QueryMessageStatus,
   QueryRunStatus,
+  RunMalloyQueryResult,
   queryPanelProgress,
 } from '../../../common/types/message_types';
 import {queryDownload} from './query_download_utils';
@@ -116,7 +117,7 @@ export async function runMalloyQuery(
   options: RunMalloyQueryOptions = {},
   cancellationToken: vscode.CancellationToken,
   progress?: vscode.Progress<{message?: string; increment?: number}>
-): Promise<ResultJSON | undefined> {
+): Promise<RunMalloyQueryResult | undefined> {
   const showSQLOnly = options.showSQLOnly ?? false;
   const showSchemaOnly = options.showSchemaOnly ?? false;
   const withWebview = options.withWebview ?? true;
@@ -250,12 +251,12 @@ export async function runMalloyQuery(
           break;
         case QueryRunStatus.Done:
           {
-            if (message.stats !== undefined) {
-              logTime('Compile', message.stats.compileTime);
-              logTime('Run', message.stats.runTime);
-              logTime('Total', message.stats.totalTime);
+            const {profilingUrl, resultJson, stats} = message;
+            if (stats !== undefined) {
+              logTime('Compile', stats.compileTime);
+              logTime('Run', stats.runTime);
+              logTime('Total', stats.totalTime);
             }
-            const {resultJson} = message;
             const queryResult = Result.fromJSON(resultJson);
             progress?.report({increment: 100, message: 'Rendering'});
 
@@ -283,7 +284,7 @@ export async function runMalloyQuery(
             });
 
             unsubscribe();
-            resolve(message.resultJson);
+            resolve({profilingUrl, resultJson, stats});
           }
           break;
         case QueryRunStatus.Error:
@@ -315,8 +316,8 @@ export function runMalloyQueryWithProgress(
   panelId: string,
   name: string,
   options: RunMalloyQueryOptions = {}
-): Thenable<ResultJSON | undefined> {
-  return vscode.window.withProgress<ResultJSON | undefined>(
+): Thenable<RunMalloyQueryResult | undefined> {
+  return vscode.window.withProgress<RunMalloyQueryResult | undefined>(
     {
       location: vscode.ProgressLocation.Notification,
       title: `Running (${name})`,

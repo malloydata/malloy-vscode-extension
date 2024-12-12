@@ -26,12 +26,12 @@ import {
   getActiveDocumentMetadata,
 } from './utils/run_query_utils';
 import {WorkerConnection} from '../worker_connection';
-import {ResultJSON} from '@malloydata/malloy';
+import {RunMalloyQueryResult} from '../../common/types/message_types';
 
 export async function runQueryFileCommand(
   worker: WorkerConnection,
   queryIndex = -1
-): Promise<ResultJSON | undefined> {
+): Promise<RunMalloyQueryResult | undefined> {
   const documentMeta = getActiveDocumentMetadata();
   if (documentMeta) {
     return runMalloyQueryWithProgress(

@@ -21,17 +21,17 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {ResultJSON} from '@malloydata/malloy';
 import {WorkerConnection} from '../worker_connection';
 import {
   getActiveDocumentMetadata,
   runMalloyQueryWithProgress,
 } from './utils/run_query_utils';
+import {RunMalloyQueryResult} from '../../common/types/message_types';
 
 export async function showSQLNamedQueryCommand(
   worker: WorkerConnection,
   name: string
-): Promise<ResultJSON | undefined> {
+): Promise<RunMalloyQueryResult | undefined> {
   const documentMeta = getActiveDocumentMetadata();
   if (documentMeta) {
     return runMalloyQueryWithProgress(

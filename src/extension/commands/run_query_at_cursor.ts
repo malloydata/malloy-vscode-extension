@@ -23,12 +23,12 @@
 
 import * as vscode from 'vscode';
 import {MALLOY_EXTENSION_STATE} from '../state';
-import {ResultJSON} from '@malloydata/malloy';
 import {BaseLanguageClient, CodeLens} from 'vscode-languageclient';
+import {RunMalloyQueryResult} from '../../common/types/message_types';
 
 export async function runQueryAtCursorCommand(
   client: BaseLanguageClient
-): Promise<ResultJSON | undefined> {
+): Promise<RunMalloyQueryResult | undefined> {
   const document =
     vscode.window.activeTextEditor?.document ||
     MALLOY_EXTENSION_STATE.getActiveWebviewPanel()?.document;

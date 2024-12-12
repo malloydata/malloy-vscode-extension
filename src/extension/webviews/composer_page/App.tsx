@@ -13,11 +13,11 @@ import {
   ComposerMessageType,
   ComposerPageMessage,
   ComposerPageMessageType,
+  RunMalloyQueryResult,
 } from '../../../common/types/message_types';
 import {Composer} from './Composer';
 import {DocumentMetadata} from '../../../common/types/query_spec';
 import {ModelDef, Result, SearchValueMapResult} from '@malloydata/malloy';
-import {RunQuery} from '@malloydata/query-composer';
 import {LabeledSpinner} from '../components/LabeledSpinner';
 
 export interface AppProps {
@@ -25,7 +25,7 @@ export interface AppProps {
 }
 
 interface QueryPromiseResolver {
-  resolve: (result: Result) => void;
+  resolve: (result: RunMalloyQueryResult) => void;
   reject: (error: Error) => void;
 }
 
@@ -56,7 +56,7 @@ export const App: React.FC<AppProps> = ({vscode}) => {
           {
             const {id, result} = data;
             if (QueriesInFlight[id]) {
-              QueriesInFlight[id]?.resolve(Result.fromJSON(result));
+              QueriesInFlight[id]?.resolve(result);
               delete QueriesInFlight[id];
             }
           }
@@ -72,7 +72,7 @@ export const App: React.FC<AppProps> = ({vscode}) => {
           break;
         case ComposerMessageType.SearchIndex:
           {
-            const result = Result.fromJSON(data.result);
+            const result = Result.fromJSON(data.result.resultJson);
             setTopValues(
               result._queryResult.result as unknown as SearchValueMapResult[]
             );
@@ -88,16 +88,14 @@ export const App: React.FC<AppProps> = ({vscode}) => {
     };
   }, [vscode]);
 
-  const runQuery = React.useCallback<RunQuery>(
+  const runQuery = React.useCallback(
     (
       query: string,
-      model: ModelDef,
-      modelPath: string,
       queryName: string | undefined
-    ) => {
+    ): Promise<RunMalloyQueryResult> => {
       queryName ??= 'new_query';
       const id = uuid();
-      const promise = new Promise<Result>((resolve, reject) => {
+      const promise = new Promise<RunMalloyQueryResult>((resolve, reject) => {
         QueriesInFlight[id] = {
           resolve,
           reject,
