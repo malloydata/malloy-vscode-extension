@@ -25,6 +25,7 @@ import * as vscode from 'vscode';
 import {URI, Utils} from 'vscode-uri';
 
 import {
+  ArrayDef,
   Explore,
   Field,
   QueryField,
@@ -44,6 +45,7 @@ import {WorkerConnection} from '../worker_connection';
 import {getActiveDocumentMetadata} from '../commands/utils/run_query_utils';
 import {DocumentMetadata} from '../../common/types/query_spec';
 
+const arrayIcon = 'data-type-array.svg';
 const numberIcon = 'number.svg';
 const numberAggregateIcon = 'number-aggregate.svg';
 const booleanIcon = 'boolean.svg';
@@ -55,9 +57,10 @@ const oneToManyIcon = 'one_to_many.svg';
 const manyToOneIcon = 'many_to_one.svg';
 const oneToOneIcon = 'one_to_one.svg';
 const unknownIcon = 'unknown.svg';
+const sqlDatabaseIcon = 'sql-database.svg';
 
 export class SchemaProvider
-  implements vscode.TreeDataProvider<ExploreItem | FieldItem>
+  implements vscode.TreeDataProvider<ArrayItem | ExploreItem | FieldItem>
 {
   private readonly resultCache: Map<string, ExploreItem[]>;
   private previousKey: string | undefined;
@@ -113,7 +116,7 @@ export class SchemaProvider
 
   async getChildren(
     element?: ExploreItem
-  ): Promise<(ExploreItem | FieldItem)[]> {
+  ): Promise<(ArrayItem | ExploreItem | FieldItem)[]> {
     if (element) {
       return element.explore.allFields
         .filter(field => !isFieldHidden(field))
@@ -121,14 +124,24 @@ export class SchemaProvider
         .map(field => {
           const newPath = [...element.accessPath, field.name];
           if (field.isExploreField()) {
-            return new ExploreItem(
-              this.context,
-              element.topLevelExplore,
-              field,
-              newPath,
-              element.explore.location,
-              element.explore.allFields.length === 1
-            );
+            if (field.structDef.type === 'array') {
+              return new ArrayItem(
+                this.context,
+                element.topLevelExplore,
+                field.structDef,
+                newPath,
+                field.location
+              );
+            } else {
+              return new ExploreItem(
+                this.context,
+                element.topLevelExplore,
+                field,
+                newPath,
+                element.explore.location,
+                element.explore.allFields.length === 1
+              );
+            }
           } else {
             return new FieldItem(
               this.context,
@@ -201,6 +214,35 @@ class ExploreItem extends vscode.TreeItem {
       dark: getIconPath(this.context, `struct_${subtype}`, false),
     };
   }
+}
+
+class ArrayItem extends vscode.TreeItem {
+  constructor(
+    private context: vscode.ExtensionContext,
+    public topLevelExplore: string,
+    public arrayDef: ArrayDef,
+    public accessPath: string[],
+    public location: DocumentLocation | undefined
+  ) {
+    super(arrayDef.as || arrayDef.name, vscode.TreeItemCollapsibleState.None);
+    this.contextValue = 'array';
+    const typeLabel = `array of ${arrayDef.elementTypeDef.type}`;
+    this.tooltip = new vscode.MarkdownString(
+      `
+$(symbol-field) \`${this.label}\`
+
+**Path**: \`${this.accessPath.join('.')}\`
+
+**Type**: \`${typeLabel}\`
+    `,
+      true
+    );
+  }
+
+  override iconPath = {
+    light: getIconPath(this.context, 'array', false),
+    dark: getIconPath(this.context, 'array', false),
+  };
 }
 
 export class FieldItem extends vscode.TreeItem {
@@ -280,6 +322,12 @@ function getIconPath(
         break;
       case 'query':
         imageFileName = queryIcon;
+        break;
+      case 'array':
+        imageFileName = arrayIcon;
+        break;
+      case 'sql native':
+        imageFileName = sqlDatabaseIcon;
         break;
       default:
         imageFileName = unknownIcon;

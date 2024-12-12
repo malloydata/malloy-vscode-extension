@@ -23,6 +23,21 @@
 
 import {html} from 'lit';
 
+export const arrayIcon = html`<svg
+  fill="none"
+  height="15"
+  viewBox="0 0 15 15"
+  width="15"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <path
+    clip-rule="evenodd"
+    d="m2.5 2c-.27614 0-.5.22386-.5.5v10c0 .2761.22386.5.5.5h2c.27614 0 .5-.2239.5-.5s-.22386-.5-.5-.5h-1.5v-9h1.5c.27614 0 .5-.22386.5-.5s-.22386-.5-.5-.5zm8 0c-.2761 0-.5.22386-.5.5s.2239.5.5.5h1.5v9h-1.5c-.2761 0-.5.2239-.5.5s.2239.5.5.5h2c.2761 0 .5-.2239.5-.5v-10c0-.27614-.2239-.5-.5-.5zm-4.5 5h-1v1h1zm1 0h1v1h-1zm3 0h-1v1h1z"
+    fill="#151515"
+    fill-rule="evenodd"
+  />
+</svg>`;
+
 export const averageIcon = html`
   <svg
     width="16px"
@@ -706,6 +721,21 @@ export const chevronDownIcon = html`<svg
   width="16px"
 >
   <path d="M480-345 240-585l56-56 184 184 184-184 56 56-240 240Z" />
+</svg>`;
+
+export const sqlNativeIcon = html`<svg
+  fill="none"
+  height="15"
+  viewBox="0 0 15 15"
+  width="15"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <path
+    clip-rule="evenodd"
+    d="m2 5.5c0-.27614.22386-.5.5-.5h2c.27614 0 .5.22386.5.5s-.22386.5-.5.5h-1.5v1h1.5c.27614 0 .5.22386.5.5v2c0 .27614-.22386.5-.5.5h-2c-.27614 0-.5-.22386-.5-.5s.22386-.5.5-.5h1.5v-1h-1.5c-.27614 0-.5-.22386-.5-.5zm4 0c0-.27614.22386-.5.5-.5h2c.27614 0 .5.22386.5.5v4.5h.5c.27614 0 .5.2239.5.5s-.22386.5-.5.5h-1c-.27614 0-.5-.2239-.5-.5v-.5h-1.5c-.27614 0-.5-.22386-.5-.5zm2 3.5h-1v-3h1zm2.5-4c.2761 0 .5.22386.5.5v3.5h1.5c.2761 0 .5.22386.5.5s-.2239.5-.5.5h-2c-.2761 0-.5-.22386-.5-.5v-4c0-.27614.2239-.5.5-.5z"
+    fill="#151515"
+    fill-rule="evenodd"
+  />
 </svg>`;
 
 export const unknownIcon = html`

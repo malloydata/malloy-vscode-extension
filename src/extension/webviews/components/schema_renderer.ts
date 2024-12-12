@@ -26,7 +26,13 @@ import {customElement, property} from 'lit/decorators.js';
 import {classMap} from 'lit/directives/class-map.js';
 
 import {styles} from './schema_renderer.css';
-import {Explore, Field, NamedQuery, QueryField} from '@malloydata/malloy';
+import {
+  Explore,
+  ExploreField,
+  Field,
+  NamedQuery,
+  QueryField,
+} from '@malloydata/malloy';
 import {
   exploreSubtype,
   fieldType,
@@ -34,6 +40,7 @@ import {
   isFieldHidden,
 } from '../../../common/schema';
 import {
+  arrayIcon,
   booleanIcon,
   chevronDownIcon,
   chevronRightIcon,
@@ -43,6 +50,7 @@ import {
   oneToManyIcon,
   oneToOneIcon,
   queryIcon,
+  sqlNativeIcon,
   stringIcon,
   timeIcon,
   unknownIcon,
@@ -83,7 +91,11 @@ function bucketFields(fields: Field[]) {
       if (isFieldAggregate(field)) {
         measures.push(field);
       } else if (field.isExploreField()) {
-        explores.push(field);
+        if (field.isArray) {
+          dimensions.push(field);
+        } else {
+          explores.push(field);
+        }
       } else if (type === 'query') {
         queries.push(field);
       } else {
@@ -113,6 +125,9 @@ function getIconElement(fieldType: string, isAggregate: boolean) {
     imageElement = numberAggregateIcon;
   } else {
     switch (fieldType) {
+      case 'array':
+        imageElement = arrayIcon;
+        break;
       case 'number':
         imageElement = numberIcon;
         break;
@@ -140,6 +155,9 @@ function getIconElement(fieldType: string, isAggregate: boolean) {
         break;
       case 'query':
         imageElement = queryIcon;
+        break;
+      case 'sql native':
+        imageElement = sqlNativeIcon;
         break;
       default:
         imageElement = unknownIcon;
@@ -171,11 +189,18 @@ function getExploreName(explore: Explore, path: string) {
  * @param path Path to this field
  * @returns Tooltip text
  */
-function buildTitle(field: Field | Explore, path: string) {
+function buildTitle(field: Field | ExploreField, path: string) {
+  let subType = '';
   if (field.isExplore()) {
-    return '';
+    if (field.isArray) {
+      if (field.structDef.type === 'array') {
+        subType = ` of ${field.structDef.elementTypeDef.type}`;
+      }
+    } else {
+      return '';
+    }
   }
-  let typeLabel = fieldType(field);
+  let typeLabel = fieldType(field) + subType;
   if (field.isAtomicField() && field.isUnsupported()) {
     typeLabel = `${typeLabel} (${field.rawType})`;
   }
@@ -238,7 +263,7 @@ const queryItem = (
 export class StructItem extends LitElement {
   static override styles = [styles];
 
-  @property({type: Object}) explore: Explore | null = null;
+  @property({type: Object}) explore: ExploreField | null = null;
   @property({type: String}) path = '';
   @property() onFieldClick?: (field: Field) => void;
   @property() onQueryClick?: (query: NamedQuery | QueryField) => void;
