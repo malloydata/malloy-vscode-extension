@@ -36,6 +36,7 @@ import {
 import {
   exploreSubtype,
   fieldType,
+  getTypeLabel,
   isFieldAggregate,
   isFieldHidden,
 } from '../../../common/schema';
@@ -189,21 +190,8 @@ function getExploreName(explore: Explore, path: string) {
  * @param path Path to this field
  * @returns Tooltip text
  */
-function buildTitle(field: Field | ExploreField, path: string) {
-  let subType = '';
-  if (field.isExplore()) {
-    if (field.isArray) {
-      if (field.structDef.type === 'array') {
-        subType = ` of ${field.structDef.elementTypeDef.type}`;
-      }
-    } else {
-      return '';
-    }
-  }
-  let typeLabel = fieldType(field) + subType;
-  if (field.isAtomicField() && field.isUnsupported()) {
-    typeLabel = `${typeLabel} (${field.rawType})`;
-  }
+function buildTitle(field: Field, path: string) {
+  const typeLabel = getTypeLabel(field);
   const fieldName = field.name;
   return `${fieldName}
 Path: ${path}${path ? '.' : ''}${fieldName}

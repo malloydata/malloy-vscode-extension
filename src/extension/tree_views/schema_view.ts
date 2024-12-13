@@ -37,6 +37,8 @@ import {BuildModelRequest} from '../../common/types/file_handler';
 import {
   exploreSubtype,
   fieldType,
+  getTypeLabel,
+  getTypeLabelFromStructDef,
   isFieldAggregate,
   isFieldHidden,
 } from '../../common/schema';
@@ -226,7 +228,7 @@ class ArrayItem extends vscode.TreeItem {
   ) {
     super(arrayDef.as || arrayDef.name, vscode.TreeItemCollapsibleState.None);
     this.contextValue = 'array';
-    const typeLabel = `array of ${arrayDef.elementTypeDef.type}`;
+    const typeLabel = getTypeLabelFromStructDef(arrayDef);
     this.tooltip = new vscode.MarkdownString(
       `
 $(symbol-field) \`${this.label}\`
@@ -255,10 +257,7 @@ export class FieldItem extends vscode.TreeItem {
   ) {
     super(field.name, vscode.TreeItemCollapsibleState.None);
     this.contextValue = fieldType(this.field);
-    let typeLabel = fieldType(this.field);
-    if (field.isAtomicField() && field.isUnsupported()) {
-      typeLabel = `${typeLabel} (${field.rawType})`;
-    }
+    const typeLabel = getTypeLabel(this.field);
     this.tooltip = new vscode.MarkdownString(
       `
 $(symbol-field) \`${field.name}\`
