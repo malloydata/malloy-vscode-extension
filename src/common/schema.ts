@@ -22,10 +22,13 @@
  */
 
 import {
+  AtomicTypeDef,
   Explore,
   Field,
   JoinRelationship,
   ModelDef,
+  RepeatedRecordTypeDef,
+  StructDef,
   isSourceDef,
 } from '@malloydata/malloy';
 
@@ -34,7 +37,15 @@ export function isFieldAggregate(field: Field) {
 }
 
 export function fieldType(field: Field) {
-  return field.isAtomicField() ? field.type.toString() : 'query';
+  if (field.isExplore()) {
+    if (field.isArray) {
+      return 'array';
+    } else {
+      return exploreSubtype(field);
+    }
+  } else {
+    return field.isAtomicField() ? field.type.toString() : 'query';
+  }
 }
 
 export function exploreSubtype(explore: Explore) {
@@ -134,6 +145,58 @@ export const getSourceDef = (modelDef: ModelDef, sourceName: string) => {
     return result;
   }
   throw new Error(`Not a source: ${sourceName}`);
+};
+
+/*
+ * It would be nice if these types made it out of Malloy, or if this
+ * functionality moved into core Malloy
+ */
+
+interface NativeUnsupportedTypeDef {
+  type: 'sql native';
+  rawType?: string;
+}
+
+interface RecordElementTypeDef {
+  type: 'record_element';
+}
+
+type TypeDef =
+  | RepeatedRecordTypeDef
+  | AtomicTypeDef
+  | NativeUnsupportedTypeDef
+  | RecordElementTypeDef;
+
+export const getTypeLabelFromStructDef = (structDef: StructDef): string => {
+  const getTypeLabelFromTypeDef = (typeDef: TypeDef): string => {
+    if (typeDef.type === 'array') {
+      return `${getTypeLabelFromTypeDef(typeDef.elementTypeDef)}[]`;
+    }
+    if (typeDef.type === 'sql native' && typeDef.rawType) {
+      `${typeDef.type} (${typeDef.rawType})`;
+    }
+    return typeDef.type;
+  };
+
+  if (structDef.type === 'array') {
+    return `${getTypeLabelFromTypeDef(structDef.elementTypeDef)}[]`;
+  }
+  return structDef.type;
+};
+
+export const getTypeLabel = (field: Field): string => {
+  if (field.isExplore()) {
+    if (field.isArray) {
+      return getTypeLabelFromStructDef(field.structDef);
+    } else {
+      return '';
+    }
+  }
+  let typeLabel = fieldType(field);
+  if (field.isAtomicField() && field.isUnsupported()) {
+    typeLabel = `${typeLabel} (${field.rawType})`;
+  }
+  return typeLabel;
 };
 
 const RESERVED: string[] = [
