@@ -51,6 +51,7 @@ import {
   oneToManyIcon,
   oneToOneIcon,
   queryIcon,
+  recordIcon,
   sqlNativeIcon,
   stringIcon,
   timeIcon,
@@ -128,6 +129,9 @@ function getIconElement(fieldType: string, isAggregate: boolean) {
     switch (fieldType) {
       case 'array':
         imageElement = arrayIcon;
+        break;
+      case 'struct_record':
+        imageElement = recordIcon;
         break;
       case 'number':
         imageElement = numberIcon;

@@ -50,6 +50,12 @@ export function fieldType(field: Field) {
 
 export function exploreSubtype(explore: Explore) {
   let subtype;
+  if (explore.structDef.type === 'array') {
+    return 'array';
+  }
+  if (explore.structDef.type === 'record') {
+    return 'record';
+  }
   if (explore.hasParentExplore()) {
     const relationship = explore.joinRelationship;
     subtype =
@@ -188,6 +194,8 @@ export const getTypeLabel = (field: Field): string => {
   if (field.isExplore()) {
     if (field.isArray) {
       return getTypeLabelFromStructDef(field.structDef);
+    } else if (field.isRecord) {
+      return 'record'; // getTypeLabelFromStructDef(field.structDef);
     } else {
       return '';
     }
