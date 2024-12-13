@@ -60,9 +60,11 @@ const manyToOneIcon = 'many_to_one.svg';
 const oneToOneIcon = 'one_to_one.svg';
 const unknownIcon = 'unknown.svg';
 const sqlDatabaseIcon = 'sql-database.svg';
+const recordIcon = 'data-type-json.svg';
 
 export class SchemaProvider
-  implements vscode.TreeDataProvider<ArrayItem | ExploreItem | FieldItem>
+  implements
+    vscode.TreeDataProvider<ArrayItem | ExploreItem | FieldItem | RecordItem>
 {
   private readonly resultCache: Map<string, ExploreItem[]>;
   private previousKey: string | undefined;
@@ -118,7 +120,7 @@ export class SchemaProvider
 
   async getChildren(
     element?: ExploreItem
-  ): Promise<(ArrayItem | ExploreItem | FieldItem)[]> {
+  ): Promise<(ArrayItem | ExploreItem | FieldItem | RecordItem)[]> {
     if (element) {
       return element.explore.allFields
         .filter(field => !isFieldHidden(field))
@@ -133,6 +135,14 @@ export class SchemaProvider
                 field.structDef,
                 newPath,
                 field.location
+              );
+            } else if (field.structDef.type === 'record') {
+              return new RecordItem(
+                this.context,
+                element.topLevelExplore,
+                field,
+                newPath,
+                element.explore.location
               );
             } else {
               return new ExploreItem(
@@ -284,6 +294,25 @@ $(symbol-field) \`${field.name}\`
   };
 }
 
+class RecordItem extends vscode.TreeItem {
+  constructor(
+    private context: vscode.ExtensionContext,
+    public topLevelExplore: string,
+    public explore: Explore,
+    public accessPath: string[],
+    public location: DocumentLocation | undefined
+  ) {
+    super(explore.name, vscode.TreeItemCollapsibleState.Collapsed);
+    this.contextValue = 'record';
+    this.tooltip = explore.name;
+
+    this.iconPath = {
+      light: getIconPath(this.context, 'record', false),
+      dark: getIconPath(this.context, 'record', false),
+    };
+  }
+}
+
 function getIconPath(
   context: vscode.ExtensionContext,
   fieldType: string,
@@ -324,6 +353,9 @@ function getIconPath(
         break;
       case 'array':
         imageFileName = arrayIcon;
+        break;
+      case 'record':
+        imageFileName = recordIcon;
         break;
       case 'sql native':
         imageFileName = sqlDatabaseIcon;
