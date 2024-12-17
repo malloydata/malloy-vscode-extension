@@ -24,7 +24,12 @@
 import * as React from 'react';
 import {useEffect, useRef} from 'react';
 
-export const DOMElement: React.FC<{element: HTMLElement}> = ({element}) => {
+export interface DOMElementProps {
+  element: HTMLElement;
+  className?: string;
+}
+
+export const DOMElement: React.FC<DOMElementProps> = ({element, className}) => {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -35,5 +40,5 @@ export const DOMElement: React.FC<{element: HTMLElement}> = ({element}) => {
     }
   }, [element]);
 
-  return <div ref={ref}></div>;
+  return <div ref={ref} className={className}></div>;
 };

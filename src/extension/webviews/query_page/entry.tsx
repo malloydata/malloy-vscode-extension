@@ -32,7 +32,7 @@ import {QueryPage} from './QueryPage';
 
 const root = document.getElementById('app');
 
-const useLit = false;
+const useLit = root?.dataset['useNewQueryPage'] !== 'true';
 
 if (root) {
   const vscode = getVSCodeAPI<QueryPanelMessage, void>();
