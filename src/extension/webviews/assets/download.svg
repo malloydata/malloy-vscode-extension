@@ -1,0 +1,5 @@
+<svg width="16px" height="16px" viewBox="0 0 110 110" version="1.1">
+  <g id="download" transform="translate(8.000000, 9.133308)">
+    <path d="M19.5833333,78.3333333 L74.4166667,78.3333333 L74.4166667,70.5 L19.5833333,70.5 L19.5833333,78.3333333 Z M74.4166667,35.25 L58.75,35.25 L58.75,11.75 L35.25,11.75 L35.25,35.25 L19.5833333,35.25 L47,62.6666667 L74.4166667,35.25 Z" fill-rule="nonzero" fill="var(--vscode-icon-foreground)"></path>
+  </g>
+</svg>
