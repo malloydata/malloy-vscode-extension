@@ -21,16 +21,26 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import * as React from 'react';
 import {html, render} from 'lit';
+import {createRoot} from 'react-dom/client';
 import {QueryPanelMessage} from '../../../common/types/message_types';
 
 import './query_page';
 import {getVSCodeAPI} from './query_vscode_context';
+import {QueryPage} from './QueryPage';
 
 const root = document.getElementById('app');
+
+const useLit = false;
 
 if (root) {
   const vscode = getVSCodeAPI<QueryPanelMessage, void>();
   root.innerText = '';
-  render(html`<query-page .vscode=${vscode}></query-page>`, root);
+  if (useLit) {
+    render(html`<query-page .vscode=${vscode}></query-page>`, root);
+  } else {
+    const reactRoot = createRoot(root);
+    reactRoot.render(<QueryPage vscode={vscode} />);
+  }
 }
