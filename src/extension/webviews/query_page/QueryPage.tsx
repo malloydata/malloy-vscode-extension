@@ -365,7 +365,7 @@ export function QueryPage({vscode}: QueryPageProps) {
           resultKind === ResultKind.PREVIEW) &&
         results.html ? (
           <div className="scroll result-container">
-            <DOMElement element={results.html} />
+            <StyledDOMElement element={results.html} />
             <CopyButton
               onCopy={async () => {
                 if (results.html) {
@@ -521,4 +521,8 @@ const StyledContainer = styled.div`
     font-size: 12px;
     padding: 5px;
   }
+`;
+
+const StyledDOMElement = styled(DOMElement)`
+  height: 100%;
 `;
