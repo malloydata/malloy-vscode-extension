@@ -79,12 +79,14 @@ export async function getMalloyLenses(
   const lenses: CodeLens[] = [];
   const parse = parseWithCache(document);
   const symbols = parse.symbols;
+  const connectionLookup = connectionManager.getConnectionLookup(
+    new URL(document.uri)
+  );
 
+  let externalPreview = false;
   const tablepaths = parse.tablePathInfo;
   for (const table of tablepaths) {
-    const conn = await connectionManager
-      .getConnectionLookup(new URL(document.uri))
-      .lookupConnection(table.connectionId);
+    const conn = await connectionLookup.lookupConnection(table.connectionId);
     const tableUrl = await getSourceUrl(table.tablePath, conn);
     if (tableUrl) {
       lenses.push({
@@ -95,6 +97,7 @@ export async function getMalloyLenses(
           arguments: [tableUrl],
         },
       });
+      externalPreview = true;
     }
   }
 
@@ -146,30 +149,20 @@ export async function getMalloyLenses(
         {
           const children = symbol.children;
           const exploreName = symbol.name;
-          lenses.push({
-            range: symbol.lensRange.toJSON(),
-            command: {
-              title: 'Schema',
-              command: 'malloy.runQuery',
-              arguments: [
-                `run: ${exploreName}->{ select: *; limit: 20 }`,
-                `Preview ${exploreName}`,
-                'schema',
-              ],
-            },
-          });
-          lenses.push({
-            range: symbol.lensRange.toJSON(),
-            command: {
-              title: 'Preview',
-              command: 'malloy.runQuery',
-              arguments: [
-                `run: ${exploreName}->{ select: *; limit: 20 }`,
-                `Preview ${exploreName}`,
-                'preview',
-              ],
-            },
-          });
+          if (!externalPreview) {
+            lenses.push({
+              range: symbol.lensRange.toJSON(),
+              command: {
+                title: 'Schema',
+                command: 'malloy.runQuery',
+                arguments: [
+                  `run: ${exploreName}->{ select: *; limit: 20 }`,
+                  `Preview ${exploreName}`,
+                  'schema',
+                ],
+              },
+            });
+          }
           lenses.push({
             range: symbol.lensRange.toJSON(),
             command: {
@@ -178,6 +171,20 @@ export async function getMalloyLenses(
               arguments: [unquoteIdentifier(exploreName)],
             },
           });
+          if (!externalPreview) {
+            lenses.push({
+              range: symbol.lensRange.toJSON(),
+              command: {
+                title: 'Preview',
+                command: 'malloy.runQuery',
+                arguments: [
+                  `run: ${exploreName}->{ select: *; limit: 20 }`,
+                  `Preview ${exploreName}`,
+                  'preview',
+                ],
+              },
+            });
+          }
           // lenses.push({
           //   range: symbol.range.toJSON(),
           //   command: {
@@ -243,20 +250,22 @@ export async function getMalloyLenses(
               arguments: [url.toString()],
             },
           });
-          for (const child of symbol.children) {
-            lenses.push({
-              range: child.lensRange.toJSON(),
-              command: {
-                title: child.name,
-                command: 'malloy.runQuery',
-                arguments: [
-                  `run: ${child.name}->{ select: *; limit: 20 }`,
-                  `Preview ${child.name}`,
-                  'schema',
-                  symbol.name,
-                ],
-              },
-            });
+          if (!externalPreview) {
+            for (const child of symbol.children) {
+              lenses.push({
+                range: child.lensRange.toJSON(),
+                command: {
+                  title: child.name,
+                  command: 'malloy.runQuery',
+                  arguments: [
+                    `run: ${child.name}->{ select: *; limit: 20 }`,
+                    `Preview ${child.name}`,
+                    'schema',
+                    symbol.name,
+                  ],
+                },
+              });
+            }
           }
           symbol.children.forEach((child, idx) => {
             lenses.push({
