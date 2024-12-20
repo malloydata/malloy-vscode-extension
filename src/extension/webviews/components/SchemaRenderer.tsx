@@ -63,6 +63,7 @@ const fieldContext = (field: Field) => {
     location,
     name,
     topLevelExplore,
+    preventDefaultContextMenuItems: true,
   };
 };
 /**
@@ -250,6 +251,7 @@ const QueryItem = ({query, path, onQueryClick}: QueryItemProps) => {
       webviewSection: 'malloySchemaNamedQuery',
       name: query.name,
       location: query.location,
+      preventDefaultContextMenuItems: true,
     };
   }
 
