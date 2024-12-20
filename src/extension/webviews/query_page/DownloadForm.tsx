@@ -176,10 +176,9 @@ export function DownloadForm({
               }}
               style={{width: '100%'}}
             >
-              $
               {options.map(option => (
                 <VSCodeOption key={option.value} value={option.value}>
-                  ${option.label}
+                  {option.label}
                 </VSCodeOption>
               ))}
             </VSCodeDropdown>
