@@ -39,6 +39,9 @@ export function getWebviewHtml(
   const cspSrc = webview.cspSource;
 
   const nonce = getNonce();
+  const useNewQueryPage = vscode.workspace
+    .getConfiguration('malloy')
+    .get('useNewQueryPage');
   return /* html */ `<!DOCTYPE html>
 <html lang="en">
   <head>
@@ -138,7 +141,7 @@ export function getWebviewHtml(
     }
   </style>
   <body>
-    <div id="app">
+    <div id="app" data-use-new-query-page="${useNewQueryPage}">
       <div class="placeholder-vertical-center">
         <div class="placeholder-horizontal-center">
           <div class="placeholder-label">Loading</div>
