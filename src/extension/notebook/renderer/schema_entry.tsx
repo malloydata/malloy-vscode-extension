@@ -35,21 +35,12 @@ import {StyleSheetManager} from 'styled-components';
 export const activate: ActivationFunction = ({postMessage}) => {
   return {
     renderOutputItem(info, element) {
-      let shadow = element.shadowRoot;
-      if (!shadow) {
-        shadow = element.attachShadow({mode: 'open'});
-        const root = document.createElement('div');
-        const styledRoot = document.createElement('div');
-        styledRoot.id = 'styled-root';
-        shadow.append(styledRoot);
-        root.id = 'root';
-        styledRoot.append(root);
-      }
-      const root = shadow.querySelector<HTMLElement>('#root');
-      const styledRoot = shadow.querySelector<HTMLElement>('#styled-root');
-      if (!root || !styledRoot) {
-        throw new Error('Element #root not found');
-      }
+      const root = document.createElement('div');
+      const styledRoot = document.createElement('div');
+      styledRoot.id = 'styled-root';
+      root.id = 'root';
+      styledRoot.append(root);
+      element.append(styledRoot);
       const reactRoot = createRoot(root);
       reactRoot.render(
         <StyleSheetManager target={styledRoot}>
