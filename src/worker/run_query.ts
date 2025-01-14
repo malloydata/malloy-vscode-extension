@@ -85,6 +85,8 @@ const fakeMalloyResult = (
       name: 'empty_model',
       exports: [],
       contents: {},
+      dependencies: {},
+      queryList: [],
     }
   );
 };
