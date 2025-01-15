@@ -23,6 +23,8 @@
 
 import {Connection, TextDocuments} from 'vscode-languageserver';
 import {
+  InMemoryModelCache,
+  CacheManager,
   MalloyError,
   Model,
   ModelMaterializer,
@@ -45,6 +47,9 @@ export class TranslateCache {
   >();
   truncatedVersion = 0;
   cache = new Map<string, {model: Model; version: number}>();
+
+  // Okay so there is definitely some redundancy here...
+  private cacheManager = new CacheManager(new InMemoryModelCache());
 
   constructor(
     private documents: TextDocuments<TextDocument>,
@@ -166,7 +171,7 @@ export class TranslateCache {
         );
         return entry.model;
       }
-      const files = {
+      const urlReader = {
         readURL: (url: URL) => {
           if (url.toString() === uri) {
             return Promise.resolve(text);
@@ -177,10 +182,13 @@ export class TranslateCache {
       };
       // TODO: Possibly look into having remaining statements run "in the background" and having
       // new runs preempt the current fetch
-      const runtime = new Runtime(
-        files,
-        this.connectionManager.getConnectionLookup(new URL(uri))
-      );
+      const runtime = new Runtime({
+        urlReader,
+        connections: this.connectionManager.getConnectionLookup(
+          new URL(uri)
+        ),
+        cacheManager: this.cacheManager,
+      });
       const modelMaterializer = await this.createModelMaterializer(
         uri,
         runtime,
@@ -224,13 +232,16 @@ export class TranslateCache {
     const text = await this.getDocumentText(this.documents, new URL(uri));
     if (languageId === 'malloy-sql') {
       const parse = MalloySQLSQLParser.parse(text, uri);
-      const files = {
+      const urlReader = {
         readURL: (url: URL) => this.getDocumentText(this.documents, url),
       };
-      const runtime = new Runtime(
-        files,
-        this.connectionManager.getConnectionLookup(new URL(uri))
-      );
+      const runtime = new Runtime({
+        urlReader,
+        connections: this.connectionManager.getConnectionLookup(
+          new URL(uri)
+        ),
+        cacheManager: this.cacheManager,
+      });
 
       const modelMaterializer = await this.createModelMaterializer(
         uri,
@@ -266,13 +277,16 @@ export class TranslateCache {
       );
       return model;
     } else {
-      const files = {
+      const urlReader = {
         readURL: (url: URL) => this.getDocumentText(this.documents, url),
       };
-      const runtime = new Runtime(
-        files,
-        this.connectionManager.getConnectionLookup(new URL(uri))
-      );
+      const runtime = new Runtime({
+        urlReader,
+        connections: this.connectionManager.getConnectionLookup(
+          new URL(uri)
+        ),
+        cacheManager: this.cacheManager,
+      });
 
       const modelMaterializer = await this.createModelMaterializer(
         uri,

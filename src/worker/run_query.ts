@@ -110,7 +110,7 @@ const computeConnectionName = (cellData: CellData | null) => {
 
 const runMSQLCell = async (
   messageHandler: WorkerMessageHandler,
-  files: FileHandler,
+  urlReader: FileHandler,
   connectionManager: ConnectionManager,
   {name, query, panelId, showSQLOnly}: MessageRun,
   cellData: CellData | null,
@@ -128,9 +128,9 @@ const runMSQLCell = async (
     documentMeta: {uri},
   } = query;
   const url = new URL(uri);
-  const connectionLookup = connectionManager.getConnectionLookup(url);
+  const connections = connectionManager.getConnectionLookup(url);
 
-  const runtime = new Runtime(files, connectionLookup);
+  const runtime = new Runtime({urlReader, connections});
   const allBegin = Date.now();
   const compileBegin = allBegin;
   sendMessage({
@@ -203,7 +203,7 @@ const runMSQLCell = async (
     dialect,
   });
 
-  const connection = await connectionLookup.lookupConnection(connectionName);
+  const connection = await connections.lookupConnection(connectionName);
 
   const sqlResults = await connection.runSQL(compiledStatement);
 
@@ -281,7 +281,7 @@ export const runQuery = async (
 
   try {
     const url = new URL(uri);
-    const connectionLookup = connectionManager.getConnectionLookup(url);
+    const connections = connectionManager.getConnectionLookup(url);
     let cellData: CellData | null = null;
     let currentCell: Cell | null = null;
     let isMalloySql = false;
@@ -320,7 +320,7 @@ export const runQuery = async (
       return;
     }
 
-    const runtime = new Runtime(fileHandler, connectionLookup);
+    const runtime = new Runtime({urlReader: fileHandler, connections});
     const allBegin = Date.now();
     const compileBegin = allBegin;
     sendMessage({
