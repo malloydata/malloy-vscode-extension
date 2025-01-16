@@ -40,3 +40,7 @@ export const prettyLogUri = (uri: string): string => {
   }
   return pretty;
 };
+
+export const prettyLogInvalidationKey = (invalidationKey: string): string => {
+  return `v(${invalidationKey.substring(0, 8)})`;
+}

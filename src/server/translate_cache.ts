@@ -23,12 +23,12 @@
 
 import {Connection, TextDocuments} from 'vscode-languageserver';
 import {
-  InMemoryModelCache,
   CacheManager,
   MalloyError,
   Model,
   ModelMaterializer,
   Runtime,
+  CachedModel,
 } from '@malloydata/malloy';
 import {TextDocument} from 'vscode-languageserver-textdocument';
 
@@ -37,7 +37,7 @@ import {BuildModelRequest, CellData} from '../common/types/file_handler';
 import {MalloySQLSQLParser} from '@malloydata/malloy-sql';
 import {FetchModelMessage} from '../common/types/message_types';
 import {fixLogRange} from '../common/malloy_sql';
-import {prettyLogUri} from '../common/log';
+import {prettyLogUri, prettyLogInvalidationKey} from '../common/log';
 
 export class TranslateCache {
   // Cache for truncated documents used for providing schema suggestions
@@ -46,10 +46,39 @@ export class TranslateCache {
     {model: Model; exploreCount: number; version: number}
   >();
   truncatedVersion = 0;
-  cache = new Map<string, {model: Model; version: number}>();
+
+  private readonly cache = new Map<
+    string,
+    CachedModel
+  >();
+
+  public async getModel(url: URL): Promise<CachedModel | undefined> {
+    const _url = url.toString();
+    const result = this.cache.get(_url);
+    const prettyUri = prettyLogUri(_url);
+    this.connection.console.info(`translateWithCache ${prettyUri} ${result ? 'hit' : 'miss'}`);
+    return Promise.resolve(result);
+  }
+
+  public async setModel(url: URL, cachedModel: CachedModel): Promise<boolean> {
+    const _url = url.toString();
+    const prettyUri = prettyLogUri(_url);
+    this.connection.console.info(
+      `translateWithCache ${prettyUri} ${prettyLogInvalidationKey(cachedModel.invalidationKeys[_url])} set`
+    );
+    this.cache.set(_url, cachedModel);
+    return Promise.resolve(true);
+  }
+
+  public dependenciesFor(uri: string): string[] | undefined {
+    const lookup = this.cache.get(uri);
+    if (lookup) {
+      return Object.keys(lookup.invalidationKeys);
+    }
+  }
 
   // Okay so there is definitely some redundancy here...
-  private cacheManager = new CacheManager(new InMemoryModelCache());
+  private cacheManager = new CacheManager(this);
 
   constructor(
     private documents: TextDocuments<TextDocument>,
@@ -61,7 +90,6 @@ export class TranslateCache {
       async (event: BuildModelRequest): Promise<FetchModelMessage> => {
         const model = await this.translateWithCache(
           event.uri,
-          event.version,
           event.languageId,
           event.refreshSchemaCache
         );
@@ -212,29 +240,15 @@ export class TranslateCache {
 
   async translateWithCache(
     uri: string,
-    currentVersion: number,
     languageId: string,
     refreshSchemaCache?: boolean
   ): Promise<Model | undefined> {
-    const prettyUri = prettyLogUri(uri);
-    const entry = this.cache.get(uri);
-    if (entry && entry.version === currentVersion && !refreshSchemaCache) {
-      const {model} = entry;
-      this.connection.console.info(
-        `translateWithCache ${prettyUri} v${currentVersion} hit`
-      );
-      return model;
-    }
-    this.connection.console.info(
-      `translateWithCache ${prettyUri} v${currentVersion} miss`
-    );
-
-    const text = await this.getDocumentText(this.documents, new URL(uri));
+    const urlReader = {
+      readURL: (url: URL) => this.getDocumentText(this.documents, url),
+    };
+    const text = await urlReader.readURL(new URL(uri));
     if (languageId === 'malloy-sql') {
       const parse = MalloySQLSQLParser.parse(text, uri);
-      const urlReader = {
-        readURL: (url: URL) => this.getDocumentText(this.documents, url),
-      };
       const runtime = new Runtime({
         urlReader,
         connections: this.connectionManager.getConnectionLookup(
@@ -268,18 +282,8 @@ export class TranslateCache {
         }
       }
 
-      const model = await modelMaterializer?.getModel();
-      if (model) {
-        this.cache.set(uri, {version: currentVersion, model});
-      }
-      this.connection.console.info(
-        `translateWithCache ${prettyUri} v${currentVersion} set`
-      );
-      return model;
+      return await modelMaterializer?.getModel();
     } else {
-      const urlReader = {
-        readURL: (url: URL) => this.getDocumentText(this.documents, url),
-      };
       const runtime = new Runtime({
         urlReader,
         connections: this.connectionManager.getConnectionLookup(
@@ -293,14 +297,7 @@ export class TranslateCache {
         runtime,
         refreshSchemaCache
       );
-      const model = await modelMaterializer?.getModel();
-      if (model) {
-        this.cache.set(uri, {version: currentVersion, model});
-        this.connection.console.info(
-          `translateWithCache ${prettyUri} v${currentVersion} set`
-        );
-      }
-      return model;
+      return await modelMaterializer?.getModel();
     }
   }
 }

@@ -64,7 +64,6 @@ export interface CellData {
 
 export interface BuildModelRequest {
   uri: string;
-  version: number;
   languageId: string;
   refreshSchemaCache?: boolean;
 }

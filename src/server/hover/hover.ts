@@ -62,7 +62,6 @@ export const getHover = async (
       } else if (context.type === 'model_property') {
         const model = await translateCache.translateWithCache(
           document.uri,
-          document.version,
           document.languageId
         );
         const importLocation = model?.getImport(position);
@@ -74,7 +73,6 @@ export const getHover = async (
       } else {
         const model = await translateCache.translateWithCache(
           document.uri,
-          document.version,
           document.languageId
         );
         const reference = model?.getReference(position);
