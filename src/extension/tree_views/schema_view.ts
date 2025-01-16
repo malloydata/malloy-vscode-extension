@@ -97,13 +97,11 @@ export class SchemaProvider
 
   async getStructs({
     uri,
-    version,
     languageId,
   }: DocumentMetadata): Promise<Explore[] | undefined> {
     try {
       const request: BuildModelRequest = {
         uri,
-        version,
         languageId,
         refreshSchemaCache: this.refreshSchemaCache,
       };

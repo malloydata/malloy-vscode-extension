@@ -247,7 +247,6 @@ class MalloyController {
       if (errorMessage(error) === NO_QUERY) {
         const request: BuildModelRequest = {
           uri: document.uri.toString(),
-          version: document.version,
           languageId: document.languageId,
           refreshSchemaCache: false,
         };

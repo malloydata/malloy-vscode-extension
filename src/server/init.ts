@@ -100,13 +100,11 @@ export const initServer = (
   async function diagnoseDocument(document: TextDocument) {
     const prettyUri = prettyLogUri(document.uri);
 
-    const eject = (key: string) => {
-      if (translateCache.cache.delete(key)) {
-        const document = documents.get(key);
-        if (document) {
-          connection.console.info(`diagnoseDocument ejecting ${prettyUri}`);
-          debouncedDiagnoseDocument(document);
-        }
+    const recompile = (key: string) => {
+      const document = documents.get(key);
+      if (document) {
+        connection.console.info(`diagnoseDocument recompiling ${prettyUri}`);
+        debouncedDiagnoseDocument(document);
       }
     };
 
@@ -133,23 +131,27 @@ export const initServer = (
         }
       }
 
+      // TODO consider whether we still want to re-diagnose files when 
+      // something they import changes? vs just waiting until the user opens
+      // that file again?
+
       // Trigger diagnostics for all documents we know that import this one,
       // too.
-      const [base, hash] = document.uri.split('#');
-      translateCache.cache.forEach((entry, key) => {
-        // Don't re-eject the current document
-        if (documents.get(key)?.uri === document.uri) {
-          return;
-        }
-        if (entry.model.fromSources.includes(document.uri)) {
-          eject(key);
-        } else if (key.startsWith(base)) {
-          const [_, keyHash] = key.split('#');
-          if (keyHash > hash) {
-            eject(key);
-          }
-        }
-      });
+      // const [base, hash] = document.uri.split('#');
+      // translateCache.cache.forEach((entry, key) => {
+      //   // Don't re-eject the current document
+      //   if (documents.get(key)?.uri === document.uri) {
+      //     return;
+      //   }
+      //   if (entry.model.fromSources.includes(document.uri)) {
+      //     eject(key);
+      //   } else if (key.startsWith(base)) {
+      //     const [_, keyHash] = key.split('#');
+      //     if (keyHash > hash) {
+      //       eject(key);
+      //     }
+      //   }
+      // });
       connection.console.info(`diagnoseDocument ${prettyUri} end`);
     }
   }
@@ -173,7 +175,8 @@ export const initServer = (
 
   documents.onDidClose(event => {
     const {uri} = event.document;
-    translateCache.cache.delete(uri);
+    // translateCache.cache.delete(uri);
+    // TODO delete files from cache..
     delete debouncedDiagnoseDocuments[uri];
   });
 
@@ -231,7 +234,8 @@ export const initServer = (
       (change?.settings as any)?.malloy?.connections ?? []
     );
     haveConnectionsBeenSet = true;
-    translateCache.cache.clear();
+    // translateCache.cache.clear();
+    // TODO clear cache...
     documents.all().forEach(debouncedDiagnoseDocument);
   });
 
