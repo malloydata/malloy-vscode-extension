@@ -41,16 +41,22 @@ import {prettyLogUri, prettyLogInvalidationKey} from '../common/log';
 
 export class TranslateCache {
   // Cache for truncated documents used for providing schema suggestions
-  truncatedCache = new Map<
-    string,
-    {model: Model; exploreCount: number; version: number}
+  private readonly truncatedCache = new Map<
+    string, {model: Model; exploreCount: number}
   >();
-  truncatedVersion = 0;
-
+  
   private readonly cache = new Map<
     string,
     CachedModel
   >();
+
+  private cacheManager = new CacheManager(this);
+
+  public deleteModel(uri: string) {
+    // It's not necessary for the `cacheManager` to know that the file has been
+    // removed from the cache.
+    this.cache.delete(uri);
+  }
 
   public async getModel(url: URL): Promise<CachedModel | undefined> {
     const _url = url.toString();
@@ -70,12 +76,19 @@ export class TranslateCache {
     return Promise.resolve(true);
   }
 
+  public dependenciesFor(uri: string): string[] | undefined {
+    const entry = this.cache.get(uri);
+    if (entry === undefined) return undefined;
+    return Object.keys(entry.invalidationKeys ?? {}).filter(other => other !== uri);
+  }
+
   /**
    * Returns files that should be recompiled when a given file changes.
    * This includes files which directly depend on this one, because they import
    * it, as well as snippets that appear later in the same notebook 
    */ 
-  public dependentsOf(uri: string): string[] {
+  public dependentsOf(uri: string): string[] | undefined {
+    if (!this.cache.has(uri)) return undefined;
     let dependencies = [];
     const [base, hash] = uri.split('#');
     for (const [otherURI, model] of this.cache.entries()) {
@@ -92,9 +105,6 @@ export class TranslateCache {
     }
     return dependencies;
   }
-
-  // Okay so there is definitely some redundancy here...
-  private cacheManager = new CacheManager(this);
 
   constructor(
     private documents: TextDocuments<TextDocument>,
@@ -145,7 +155,7 @@ export class TranslateCache {
     refreshSchemaCache?: boolean | number
   ): Promise<ModelMaterializer | null> {
     const prettyUri = prettyLogUri(uri);
-    this.connection.console.info(`createModelMaterializer ${prettyUri} start`);
+    this.connection.console.debug(`createModelMaterializer ${prettyUri} start`);
     let modelMaterializer: ModelMaterializer | null = null;
     const queryFileURL = new URL(uri);
     if (queryFileURL.protocol === 'vscode-notebook-cell:') {
@@ -187,7 +197,7 @@ export class TranslateCache {
         noThrowOnError: true,
       });
     }
-    this.connection.console.info(`createModelMaterializer ${prettyUri} end`);
+    this.connection.console.debug(`createModelMaterializer ${prettyUri} end`);
     return modelMaterializer;
   }
 
@@ -202,8 +212,9 @@ export class TranslateCache {
     text: string,
     exploreCount: number
   ): Promise<Model | undefined> {
+    const prettyUri = prettyLogUri(document.uri);
     this.connection.console.info(
-      `translateWithTruncatedCache ${document.uri} start`
+      `translateWithTruncatedCache ${prettyUri} start`
     );
     const {uri, languageId} = document;
     if (languageId === 'malloy') {
@@ -211,7 +222,7 @@ export class TranslateCache {
       // Only re-compile the model if the number of explores has changed
       if (entry && entry.exploreCount === exploreCount) {
         this.connection.console.info(
-          `translateWithTruncatedCache ${document.uri} hit`
+          `translateWithTruncatedCache ${prettyUri} hit`
         );
         return entry.model;
       }
@@ -242,12 +253,11 @@ export class TranslateCache {
       if (model) {
         this.truncatedCache.set(uri, {
           model,
-          exploreCount,
-          version: this.truncatedVersion++,
+          exploreCount
         });
       }
       this.connection.console.info(
-        `translateWithTruncatedCache ${document.uri} miss`
+        `translateWithTruncatedCache ${prettyUri} miss`
       );
       return model;
     }
@@ -259,6 +269,10 @@ export class TranslateCache {
     languageId: string,
     refreshSchemaCache?: boolean
   ): Promise<Model | undefined> {
+    const prettyUri = prettyLogUri(uri);
+    this.connection.console.info(
+      `translateWithCache ${prettyUri} start`
+    );
     const urlReader = {
       readURL: (url: URL) => this.getDocumentText(this.documents, url),
     };

@@ -125,7 +125,7 @@ export const initServer = (
 
       // Trigger diagnostics for all documents we know that import this one,
       // too.
-      for (const dependency of translateCache.dependentsOf(document.uri)) {
+      for (const dependency of translateCache.dependentsOf(document.uri) ?? []) {
         const document = documents.get(dependency);
         if (document) {
           connection.console.info(`diagnoseDocument recompiling ${prettyLogUri(document.uri)}`);
@@ -153,10 +153,25 @@ export const initServer = (
     debouncedDiagnoseDocument(change.document);
   });
 
+  function ejectIfUnused(uri: string) {
+    const dependents = translateCache.dependentsOf(uri);
+    if (dependents && dependents.length === 0) {
+      connection.console.info(`ejectIfUnused ejecting ${prettyLogUri(uri)}`);
+      const dependencies = translateCache.dependenciesFor(uri) ?? [];
+      translateCache.deleteModel(uri);
+      for (const other of dependencies) {
+        const document = documents.get(other);
+        if (document === undefined) {
+          connection.console.info(`ejectIfUnused no document for ${prettyLogUri(other)}, considering deletion`);
+          ejectIfUnused(other);
+        }
+      }
+    }
+  }
+
   documents.onDidClose(event => {
     const {uri} = event.document;
-    // translateCache.cache.delete(uri);
-    // TODO delete files from cache..
+    ejectIfUnused(uri);
     delete debouncedDiagnoseDocuments[uri];
   });
 
