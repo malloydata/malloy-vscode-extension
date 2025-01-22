@@ -56,6 +56,12 @@ export class TranslateCache {
     // It's not necessary for the `cacheManager` to know that the file has been
     // removed from the cache.
     this.cache.delete(uri);
+    this.truncatedCache.delete(uri);
+  }
+
+  public deleteAllModels() {
+    this.cache.clear();
+    this.truncatedCache.clear();
   }
 
   public async getModel(url: URL): Promise<CachedModel | undefined> {
