@@ -70,11 +70,27 @@ export class TranslateCache {
     return Promise.resolve(true);
   }
 
-  public dependenciesFor(uri: string): string[] | undefined {
-    const lookup = this.cache.get(uri);
-    if (lookup) {
-      return Object.keys(lookup.invalidationKeys);
+  /**
+   * Returns files that should be recompiled when a given file changes.
+   * This includes files which directly depend on this one, because they import
+   * it, as well as snippets that appear later in the same notebook 
+   */ 
+  public dependentsOf(uri: string): string[] {
+    let dependencies = [];
+    const [base, hash] = uri.split('#');
+    for (const [otherURI, model] of this.cache.entries()) {
+      if (otherURI === uri) continue;
+      if (Object.keys(model.invalidationKeys).includes(uri)) {
+        dependencies.push(otherURI);
+      }
+      if (otherURI.startsWith(base)) {
+        const [_, keyHash] = otherURI.split('#');
+        if (keyHash > hash) {
+          dependencies.push(otherURI);
+        }
+      }
     }
+    return dependencies;
   }
 
   // Okay so there is definitely some redundancy here...

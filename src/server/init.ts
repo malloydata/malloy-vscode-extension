@@ -100,14 +100,6 @@ export const initServer = (
   async function diagnoseDocument(document: TextDocument) {
     const prettyUri = prettyLogUri(document.uri);
 
-    const recompile = (key: string) => {
-      const document = documents.get(key);
-      if (document) {
-        connection.console.info(`diagnoseDocument recompiling ${prettyUri}`);
-        debouncedDiagnoseDocument(document);
-      }
-    };
-
     if (haveConnectionsBeenSet) {
       connection.console.info(`diagnoseDocument ${prettyUri} start`);
       // Necessary to copy the versions, because they're mutated in the same document object
@@ -131,27 +123,15 @@ export const initServer = (
         }
       }
 
-      // TODO consider whether we still want to re-diagnose files when 
-      // something they import changes? vs just waiting until the user opens
-      // that file again?
-
       // Trigger diagnostics for all documents we know that import this one,
       // too.
-      // const [base, hash] = document.uri.split('#');
-      // translateCache.cache.forEach((entry, key) => {
-      //   // Don't re-eject the current document
-      //   if (documents.get(key)?.uri === document.uri) {
-      //     return;
-      //   }
-      //   if (entry.model.fromSources.includes(document.uri)) {
-      //     eject(key);
-      //   } else if (key.startsWith(base)) {
-      //     const [_, keyHash] = key.split('#');
-      //     if (keyHash > hash) {
-      //       eject(key);
-      //     }
-      //   }
-      // });
+      for (const dependency of translateCache.dependentsOf(document.uri)) {
+        const document = documents.get(dependency);
+        if (document) {
+          connection.console.info(`diagnoseDocument recompiling ${prettyLogUri(document.uri)}`);
+          debouncedDiagnoseDocument(document);
+        }
+      }
       connection.console.info(`diagnoseDocument ${prettyUri} end`);
     }
   }
