@@ -44,3 +44,7 @@ export const prettyLogUri = (uri: string): string => {
 export const prettyLogInvalidationKey = (invalidationKey: string): string => {
   return `v(${invalidationKey.substring(0, 8)})`;
 }
+
+export const prettyTime = (ms: number): string => {
+  return (ms / 1000).toFixed(3) + "s";
+}

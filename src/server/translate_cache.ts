@@ -37,7 +37,7 @@ import {BuildModelRequest, CellData} from '../common/types/file_handler';
 import {MalloySQLSQLParser} from '@malloydata/malloy-sql';
 import {FetchModelMessage} from '../common/types/message_types';
 import {fixLogRange} from '../common/malloy_sql';
-import {prettyLogUri, prettyLogInvalidationKey} from '../common/log';
+import {prettyTime, prettyLogUri, prettyLogInvalidationKey} from '../common/log';
 
 export class TranslateCache {
   // Cache for truncated documents used for providing schema suggestions
@@ -276,6 +276,7 @@ export class TranslateCache {
     refreshSchemaCache?: boolean
   ): Promise<Model | undefined> {
     const prettyUri = prettyLogUri(uri);
+    const t0 = performance.now();
     this.connection.console.info(
       `translateWithCache ${prettyUri} start`
     );
@@ -318,7 +319,11 @@ export class TranslateCache {
         }
       }
 
-      return await modelMaterializer?.getModel();
+      const model = await modelMaterializer?.getModel();
+      this.connection.console.info(
+        `translateWithCache ${prettyUri} end in ${prettyTime(performance.now() - t0)}s`
+      );
+      return model;
     } else {
       const runtime = new Runtime({
         urlReader,
@@ -333,7 +338,11 @@ export class TranslateCache {
         runtime,
         refreshSchemaCache
       );
-      return await modelMaterializer?.getModel();
+      const model = await modelMaterializer?.getModel();
+      this.connection.console.info(
+        `translateWithCache ${prettyUri} end in ${prettyTime(performance.now() - t0)}`
+      );
+      return model;
     }
   }
 }
