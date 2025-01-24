@@ -187,6 +187,7 @@ const Editor = styled.div`
   display: flex;
   flex-grow: 1;
   overflow: automatic;
+  height: 100%;
 `;
 
 const Stats = styled.div`
