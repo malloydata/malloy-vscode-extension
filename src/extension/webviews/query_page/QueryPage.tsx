@@ -7,6 +7,7 @@
 
 import * as React from 'react';
 import {useCallback, useEffect, useState} from 'react';
+import styled from 'styled-components';
 import {
   Explore,
   Field,
@@ -38,11 +39,9 @@ import {convertFromBytes} from '../../../common/convert_to_bytes';
 
 import {LabeledSpinner} from '../components/LabeledSpinner';
 import {SchemaRenderer} from '../components/SchemaRenderer';
-import '../components/prism_container';
 import {CopyButton as CopyButtonInner} from './CopyButton';
 import {DownloadButton} from './DownloadButton';
 import {ErrorPanel} from './ErrorPanel';
-import styled from 'styled-components';
 import {CodeContainer} from '../components/CodeContainer';
 import {DOMElement} from '../components/DOMElement';
 

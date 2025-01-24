@@ -27,7 +27,6 @@ import {Explore, Field, NamedQuery, QueryField} from '@malloydata/malloy';
 import {ActivationFunction} from 'vscode-notebook-renderer';
 import {FetchModelMessage} from '../../../common/types/message_types';
 import {fieldType} from '../../../common/schema';
-import '../../webviews/components/schema_renderer';
 import {MalloyRendererMessage} from '../types';
 import {SchemaRenderer} from '../../webviews/components/SchemaRenderer';
 import {StyleSheetManager} from 'styled-components';

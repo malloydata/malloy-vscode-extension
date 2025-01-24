@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Google LLC
+ * Copyright 2023 Google LLC
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files
@@ -21,43 +21,14 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {LitElement, css, html} from 'lit';
-import {customElement, property} from 'lit/decorators.js';
-import {copy} from '../assets/copy';
-import '../components/popup_dialog';
-import './download_form';
+import * as React from 'react';
+import {createRoot} from 'react-dom/client';
+import {HelpPage} from './HelpPage';
 
-const styles = css`
-  .copy-button {
-    width: 25px;
-    height: 25px;
-    background-color: var(--vscode-editorWidget-background);
-    color: var(--vscode-editorWidget-foreground);
-    border: 1px solid var(--vscode-dropdown-border);
-    border-radius: 4px;
-    cursor: pointer;
-  }
+const root = document.getElementById('app');
 
-  .copy-button svg {
-    width: 25px;
-    height: 25px;
-  }
-`;
-
-@customElement('copy-button')
-export class CopyButton extends LitElement {
-  static override styles = [styles];
-
-  @property()
-  onCopy!: () => Promise<void>;
-
-  override render() {
-    return html`<div class="copy-button" @click=${this.onCopy}>${copy}</div>`;
-  }
-}
-
-declare global {
-  interface HTMLElementTagNameMap {
-    'copy-button': CopyButton;
-  }
+if (root) {
+  root.innerText = '';
+  const reactRoot = createRoot(root);
+  reactRoot.render(<HelpPage />);
 }

@@ -264,7 +264,7 @@ export async function doBuild(
       './src/extension/webviews/composer_page/entry.tsx',
       './src/extension/webviews/query_page/entry.tsx',
       './src/extension/webviews/connections_page/entry.ts',
-      './src/extension/webviews/help_page/entry.ts',
+      './src/extension/webviews/help_page/entry.tsx',
     ],
     entryNames: '[dir]',
     platform: 'browser',
