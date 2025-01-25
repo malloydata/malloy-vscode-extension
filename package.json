@@ -608,7 +608,6 @@
     "@malloydata/syntax-highlight": "0.0.232",
     "@vscode/webview-ui-toolkit": "^1.2.1",
     "duckdb": "1.0.0",
-    "lit": "^3.0.2",
     "lodash": "^4.17.21",
     "node-fetch": "^2.6.6",
     "prismjs": "^1.28.0",
