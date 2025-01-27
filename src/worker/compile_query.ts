@@ -20,7 +20,7 @@ export const compileQuery = async (
   const {uri} = documentMeta;
   const url = new URL(uri);
   const connectionLookup = connectionManager.getConnectionLookup(url);
-  const runtime = new Runtime(fileHandler, connectionLookup);
+  const runtime = new Runtime({ urlReader: fileHandler, connections: connectionLookup });
 
   let workspaceFolders: string[] = [];
   if (url.protocol === 'untitled:') {
