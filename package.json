@@ -383,6 +383,11 @@
           "default": 100,
           "description": "Number of top values to fetch for index."
         },
+        "malloy.useNewQueryPage": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable the new React query page."
+        },
         "malloy.connections": {
           "type": "array",
           "items": {
