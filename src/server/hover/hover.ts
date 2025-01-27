@@ -98,7 +98,6 @@ async function getImportHover(
   };
   const importedModel = await translateCache.translateWithCache(
     importedDocument.uri,
-    importedDocument.version,
     importedDocument.languageId
   );
   if (importedModel) {

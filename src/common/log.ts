@@ -21,6 +21,8 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import {InvalidationKey} from "@malloydata/malloy";
+
 export const logPrefix = (level: string) => {
   const stamp = new Date().toLocaleTimeString();
   return `[${level} - ${stamp}]`;
@@ -41,8 +43,8 @@ export const prettyLogUri = (uri: string): string => {
   return pretty;
 };
 
-export const prettyLogInvalidationKey = (invalidationKey: string): string => {
-  return `v(${invalidationKey.substring(0, 8)})`;
+export const prettyLogInvalidationKey = (invalidationKey: InvalidationKey): string => {
+  return `v(${`${invalidationKey}`.substring(0, 8)})`;
 }
 
 export const prettyTime = (ms: number): string => {

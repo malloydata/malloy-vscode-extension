@@ -33,7 +33,6 @@ export async function getMalloyDefinitionReference(
   try {
     const model = await translateCache.translateWithCache(
       document.uri,
-      document.version,
       document.languageId
     );
     if (!model) {
