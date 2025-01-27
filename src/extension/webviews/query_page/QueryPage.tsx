@@ -294,7 +294,7 @@ export function QueryPage({vscode}: QueryPageProps) {
 
   const getProfilingUrlLink = (profilingUrl?: string) => {
     return profilingUrl ? (
-      <a className="profiling-url" href="${profilingUrl}">
+      <a className="profiling-url" href={profilingUrl}>
         Query Profile Page
       </a>
     ) : null;
