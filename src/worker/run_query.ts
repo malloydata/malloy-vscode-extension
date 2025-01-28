@@ -205,7 +205,14 @@ const runMSQLCell = async (
 
   const connection = await connectionLookup.lookupConnection(connectionName);
 
-  const sqlResults = await connection.runSQL(compiledStatement);
+  const abortController = new AbortController();
+  cancellationToken.onCancellationRequested(() => {
+    abortController.abort();
+  });
+
+  const sqlResults = await connection.runSQL(compiledStatement, {
+    abortSignal: abortController.signal,
+  });
 
   if (cancellationToken.isCancellationRequested) return;
 
