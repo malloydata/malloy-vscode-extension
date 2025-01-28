@@ -37,18 +37,20 @@ import {BuildModelRequest, CellData} from '../common/types/file_handler';
 import {MalloySQLSQLParser} from '@malloydata/malloy-sql';
 import {FetchModelMessage} from '../common/types/message_types';
 import {fixLogRange} from '../common/malloy_sql';
-import {prettyTime, prettyLogUri, prettyLogInvalidationKey} from '../common/log';
+import {
+  prettyTime,
+  prettyLogUri,
+  prettyLogInvalidationKey,
+} from '../common/log';
 
 export class TranslateCache {
   // Cache for truncated documents used for providing schema suggestions
   private readonly truncatedCache = new Map<
-    string, {model: Model; exploreCount: number}
-  >();
-  
-  private readonly cache = new Map<
     string,
-    CachedModel
+    {model: Model; exploreCount: number}
   >();
+
+  private readonly cache = new Map<string, CachedModel>();
 
   private cacheManager = new CacheManager(this);
 
@@ -68,7 +70,9 @@ export class TranslateCache {
     const _url = url.toString();
     const result = this.cache.get(_url);
     const prettyUri = prettyLogUri(_url);
-    this.connection.console.info(`translateWithCache ${prettyUri} ${result ? 'hit' : 'miss'}`);
+    this.connection.console.info(
+      `translateWithCache ${prettyUri} ${result ? 'hit' : 'miss'}`
+    );
     return Promise.resolve(result);
   }
 
@@ -76,7 +80,9 @@ export class TranslateCache {
     const _url = url.toString();
     const prettyUri = prettyLogUri(_url);
     this.connection.console.info(
-      `translateWithCache ${prettyUri} ${prettyLogInvalidationKey(cachedModel.invalidationKeys[_url])} set`
+      `translateWithCache ${prettyUri} ${prettyLogInvalidationKey(
+        cachedModel.invalidationKeys[_url]
+      )} set`
     );
     this.cache.set(_url, cachedModel);
     return Promise.resolve(true);
@@ -85,17 +91,19 @@ export class TranslateCache {
   public dependenciesFor(uri: string): string[] | undefined {
     const entry = this.cache.get(uri);
     if (entry === undefined) return undefined;
-    return Object.keys(entry.invalidationKeys ?? {}).filter(other => other !== uri);
+    return Object.keys(entry.invalidationKeys ?? {}).filter(
+      other => other !== uri
+    );
   }
 
   /**
    * Returns files that should be recompiled when a given file changes.
    * This includes files which directly depend on this one, because they import
-   * it, as well as snippets that appear later in the same notebook 
-   */ 
+   * it, as well as snippets that appear later in the same notebook
+   */
   public dependentsOf(uri: string): string[] | undefined {
     if (!this.cache.has(uri)) return undefined;
-    let dependencies = [];
+    const dependencies = [];
     const [base, hash] = uri.split('#');
     for (const [otherURI, model] of this.cache.entries()) {
       if (otherURI === uri) continue;
@@ -245,9 +253,7 @@ export class TranslateCache {
       // new runs preempt the current fetch
       const runtime = new Runtime({
         urlReader,
-        connections: this.connectionManager.getConnectionLookup(
-          new URL(uri)
-        ),
+        connections: this.connectionManager.getConnectionLookup(new URL(uri)),
         cacheManager: this.cacheManager,
       });
       const modelMaterializer = await this.createModelMaterializer(
@@ -259,7 +265,7 @@ export class TranslateCache {
       if (model) {
         this.truncatedCache.set(uri, {
           model,
-          exploreCount
+          exploreCount,
         });
       }
       this.connection.console.info(
@@ -277,9 +283,7 @@ export class TranslateCache {
   ): Promise<Model | undefined> {
     const prettyUri = prettyLogUri(uri);
     const t0 = performance.now();
-    this.connection.console.info(
-      `translateWithCache ${prettyUri} start`
-    );
+    this.connection.console.info(`translateWithCache ${prettyUri} start`);
     const urlReader = {
       readURL: (url: URL) => this.getDocumentText(this.documents, url),
     };
@@ -288,9 +292,7 @@ export class TranslateCache {
       const parse = MalloySQLSQLParser.parse(text, uri);
       const runtime = new Runtime({
         urlReader,
-        connections: this.connectionManager.getConnectionLookup(
-          new URL(uri)
-        ),
+        connections: this.connectionManager.getConnectionLookup(new URL(uri)),
         cacheManager: this.cacheManager,
       });
 
@@ -321,15 +323,15 @@ export class TranslateCache {
 
       const model = await modelMaterializer?.getModel();
       this.connection.console.info(
-        `translateWithCache ${prettyUri} end in ${prettyTime(performance.now() - t0)}s`
+        `translateWithCache ${prettyUri} end in ${prettyTime(
+          performance.now() - t0
+        )}s`
       );
       return model;
     } else {
       const runtime = new Runtime({
         urlReader,
-        connections: this.connectionManager.getConnectionLookup(
-          new URL(uri)
-        ),
+        connections: this.connectionManager.getConnectionLookup(new URL(uri)),
         cacheManager: this.cacheManager,
       });
 
@@ -340,7 +342,9 @@ export class TranslateCache {
       );
       const model = await modelMaterializer?.getModel();
       this.connection.console.info(
-        `translateWithCache ${prettyUri} end in ${prettyTime(performance.now() - t0)}`
+        `translateWithCache ${prettyUri} end in ${prettyTime(
+          performance.now() - t0
+        )}`
       );
       return model;
     }

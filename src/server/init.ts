@@ -125,10 +125,13 @@ export const initServer = (
 
       // Trigger diagnostics for all documents we know that import this one,
       // too.
-      for (const dependency of translateCache.dependentsOf(document.uri) ?? []) {
+      for (const dependency of translateCache.dependentsOf(document.uri) ??
+        []) {
         const document = documents.get(dependency);
         if (document) {
-          connection.console.info(`diagnoseDocument recompiling ${prettyLogUri(document.uri)}`);
+          connection.console.info(
+            `diagnoseDocument recompiling ${prettyLogUri(document.uri)}`
+          );
           debouncedDiagnoseDocument(document);
         }
       }
@@ -162,7 +165,11 @@ export const initServer = (
       for (const other of dependencies) {
         const document = documents.get(other);
         if (document === undefined) {
-          connection.console.info(`ejectIfUnused no document for ${prettyLogUri(other)}, considering deletion`);
+          connection.console.info(
+            `ejectIfUnused no document for ${prettyLogUri(
+              other
+            )}, considering deletion`
+          );
           ejectIfUnused(other);
         }
       }
