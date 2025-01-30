@@ -21,12 +21,17 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {html, render} from 'lit';
-import './connections_app';
+import * as React from 'react';
+import {createRoot} from 'react-dom/client';
+import {ConnectionPanelMessage} from '../../../common/types/message_types';
+import {getVSCodeAPI} from '../vscode_wrapper';
+import {ConnectionsApp} from './ConnectionsApp';
 
 const root = document.getElementById('app');
 
 if (root) {
+  const vscode = getVSCodeAPI<ConnectionPanelMessage, void>();
   root.innerText = '';
-  render(html`<connections-app></connections-app>`, root);
+  const reactRoot = createRoot(root);
+  reactRoot.render(<ConnectionsApp vscode={vscode} />);
 }
