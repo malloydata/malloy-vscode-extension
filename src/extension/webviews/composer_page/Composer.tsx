@@ -6,12 +6,14 @@
  */
 
 import * as React from 'react';
-import {useCallback, useEffect, useState} from 'react';
+import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
   ExploreQueryEditor,
   useQueryBuilder,
   useRunQuery,
   RunQuery,
+  UndoContext,
+  StubCompile,
 } from '@malloydata/query-composer';
 import {
   ModelDef,
@@ -41,7 +43,7 @@ export interface ComposerProps {
   topValues: SearchValueMapResult[] | undefined;
 }
 
-const nullUpdateQueryInUrl = () => {};
+const stubCompile = new StubCompile();
 
 export const Composer: React.FC<ComposerProps> = ({
   documentMeta,
@@ -53,17 +55,67 @@ export const Composer: React.FC<ComposerProps> = ({
   topValues,
 }) => {
   const [error, setError] = useState<Error>();
+  const history = useRef<string[]>(['']);
+  const historyIndex = useRef(0);
+
+  const updateQueryInUrl = useCallback(
+    ({query}: {query: string | undefined}) => {
+      if (query && query !== history.current[historyIndex.current]) {
+        history.current = history.current.slice(0, historyIndex.current + 1);
+        history.current.push(query);
+        historyIndex.current++;
+      }
+      console.info('updateQueryInUrl', history.current, historyIndex.current);
+    },
+    []
+  );
+
   const {
     error: queryError,
     queryModifiers,
     querySummary,
     queryWriter,
-  } = useQueryBuilder(
-    modelDef,
-    sourceName,
-    documentMeta.uri,
-    nullUpdateQueryInUrl
-  );
+  } = useQueryBuilder(modelDef, sourceName, documentMeta.uri, updateQueryInUrl);
+
+  const undoContext = useMemo(() => {
+    const updateQuery = () => {
+      const query = history.current[historyIndex.current];
+      if (query) {
+        stubCompile
+          .compileQuery(modelDef, query)
+          .then(query => queryModifiers.setQuery(query, true))
+          .catch(console.error);
+      } else {
+        queryModifiers.clearQuery(true);
+      }
+    };
+
+    const canRedo = () => historyIndex.current < history.current.length - 1;
+    const canUndo = () => historyIndex.current > 0;
+
+    const undo = () => {
+      if (canUndo()) {
+        historyIndex.current--;
+        updateQuery();
+      }
+      console.info('undo', history.current, historyIndex.current);
+    };
+
+    const redo = () => {
+      if (canRedo()) {
+        historyIndex.current++;
+        updateQuery();
+      }
+      console.info('redo', history.current, historyIndex.current);
+    };
+
+    return {
+      canRedo,
+      canUndo,
+      redo,
+      undo,
+    };
+  }, [modelDef, queryModifiers]);
 
   const [stats, setStats] = useState<QueryRunStats>();
   const [profilingUrl, setProfilingUrl] = useState<string>();
@@ -120,24 +172,28 @@ export const Composer: React.FC<ComposerProps> = ({
   const query = queryWriter.getQueryStringForNotebook();
 
   return (
-    <Outer>
-      <Editor>
-        <ExploreQueryEditor
-          model={modelDef}
-          modelPath={documentMeta.fileName}
-          source={source}
-          queryModifiers={queryModifiers}
-          topValues={topValues}
-          querySummary={querySummary}
-          queryWriter={queryWriter}
-          result={result || error}
-          isRunning={isRunning}
-          runQuery={runQuery}
-          refreshModel={() => refreshModel(query)}
-        />
-      </Editor>
-      <Stats>{getStats(stats, profilingUrl, queryCostBytes)}</Stats>
-    </Outer>
+    <UndoContext.Provider value={undoContext}>
+      <Outer>
+        <Editor>
+          <ExploreQueryEditor
+            model={modelDef}
+            modelPath={documentMeta.fileName}
+            source={source}
+            queryModifiers={queryModifiers}
+            topValues={topValues}
+            querySummary={querySummary}
+            queryWriter={queryWriter}
+            result={result || error}
+            isRunning={isRunning}
+            runQuery={runQuery}
+            refreshModel={() => {
+              if (query) refreshModel(query);
+            }}
+          />
+        </Editor>
+        <Stats>{getStats(stats, profilingUrl, queryCostBytes)}</Stats>
+      </Outer>
+    </UndoContext.Provider>
   );
 };
 
