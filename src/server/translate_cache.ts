@@ -23,10 +23,12 @@
 
 import {Connection, TextDocuments} from 'vscode-languageserver';
 import {
+  CacheManager,
   MalloyError,
   Model,
   ModelMaterializer,
   Runtime,
+  CachedModel,
 } from '@malloydata/malloy';
 import {TextDocument} from 'vscode-languageserver-textdocument';
 
@@ -35,16 +37,88 @@ import {BuildModelRequest, CellData} from '../common/types/file_handler';
 import {MalloySQLSQLParser} from '@malloydata/malloy-sql';
 import {FetchModelMessage} from '../common/types/message_types';
 import {fixLogRange} from '../common/malloy_sql';
-import {prettyLogUri} from '../common/log';
+import {
+  prettyTime,
+  prettyLogUri,
+  prettyLogInvalidationKey,
+} from '../common/log';
 
 export class TranslateCache {
   // Cache for truncated documents used for providing schema suggestions
-  truncatedCache = new Map<
+  private readonly truncatedCache = new Map<
     string,
-    {model: Model; exploreCount: number; version: number}
+    {model: Model; exploreCount: number}
   >();
-  truncatedVersion = 0;
-  cache = new Map<string, {model: Model; version: number}>();
+
+  private readonly cache = new Map<string, CachedModel>();
+
+  private cacheManager = new CacheManager(this);
+
+  public deleteModel(uri: string) {
+    // It's not necessary for the `cacheManager` to know that the file has been
+    // removed from the cache.
+    this.cache.delete(uri);
+    this.truncatedCache.delete(uri);
+  }
+
+  public deleteAllModels() {
+    this.cache.clear();
+    this.truncatedCache.clear();
+  }
+
+  public async getModel(url: URL): Promise<CachedModel | undefined> {
+    const _url = url.toString();
+    const result = this.cache.get(_url);
+    const prettyUri = prettyLogUri(_url);
+    this.connection.console.info(
+      `translateWithCache ${prettyUri} ${result ? 'hit' : 'miss'}`
+    );
+    return Promise.resolve(result);
+  }
+
+  public async setModel(url: URL, cachedModel: CachedModel): Promise<boolean> {
+    const _url = url.toString();
+    const prettyUri = prettyLogUri(_url);
+    this.connection.console.info(
+      `translateWithCache ${prettyUri} ${prettyLogInvalidationKey(
+        cachedModel.invalidationKeys[_url]
+      )} set`
+    );
+    this.cache.set(_url, cachedModel);
+    return Promise.resolve(true);
+  }
+
+  public dependenciesFor(uri: string): string[] | undefined {
+    const entry = this.cache.get(uri);
+    if (entry === undefined) return undefined;
+    return Object.keys(entry.invalidationKeys ?? {}).filter(
+      other => other !== uri
+    );
+  }
+
+  /**
+   * Returns files that should be recompiled when a given file changes.
+   * This includes files which directly depend on this one, because they import
+   * it, as well as snippets that appear later in the same notebook
+   */
+  public dependentsOf(uri: string): string[] | undefined {
+    if (!this.cache.has(uri)) return undefined;
+    const dependencies = [];
+    const [base, hash] = uri.split('#');
+    for (const [otherURI, model] of this.cache.entries()) {
+      if (otherURI === uri) continue;
+      if (Object.keys(model.invalidationKeys).includes(uri)) {
+        dependencies.push(otherURI);
+      }
+      if (otherURI.startsWith(base)) {
+        const [_, keyHash] = otherURI.split('#');
+        if (keyHash > hash) {
+          dependencies.push(otherURI);
+        }
+      }
+    }
+    return dependencies;
+  }
 
   constructor(
     private documents: TextDocuments<TextDocument>,
@@ -56,7 +130,6 @@ export class TranslateCache {
       async (event: BuildModelRequest): Promise<FetchModelMessage> => {
         const model = await this.translateWithCache(
           event.uri,
-          event.version,
           event.languageId,
           event.refreshSchemaCache
         );
@@ -96,7 +169,7 @@ export class TranslateCache {
     refreshSchemaCache?: boolean | number
   ): Promise<ModelMaterializer | null> {
     const prettyUri = prettyLogUri(uri);
-    this.connection.console.info(`createModelMaterializer ${prettyUri} start`);
+    this.connection.console.debug(`createModelMaterializer ${prettyUri} start`);
     let modelMaterializer: ModelMaterializer | null = null;
     const queryFileURL = new URL(uri);
     if (queryFileURL.protocol === 'vscode-notebook-cell:') {
@@ -138,7 +211,7 @@ export class TranslateCache {
         noThrowOnError: true,
       });
     }
-    this.connection.console.info(`createModelMaterializer ${prettyUri} end`);
+    this.connection.console.debug(`createModelMaterializer ${prettyUri} end`);
     return modelMaterializer;
   }
 
@@ -153,8 +226,9 @@ export class TranslateCache {
     text: string,
     exploreCount: number
   ): Promise<Model | undefined> {
+    const prettyUri = prettyLogUri(document.uri);
     this.connection.console.info(
-      `translateWithTruncatedCache ${document.uri} start`
+      `translateWithTruncatedCache ${prettyUri} start`
     );
     const {uri, languageId} = document;
     if (languageId === 'malloy') {
@@ -162,11 +236,11 @@ export class TranslateCache {
       // Only re-compile the model if the number of explores has changed
       if (entry && entry.exploreCount === exploreCount) {
         this.connection.console.info(
-          `translateWithTruncatedCache ${document.uri} hit`
+          `translateWithTruncatedCache ${prettyUri} hit`
         );
         return entry.model;
       }
-      const files = {
+      const urlReader = {
         readURL: (url: URL) => {
           if (url.toString() === uri) {
             return Promise.resolve(text);
@@ -177,10 +251,11 @@ export class TranslateCache {
       };
       // TODO: Possibly look into having remaining statements run "in the background" and having
       // new runs preempt the current fetch
-      const runtime = new Runtime(
-        files,
-        this.connectionManager.getConnectionLookup(new URL(uri))
-      );
+      const runtime = new Runtime({
+        urlReader,
+        connections: this.connectionManager.getConnectionLookup(new URL(uri)),
+        cacheManager: this.cacheManager,
+      });
       const modelMaterializer = await this.createModelMaterializer(
         uri,
         runtime,
@@ -191,11 +266,10 @@ export class TranslateCache {
         this.truncatedCache.set(uri, {
           model,
           exploreCount,
-          version: this.truncatedVersion++,
         });
       }
       this.connection.console.info(
-        `translateWithTruncatedCache ${document.uri} miss`
+        `translateWithTruncatedCache ${prettyUri} miss`
       );
       return model;
     }
@@ -204,33 +278,23 @@ export class TranslateCache {
 
   async translateWithCache(
     uri: string,
-    currentVersion: number,
     languageId: string,
     refreshSchemaCache?: boolean
   ): Promise<Model | undefined> {
     const prettyUri = prettyLogUri(uri);
-    const entry = this.cache.get(uri);
-    if (entry && entry.version === currentVersion && !refreshSchemaCache) {
-      const {model} = entry;
-      this.connection.console.info(
-        `translateWithCache ${prettyUri} v${currentVersion} hit`
-      );
-      return model;
-    }
-    this.connection.console.info(
-      `translateWithCache ${prettyUri} v${currentVersion} miss`
-    );
-
-    const text = await this.getDocumentText(this.documents, new URL(uri));
+    const t0 = performance.now();
+    this.connection.console.info(`translateWithCache ${prettyUri} start`);
+    const urlReader = {
+      readURL: (url: URL) => this.getDocumentText(this.documents, url),
+    };
+    const text = await urlReader.readURL(new URL(uri));
     if (languageId === 'malloy-sql') {
       const parse = MalloySQLSQLParser.parse(text, uri);
-      const files = {
-        readURL: (url: URL) => this.getDocumentText(this.documents, url),
-      };
-      const runtime = new Runtime(
-        files,
-        this.connectionManager.getConnectionLookup(new URL(uri))
-      );
+      const runtime = new Runtime({
+        urlReader,
+        connections: this.connectionManager.getConnectionLookup(new URL(uri)),
+        cacheManager: this.cacheManager,
+      });
 
       const modelMaterializer = await this.createModelMaterializer(
         uri,
@@ -258,21 +322,18 @@ export class TranslateCache {
       }
 
       const model = await modelMaterializer?.getModel();
-      if (model) {
-        this.cache.set(uri, {version: currentVersion, model});
-      }
       this.connection.console.info(
-        `translateWithCache ${prettyUri} v${currentVersion} set`
+        `translateWithCache ${prettyUri} end in ${prettyTime(
+          performance.now() - t0
+        )}s`
       );
       return model;
     } else {
-      const files = {
-        readURL: (url: URL) => this.getDocumentText(this.documents, url),
-      };
-      const runtime = new Runtime(
-        files,
-        this.connectionManager.getConnectionLookup(new URL(uri))
-      );
+      const runtime = new Runtime({
+        urlReader,
+        connections: this.connectionManager.getConnectionLookup(new URL(uri)),
+        cacheManager: this.cacheManager,
+      });
 
       const modelMaterializer = await this.createModelMaterializer(
         uri,
@@ -280,12 +341,11 @@ export class TranslateCache {
         refreshSchemaCache
       );
       const model = await modelMaterializer?.getModel();
-      if (model) {
-        this.cache.set(uri, {version: currentVersion, model});
-        this.connection.console.info(
-          `translateWithCache ${prettyUri} v${currentVersion} set`
-        );
-      }
+      this.connection.console.info(
+        `translateWithCache ${prettyUri} end in ${prettyTime(
+          performance.now() - t0
+        )}`
+      );
       return model;
     }
   }

@@ -17,7 +17,6 @@ export async function getMalloyCodeAction(
   try {
     const model = await translateCache.translateWithCache(
       document.uri,
-      document.version,
       document.languageId
     );
     if (model?.problems) {

@@ -61,10 +61,10 @@ export async function downloadQuery(
     abortController.abort();
   });
 
-  const runtime = new Runtime(
-    fileHandler,
-    connectionManager.getConnectionLookup(url)
-  );
+  const runtime = new Runtime({
+    urlReader: fileHandler,
+    connections: connectionManager.getConnectionLookup(url),
+  });
 
   sendMessage({
     status: QueryDownloadStatus.Compiling,
