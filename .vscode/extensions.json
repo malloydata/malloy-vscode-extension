@@ -3,7 +3,6 @@
     "connor4312.esbuild-problem-matchers",
     "dbaeumer.vscode-eslint",
     "esbenp.prettier-vscode",
-    "runem.lit-plugin",
     "styled-components.vscode-styled-components",
     "tobermory.es6-string-html"
   ]

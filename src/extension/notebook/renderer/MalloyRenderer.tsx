@@ -21,15 +21,23 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {LitElement, css, html, nothing} from 'lit';
-import {customElement, property} from 'lit/decorators.js';
-import {until} from 'lit/directives/until.js';
+import * as React from 'react';
 import {Result} from '@malloydata/malloy';
 import {HTMLView} from '@malloydata/render';
 import '@malloydata/render/webcomponent';
 import {MalloyRendererMessage} from '../types';
+import {useEffect, useState} from 'react';
+import {DOMElement} from '../../webviews/components/DOMElement';
 
-const styles = css`
+export interface MalloyRendererProps {
+  postMessage?: (message: MalloyRendererMessage) => void;
+  result: Result | null;
+}
+
+const css = `
+  malloy-render::part(container) {
+    max-height: 600px;
+  }
   :root {
     --malloy-font-family: var(--vscode-font-family, Roboto);
     --malloy-title-color: var(--vscode-titleBar-activeForeground);
@@ -39,50 +47,39 @@ const styles = css`
   }
 `;
 
-@customElement('malloy-renderer')
-export class MalloyRenderer extends LitElement {
-  @property({type: Object}) postMessage?: (
-    message: MalloyRendererMessage
-  ) => void;
-  static override styles = [styles];
-
-  @property({type: Object}) result: Result | null = null;
-
-  override render() {
-    if (!this.result) {
-      return nothing;
+export const MalloyRenderer = ({postMessage, result}: MalloyRendererProps) => {
+  const [resultHtml, setResultHtml] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    if (result) {
+      new HTMLView(document)
+        .render(result, {
+          dataStyles: {},
+          isDrillingEnabled: true,
+          onDrill: (
+            drillQuery: string,
+            _target: HTMLElement,
+            _drillFilters: string[]
+          ) => {
+            const command = 'malloy.copyToClipboard';
+            const args = [drillQuery, 'Query'];
+            postMessage?.({command, args});
+          },
+          nextRendererOptions: {
+            tableConfig: {
+              enableDrill: true,
+            },
+          },
+        })
+        .then(resultHtml => setResultHtml(resultHtml));
     }
-    const resultHtml = new HTMLView(document).render(this.result, {
-      dataStyles: {},
-      isDrillingEnabled: true,
-      onDrill: (
-        drillQuery: string,
-        _target: HTMLElement,
-        _drillFilters: string[]
-      ) => {
-        const command = 'malloy.copyToClipboard';
-        const args = [drillQuery, 'Query'];
-        this.postMessage?.({command, args});
-      },
-      nextRendererOptions: {
-        tableConfig: {
-          enableDrill: true,
-        },
-      },
-    });
-    return html`<link rel="preconnect" href="https://rsms.me/" />
-      <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
-      <style>
-        malloy-render::part(container) {
-          max-height: 600px;
-        }
-      </style>
-      ${until(resultHtml)}`;
-  }
-}
+  }, [postMessage, result]);
 
-declare global {
-  interface HTMLElementTagNameMap {
-    'malloy-renderer': MalloyRenderer;
-  }
-}
+  return (
+    <>
+      <link rel="preconnect" href="https://rsms.me/" />
+      <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
+      <style>{css}</style>
+      {resultHtml ? <DOMElement element={resultHtml} /> : null}
+    </>
+  );
+};

@@ -594,7 +594,6 @@
     ]
   },
   "dependencies": {
-    "@lit-labs/observers": "^2.0.2",
     "@malloydata/db-bigquery": "0.0.232",
     "@malloydata/db-duckdb": "0.0.232",
     "@malloydata/db-mysql": "0.0.232",
@@ -608,7 +607,6 @@
     "@malloydata/syntax-highlight": "0.0.232",
     "@vscode/webview-ui-toolkit": "^1.2.1",
     "duckdb": "1.0.0",
-    "lit": "^3.0.2",
     "lodash": "^4.17.21",
     "node-fetch": "^2.6.6",
     "prismjs": "^1.28.0",
@@ -653,7 +651,6 @@
     "esbuild-plugin-svgr": "^1.0.1",
     "eslint": "^8.49.0",
     "eslint-config-prettier": "^9.0.0",
-    "eslint-plugin-lit": "^1.11.0",
     "eslint-plugin-prettier": "^5.0.0",
     "eslint-plugin-react": "^7.37.1",
     "eslint-plugin-react-hooks": "^5.0.0",

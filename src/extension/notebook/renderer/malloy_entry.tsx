@@ -21,12 +21,15 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {html, render} from 'lit';
+import * as React from 'react';
+import {createRoot} from 'react-dom/client';
 import {ActivationFunction} from 'vscode-notebook-renderer';
-import './malloy_renderer';
+import './MalloyRenderer';
 import '@malloydata/render/webcomponent';
 import {Result} from '@malloydata/malloy';
 import {MalloyRenderProps} from '@malloydata/render';
+import {StyleSheetManager} from 'styled-components';
+import {SchemaRendererWrapper} from './schema_entry';
 
 // TODO: Figure out how to make this part of @malloydata/render/webcomponent export
 declare global {
@@ -79,12 +82,18 @@ export const activate: ActivationFunction = ({postMessage}) => {
         if (!root) {
           throw new Error('Element #root not found');
         }
-        render(
-          html`<malloy-renderer
-            .result=${result}
-            .postMessage=${postMessage}
-          ></malloy-renderer>`,
-          root
+        const styledRoot = document.createElement('div');
+        styledRoot.id = 'styled-root';
+        root.id = 'root';
+        styledRoot.append(root);
+        const reactRoot = createRoot(root);
+        reactRoot.render(
+          <StyleSheetManager target={styledRoot}>
+            <SchemaRendererWrapper
+              results={info.json()}
+              postMessage={postMessage}
+            />
+          </StyleSheetManager>
         );
       }
     },
