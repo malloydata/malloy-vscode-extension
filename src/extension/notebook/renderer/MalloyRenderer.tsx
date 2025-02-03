@@ -29,11 +29,6 @@ import {MalloyRendererMessage} from '../types';
 import {useEffect, useState} from 'react';
 import {DOMElement} from '../../webviews/components/DOMElement';
 
-// const styles = css`
-//   :root {
-//   }
-// `;
-
 export interface MalloyRendererProps {
   postMessage?: (message: MalloyRendererMessage) => void;
   result: Result | null;
