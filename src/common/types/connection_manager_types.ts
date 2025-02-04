@@ -37,9 +37,8 @@ export const ConnectionBackendNames: Record<ConnectionBackend, string> = {
   [ConnectionBackend.DuckDB]: 'DuckDB',
   // TODO(whscullin): Remove beta once ready.
   [ConnectionBackend.Snowflake]: 'Snowflake (Beta)',
-  // TODO(figutierrez): Remove beta once ready.
-  [ConnectionBackend.Trino]: 'Trino (Beta)',
-  [ConnectionBackend.Presto]: 'Presto (Beta)',
+  [ConnectionBackend.Trino]: 'Trino',
+  [ConnectionBackend.Presto]: 'Presto',
   [ConnectionBackend.MySQL]: 'MySQL',
 };
 

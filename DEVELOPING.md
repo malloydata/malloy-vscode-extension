@@ -37,8 +37,11 @@ launch profile from the "Run and Debug" panel.
 
 ## Running against a local version of Malloy
 
-1. In your local Malloy repository, run `npm link -ws`. That will make your development packages locally available for development.
-2. In your VS Code extension repository, run `npm run malloy-link` to use your local Malloy packages.
-3. If you make changes to Malloy that are required by the extension, merges those into main, and that will trigger an automatic developer release of Malloy.
-4. Once that release completes, run `npm run malloy-update` to update dependencies to that release. This will break the link to your local version of Malloy, so if you want to resume local development, re-run `npm run malloy-link`
-5. To manually unlink without updating, you may run `npm run malloy-unlink`
+1. One time, in your local Malloy repository, run `npm link -ws`. That will make your development packages locally available for development.
+2. Each time you make changes, you'll need to run `npm run build` from the `malloy` directory
+3. In your VS Code extension repository, run `npm run malloy-link` to pull in the newly built local Malloy packages.
+
+## Committing changes to the local version of Malloy
+1. If you make changes to Malloy that are required by the extension, merge those into main and that will trigger an automatic developer release of Malloy.
+2. Once that release completes, run `npm run malloy-update` to update dependencies to that release. This will break the link to your local version of Malloy, so if you want to resume local development, re-run `npm run malloy-link`
+3. To manually unlink without updating, you may run `npm run malloy-unlink`
