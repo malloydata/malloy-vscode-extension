@@ -35,7 +35,7 @@ import {
   ConnectionBackend,
   ConnectionBackendNames,
   ConnectionConfig,
-  PostgresConnectionConfig
+  PostgresConnectionConfig,
 } from '../../../../common/types/connection_manager_types';
 import {ConnectionMessageTest} from '../../../../common/types/message_types';
 import {chevronDownIcon} from '../../components/icons';
@@ -92,7 +92,7 @@ export class ConnectionEditor extends LitElement {
     ConnectionBackend.DuckDB,
     ConnectionBackend.Snowflake,
     ConnectionBackend.Presto,
-    ConnectionBackend.Trino
+    ConnectionBackend.Trino,
   ];
 
   override render() {
@@ -169,40 +169,40 @@ export class ConnectionEditor extends LitElement {
 
   private renderConnectionEditor = () => {
     switch (this.config.backend) {
-        case ConnectionBackend.BigQuery:
-          return html`<bigquery-connection-editor
-            .config=${this.config}
-            .setConfig=${this.setConfig}
-            .requestFilePath=${this.requestFilePath}
-          ></bigquery-connection-editor>`;
-        case ConnectionBackend.Postgres:
-          return html`<postgres-connection-editor
-            .config=${this.config as PostgresConnectionConfig}
-            .setConfig=${this.setConfig}
-          ></postgres-connection-editor>`;
-        case ConnectionBackend.DuckDB:
-          return html`<duckdb-connection-editor
-            .config=${this.config}
-            .setConfig=${this.setConfig}
-            .requestFilePath=${this.requestFilePath}
-          ></duckdb-connection-editor>`;
-        case ConnectionBackend.Snowflake:
-          return html`<snowflake-connection-editor
-            .config=${this.config}
-            .setConfig=${this.setConfig}
-            .requestFilePath=${this.requestFilePath}
-          ></snowflake-connection-editor>`;
-        // Trino and Presto use an identical config.
-        case ConnectionBackend.Trino:
-        case ConnectionBackend.Presto:
-          return html`<trino-presto-connection-editor
-            .config=${this.config}
-            .setConfig=${this.setConfig}
-          ></trino-presto-connection-editor>`;
-        default:
-          return html`<div>Unknown Connection Type</div>`;
+      case ConnectionBackend.BigQuery:
+        return html`<bigquery-connection-editor
+          .config=${this.config}
+          .setConfig=${this.setConfig}
+          .requestFilePath=${this.requestFilePath}
+        ></bigquery-connection-editor>`;
+      case ConnectionBackend.Postgres:
+        return html`<postgres-connection-editor
+          .config=${this.config as PostgresConnectionConfig}
+          .setConfig=${this.setConfig}
+        ></postgres-connection-editor>`;
+      case ConnectionBackend.DuckDB:
+        return html`<duckdb-connection-editor
+          .config=${this.config}
+          .setConfig=${this.setConfig}
+          .requestFilePath=${this.requestFilePath}
+        ></duckdb-connection-editor>`;
+      case ConnectionBackend.Snowflake:
+        return html`<snowflake-connection-editor
+          .config=${this.config}
+          .setConfig=${this.setConfig}
+          .requestFilePath=${this.requestFilePath}
+        ></snowflake-connection-editor>`;
+      // Trino and Presto use an identical config.
+      case ConnectionBackend.Trino:
+      case ConnectionBackend.Presto:
+        return html`<trino-presto-connection-editor
+          .config=${this.config}
+          .setConfig=${this.setConfig}
+        ></trino-presto-connection-editor>`;
+      default:
+        return html`<div>Unknown Connection Type</div>`;
     }
-  }
+  };
 }
 
 declare global {

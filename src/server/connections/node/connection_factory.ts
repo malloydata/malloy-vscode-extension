@@ -94,15 +94,19 @@ export class NodeConnectionFactory implements ConnectionFactory {
         break;
       }
       case ConnectionBackend.Trino: {
-        connection = await createTrinoPrestoConnection(this.client,
+        connection = await createTrinoPrestoConnection(
+          this.client,
           connectionConfig,
-          configOptions);
+          configOptions
+        );
         break;
       }
       case ConnectionBackend.Presto: {
-        connection = await createTrinoPrestoConnection(this.client,
+        connection = await createTrinoPrestoConnection(
+          this.client,
           connectionConfig,
-          configOptions);
+          configOptions
+        );
         break;
       }
       case ConnectionBackend.MySQL: {

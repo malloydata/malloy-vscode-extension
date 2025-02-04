@@ -49,7 +49,8 @@ export const createTrinoPrestoConnection = async (
     `Creating ${connectionConfig.id} connection with`,
     JSON.stringify(sanitizedConfig)
   );
-  const TrinoPrestoContructor = connectionConfig.id === 'presto' ? PrestoConnection : TrinoConnection;
+  const TrinoPrestoContructor =
+    connectionConfig.id === 'presto' ? PrestoConnection : TrinoConnection;
   const connection = new TrinoPrestoContructor(
     connectionConfig.id,
     () => ({rowLimit}),
