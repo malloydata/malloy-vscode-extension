@@ -32,12 +32,10 @@ import {createBigQueryConnection} from './bigquery_connection';
 import {createDuckDbConnection} from './duckdb_connection';
 import {createPostgresConnection} from './postgres_connection';
 import {createSnowflakeConnection} from './snowflake_connection';
-import {createTrinoConnection} from './trino_connection';
+import {createTrinoPrestoConnection} from './trino_presto_connection';
 
 import {fileURLToPath} from 'url';
 import {GenericConnection} from '../../../common/types/worker_message_types';
-import {TrinoExecutor} from '@malloydata/db-trino';
-import {createPrestoConnection} from './presto_connection';
 import {MySQLExecutor} from '@malloydata/db-mysql';
 import {createMySQLConnection} from './mysql_connection';
 
@@ -96,11 +94,15 @@ export class NodeConnectionFactory implements ConnectionFactory {
         break;
       }
       case ConnectionBackend.Trino: {
-        connection = await createTrinoConnection();
+        connection = await createTrinoPrestoConnection(this.client,
+          connectionConfig,
+          configOptions);
         break;
       }
       case ConnectionBackend.Presto: {
-        connection = await createPrestoConnection();
+        connection = await createTrinoPrestoConnection(this.client,
+          connectionConfig,
+          configOptions);
         break;
       }
       case ConnectionBackend.MySQL: {
@@ -168,41 +170,19 @@ export class NodeConnectionFactory implements ConnectionFactory {
     }
 
     if (!configs.find(config => config.backend === ConnectionBackend.Trino)) {
-      try {
-        const trinoOptions = TrinoExecutor.getConnectionOptionsFromEnv('trino');
-        if (trinoOptions !== null) {
-          // TODO(figutierrez): add default.
-          configs.push({
-            name: 'trino',
-            backend: ConnectionBackend.Trino,
-            id: 'trino-default',
-          });
-        }
-      } catch (error) {
-        console.info(
-          `Could not get connection options for Trino connection. ${error}`
-        );
-      }
+      configs.push({
+        name: 'trino',
+        backend: ConnectionBackend.Trino,
+        id: 'trino-default',
+      });
     }
 
     if (!configs.find(config => config.backend === ConnectionBackend.Presto)) {
-      try {
-        const prestoOptions =
-          // this serves both Trino and Presto
-          TrinoExecutor.getConnectionOptionsFromEnv('presto');
-        if (prestoOptions !== null) {
-          // TODO(figutierrez): add default.
-          configs.push({
-            name: 'presto',
-            backend: ConnectionBackend.Presto,
-            id: 'presto-default',
-          });
-        }
-      } catch (error) {
-        console.info(
-          `Could not get connection options for Presto connection. ${error}`
-        );
-      }
+      configs.push({
+        name: 'presto',
+        backend: ConnectionBackend.Presto,
+        id: 'presto-default',
+      });
     }
 
     if (!configs.find(config => config.backend === ConnectionBackend.MySQL)) {

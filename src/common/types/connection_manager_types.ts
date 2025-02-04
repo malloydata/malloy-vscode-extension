@@ -92,14 +92,24 @@ export interface SnowflakeConnectionConfig extends BaseConnectionConfig {
   timeoutMs?: number;
 }
 
-export interface TrinoConnectionConfig extends BaseConnectionConfig {
-  backend: ConnectionBackend.Trino;
-  // TODO(figutierrez): add options.
+// Note: These options are identical to the TrinoConnectionConfig, except the value of 'backend'.
+// This is because they ultimately rout to a shared connection: `TrinoPrestoConnection`.
+// This should not be exported because it is only used below.
+interface TrinoPrestoPartialConnectionConfig extends BaseConnectionConfig {
+  server?: string;
+  port?: number;
+  catalog?: string;
+  schema?: string;
+  user?: string;
+  password?: string;
 }
 
-export interface PrestoConnectionConfig extends BaseConnectionConfig {
+export interface TrinoConnectionConfig extends TrinoPrestoPartialConnectionConfig {
+  backend: ConnectionBackend.Trino;
+}
+
+export interface PrestoConnectionConfig extends TrinoPrestoPartialConnectionConfig {
   backend: ConnectionBackend.Presto;
-  // TODO(figutierrez): add options.
 }
 
 export interface MySQLConnectionConfig extends BaseConnectionConfig {
