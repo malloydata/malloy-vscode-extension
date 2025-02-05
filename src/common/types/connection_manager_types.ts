@@ -95,6 +95,8 @@ export interface SnowflakeConnectionConfig extends BaseConnectionConfig {
 // This is because they ultimately rout to a shared connection: `TrinoPrestoConnection`.
 // This should not be exported because it is only used below.
 interface TrinoPrestoPartialConnectionConfig extends BaseConnectionConfig {
+  // For a Presto connnection, 'server' is just the host (ex: http://localhost),
+  // but for a Trino connection, 'server' includes port information
   server?: string;
   port?: number;
   catalog?: string;

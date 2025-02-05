@@ -53,7 +53,7 @@ export const createTrinoPrestoConnection = async (
       connectionConfig
     );
     return connection;
-  } else if (connectionConfig.name === ConnectionBackend.Trino) {
+  } else if (connectionConfig.backend === ConnectionBackend.Trino) {
     const connection = new TrinoConnection(
       connectionConfig.id,
       () => ({rowLimit}),
@@ -61,8 +61,6 @@ export const createTrinoPrestoConnection = async (
     );
     return connection;
   } else {
-    throw new Error(
-      'Invalid connection config backend: ' + connectionConfig.backend
-    );
+    throw new Error('Invalid backend provided.');
   }
 };

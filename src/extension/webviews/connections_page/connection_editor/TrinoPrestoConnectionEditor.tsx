@@ -1,6 +1,7 @@
 import * as React from 'react';
 import {VSCodeTextField} from '@vscode/webview-ui-toolkit/react';
 import {
+  ConnectionBackend,
   PrestoConnectionConfig,
   TrinoConnectionConfig,
 } from '../../../../common/types/connection_manager_types';
@@ -31,35 +32,55 @@ export const TrinoPrestoConnectionEditor = ({
             ></VSCodeTextField>
           </td>
         </tr>
-        <tr>
-          <td className="label-cell">
-            <label>Host:</label>
-          </td>
-          <td>
-            <VSCodeTextField
-              value={config.server || ''}
-              placeholder="http(s)://..."
-              onChange={({target}) => {
-                const value = (target as HTMLInputElement).value;
-                setConfig({...config, server: value});
-              }}
-            ></VSCodeTextField>
-          </td>
-        </tr>
-        <tr>
-          <td className="label-cell">
-            <label>Port:</label>
-          </td>
-          <td>
-            <VSCodeTextField
-              value={config.port ? config.port.toString() : ''}
-              onChange={({target}) => {
-                const value = (target as HTMLInputElement).value;
-                setConfig({...config, port: parseInt(value)});
-              }}
-            ></VSCodeTextField>
-          </td>
-        </tr>
+        {config.backend === ConnectionBackend.Presto ? (
+          <>
+            <tr>
+              <td className="label-cell">
+                <label>Host (origin):</label>
+              </td>
+              <td>
+                <VSCodeTextField
+                  value={config.server || ''}
+                  placeholder={'http(s)://hostname'}
+                  onChange={({target}) => {
+                    const value = (target as HTMLInputElement).value;
+                    setConfig({...config, server: value});
+                  }}
+                ></VSCodeTextField>
+              </td>
+            </tr>
+            <tr>
+              <td className="label-cell">
+                <label>Port:</label>
+              </td>
+              <td>
+                <VSCodeTextField
+                  value={config.port ? config.port.toString() : ''}
+                  onChange={({target}) => {
+                    const value = (target as HTMLInputElement).value;
+                    setConfig({...config, port: parseInt(value)});
+                  }}
+                ></VSCodeTextField>
+              </td>
+            </tr>
+          </>
+        ) : (
+          <tr>
+            <td className="label-cell">
+              <label>Server</label>
+            </td>
+            <td>
+              <VSCodeTextField
+                value={config.server || ''}
+                placeholder={'http(s)://hostname:port'}
+                onChange={({target}) => {
+                  const value = (target as HTMLInputElement).value;
+                  setConfig({...config, server: value});
+                }}
+              ></VSCodeTextField>
+            </td>
+          </tr>
+        )}
         <tr>
           <td className="label-cell">
             <label>Catalog:</label>
