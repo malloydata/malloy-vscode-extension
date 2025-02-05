@@ -104,7 +104,6 @@ export class EditConnectionPanel {
                 config: message.connection,
               }
             );
-            console.log("Result recieved from malloy/testConnection: " + result);
             if (result) {
               throw new Error(result);
             }

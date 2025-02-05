@@ -44,8 +44,6 @@ export const createTrinoPrestoConnection = async (
     });
   }
 
-  const sanitizedConfig = {...config};
-  sanitizedConfig.password = sanitizedConfig.password ? '***' : '';
   if (connectionConfig.backend === ConnectionBackend.Presto) {
     const connection = new PrestoConnection(
       connectionConfig.id,
