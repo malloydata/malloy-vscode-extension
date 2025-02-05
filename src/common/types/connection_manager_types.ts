@@ -103,11 +103,13 @@ interface TrinoPrestoPartialConnectionConfig extends BaseConnectionConfig {
   password?: string;
 }
 
-export interface TrinoConnectionConfig extends TrinoPrestoPartialConnectionConfig {
+export interface TrinoConnectionConfig
+  extends TrinoPrestoPartialConnectionConfig {
   backend: ConnectionBackend.Trino;
 }
 
-export interface PrestoConnectionConfig extends TrinoPrestoPartialConnectionConfig {
+export interface PrestoConnectionConfig
+  extends TrinoPrestoPartialConnectionConfig {
   backend: ConnectionBackend.Presto;
 }
 

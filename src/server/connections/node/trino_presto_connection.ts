@@ -24,6 +24,7 @@
 import {PrestoConnection, TrinoConnection} from '@malloydata/db-trino';
 import {
   ConfigOptions,
+  ConnectionBackend,
   PrestoConnectionConfig,
   TrinoConnectionConfig,
 } from '../../../common/types/connection_manager_types';
@@ -45,16 +46,23 @@ export const createTrinoPrestoConnection = async (
 
   const sanitizedConfig = {...config};
   sanitizedConfig.password = sanitizedConfig.password ? '***' : '';
-  console.info(
-    `Creating ${connectionConfig.id} connection with`,
-    JSON.stringify(sanitizedConfig)
-  );
-  const TrinoPrestoContructor =
-    connectionConfig.id === 'presto' ? PrestoConnection : TrinoConnection;
-  const connection = new TrinoPrestoContructor(
-    connectionConfig.id,
-    () => ({rowLimit}),
-    connectionConfig
-  );
-  return connection;
+  if (connectionConfig.backend === ConnectionBackend.Presto) {
+    const connection = new PrestoConnection(
+      connectionConfig.id,
+      () => ({rowLimit}),
+      connectionConfig
+    );
+    return connection;
+  } else if (connectionConfig.name === ConnectionBackend.Trino) {
+    const connection = new TrinoConnection(
+      connectionConfig.id,
+      () => ({rowLimit}),
+      connectionConfig
+    );
+    return connection;
+  } else {
+    throw new Error(
+      'Invalid connection config backend: ' + connectionConfig.backend
+    );
+  }
 };

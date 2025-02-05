@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /*
  * Copyright 2023 Google LLC
  *
@@ -66,7 +67,6 @@ export class MessageHandler implements WorkerMessageHandler {
       try {
         await testConnection(connectionManager, message.config);
       } catch (error) {
-        console.log("An error occurred while testing the connection: " + errorMessage(error));
         return errorMessage(error);
       }
       return '';
