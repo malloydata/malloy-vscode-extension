@@ -24,7 +24,7 @@
 import {CodeLens, Connection, Position, Range} from 'vscode-languageserver';
 import {TextDocument} from 'vscode-languageserver-textdocument';
 import {parseWithCache} from '../parse_cache';
-import {ConnectionManager} from '../../common/connection_manager';
+import {ConnectionManager} from '../../common/types/connection_manager_types';
 import {getSourceUrl, unquoteIdentifier} from './utils';
 
 // const explain = `

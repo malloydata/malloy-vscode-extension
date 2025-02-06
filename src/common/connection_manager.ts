@@ -59,7 +59,7 @@ export class DynamicConnectionLookup implements LookupConnection<Connection> {
   }
 }
 
-export class ConnectionManager {
+export class CommonConnectionManager {
   private connectionLookups: Record<string, DynamicConnectionLookup> = {};
   private configList: ConnectionConfig[] = [];
   configMap: Record<string | symbol, ConnectionConfig> = {};

@@ -31,7 +31,7 @@ import {
   WorkerMessageMap,
   WorkerMessageResponseMap,
 } from '../common/types/worker_message_types';
-import {ConnectionManager} from '../common/connection_manager';
+import {ConnectionManager} from '../common/types/connection_manager_types';
 import {RpcFileHandler} from './file_handler';
 import {FileHandler} from '../common/types/file_handler';
 import {ProgressType} from 'vscode-jsonrpc';
