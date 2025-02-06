@@ -26,7 +26,7 @@ _OR_
 
 ## Running and Debugging
 
-1. Open the top-level repository directory in VSCode
+1. Open the top-level `malloy-vscode-extension` directory in VSCode
 2. Select the "Run and Debug" panel in the left bar.
 3. Click the green arrow "Run" button, with the "Run Extension" profile selected.
 
