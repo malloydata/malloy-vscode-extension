@@ -57,6 +57,7 @@ import {
 import {
   GenericConnection,
   WorkerFetchMessage,
+  WorkerGetConfigMessage,
   WorkerGetSecretMessage,
 } from '../common/types/worker_message_types';
 import {BaseLanguageClient} from 'vscode-languageclient';
@@ -343,6 +344,15 @@ export const setupFileMessaging = (
           }
         }
         return secret;
+      }
+    )
+  );
+
+  context.subscriptions.push(
+    client.onRequest(
+      'malloy/getConfig',
+      async ({key}: WorkerGetConfigMessage) => {
+        return await vscode.workspace.getConfiguration('malloy').get(key);
       }
     )
   );

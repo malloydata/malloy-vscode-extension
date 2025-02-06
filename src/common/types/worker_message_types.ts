@@ -153,6 +153,10 @@ export interface WorkerGetSecretMessage {
   promptIfMissing?: false | string;
 }
 
+export interface WorkerGetConfigMessage {
+  key: string;
+}
+
 /**
  * Map of worker message types to worker message interfaces.
  */
@@ -162,6 +166,7 @@ export interface WorkerMessageMap {
   'malloy/fetchCellData': WorkerFetchCellDataMessage;
   'malloy/fetchWorkspaceFolders': WorkerFetchWorkspaceFoldersMessage;
   'malloy/getSecret': WorkerGetSecretMessage;
+  'malloy/getConfig': WorkerGetConfigMessage;
 }
 
 export interface WorkerMessageResponseMap {
@@ -170,6 +175,7 @@ export interface WorkerMessageResponseMap {
   'malloy/fetchCellData': CellData;
   'malloy/fetchWorkspaceFolders': string[];
   'malloy/getSecret': string;
+  'malloy/getConfig': unknown;
 }
 
 /**

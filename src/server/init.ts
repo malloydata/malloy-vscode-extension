@@ -46,7 +46,7 @@ import {
 import {getHover} from './hover/hover';
 import {getMalloyDefinitionReference} from './definitions/definitions';
 import {TranslateCache} from './translate_cache';
-import {ConnectionManager} from '../common/connection_manager';
+import {ConnectionManager} from '../common/types/connection_manager_types';
 import {findMalloyLensesAt} from './lenses/lenses';
 import {prettyLogUri} from '../common/log';
 import {getMalloyCodeAction} from './code_actions/code_actions';

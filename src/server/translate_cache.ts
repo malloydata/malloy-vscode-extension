@@ -32,7 +32,7 @@ import {
 } from '@malloydata/malloy';
 import {TextDocument} from 'vscode-languageserver-textdocument';
 
-import {ConnectionManager} from '../common/connection_manager';
+import {ConnectionManager} from '../common/types/connection_manager_types';
 import {BuildModelRequest, CellData} from '../common/types/file_handler';
 import {MalloySQLSQLParser} from '@malloydata/malloy-sql';
 import {FetchModelMessage} from '../common/types/message_types';

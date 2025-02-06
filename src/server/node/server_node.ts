@@ -24,7 +24,7 @@
 import {DidChangeConfigurationParams} from 'vscode-languageserver';
 import {createConnection, ProposedFeatures} from 'vscode-languageserver/node';
 import {initServer} from '../init';
-import {ConnectionManager} from '../../common/connection_manager';
+import {CommonConnectionManager} from '../../common/connection_manager';
 import {NodeConnectionFactory} from '../connections/node/connection_factory';
 import {NodeMessageHandler} from '../../worker/node/message_handler';
 
@@ -52,7 +52,7 @@ const onDidChangeConfiguration = (change: DidChangeConfigurationParams) => {
 };
 
 const connection = createConnection(ProposedFeatures.all);
-const connectionManager = new ConnectionManager(
+const connectionManager = new CommonConnectionManager(
   new NodeConnectionFactory(connection)
 );
 

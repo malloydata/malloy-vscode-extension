@@ -21,6 +21,12 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import {
+  Connection,
+  LookupConnection,
+  TestableConnection,
+} from '@malloydata/malloy';
+
 export enum ConnectionBackend {
   BigQuery = 'bigquery',
   Postgres = 'postgres',
@@ -106,14 +112,15 @@ export interface MySQLConnectionConfig extends BaseConnectionConfig {
   backend: ConnectionBackend.MySQL;
   // TODO(figutierrez): add options.
 }
+
 export type ConnectionConfig =
   | BigQueryConnectionConfig
   | PostgresConnectionConfig
   | DuckDBConnectionConfig
   | SnowflakeConnectionConfig
   | TrinoConnectionConfig
-  | MySQLConnectionConfig
-  | PrestoConnectionConfig;
+  | PrestoConnectionConfig
+  | MySQLConnectionConfig;
 
 export interface ConfigOptions {
   workingDirectory?: string;
@@ -127,4 +134,13 @@ export interface ConnectionConfigManager {
   getAvailableBackends(): ConnectionBackend[];
   getConnectionConfigs(): ConnectionConfig[];
   onConfigurationUpdated(): Promise<void>;
+}
+
+export interface ConnectionManager {
+  connectionForConfig(
+    connectionConfig: ConnectionConfig,
+    options: ConfigOptions
+  ): Promise<TestableConnection>;
+  getConnectionLookup(fileURL: URL): LookupConnection<Connection>;
+  setConnectionsConfig(connectionsConfig: ConnectionConfig[]): void;
 }

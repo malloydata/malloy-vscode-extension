@@ -30,7 +30,7 @@ import {
 } from '../../common/types/worker_message_types';
 import {createRunnable} from '../create_runnable';
 import {CellData, FileHandler} from '../../common/types/file_handler';
-import {ConnectionManager} from '../../common/connection_manager';
+import {ConnectionManager} from '../../common/types/connection_manager_types';
 import {CancellationToken, ProgressType} from 'vscode-jsonrpc';
 import {
   QueryDownloadMessage,
