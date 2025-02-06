@@ -83,8 +83,8 @@ export async function getMalloyLenses(
     new URL(document.uri)
   );
 
-  let externalPreview = false;
   const tablepaths = parse.tablePathInfo;
+  let externalPreview = tablepaths.length ? false : true;
   for (const table of tablepaths) {
     const conn = await connectionLookup.lookupConnection(table.connectionId);
     const tableUrl = await getSourceUrl(table.tablePath, conn);
