@@ -132,7 +132,7 @@ export const ConnectionsApp = ({vscode}: ConnectionsAppProp) => {
       <VSCodeProgressRing>Loading</VSCodeProgressRing>
     </div>
   ) : (
-    <div style={{maxWidth: '80em'}}>
+    <div style={{maxWidth: '80em', height: '100%', overflowY: 'auto'}}>
       <div style={{margin: '0 10px 10px 10px'}}>
         <ConnectionEditorList
           connections={connections}
