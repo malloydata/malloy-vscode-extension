@@ -13,13 +13,13 @@ import {
   useRunQuery,
   RunQuery,
   UndoContext,
-  StubCompile,
 } from '@malloydata/query-composer';
 import {
   ModelDef,
   Result,
   SearchValueMapResult,
   SourceDef,
+  TurtleDef,
 } from '@malloydata/malloy';
 
 import {DocumentMetadata} from '../../../common/types/query_spec';
@@ -43,8 +43,6 @@ export interface ComposerProps {
   topValues: SearchValueMapResult[] | undefined;
 }
 
-const stubCompile = new StubCompile();
-
 export const Composer: React.FC<ComposerProps> = ({
   documentMeta,
   modelDef,
@@ -55,17 +53,14 @@ export const Composer: React.FC<ComposerProps> = ({
   topValues,
 }) => {
   const [error, setError] = useState<Error>();
-  const history = useRef<string[]>(['']);
+  const history = useRef<Array<TurtleDef | undefined>>([undefined]);
   const historyIndex = useRef(0);
 
   const updateQueryInUrl = useCallback(
-    ({query}: {query: string | undefined}) => {
-      if (query && query !== history.current[historyIndex.current]) {
-        history.current = history.current.slice(0, historyIndex.current + 1);
-        history.current.push(query);
-        historyIndex.current++;
-      }
-      console.info('updateQueryInUrl', history.current, historyIndex.current);
+    ({turtle}: {turtle: TurtleDef | undefined}) => {
+      history.current = history.current.slice(0, historyIndex.current + 1);
+      history.current.push(turtle);
+      historyIndex.current++;
     },
     []
   );
@@ -79,12 +74,9 @@ export const Composer: React.FC<ComposerProps> = ({
 
   const undoContext = useMemo(() => {
     const updateQuery = () => {
-      const query = history.current[historyIndex.current];
-      if (query) {
-        stubCompile
-          .compileQuery(modelDef, query)
-          .then(query => queryModifiers.setQuery(query, true))
-          .catch(console.error);
+      const turtle = history.current[historyIndex.current];
+      if (turtle) {
+        queryModifiers.setQuery(turtle, true);
       } else {
         queryModifiers.clearQuery(true);
       }
@@ -98,7 +90,6 @@ export const Composer: React.FC<ComposerProps> = ({
         historyIndex.current--;
         updateQuery();
       }
-      console.info('undo', history.current, historyIndex.current);
     };
 
     const redo = () => {
@@ -106,7 +97,6 @@ export const Composer: React.FC<ComposerProps> = ({
         historyIndex.current++;
         updateQuery();
       }
-      console.info('redo', history.current, historyIndex.current);
     };
 
     return {
