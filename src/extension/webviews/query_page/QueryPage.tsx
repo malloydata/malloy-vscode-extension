@@ -57,6 +57,7 @@ interface Results {
   schema?: Explore[];
   profilingUrl?: string;
   queryCostBytes?: number;
+  isEstimate?: boolean;
   warning?: string;
 }
 
@@ -121,6 +122,7 @@ export function QueryPage({vscode}: QueryPageProps) {
             setResults({
               ...results,
               queryCostBytes,
+              isEstimate: true,
               schema: schema.map(json => Explore.fromJSON(json)),
             });
           }
@@ -210,6 +212,7 @@ export function QueryPage({vscode}: QueryPageProps) {
             metadata,
             profilingUrl,
             queryCostBytes,
+            isEstimate: false,
             stats,
             // TODO(whscullin) Lens Query Panel
             // Fix canDownload/canDownload stream distinction
@@ -264,22 +267,25 @@ export function QueryPage({vscode}: QueryPageProps) {
   const getStats = (
     stats?: QueryRunStats,
     profilingUrl?: string,
-    queryCostBytes?: number
+    queryCostBytes?: number,
+    isEstimate?: boolean
   ) => {
     return (
-      (stats
-        ? `Compile Time: ${stats.compileTime.toLocaleString()}s, Run Time:
-        ${stats.runTime.toLocaleString()}s, Total Time:
-        ${stats.totalTime.toLocaleString()}s.`
-        : '') +
-      getQueryCostStats(queryCostBytes, !results.html) +
-      getProfilingUrlLink(profilingUrl)
+      <span>
+        {stats
+          ? `Compile Time: ${stats.compileTime.toLocaleString()}s, Run Time:
+          ${stats.runTime.toLocaleString()}s, Total Time:
+          ${stats.totalTime.toLocaleString()}s. `
+          : ''}
+        {getQueryCostStats(queryCostBytes, isEstimate)}{' '}
+        {getProfilingUrlLink(profilingUrl)}
+      </span>
     );
   };
 
   const getQueryCostStats = (queryCostBytes?: number, isEstimate?: boolean) => {
     if (typeof queryCostBytes !== 'number') {
-      return null;
+      return '';
     }
 
     if (queryCostBytes) {
@@ -429,7 +435,8 @@ export function QueryPage({vscode}: QueryPageProps) {
             {getStats(
               results.stats,
               results.profilingUrl,
-              results.queryCostBytes
+              results.queryCostBytes,
+              results.isEstimate
             )}
           </div>
         ) : null}
