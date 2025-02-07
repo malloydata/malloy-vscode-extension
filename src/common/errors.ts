@@ -35,5 +35,11 @@ export const errorMessage = (error: unknown): string => {
   } else {
     console.error(error);
   }
+  // In cases where the error had a blank message, we still want to communicate
+  // a string, because a blank error message might be wrongly interpreted as
+  // not being an error at all.
+  if (!message) {
+    message = 'Something went wrong';
+  }
   return message;
 };
