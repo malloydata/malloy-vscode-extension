@@ -22,7 +22,7 @@
  */
 
 import {downloadQuery} from './download_query';
-import {ConnectionManager} from '../../common/connection_manager';
+import {ConnectionManager} from '../../common/types/connection_manager_types';
 import {MessageHandler} from '../message_handler';
 import {inspect} from 'node:util';
 import {GenericConnection} from '../../common/types/worker_message_types';

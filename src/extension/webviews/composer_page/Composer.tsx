@@ -105,7 +105,7 @@ export const Composer: React.FC<ComposerProps> = ({
       redo,
       undo,
     };
-  }, [modelDef, queryModifiers]);
+  }, [queryModifiers]);
 
   const [stats, setStats] = useState<QueryRunStats>();
   const [profilingUrl, setProfilingUrl] = useState<string>();

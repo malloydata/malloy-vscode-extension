@@ -42,7 +42,7 @@ import {
   QueryRunStatus,
 } from '../common/types/message_types';
 import {createModelMaterializer, createRunnable} from './create_runnable';
-import {ConnectionManager} from '../common/connection_manager';
+import {ConnectionManager} from '../common/types/connection_manager_types';
 import {Cell, CellData, FileHandler} from '../common/types/file_handler';
 import {CancellationToken, ProgressType} from 'vscode-jsonrpc';
 import {errorMessage} from '../common/errors';
@@ -85,8 +85,8 @@ const fakeMalloyResult = (
       name: 'empty_model',
       exports: [],
       contents: {},
-      dependencies: {},
       queryList: [],
+      dependencies: {},
     }
   );
 };

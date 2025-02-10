@@ -21,8 +21,10 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {ConnectionManager} from '../common/connection_manager';
-import {ConnectionConfig} from '../common/types/connection_manager_types';
+import {
+  ConnectionConfig,
+  ConnectionManager,
+} from '../common/types/connection_manager_types';
 
 export async function testConnection(
   connectionManager: ConnectionManager,
