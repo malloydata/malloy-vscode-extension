@@ -149,20 +149,14 @@ export async function getMalloyLenses(
         {
           const children = symbol.children;
           const exploreName = symbol.name;
-          if (!externalPreview) {
-            lenses.push({
-              range: symbol.lensRange.toJSON(),
-              command: {
-                title: 'Schema',
-                command: 'malloy.runQuery',
-                arguments: [
-                  `run: ${exploreName}->{ select: *; limit: 20 }`,
-                  `Preview ${exploreName}`,
-                  'schema',
-                ],
-              },
-            });
-          }
+          lenses.push({
+            range: symbol.lensRange.toJSON(),
+            command: {
+              title: 'Schema',
+              command: 'malloy.showSchema',
+              arguments: [unquoteIdentifier(exploreName)],
+            },
+          });
           lenses.push({
             range: symbol.lensRange.toJSON(),
             command: {
@@ -179,7 +173,7 @@ export async function getMalloyLenses(
                 command: 'malloy.runQuery',
                 arguments: [
                   `run: ${exploreName}->{ select: *; limit: 20 }`,
-                  `Preview ${exploreName}`,
+                  `Preview: ${exploreName}`,
                   'preview',
                 ],
               },
@@ -250,22 +244,15 @@ export async function getMalloyLenses(
               arguments: [url.toString()],
             },
           });
-          if (!externalPreview) {
-            for (const child of symbol.children) {
-              lenses.push({
-                range: child.lensRange.toJSON(),
-                command: {
-                  title: child.name,
-                  command: 'malloy.runQuery',
-                  arguments: [
-                    `run: ${child.name}->{ select: *; limit: 20 }`,
-                    `Preview ${child.name}`,
-                    'schema',
-                    symbol.name,
-                  ],
-                },
-              });
-            }
+          for (const child of symbol.children) {
+            lenses.push({
+              range: child.lensRange.toJSON(),
+              command: {
+                title: child.name,
+                command: 'malloy.showSchema',
+                arguments: [child.name],
+              },
+            });
           }
           symbol.children.forEach((child, idx) => {
             lenses.push({

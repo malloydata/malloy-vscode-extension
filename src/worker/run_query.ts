@@ -350,10 +350,19 @@ export const runQuery = async (
       );
       const model = await modelMaterializer?.getModel();
       if (model) {
-        sendMessage({
-          status: QueryRunStatus.Schema,
-          schema: model.explores.map(explore => explore.toJSON()),
-        });
+        if (query.type === 'file' && query.exploreName) {
+          sendMessage({
+            status: QueryRunStatus.Schema,
+            schema: model.explores
+              .filter(explore => explore.name === query.exploreName)
+              .map(explore => explore.toJSON()),
+          });
+        } else {
+          sendMessage({
+            status: QueryRunStatus.Schema,
+            schema: model.explores.map(explore => explore.toJSON()),
+          });
+        }
       }
       return;
     }
