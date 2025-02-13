@@ -6,7 +6,7 @@
  */
 
 import * as React from 'react';
-import {useCallback, useEffect, useState} from 'react';
+import {ReactElement, useCallback, useEffect, useState} from 'react';
 import {
   VSCodeButton,
   VSCodeDropdown,
@@ -61,7 +61,7 @@ export function DownloadForm({
   const [rowLimit, setRowLimit] = useState(1000);
   const [amount, setAmount] = useState<'current' | 'all' | number>('current');
   const [href, setHref] = useState<string>();
-  const [buttonElement, setButtonElement] = useState<JSX.Element>(
+  const [buttonElement, setButtonElement] = useState<ReactElement>(
     <b>Loading...</b>
   );
 

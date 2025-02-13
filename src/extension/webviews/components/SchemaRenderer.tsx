@@ -48,7 +48,7 @@ import StringIcon from '../../../../img/string.svg';
 import TimeIcon from '../../../../img/time.svg';
 import UnknownIcon from '../../../../img/unknown.svg';
 
-import {useState} from 'react';
+import {ReactElement, useState} from 'react';
 import styled from 'styled-components';
 
 const sortByName = (a: {name: string}, b: {name: string}) =>
@@ -116,7 +116,7 @@ function bucketFields(fields: Field[]) {
  * @returns A React wrapped svg of the icon.
  */
 function getIconElement(fieldType: string, isAggregate: boolean) {
-  let imageElement: JSX.Element | null;
+  let imageElement: ReactElement | null;
   if (isAggregate) {
     imageElement = <NumberAggregateIcon />;
   } else {
