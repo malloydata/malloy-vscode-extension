@@ -32,7 +32,7 @@ export function previewFromSchemaCommand(item: {
     `run: ${item.topLevelExplore}->{ select: ${[...item.accessPath, '*'].join(
       '.'
     )}; limit: 20 }`,
-    `Preview ${item.topLevelExplore} ${item.accessPath.join('.')}`,
+    `Preview: ${item.topLevelExplore} ${item.accessPath.join('.')}`,
     'preview'
   );
 }

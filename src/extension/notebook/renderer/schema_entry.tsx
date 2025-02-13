@@ -114,7 +114,7 @@ export function SchemaRendererWrapper({
     const select = fieldPath.join('.');
     const args = [
       `run: ${exploreName}->{ select: ${select}; limit: 20 }`,
-      `Preview ${exploreName} ${accessPath}`,
+      `Preview: ${exploreName} ${accessPath}`,
       'preview',
     ];
     postMessage?.({command, args});

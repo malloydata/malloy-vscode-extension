@@ -42,7 +42,8 @@ export interface QueryStringSpec {
 
 export interface QueryFileSpec {
   type: 'file';
-  index: number;
+  index?: number;
+  exploreName?: string;
   documentMeta: DocumentMetadata;
 }
 

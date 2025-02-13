@@ -96,7 +96,7 @@ export const createRunnable = async (
       runnable = mm.loadQueryByName(query.name);
       break;
     case 'file': {
-      if (query.index === -1) {
+      if (query.index === undefined || query.index === -1) {
         runnable = mm.loadFinalQuery();
       } else {
         runnable = mm.loadQueryByIndex(query.index);

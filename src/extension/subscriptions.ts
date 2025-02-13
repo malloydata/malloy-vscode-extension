@@ -66,6 +66,7 @@ import {showSchemaFileCommand} from './commands/show_schema_file';
 import {noAwait} from '../util/no_await';
 import {createDefaultConnections} from './commands/create_default_connections';
 import {openComposer} from './commands/open_composer';
+import {showSchemaCommand} from './commands/show_schema';
 
 function getNewClientId(): string {
   return uuid();
@@ -122,6 +123,13 @@ export const setupSubscriptions = async (
   context.subscriptions.push(
     vscode.commands.registerCommand('malloy.showSchemaFile', (uri: string) =>
       showSchemaFileCommand(worker, uri)
+    )
+  );
+
+  // Show Schema (source)
+  context.subscriptions.push(
+    vscode.commands.registerCommand('malloy.showSchema', (explore: string) =>
+      showSchemaCommand(worker, explore)
     )
   );
 
