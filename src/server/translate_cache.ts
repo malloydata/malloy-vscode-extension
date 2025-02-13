@@ -73,7 +73,7 @@ export class TranslateCache {
     this.connection.console.info(
       `translateWithCache ${prettyUri} ${result ? 'hit' : 'miss'}`
     );
-    return Promise.resolve(result);
+    return result;
   }
 
   public async setModel(url: URL, cachedModel: CachedModel): Promise<boolean> {
@@ -85,7 +85,7 @@ export class TranslateCache {
       )} set`
     );
     this.cache.set(_url, cachedModel);
-    return Promise.resolve(true);
+    return true;
   }
 
   public dependenciesFor(uri: string): string[] | undefined {
@@ -241,9 +241,9 @@ export class TranslateCache {
         return entry.model;
       }
       const urlReader = {
-        readURL: (url: URL) => {
+        readURL: async (url: URL) => {
           if (url.toString() === uri) {
-            return Promise.resolve(text);
+            return text;
           } else {
             return this.getDocumentText(this.documents, url);
           }

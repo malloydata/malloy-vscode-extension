@@ -60,7 +60,6 @@ class VSCodeWriteStream implements WriteStream {
 
   async write(chunk?: string) {
     this.contents = this.contents += chunk;
-    return Promise.resolve(undefined);
   }
 }
 
