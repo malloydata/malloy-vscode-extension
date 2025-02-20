@@ -52,7 +52,7 @@ export function ResultKindToggle({
       {availableKinds.map(kind => (
         <ResultControl
           key={kind}
-          selected={resultKind === kind}
+          $selected={resultKind === kind}
           onClick={() => setKind(kind)}
         >
           {kind}
@@ -76,12 +76,12 @@ export interface ResultControlProps {
   label: string;
 }
 
-const ResultControl = styled.div<{selected: boolean}>`
+const ResultControl = styled.div<{$selected: boolean}>`
   border: 0;
   border-bottom: none;
   cursor: pointer;
   padding: 3px 5px;
   color: var(--vscode-panelTitle-activeForeground);
-  border-bottom: ${({selected}) =>
-    selected ? '1px solid var(--vscode-panelTitle-activeBorder)' : 'none'};
+  border-bottom: ${({$selected}) =>
+    $selected ? '1px solid var(--vscode-panelTitle-activeBorder)' : 'none'};
 `;

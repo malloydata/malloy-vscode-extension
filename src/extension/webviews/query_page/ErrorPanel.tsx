@@ -30,17 +30,17 @@ export function ErrorPanel({message}: ErrorPanelProps) {
       return part;
     }
   });
-  return <ErrorPanelInner multiLine={multiLine}>{formatted}</ErrorPanelInner>;
+  return <ErrorPanelInner $multiLine={multiLine}>{formatted}</ErrorPanelInner>;
 }
 
 interface ErrorPanelInnerProps {
-  multiLine: boolean;
+  $multiLine: boolean;
 }
 
 const ErrorPanelInner = styled.div<ErrorPanelInnerProps>`
-  white-space: ${({multiLine}) => (multiLine ? 'pre-wrap' : 'normal')};
-  font-family: ${({multiLine}) => (multiLine ? 'monospace' : 'inherit')};
-  word-wrap: ${({multiLine}) => (multiLine ? 'break-word' : 'initial')};
+  white-space: ${({$multiLine}) => ($multiLine ? 'pre-wrap' : 'normal')};
+  font-family: ${({$multiLine}) => ($multiLine ? 'monospace' : 'inherit')};
+  word-wrap: ${({$multiLine}) => ($multiLine ? 'break-word' : 'initial')};
   background-color: var(--vscode-inputValidation-errorBackground);
   padding: 10px;
   margin: 30px;
