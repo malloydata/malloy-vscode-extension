@@ -713,7 +713,7 @@
     "@vscode/vsce": "^2.19.0",
     "axios": "^1.7.4",
     "csv-stringify": "^5.6.5",
-    "esbuild": "^0.24.0",
+    "esbuild": "^0.25.0",
     "esbuild-plugin-svgr": "^1.0.1",
     "eslint": "^8.49.0",
     "eslint-config-prettier": "^9.0.0",
