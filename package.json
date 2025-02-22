@@ -7,7 +7,7 @@
   "private": true,
   "engines": {
     "vscode": "^1.82.0",
-    "node": ">=18",
+    "node": ">=20",
     "npm": ">=9"
   },
   "scripts": {
@@ -694,7 +694,7 @@
     "@types/lodash": "^4.14.191",
     "@types/madge": "^5.0.0",
     "@types/mocha": "^10.0.1",
-    "@types/node": "^18.15.3",
+    "@types/node": "^20.14.8",
     "@types/node-fetch": "^2.6.2",
     "@types/prismjs": "^1.26.0",
     "@types/react": "^18.3.12",
