@@ -29,7 +29,7 @@ import {
   TextDocuments,
 } from 'vscode-languageserver';
 import {TextDocument} from 'vscode-languageserver-textdocument';
-import {DocumentLocation, Model, Tag} from '@malloydata/malloy';
+import {Annotation, DocumentLocation, Model} from '@malloydata/malloy';
 
 import {COMPLETION_DOCS} from '../../common/completion_docs';
 import {parseWithCache} from '../parse_cache';
@@ -141,7 +141,7 @@ function getReferenceHover(
   _documents: TextDocuments<TextDocument>,
   {text, definition}: DocumentReference
 ) {
-  const tags = Tag.annotationToTaglines(definition.annotation).join('');
+  const tags = annotationToTaglines(definition.annotation).join('');
   const markdown = `\`\`\`
 ${tags}${text}: ${definition.type}
 \`\`\``;
@@ -152,4 +152,26 @@ ${tags}${text}: ${definition.type}
   return {
     contents,
   };
+}
+
+type NoteArray = Annotation['notes'];
+
+function annotationToTaglines(
+  annote: Annotation | undefined,
+  prefix?: RegExp
+): string[] {
+  annote ||= {};
+  const tagLines = annote.inherits
+    ? annotationToTaglines(annote.inherits, prefix)
+    : [];
+  function prefixed(na: NoteArray | undefined): string[] {
+    const ret: string[] = [];
+    for (const n of na || []) {
+      if (prefix === undefined || n.text.match(prefix)) {
+        ret.push(n.text);
+      }
+    }
+    return ret;
+  }
+  return tagLines.concat(prefixed(annote.blockNotes), prefixed(annote.notes));
 }
