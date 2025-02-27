@@ -184,15 +184,24 @@ export const initServer = (
 
   connection.onDocumentSymbol(handler => {
     const document = documents.get(handler.textDocument.uri);
-    return document && document.languageId === 'malloy'
-      ? getMalloySymbols(document)
-      : [];
+    if (document && document.languageId === 'malloy') {
+      try {
+        return getMalloySymbols(document);
+      } catch (error) {
+        console.error('getMalloySymbols', error);
+      }
+    }
+    return [];
   });
 
   connection.onCodeLens(async handler => {
     const document = documents.get(handler.textDocument.uri);
     if (document && document.languageId === 'malloy') {
-      return await getMalloyLenses(connection, document, connectionManager);
+      try {
+        return await getMalloyLenses(connection, document, connectionManager);
+      } catch (error) {
+        console.error('getMalloyLenses', error);
+      }
     }
     return [];
   });
@@ -210,23 +219,35 @@ export const initServer = (
     async ({uri, position}: {uri: string; position: Position}) => {
       const document = documents.get(uri);
       if (document && position) {
-        return await findMalloyLensesAt(
-          connection,
-          document,
-          position,
-          connectionManager
-        );
-      } else {
-        return [];
+        try {
+          return await findMalloyLensesAt(
+            connection,
+            document,
+            position,
+            connectionManager
+          );
+        } catch (error) {
+          console.error('findMalloyLensesAt', error);
+        }
       }
+      return [];
     }
   );
 
   connection.onDefinition(handler => {
     const document = documents.get(handler.textDocument.uri);
-    return document && document.languageId === 'malloy'
-      ? getMalloyDefinitionReference(translateCache, document, handler.position)
-      : [];
+    if (document && document.languageId === 'malloy') {
+      try {
+        return getMalloyDefinitionReference(
+          translateCache,
+          document,
+          handler.position
+        );
+      } catch (error) {
+        console.error('getMalloyDefinitionReference', error);
+      }
+    }
+    return [];
   });
 
   connection.onDidChangeConfiguration(change => {
@@ -244,15 +265,18 @@ export const initServer = (
   connection.onCompletion(async (params): Promise<CompletionItem[]> => {
     const document = documents.get(params.textDocument.uri);
     if (document && document.languageId === 'malloy') {
-      const completionItems = await getCompletionItems(
-        document,
-        params,
-        translateCache
-      );
-      return completionItems;
-    } else {
-      return [];
+      try {
+        const completionItems = await getCompletionItems(
+          document,
+          params,
+          translateCache
+        );
+        return completionItems;
+      } catch (error) {
+        console.error('getCompletionItems', error);
+      }
     }
+    return [];
   });
 
   // This handler resolves additional information for the item selected in
@@ -264,9 +288,14 @@ export const initServer = (
   connection.onHover(async (params: HoverParams): Promise<Hover | null> => {
     const document = documents.get(params.textDocument.uri);
 
-    return document && document.languageId === 'malloy'
-      ? getHover(document, documents, translateCache, params)
-      : null;
+    if (document && document.languageId === 'malloy') {
+      try {
+        return getHover(document, documents, translateCache, params);
+      } catch (error) {
+        console.error('getHover', error);
+      }
+    }
+    return null;
   });
 
   documents.listen(connection);
