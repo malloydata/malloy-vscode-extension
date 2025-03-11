@@ -54,11 +54,13 @@ interface Results {
   sql?: string;
   json?: string;
   metadata?: string;
-  schema?: Explore[];
   profilingUrl?: string;
+  warning?: string;
+}
+
+interface CostEstimate {
   queryCostBytes?: number;
   isEstimate?: boolean;
-  warning?: string;
 }
 
 export interface QueryPageProps {
@@ -71,6 +73,8 @@ export function QueryPage({vscode}: QueryPageProps) {
   const [progressMessage, setProgressMessage] = useState('');
   const [error, setError] = useState('');
   const [results, setResults] = useState<Results>({});
+  const [costEstimate, setCostEstimate] = useState<CostEstimate>({});
+  const [schema, setSchema] = useState<Explore[]>();
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
@@ -119,23 +123,16 @@ export function QueryPage({vscode}: QueryPageProps) {
           {
             const {queryCostBytes, schema} = message;
             setProgressMessage('');
-            setResults({
-              ...results,
-              queryCostBytes,
-              isEstimate: true,
-              schema: schema.map(json => Explore.fromJSON(json)),
-            });
+            setCostEstimate({queryCostBytes, isEstimate: true});
+            setSchema(schema.map(json => Explore.fromJSON(json)));
           }
           break;
         case QueryRunStatus.Schema:
           {
             const {schema} = message;
             setProgressMessage('');
-            setResults({
-              ...results,
-              schema: schema.map(json => Explore.fromJSON(json)),
-            });
-            setResultKind(ResultKind.SCHEMA);
+            setSchema(schema.map(json => Explore.fromJSON(json))),
+              setResultKind(ResultKind.SCHEMA);
             setAvailableKinds([ResultKind.SCHEMA]);
           }
           break;
@@ -207,12 +204,9 @@ export function QueryPage({vscode}: QueryPageProps) {
             json,
             name,
             result,
-            schema,
             sql,
             metadata,
             profilingUrl,
-            queryCostBytes,
-            isEstimate: false,
             stats,
             // TODO(whscullin) Lens Query Panel
             // Fix canDownload/canDownload stream distinction
@@ -221,6 +215,11 @@ export function QueryPage({vscode}: QueryPageProps) {
           };
 
           setResults(currentResults);
+          setCostEstimate({
+            queryCostBytes,
+            isEstimate: false,
+          });
+          setSchema(schema);
 
           setProgressMessage('Rendering');
           new HTMLView(document)
@@ -254,7 +253,7 @@ export function QueryPage({vscode}: QueryPageProps) {
         }
       }
     },
-    [copyToClipboard, results]
+    [copyToClipboard]
   );
 
   useEffect(() => {
@@ -407,10 +406,10 @@ export function QueryPage({vscode}: QueryPageProps) {
             />
           </div>
         ) : null}
-        {resultKind === ResultKind.SCHEMA && results.schema ? (
+        {resultKind === ResultKind.SCHEMA && schema ? (
           <div className="scroll">
             <SchemaRenderer
-              explores={results.schema!}
+              explores={schema}
               queries={[]}
               defaultShow={true}
               onFieldClick={onFieldClick}
@@ -430,13 +429,15 @@ export function QueryPage({vscode}: QueryPageProps) {
             </div>
           </div>
         ) : null}
-        {results.stats || results.profilingUrl || results.queryCostBytes ? (
+        {results.stats ||
+        results.profilingUrl ||
+        costEstimate.queryCostBytes ? (
           <div className="stats">
             {getStats(
               results.stats,
               results.profilingUrl,
-              results.queryCostBytes,
-              results.isEstimate
+              costEstimate.queryCostBytes,
+              costEstimate.isEstimate
             )}
           </div>
         ) : null}
