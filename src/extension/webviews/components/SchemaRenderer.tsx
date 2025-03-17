@@ -87,11 +87,7 @@ function bucketFields(fields: Field[]) {
       if (isFieldAggregate(field)) {
         measures.push(field);
       } else if (field.isExploreField()) {
-        if (field.isArray) {
-          dimensions.push(field);
-        } else {
-          explores.push(field);
-        }
+        explores.push(field);
       } else if (type === 'query') {
         queries.push(field);
       } else {
