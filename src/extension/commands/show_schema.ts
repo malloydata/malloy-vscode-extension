@@ -21,7 +21,7 @@ export async function showSchemaCommand(
     return runMalloyQueryWithProgress(
       worker,
       {type: 'file', exploreName, documentMeta},
-      documentMeta.uri,
+      `${documentMeta.uri} ${exploreName}`,
       `Schema: ${exploreName}`,
       {showSchemaOnly: true}
     );
