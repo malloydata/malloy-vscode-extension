@@ -25,7 +25,6 @@ import * as vscode from 'vscode';
 import {URI, Utils} from 'vscode-uri';
 
 import {
-  ArrayDef,
   Explore,
   Field,
   QueryField,
@@ -38,7 +37,6 @@ import {
   exploreSubtype,
   fieldType,
   getTypeLabel,
-  getTypeLabelFromStructDef,
   isFieldAggregate,
   isFieldHidden,
 } from '../../common/schema';
@@ -117,7 +115,7 @@ export class SchemaProvider
   }
 
   async getChildren(
-    element?: ExploreItem
+    element?: ExploreItem | ArrayItem
   ): Promise<(ArrayItem | ExploreItem | FieldItem | RecordItem)[]> {
     if (element) {
       return element.explore.allFields
@@ -130,7 +128,7 @@ export class SchemaProvider
               return new ArrayItem(
                 this.context,
                 element.topLevelExplore,
-                field.structDef,
+                field,
                 newPath,
                 field.location
               );
@@ -230,13 +228,13 @@ class ArrayItem extends vscode.TreeItem {
   constructor(
     private context: vscode.ExtensionContext,
     public topLevelExplore: string,
-    public arrayDef: ArrayDef,
+    public explore: Explore,
     public accessPath: string[],
     public location: DocumentLocation | undefined
   ) {
-    super(arrayDef.as || arrayDef.name, vscode.TreeItemCollapsibleState.None);
+    super(explore.name, vscode.TreeItemCollapsibleState.Collapsed);
     this.contextValue = 'array';
-    const typeLabel = getTypeLabelFromStructDef(arrayDef);
+    const typeLabel = 'array';
     this.tooltip = new vscode.MarkdownString(
       `
 $(symbol-field) \`${this.label}\`
