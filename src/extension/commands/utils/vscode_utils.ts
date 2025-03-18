@@ -33,6 +33,7 @@ const turtleIcon = 'turtle.svg';
 
 export function createOrReuseWebviewPanel(
   viewType: string,
+  webView: string,
   title: string,
   panelId: string,
   cancel: () => void,
@@ -75,6 +76,7 @@ export function createOrReuseWebviewPanel(
       turtleIcon
     );
     MALLOY_EXTENSION_STATE.setRunState(panelId, current);
+    loadQueryWebview(current, webView);
   }
 
   return current;
@@ -86,7 +88,7 @@ export function loadQueryWebview(current: RunState, module: string): void {
   current.panel.onDidDispose(() => {
     current.cancel();
     const actuallyCurrent = MALLOY_EXTENSION_STATE.getRunState(current.panelId);
-    if (actuallyCurrent === current) {
+    if (actuallyCurrent?.panel === current.panel) {
       MALLOY_EXTENSION_STATE.setRunState(current.panelId, undefined);
     }
   });

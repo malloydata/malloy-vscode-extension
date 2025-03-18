@@ -39,7 +39,6 @@ import {CancellationTokenSource, Disposable} from 'vscode-jsonrpc';
 import {
   createOrReuseWebviewPanel,
   disposeWebviewPanel,
-  loadQueryWebview,
   showSchemaTreeViewWhenFocused,
 } from './vscode_utils';
 import {WorkerConnection} from '../../worker_connection';
@@ -153,12 +152,12 @@ export async function runMalloyQuery(
     if (withWebview) {
       current = createOrReuseWebviewPanel(
         'malloyQuery',
+        'query_page',
         name,
         panelId,
         cancel,
         query.documentMeta
       );
-      loadQueryWebview(current, 'query_page');
       subscriptions.push(showSchemaTreeViewWhenFocused(current.panel, panelId));
     }
 

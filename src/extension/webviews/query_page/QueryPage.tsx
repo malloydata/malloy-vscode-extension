@@ -146,7 +146,7 @@ export function QueryPage({vscode}: QueryPageProps) {
             profilingUrl,
           } = message;
 
-          const defaultKind = resultKindFromString(defaultTab);
+          const defaultKind = resultKindFromString(defaultTab ?? 'html');
           if (defaultKind) {
             setResultKind(defaultKind);
           }
