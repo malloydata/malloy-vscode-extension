@@ -223,12 +223,8 @@ const runMSQLCell = async (
     .replace(/;\s*$/, ''); // Remove trailing `;`
   const structDefAttempt = await connection.fetchSchemaForSQLStruct(
     {
-      type: 'sql_select',
       selectStr: sql,
-      name: `${connection.name}.describe ${sql}`,
       connection: connection.name,
-      dialect: connection.dialectName,
-      fields: [],
     },
     {}
   );
