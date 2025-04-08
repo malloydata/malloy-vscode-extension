@@ -13,8 +13,12 @@ import {MALLOY_EXTENSION_STATE} from '../state';
 import {WorkerConnection} from '../worker_connection';
 import {ComposerMessageManager} from './utils/composer_message_manager';
 import {errorMessage} from '../../common/errors';
+import {getMalloyConfig} from '../utils/config';
 
 const icon = 'turtle.svg';
+
+const config = getMalloyConfig();
+const newExplorer = config.get('useNewExplorer') as boolean;
 
 export async function openComposer(
   worker: WorkerConnection,
@@ -47,11 +51,17 @@ export async function openComposer(
       viewName
     );
 
-    composerPanel.webview.html = getWebviewHtml(
-      'composer_page',
-      composerPanel.webview
-    );
-
+    if (newExplorer) {
+      composerPanel.webview.html = getWebviewHtml(
+        'explorer_page',
+        composerPanel.webview
+      );
+    } else {
+      composerPanel.webview.html = getWebviewHtml(
+        'composer_page',
+        composerPanel.webview
+      );
+    }
     try {
       void messageManager.newModel();
     } catch (error) {

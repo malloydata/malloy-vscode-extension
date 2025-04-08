@@ -27,6 +27,7 @@ import {
   ResultJSON,
   SerializedExplore,
 } from '@malloydata/malloy';
+import * as Malloy from '@malloydata/malloy-interfaces';
 import {ConnectionBackend, ConnectionConfig} from './connection_manager_types';
 import {ProgressType} from 'vscode-jsonrpc';
 import {DocumentMetadata} from './query_spec';
@@ -34,6 +35,12 @@ import {DocumentMetadata} from './query_spec';
 export interface RunMalloyQueryResult {
   profilingUrl: string | undefined;
   resultJson: ResultJSON;
+  stats: QueryRunStats;
+}
+
+export interface RunMalloyQueryStableResult {
+  profilingUrl: string | undefined;
+  result: Malloy.Result;
   stats: QueryRunStats;
 }
 
@@ -49,6 +56,7 @@ export enum QueryRunStatus {
   Running = 'running',
   Error = 'error',
   Done = 'done',
+  StableDone = 'stable-done',
   StartDownload = 'start-download',
   RunCommand = 'run-command',
   Schema = 'schema',
@@ -112,6 +120,14 @@ interface QueryMessageStatusDone {
   profilingUrl?: string;
 }
 
+interface QueryMessageStatusStableDone {
+  status: QueryRunStatus.StableDone;
+  name: string;
+  result: Malloy.Result;
+  stats: QueryRunStats;
+  profilingUrl?: string;
+}
+
 export interface QueryRunStats {
   compileTime: number;
   runTime: number;
@@ -127,6 +143,7 @@ export type QueryMessageStatus =
   | QueryMessageStatusError
   | QueryMessageStatusRunning
   | QueryMessageStatusDone
+  | QueryMessageStatusStableDone
   | QueryMessageStatusSchema;
 
 interface QueryMessageAppReady {
@@ -291,7 +308,9 @@ export interface FetchModelMessage {
 
 export enum ComposerMessageType {
   NewModel = 'new-model',
+  NewModelInfo = 'new-model-info',
   ResultSuccess = 'result-success',
+  StableResultSuccess = 'stable-result-success',
   ResultError = 'result-error',
   SearchIndex = 'search-index',
 }
@@ -304,10 +323,24 @@ export interface ComposerMessageNewModel {
   viewName?: string;
 }
 
+export interface ComposerMessageNewModelInfo {
+  type: ComposerMessageType.NewModelInfo;
+  documentMeta: DocumentMetadata;
+  model: Malloy.ModelInfo;
+  sourceName: string;
+  viewName?: string;
+}
+
 export interface ComposerMessageResultSuccess {
   type: ComposerMessageType.ResultSuccess;
   id: string;
   result: RunMalloyQueryResult;
+}
+
+export interface ComposerMessageStableResultSuccess {
+  type: ComposerMessageType.StableResultSuccess;
+  id: string;
+  result: RunMalloyQueryStableResult;
 }
 
 export interface ComposerMessageResultError {
@@ -323,13 +356,16 @@ export interface ComposerMessageSearchIndex {
 
 export type ComposerMessage =
   | ComposerMessageNewModel
+  | ComposerMessageNewModelInfo
   | ComposerMessageResultSuccess
   | ComposerMessageResultError
-  | ComposerMessageSearchIndex;
+  | ComposerMessageSearchIndex
+  | ComposerMessageStableResultSuccess;
 
 export enum ComposerPageMessageType {
   Ready = 'ready',
   RunQuery = 'run-query',
+  RunStableQuery = 'run-stable-query',
   RefreshModel = 'refresh-model',
 }
 
@@ -344,6 +380,13 @@ export interface ComposerPageMessageRunQuery {
   queryName: string;
 }
 
+export interface ComposerPageMessageRunStableQuery {
+  type: ComposerPageMessageType.RunStableQuery;
+  id: string;
+  source: Malloy.SourceInfo;
+  query: Malloy.Query;
+}
+
 export interface ComposerPageMessageRefreshModel {
   type: ComposerPageMessageType.RefreshModel;
   query: string;
@@ -352,4 +395,5 @@ export interface ComposerPageMessageRefreshModel {
 export type ComposerPageMessage =
   | ComposerPageMessageReady
   | ComposerPageMessageRunQuery
+  | ComposerPageMessageRunStableQuery
   | ComposerPageMessageRefreshModel;
