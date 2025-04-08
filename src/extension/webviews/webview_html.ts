@@ -37,11 +37,17 @@ export function getWebviewHtml(
   );
   const entrySrc = webview.asWebviewUri(onDiskPath);
   const cspSrc = webview.cspSource;
+  const explorerCss = webview.asWebviewUri(
+    vscode.Uri.joinPath(
+      MALLOY_EXTENSION_STATE.getExtensionUri(),
+      'node_modules',
+      '@malloydata/malloy-explorer',
+      'dist',
+      'malloy-explorer.css'
+    )
+  );
 
   const nonce = getNonce();
-  const useNewQueryPage = vscode.workspace
-    .getConfiguration('malloy')
-    .get('useNewQueryPage');
   return /* html */ `<!DOCTYPE html>
 <html lang="en">
   <head>
@@ -50,6 +56,7 @@ export function getWebviewHtml(
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="preconnect" href="https://rsms.me/" />
     <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
+    <link rel="stylesheet" href="${explorerCss}" />
     <title>Malloy Results</title>
   </head>
   <style>
@@ -141,7 +148,7 @@ export function getWebviewHtml(
     }
   </style>
   <body>
-    <div id="app" data-use-new-query-page="${useNewQueryPage}">
+    <div id="app">
       <div class="placeholder-vertical-center">
         <div class="placeholder-horizontal-center">
           <div class="placeholder-label">Loading</div>
