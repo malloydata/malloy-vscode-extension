@@ -42,7 +42,7 @@ export const App: React.FC<AppProps> = ({vscode}) => {
   const [documentMeta, setDocumentMeta] = useState<DocumentMetadata>();
   const [model, setModel] = useState<Malloy.ModelInfo>();
   const [sourceName, setSourceName] = useState<string>();
-  const [_viewName, setViewName] = useState<string>();
+  const [viewName, setViewName] = useState<string>();
   const [topValues, setTopValues] = useState<SearchValueMapResult[]>();
   const [response, setResponse] = useState<QueryResponse>();
   const [query, setQuery] = useState<Malloy.Query>();
@@ -157,6 +157,7 @@ export const App: React.FC<AppProps> = ({vscode}) => {
           runQuery={runQuery}
           topValues={topValues}
           submittedQuery={submittedQuery}
+          viewName={viewName}
         />
       </div>
     );

@@ -6,7 +6,7 @@
  */
 
 import * as React from 'react';
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import * as Malloy from '@malloydata/malloy-interfaces';
 import {
   ExplorerPanelsContext,
@@ -18,13 +18,14 @@ import {
   SubmittedQuery,
 } from '@malloydata/malloy-explorer';
 
-import {SearchValueMapResult} from '@malloydata/malloy';
+import type {SearchValueMapResult} from '@malloydata/malloy';
 
 export interface ExplorerProps {
   source: Malloy.SourceInfo | undefined;
   runQuery: (source: Malloy.SourceInfo, query: Malloy.Query) => Promise<void>;
   submittedQuery: SubmittedQuery | undefined;
   topValues: SearchValueMapResult[] | undefined;
+  viewName?: string;
 }
 
 export function findSource(
@@ -36,16 +37,48 @@ export function findSource(
   );
 }
 
+export function findView(
+  source: Malloy.SourceInfo,
+  name: string
+): Malloy.FieldInfo | undefined {
+  return source.schema.fields.find(
+    entry => entry.name === name && entry.kind === 'view'
+  );
+}
+
 export const Explorer: React.FC<ExplorerProps> = ({
   source,
   runQuery,
   submittedQuery,
   topValues,
+  viewName,
 }) => {
   const [query, setQuery] = useState<Malloy.Query>();
   const [isSourcePanelOpen, setIsSourcePanelOpen] = useState(true);
   const [sourcePanelWidth, setSourcePanelWidth] = useState(280);
   const [queryPanelWidth, setQueryPanelWidth] = useState(360);
+
+  useEffect(() => {
+    if (source && viewName) {
+      const view = findView(source, viewName);
+      if (view) {
+        const query: Malloy.Query = {
+          definition: {
+            kind: 'arrow',
+            source: {
+              kind: 'source_reference',
+              name: source.name,
+            },
+            view: {
+              kind: 'view_reference',
+              name: viewName,
+            },
+          },
+        };
+        setQuery(query);
+      }
+    }
+  }, [source, viewName]);
 
   if (!source) {
     return <div>Invalid source name</div>;

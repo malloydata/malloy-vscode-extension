@@ -252,6 +252,7 @@ export class ComposerMessageManager
         documentMeta: this.documentMeta,
         model,
         sourceName,
+        viewName: this.viewName,
       });
     } else {
       this.postMessage({
@@ -259,6 +260,7 @@ export class ComposerMessageManager
         documentMeta: this.documentMeta,
         modelDef,
         sourceName,
+        viewName: this.viewName,
       });
     }
 
