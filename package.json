@@ -674,7 +674,6 @@
     "@malloydata/query-composer": "0.0.253-dev250412010506",
     "@malloydata/render": "0.0.260",
     "@malloydata/syntax-highlight": "0.0.260",
-    "@stylexjs/stylex": "^0.11.1",
     "@vscode/webview-ui-toolkit": "^1.2.1",
     "duckdb": "1.0.0",
     "lodash": "^4.17.21",
