@@ -117,8 +117,7 @@ export class NodeConnectionFactory implements ConnectionFactory {
       case ConnectionBackend.Publisher: {
         connection = await createPublisherConnection(
           this.client,
-          connectionConfig,
-          configOptions
+          connectionConfig
         );
         break;
       }

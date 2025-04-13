@@ -6,31 +6,27 @@
  */
 
 import {PublisherConnection} from '@malloydata/db-publisher';
-import {
-  ConfigOptions,
-  PublisherConnectionConfig,
-} from '../../../common/types/connection_manager_types';
+import {PublisherConnectionConfig} from '../../../common/types/connection_manager_types';
 import {GenericConnection} from '../../../common/types/worker_message_types';
 
 export const createPublisherConnection = async (
   client: GenericConnection,
-  connectionConfig: PublisherConnectionConfig,
-  configOptions: ConfigOptions
+  connectionConfig: PublisherConnectionConfig
 ): Promise<PublisherConnection> => {
   const {connectionUri, accessToken} = connectionConfig;
 
   if (!connectionUri) {
     throw new Error('Connection URI is required');
   }
-  // Maybe we will use configOptions in the future?
-  console.info('PublisherConnection is not using configOptions', configOptions);
 
   const options = {
     connectionUri,
     accessToken,
   };
   console.info('Creating publisher connection with', options);
-  const connection = new PublisherConnection(connectionConfig.name, options);
-  // TODO: call async init method if needed
+  const connection = await PublisherConnection.create(
+    connectionConfig.name,
+    options
+  );
   return connection;
 };
