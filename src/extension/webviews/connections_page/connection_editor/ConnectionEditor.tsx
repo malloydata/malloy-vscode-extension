@@ -44,6 +44,32 @@ import {SnowflakeConnectionEditor} from './SnowflakeConnectionEditor';
 import {TrinoPrestoConnectionEditor} from './TrinoPrestoConnectionEditor';
 import {PublisherConnectionEditor} from './PublisherConnectionEditor';
 
+interface ConnectionHeaderProps {
+  config: {name?: string};
+  setSelectedId: (id: any) => void;
+}
+
+const ConnectionHeader: React.FC<ConnectionHeaderProps> = ({
+  config,
+  setSelectedId,
+}) => {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '5px',
+        justifyContent: 'space-between',
+      }}
+    >
+      <b className="connection-title" onClick={() => setSelectedId(null)}>
+        <ChevronDownIcon width={16} height={16} />
+        CONNECTION: {config.name || 'Untitled'}
+      </b>
+    </div>
+  );
+};
+
 export interface ConnectionEditorProps {
   config: ConnectionConfig;
   setConfig: (config: ConnectionConfig) => void;
@@ -69,6 +95,16 @@ export const ConnectionEditor = ({
   availableBackends,
   setSelectedId,
 }: ConnectionEditorProps) => {
+  if ('readOnly' in config && config.readOnly) {
+    return (
+      <div className="connection-editor-box">
+        <ConnectionHeader config={config} setSelectedId={setSelectedId} />
+        <div className="read-only-message" style={{color: 'gray'}}>
+          This connection is managed externally and cannot be modified.
+        </div>
+      </div>
+    );
+  }
   const allBackendOptions: ConnectionBackend[] = [
     ConnectionBackend.BigQuery,
     ConnectionBackend.Postgres,
@@ -85,19 +121,7 @@ export const ConnectionEditor = ({
 
   return (
     <div className="connection-editor-box">
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '5px',
-          justifyContent: 'space-between',
-        }}
-      >
-        <b className="connection-title" onClick={() => setSelectedId(null)}>
-          <ChevronDownIcon width={16} height={16} />
-          CONNECTION: {config.name || 'Untitled'}
-        </b>
-      </div>
+      <ConnectionHeader config={config} setSelectedId={setSelectedId} />
       <ConnectionEditorTable>
         <tbody>
           <tr>
