@@ -42,6 +42,7 @@ import {ConnectionEditorTable} from './ConnectionEditorTable';
 import {PostgresConnectionEditor} from './PostgresConnectionEditor';
 import {SnowflakeConnectionEditor} from './SnowflakeConnectionEditor';
 import {TrinoPrestoConnectionEditor} from './TrinoPrestoConnectionEditor';
+import {PublisherConnectionEditor} from './PublisherConnectionEditor';
 
 export interface ConnectionEditorProps {
   config: ConnectionConfig;
@@ -75,6 +76,7 @@ export const ConnectionEditor = ({
     ConnectionBackend.Snowflake,
     ConnectionBackend.Presto,
     ConnectionBackend.Trino,
+    ConnectionBackend.Publisher,
   ];
 
   const backendOptions = allBackendOptions
@@ -156,6 +158,11 @@ export const ConnectionEditor = ({
           config={config}
           setConfig={setConfig}
         ></TrinoPrestoConnectionEditor>
+      ) : config.backend === ConnectionBackend.Publisher ? (
+        <PublisherConnectionEditor
+          config={config}
+          setConfig={setConfig}
+        ></PublisherConnectionEditor>
       ) : (
         <div>Unknown Connection Type</div>
       )}

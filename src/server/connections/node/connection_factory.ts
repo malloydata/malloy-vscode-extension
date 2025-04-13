@@ -33,6 +33,7 @@ import {createDuckDbConnection} from './duckdb_connection';
 import {createPostgresConnection} from './postgres_connection';
 import {createSnowflakeConnection} from './snowflake_connection';
 import {createTrinoPrestoConnection} from './trino_presto_connection';
+import {createPublisherConnection} from './publisher_connection';
 
 import {fileURLToPath} from 'url';
 import {GenericConnection} from '../../../common/types/worker_message_types';
@@ -111,6 +112,14 @@ export class NodeConnectionFactory implements ConnectionFactory {
       }
       case ConnectionBackend.MySQL: {
         connection = await createMySQLConnection();
+        break;
+      }
+      case ConnectionBackend.Publisher: {
+        connection = await createPublisherConnection(
+          this.client,
+          connectionConfig,
+          configOptions
+        );
         break;
       }
     }

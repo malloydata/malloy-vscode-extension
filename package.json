@@ -583,6 +583,24 @@
                     "type": "string"
                   }
                 }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "backend": {
+                    "type": "string",
+                    "const": "publisher"
+                  },
+                  "connectionUri": {
+                    "type": "string"
+                  },
+                  "accessToken": {
+                    "type": "string"
+                  },
+                  "readOnly": {
+                    "type": "boolean"
+                  }
+                }
               }
             ]
           },
