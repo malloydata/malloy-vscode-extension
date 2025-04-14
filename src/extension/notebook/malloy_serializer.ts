@@ -37,7 +37,12 @@ export function activateNotebookSerializer(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.workspace.registerNotebookSerializer(
       'malloy-notebook',
-      new MalloySerializer()
+      new MalloySerializer(),
+      {
+        transientCellMetadata: {cost: true, config: true},
+        transientDocumentMetadata: {},
+        transientOutputs: true,
+      }
     )
   );
 }
