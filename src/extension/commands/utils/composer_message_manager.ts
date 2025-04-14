@@ -6,6 +6,7 @@
  */
 
 import * as vscode from 'vscode';
+import * as QueryBuilder from '@malloydata/malloy-query-builder';
 import {v1 as uuid} from 'uuid';
 import {WebviewMessageManager} from '../../webview_message_manager';
 import {
@@ -14,13 +15,24 @@ import {
   ComposerPageMessage,
   ComposerPageMessageRefreshModel,
   ComposerPageMessageRunQuery,
+  ComposerPageMessageRunStableQuery,
   ComposerPageMessageType,
 } from '../../../common/types/message_types';
 import {DocumentMetadata, QuerySpec} from '../../../common/types/query_spec';
-import {ModelDef, SearchValueMapResult} from '@malloydata/malloy';
+import {
+  API,
+  ModelDef,
+  modelDefToModelInfo,
+  Result,
+  SearchValueMapResult,
+} from '@malloydata/malloy';
 import {runMalloyQuery} from './run_query_utils';
 import {WorkerConnection} from '../../worker_connection';
 import {getSourceDef} from '../../../common/schema';
+import {getMalloyConfig} from '../../utils/config';
+
+const config = getMalloyConfig();
+const newExplorer = config.get('useNewExplorer') as boolean;
 
 export class ComposerMessageManager
   extends WebviewMessageManager<ComposerMessage, ComposerPageMessage>
@@ -39,6 +51,9 @@ export class ComposerMessageManager
         case ComposerPageMessageType.RunQuery:
           await this.runQuery(message);
           break;
+        case ComposerPageMessageType.RunStableQuery:
+          await this.runStableQuery(message);
+          break;
         case ComposerPageMessageType.RefreshModel:
           await this.refreshModel(message);
           break;
@@ -56,6 +71,45 @@ export class ComposerMessageManager
             type: ComposerMessageType.ResultSuccess,
             id,
             result,
+          });
+        } else {
+          this.postMessage({
+            type: ComposerMessageType.ResultError,
+            id,
+            error: 'No results',
+          });
+        }
+      } catch (error) {
+        this.postMessage({
+          type: ComposerMessageType.ResultError,
+          id,
+          error: error instanceof Error ? error.message : `${error}`,
+        });
+      }
+    }
+  }
+
+  async runStableQuery(message: ComposerPageMessageRunStableQuery) {
+    {
+      const {id, source, query} = message;
+      try {
+        const qb = new QueryBuilder.ASTQuery({source, query});
+        const runQueryResult = await this.runQueryWithProgress(
+          id,
+          'Explorer',
+          qb.toMalloy()
+        );
+        if (runQueryResult) {
+          const {stats, resultJson, profilingUrl} = runQueryResult;
+          const result = API.util.wrapResult(Result.fromJSON(resultJson));
+          this.postMessage({
+            type: ComposerMessageType.StableResultSuccess,
+            id,
+            result: {
+              stats,
+              result,
+              profilingUrl,
+            },
           });
         } else {
           this.postMessage({
@@ -152,12 +206,22 @@ export class ComposerMessageManager
         query,
       });
       const sourceName = this.sourceName ?? Object.keys(modelDef.contents)[0];
-      this.postMessage({
-        type: ComposerMessageType.NewModel,
-        documentMeta: this.documentMeta,
-        modelDef,
-        sourceName,
-      });
+      if (newExplorer) {
+        const model = modelDefToModelInfo(modelDef);
+        this.postMessage({
+          type: ComposerMessageType.NewModelInfo,
+          documentMeta: this.documentMeta,
+          model,
+          sourceName,
+        });
+      } else {
+        this.postMessage({
+          type: ComposerMessageType.NewModel,
+          documentMeta: this.documentMeta,
+          modelDef,
+          sourceName,
+        });
+      }
       void vscode.window.showInformationMessage('Model refreshed');
     } catch (error) {
       const message = `${error instanceof Error ? error.message : error}`;
@@ -181,13 +245,24 @@ export class ComposerMessageManager
 
     const sourceName = this.sourceName ?? Object.keys(modelDef.contents)[0];
 
-    this.postMessage({
-      type: ComposerMessageType.NewModel,
-      documentMeta: this.documentMeta,
-      modelDef,
-      sourceName,
-      viewName: this.viewName,
-    });
+    if (newExplorer) {
+      const model = modelDefToModelInfo(modelDef);
+      this.postMessage({
+        type: ComposerMessageType.NewModelInfo,
+        documentMeta: this.documentMeta,
+        model,
+        sourceName,
+        viewName: this.viewName,
+      });
+    } else {
+      this.postMessage({
+        type: ComposerMessageType.NewModel,
+        documentMeta: this.documentMeta,
+        modelDef,
+        sourceName,
+        viewName: this.viewName,
+      });
+    }
 
     void this.initializeIndex(modelDef, sourceName);
   }

@@ -48,7 +48,7 @@ import StringIcon from '../../../../img/string.svg';
 import TimeIcon from '../../../../img/time.svg';
 import UnknownIcon from '../../../../img/unknown.svg';
 
-import {useState} from 'react';
+import {JSX, useState} from 'react';
 import styled from 'styled-components';
 
 const sortByName = (a: {name: string}, b: {name: string}) =>

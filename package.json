@@ -383,10 +383,10 @@
           "default": 100,
           "description": "Number of top values to fetch for index."
         },
-        "malloy.useNewQueryPage": {
+        "malloy.useNewExplorer": {
           "type": "boolean",
-          "default": true,
-          "description": "Enable the new React query page."
+          "default": false,
+          "description": "Enable the new Explorer page (Beta)."
         },
         "malloy.connections": {
           "type": "array",
@@ -667,8 +667,11 @@
     "@malloydata/db-snowflake": "0.0.260",
     "@malloydata/db-trino": "0.0.260",
     "@malloydata/malloy": "0.0.260",
+    "@malloydata/malloy-explorer": "0.0.257-dev250412010850",
+    "@malloydata/malloy-interfaces": "0.0.260",
+    "@malloydata/malloy-query-builder": "0.0.260",
     "@malloydata/malloy-sql": "0.0.260",
-    "@malloydata/query-composer": "0.0.253",
+    "@malloydata/query-composer": "0.0.253-dev250412010506",
     "@malloydata/render": "0.0.260",
     "@malloydata/syntax-highlight": "0.0.260",
     "@vscode/webview-ui-toolkit": "^1.2.1",
@@ -676,8 +679,8 @@
     "lodash": "^4.17.21",
     "node-fetch": "^2.6.6",
     "prismjs": "^1.30.0",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
     "safevalues": "^0.5.2",
     "styled-components": "^5.3.3",
     "uuid": "^8.3.2",
@@ -697,8 +700,8 @@
     "@types/node": "^20.14.8",
     "@types/node-fetch": "^2.6.2",
     "@types/prismjs": "^1.26.0",
-    "@types/react": "^18.3.12",
-    "@types/react-dom": "^18.3.1",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.1",
     "@types/semver": "^7.3.9",
     "@types/styled-components": "^5.1.34",
     "@types/tar-stream": "^2.2.2",
