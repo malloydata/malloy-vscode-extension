@@ -101,7 +101,10 @@ export class ComposerMessageManager
         );
         if (runQueryResult) {
           const {stats, resultJson, profilingUrl} = runQueryResult;
-          const result = API.util.wrapResult(Result.fromJSON(resultJson));
+          const legacyResult = Result.fromJSON(resultJson);
+          const result = API.util.wrapResult(legacyResult);
+          // TODO - remove once wrapResult is fixed
+          result.sql = legacyResult.sql;
           this.postMessage({
             type: ComposerMessageType.StableResultSuccess,
             id,
