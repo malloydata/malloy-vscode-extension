@@ -667,7 +667,7 @@
     "@malloydata/db-snowflake": "0.0.264",
     "@malloydata/db-trino": "0.0.264",
     "@malloydata/malloy": "0.0.264",
-    "@malloydata/malloy-explorer": "0.0.257-dev250412010850",
+    "@malloydata/malloy-explorer": "0.0.264-dev250417011542",
     "@malloydata/malloy-interfaces": "0.0.264",
     "@malloydata/malloy-query-builder": "0.0.264",
     "@malloydata/malloy-sql": "0.0.264",

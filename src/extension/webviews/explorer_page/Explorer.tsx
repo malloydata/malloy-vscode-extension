@@ -114,11 +114,7 @@ export const Explorer: React.FC<ExplorerProps> = ({
                   flex: '0 0 auto',
                 }}
               >
-                <SourcePanel
-                  source={source}
-                  query={query}
-                  setQuery={setQuery}
-                />
+                <SourcePanel />
                 <ResizeBar
                   minWidth={180}
                   width={sourcePanelWidth}
@@ -135,13 +131,7 @@ export const Explorer: React.FC<ExplorerProps> = ({
                 flex: '0 0 auto',
               }}
             >
-              <QueryPanel
-                source={source}
-                query={query}
-                setQuery={setQuery}
-                runQuery={runQuery}
-                showSource={false}
-              />
+              <QueryPanel runQuery={runQuery} />
               <ResizeBar
                 minWidth={230}
                 width={queryPanelWidth}
