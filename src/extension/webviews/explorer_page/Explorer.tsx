@@ -26,6 +26,7 @@ export interface ExplorerProps {
   submittedQuery: SubmittedQuery | undefined;
   topValues: SearchValueMapResult[] | undefined;
   viewName?: string;
+  refreshModel: (source: Malloy.SourceInfo, query: Malloy.Query) => void;
 }
 
 export function findSource(
@@ -52,6 +53,7 @@ export const Explorer: React.FC<ExplorerProps> = ({
   submittedQuery,
   topValues,
   viewName,
+  refreshModel,
 }) => {
   const [query, setQuery] = useState<Malloy.Query>();
   const [isSourcePanelOpen, setIsSourcePanelOpen] = useState(true);
@@ -114,7 +116,11 @@ export const Explorer: React.FC<ExplorerProps> = ({
                   flex: '0 0 auto',
                 }}
               >
-                <SourcePanel />
+                <SourcePanel
+                  onRefresh={() => {
+                    if (source && query) refreshModel(source, query);
+                  }}
+                />
                 <ResizeBar
                   minWidth={180}
                   width={sourcePanelWidth}

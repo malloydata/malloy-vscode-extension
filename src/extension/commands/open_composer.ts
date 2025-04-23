@@ -18,13 +18,13 @@ import {getMalloyConfig} from '../utils/config';
 const icon = 'turtle.svg';
 
 const config = getMalloyConfig();
-const newExplorer = config.get('useNewExplorer') as boolean;
 
 export async function openComposer(
   worker: WorkerConnection,
   sourceName?: string,
   viewName?: string
 ) {
+  const newExplorer = config.get('useNewExplorer') as boolean;
   const documentMeta = getActiveDocumentMetadata();
   if (documentMeta) {
     const basename = Utils.basename(vscode.Uri.parse(documentMeta.uri));
@@ -47,6 +47,7 @@ export async function openComposer(
       worker,
       composerPanel,
       documentMeta,
+      newExplorer,
       sourceName,
       viewName
     );

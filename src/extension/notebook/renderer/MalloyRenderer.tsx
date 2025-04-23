@@ -34,7 +34,7 @@ export interface MalloyRendererProps {
   result: Result | null;
 }
 
-const css = `
+const css = /* css */ `
   malloy-render::part(container) {
     max-height: 600px;
   }

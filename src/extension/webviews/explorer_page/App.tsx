@@ -149,6 +149,16 @@ export const App: React.FC<AppProps> = ({vscode}) => {
     [vscode]
   );
 
+  const refreshModel = React.useCallback(
+    (source: Malloy.SourceInfo, query: Malloy.Query) =>
+      vscode.postMessage({
+        type: ComposerPageMessageType.RefreshStableModel,
+        source,
+        query,
+      }),
+    [vscode]
+  );
+
   if (documentMeta && model && sourceName) {
     return (
       <div style={{height: '100%'}}>
@@ -158,6 +168,7 @@ export const App: React.FC<AppProps> = ({vscode}) => {
           topValues={topValues}
           submittedQuery={submittedQuery}
           viewName={viewName}
+          refreshModel={refreshModel}
         />
       </div>
     );

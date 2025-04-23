@@ -14,6 +14,7 @@ import {
   ComposerMessageType,
   ComposerPageMessage,
   ComposerPageMessageRefreshModel,
+  ComposerPageMessageRefreshStableModel,
   ComposerPageMessageRunQuery,
   ComposerPageMessageRunStableQuery,
   ComposerPageMessageType,
@@ -29,10 +30,6 @@ import {
 import {runMalloyQuery} from './run_query_utils';
 import {WorkerConnection} from '../../worker_connection';
 import {getSourceDef} from '../../../common/schema';
-import {getMalloyConfig} from '../../utils/config';
-
-const config = getMalloyConfig();
-const newExplorer = config.get('useNewExplorer') as boolean;
 
 export class ComposerMessageManager
   extends WebviewMessageManager<ComposerMessage, ComposerPageMessage>
@@ -42,6 +39,7 @@ export class ComposerMessageManager
     private worker: WorkerConnection,
     composerPanel: vscode.WebviewPanel,
     private documentMeta: DocumentMetadata,
+    private newExplorer: boolean,
     private sourceName?: string,
     private viewName?: string
   ) {
@@ -56,6 +54,9 @@ export class ComposerMessageManager
           break;
         case ComposerPageMessageType.RefreshModel:
           await this.refreshModel(message);
+          break;
+        case ComposerPageMessageType.RefreshStableModel:
+          await this.refreshStableModel(message);
           break;
       }
     });
@@ -209,7 +210,7 @@ export class ComposerMessageManager
         query,
       });
       const sourceName = this.sourceName ?? Object.keys(modelDef.contents)[0];
-      if (newExplorer) {
+      if (this.newExplorer) {
         const model = modelDefToModelInfo(modelDef);
         this.postMessage({
           type: ComposerMessageType.NewModelInfo,
@@ -241,14 +242,24 @@ export class ComposerMessageManager
     }
   }
 
+  async refreshStableModel({
+    source,
+    query,
+  }: ComposerPageMessageRefreshStableModel): Promise<void> {
+    const qb = new QueryBuilder.ASTQuery({source, query});
+    return this.refreshModel({
+      type: ComposerPageMessageType.RefreshModel,
+      query: qb.toMalloy(),
+    });
+  }
+
   async newModel(): Promise<void> {
     const modelDef = await this.worker.sendRequest('malloy/compile', {
       documentMeta: this.documentMeta,
     });
 
     const sourceName = this.sourceName ?? Object.keys(modelDef.contents)[0];
-
-    if (newExplorer) {
+    if (this.newExplorer) {
       const model = modelDefToModelInfo(modelDef);
       this.postMessage({
         type: ComposerMessageType.NewModelInfo,
