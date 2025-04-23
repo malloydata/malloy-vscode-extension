@@ -367,6 +367,7 @@ export enum ComposerPageMessageType {
   RunQuery = 'run-query',
   RunStableQuery = 'run-stable-query',
   RefreshModel = 'refresh-model',
+  RefreshStableModel = 'refresh-stable-model',
 }
 
 export interface ComposerPageMessageReady {
@@ -392,8 +393,15 @@ export interface ComposerPageMessageRefreshModel {
   query: string;
 }
 
+export interface ComposerPageMessageRefreshStableModel {
+  type: ComposerPageMessageType.RefreshStableModel;
+  source: Malloy.SourceInfo;
+  query: Malloy.Query;
+}
+
 export type ComposerPageMessage =
   | ComposerPageMessageReady
   | ComposerPageMessageRunQuery
   | ComposerPageMessageRunStableQuery
-  | ComposerPageMessageRefreshModel;
+  | ComposerPageMessageRefreshModel
+  | ComposerPageMessageRefreshStableModel;
