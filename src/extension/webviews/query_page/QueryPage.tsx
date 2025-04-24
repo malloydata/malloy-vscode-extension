@@ -41,7 +41,7 @@ import {LabeledSpinner} from '../components/LabeledSpinner';
 import {SchemaRenderer} from '../components/SchemaRenderer';
 import {CopyButton as CopyButtonInner} from './CopyButton';
 import {DownloadButton} from './DownloadButton';
-import {ErrorPanel} from './ErrorPanel';
+import {ErrorPanel} from '../components/ErrorPanel';
 import {CodeContainer} from '../components/CodeContainer';
 import {DOMElement} from '../components/DOMElement';
 

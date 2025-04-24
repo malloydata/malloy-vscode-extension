@@ -26,6 +26,7 @@ import {
   QueryResponse,
   SubmittedQuery,
 } from '@malloydata/malloy-explorer';
+import {ErrorPanel} from '../components/ErrorPanel';
 
 export interface AppProps {
   vscode: VsCodeApi<ComposerPageMessage, void>;
@@ -51,6 +52,7 @@ export const App: React.FC<AppProps> = ({vscode}) => {
   const [queryResolutionStartMillis, setQueryResolutionStartMillis] = useState<
     number | null
   >(null);
+  const [error, setError] = useState('');
 
   const source =
     model && sourceName ? findSource(model, sourceName) : undefined;
@@ -142,8 +144,13 @@ export const App: React.FC<AppProps> = ({vscode}) => {
         query,
         source,
       });
-      const {result} = await promise;
-      setResponse({result});
+      try {
+        const {result} = await promise;
+        setResponse({result});
+        setError('');
+      } catch (error) {
+        setError(error instanceof Error ? error.message : `${error}`);
+      }
       setExecutionState('finished');
     },
     [vscode]
@@ -158,6 +165,10 @@ export const App: React.FC<AppProps> = ({vscode}) => {
       }),
     [vscode]
   );
+
+  if (error) {
+    return <ErrorPanel message={error} />;
+  }
 
   if (documentMeta && model && sourceName) {
     return (
