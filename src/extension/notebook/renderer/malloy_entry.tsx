@@ -27,7 +27,7 @@ import {ActivationFunction} from 'vscode-notebook-renderer';
 import './MalloyRenderer';
 import '@malloydata/render/webcomponent';
 import {Result} from '@malloydata/malloy';
-import {MalloyRenderProps} from '@malloydata/render';
+import type {MalloyRenderProps} from '@malloydata/render';
 import {StyleSheetManager} from 'styled-components';
 import {SchemaRendererWrapper} from './schema_entry';
 
