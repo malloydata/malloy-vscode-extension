@@ -26,7 +26,17 @@ import {
   QueryResponse,
   SubmittedQuery,
 } from '@malloydata/malloy-explorer';
-import {ErrorPanel} from '../components/ErrorPanel';
+
+// TODO(whscullin) fix when properly exported from @malloydata/malloy-explorer
+export type SeverityLevel = 'INFO' | 'DEBUG' | 'WARN' | 'ERROR' | 'FATAL';
+
+export type Message = {
+  severity: SeverityLevel;
+  title: string;
+  description?: string;
+  content?: string;
+  customRenderer?: React.ReactNode;
+};
 
 export interface AppProps {
   vscode: VsCodeApi<ComposerPageMessage, void>;
@@ -52,7 +62,6 @@ export const App: React.FC<AppProps> = ({vscode}) => {
   const [queryResolutionStartMillis, setQueryResolutionStartMillis] = useState<
     number | null
   >(null);
-  const [error, setError] = useState('');
 
   const source =
     model && sourceName ? findSource(model, sourceName) : undefined;
@@ -147,9 +156,16 @@ export const App: React.FC<AppProps> = ({vscode}) => {
       try {
         const {result} = await promise;
         setResponse({result});
-        setError('');
       } catch (error) {
-        setError(error instanceof Error ? error.message : `${error}`);
+        console.info(error);
+        const messages: Message[] = [
+          {
+            severity: 'ERROR',
+            title: 'Error',
+            content: error instanceof Error ? error.message : `${error}`,
+          },
+        ];
+        setResponse({messages});
       }
       setExecutionState('finished');
     },
@@ -165,10 +181,6 @@ export const App: React.FC<AppProps> = ({vscode}) => {
       }),
     [vscode]
   );
-
-  if (error) {
-    return <ErrorPanel message={error} />;
-  }
 
   if (documentMeta && model && sourceName) {
     return (
