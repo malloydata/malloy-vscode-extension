@@ -32,12 +32,28 @@ import {COMPLETION_DOCS} from '../../common/completion_docs';
 import {parseWithCache} from '../parse_cache';
 import {TranslateCache} from '../translate_cache';
 import {getSchemaCompletions} from './schema_completions';
+import {computeMalloyCompletions} from '@malloydata/malloy';
 
 export async function getCompletionItems(
   document: TextDocument,
   context: CompletionParams,
   translateCache: TranslateCache
 ): Promise<CompletionItem[]> {
+  const documentText = document.getText();
+  const lexerCompletions = await computeMalloyCompletions(
+    documentText,
+    context.position,
+    {
+      source_name: ['allocation', 'bands', 'countability'],
+    }
+  );
+  return lexerCompletions.map(completion => {
+    return {
+      kind: CompletionItemKind.Field,
+      label: completion,
+    };
+  });
+
   const schemaCompletions = await getSchemaCompletions(
     document,
     context,
