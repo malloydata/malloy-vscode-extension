@@ -14,7 +14,6 @@ export const createPublisherConnection = async (
   connectionConfig: PublisherConnectionConfig
 ): Promise<PublisherConnection> => {
   const {connectionUri, accessToken} = connectionConfig;
-
   if (!connectionUri) {
     throw new Error('Connection URI is required');
   }
