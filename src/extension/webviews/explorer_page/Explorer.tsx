@@ -9,10 +9,9 @@ import * as React from 'react';
 import {useEffect, useState} from 'react';
 import * as Malloy from '@malloydata/malloy-interfaces';
 import {
-  ExplorerPanelsContext,
   MalloyExplorerProvider,
   QueryPanel,
-  ResizeBar,
+  ResizableCollapsiblePanel,
   ResultPanel,
   SourcePanel,
   SubmittedQuery,
@@ -56,9 +55,6 @@ export const Explorer: React.FC<ExplorerProps> = ({
   refreshModel,
 }) => {
   const [query, setQuery] = useState<Malloy.Query>();
-  const [isSourcePanelOpen, setIsSourcePanelOpen] = useState(true);
-  const [sourcePanelWidth, setSourcePanelWidth] = useState(280);
-  const [queryPanelWidth, setQueryPanelWidth] = useState(360);
 
   useEffect(() => {
     if (source && viewName) {
@@ -93,68 +89,46 @@ export const Explorer: React.FC<ExplorerProps> = ({
       query={query}
       topValues={topValues}
     >
-      <ExplorerPanelsContext.Provider
-        value={{
-          isSourcePanelOpen,
-          setIsSourcePanelOpen,
-        }}
-      >
-        <div style={{display: 'flex', flexDirection: 'column', height: '100%'}}>
-          <div
-            style={{
-              display: 'flex',
-              height: '100%',
-              overflowY: 'auto',
-            }}
+      <div style={{display: 'flex', flexDirection: 'column', height: '100%'}}>
+        <div
+          style={{
+            display: 'flex',
+            height: '100%',
+            overflowY: 'auto',
+          }}
+        >
+          <ResizableCollapsiblePanel
+            isInitiallyExpanded={true}
+            initialWidth={280}
+            minWidth={180}
+            icon="database"
+            title={source.name}
           >
-            {isSourcePanelOpen && (
-              <div
-                style={{
-                  width: sourcePanelWidth,
-                  position: 'relative',
-                  height: '100%',
-                  flex: '0 0 auto',
-                }}
-              >
-                <SourcePanel
-                  onRefresh={() => {
-                    if (source && query) refreshModel(source, query);
-                  }}
-                />
-                <ResizeBar
-                  minWidth={180}
-                  width={sourcePanelWidth}
-                  onWidthChange={setSourcePanelWidth}
-                />
-              </div>
-            )}
-
-            <div
-              style={{
-                width: queryPanelWidth,
-                position: 'relative',
-                height: '100%',
-                flex: '0 0 auto',
+            <SourcePanel
+              onRefresh={() => {
+                if (source && query) refreshModel(source, query);
               }}
-            >
-              <QueryPanel runQuery={runQuery} />
-              <ResizeBar
-                minWidth={230}
-                width={queryPanelWidth}
-                onWidthChange={setQueryPanelWidth}
-              />
-            </div>
-            <div style={{height: '100%', flex: '1 1 auto'}}>
-              <ResultPanel
-                source={source}
-                draftQuery={query}
-                setDraftQuery={setQuery}
-                submittedQuery={submittedQuery}
-              />
-            </div>
+            />
+          </ResizableCollapsiblePanel>
+          <ResizableCollapsiblePanel
+            isInitiallyExpanded={true}
+            initialWidth={360}
+            minWidth={280}
+            icon="filterSliders"
+            title="Query"
+          >
+            <QueryPanel runQuery={runQuery} />
+          </ResizableCollapsiblePanel>
+          <div style={{height: '100%', flex: '1 1 auto'}}>
+            <ResultPanel
+              source={source}
+              draftQuery={query}
+              setDraftQuery={setQuery}
+              submittedQuery={submittedQuery}
+            />
           </div>
         </div>
-      </ExplorerPanelsContext.Provider>
+      </div>
     </MalloyExplorerProvider>
   );
 };
