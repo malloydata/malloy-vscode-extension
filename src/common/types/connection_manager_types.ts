@@ -35,6 +35,7 @@ export enum ConnectionBackend {
   Trino = 'trino',
   Presto = 'presto',
   MySQL = 'mysql',
+  Publisher = 'publisher',
 }
 
 export const ConnectionBackendNames: Record<ConnectionBackend, string> = {
@@ -46,6 +47,7 @@ export const ConnectionBackendNames: Record<ConnectionBackend, string> = {
   [ConnectionBackend.Trino]: 'Trino',
   [ConnectionBackend.Presto]: 'Presto',
   [ConnectionBackend.MySQL]: 'MySQL',
+  [ConnectionBackend.Publisher]: 'Publisher',
 };
 
 /*
@@ -126,6 +128,13 @@ export interface MySQLConnectionConfig extends BaseConnectionConfig {
   // TODO(figutierrez): add options.
 }
 
+export interface PublisherConnectionConfig extends BaseConnectionConfig {
+  backend: ConnectionBackend.Publisher;
+  connectionUri?: string;
+  accessToken?: string;
+  readOnly?: boolean;
+}
+
 export type ConnectionConfig =
   | BigQueryConnectionConfig
   | PostgresConnectionConfig
@@ -133,7 +142,8 @@ export type ConnectionConfig =
   | SnowflakeConnectionConfig
   | TrinoConnectionConfig
   | PrestoConnectionConfig
-  | MySQLConnectionConfig;
+  | MySQLConnectionConfig
+  | PublisherConnectionConfig;
 
 export interface ConfigOptions {
   workingDirectory?: string;

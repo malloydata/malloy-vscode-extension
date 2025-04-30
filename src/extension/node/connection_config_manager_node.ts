@@ -33,6 +33,7 @@ class ConnectionConfigManagerNode extends ConnectionConfigManagerBase {
       ConnectionBackend.Snowflake,
       ConnectionBackend.Trino,
       ConnectionBackend.Presto,
+      ConnectionBackend.Publisher,
     ];
     if (isDuckDBAvailable) {
       available.push(ConnectionBackend.DuckDB);
