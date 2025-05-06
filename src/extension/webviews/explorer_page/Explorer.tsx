@@ -89,7 +89,14 @@ export const Explorer: React.FC<ExplorerProps> = ({
       query={query}
       topValues={topValues}
     >
-      <div style={{display: 'flex', flexDirection: 'column', height: '100%'}}>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+          backgroundColor: '#fff',
+        }}
+      >
         <div
           style={{
             display: 'flex',
