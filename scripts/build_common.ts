@@ -252,6 +252,7 @@ export async function doBuild(
     entryNames: '[dir]',
     platform: 'browser',
     plugins: webviewPlugins,
+    sourcemap: false,
   };
 
   // Build the notebook renderers
