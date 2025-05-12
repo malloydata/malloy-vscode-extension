@@ -46,7 +46,7 @@ import {PublisherConnectionEditor} from './PublisherConnectionEditor';
 
 interface ConnectionHeaderProps {
   config: {name?: string};
-  setSelectedId: (id: any) => void;
+  setSelectedId: (id: string | null) => void;
 }
 
 const ConnectionHeader: React.FC<ConnectionHeaderProps> = ({
