@@ -78,7 +78,15 @@ export function QueryPage({vscode}: QueryPageProps) {
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
-    setIsDarkMode(document.body.dataset['vscodeThemeKind'] === 'vscode-dark');
+    const updateDarkMode = () => {
+      setIsDarkMode(document.body.dataset['vscodeThemeKind'] === 'vscode-dark');
+    };
+    const observer = new MutationObserver(updateDarkMode);
+    observer.observe(document.body, {
+      attributes: true,
+    });
+    updateDarkMode();
+    return () => observer.disconnect();
   }, []);
 
   const copyToClipboard = useCallback(

@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as yargs from 'yargs';
+import yargs from 'yargs';
 import {doBuild} from './build_common';
 import {outDir, Targets} from './constants';
 

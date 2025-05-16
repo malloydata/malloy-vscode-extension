@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "rootDir": ".",
+    "strict": true,
+    "moduleResolution": "node"
+  }
+}

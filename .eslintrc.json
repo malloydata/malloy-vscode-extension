@@ -126,6 +126,13 @@
       }
     },
     {
+      "files": ["scripts/**"],
+      "parserOptions": {
+        "warnOnUnsupportedTypeScriptVersion": false,
+        "project": ["./scripts/tsconfig.json"]
+      }
+    },
+    {
       "files": ["integration/**"],
       "parserOptions": {
         "warnOnUnsupportedTypeScriptVersion": false,
