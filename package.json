@@ -385,7 +385,7 @@
         },
         "malloy.useNewExplorer": {
           "type": "boolean",
-          "default": false,
+          "default": true,
           "description": "Enable the new Explorer page (Beta)."
         },
         "malloy.connections": {
