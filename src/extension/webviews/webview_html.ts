@@ -94,9 +94,6 @@ export function getWebviewHtml(
       --malloy-composer-menu-fontFamily: var(--vscode-menu-font);
       --malloy-composer-menu-fontSize: var(--vscode-font-size);
     }
-    .vscode-dark .shiki, .vscode-dark .shiki span {
-      color: var(--shiki-dark) !important;
-    }
     .shiki span {
       font-size: var(--vscode-editor-font-size);
       font-family: var(--vscode-editor-font-family);
