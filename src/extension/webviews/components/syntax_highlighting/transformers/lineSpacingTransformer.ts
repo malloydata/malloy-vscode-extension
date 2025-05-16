@@ -6,19 +6,19 @@
  */
 
 import {Element} from 'hast';
-import {GetTransformer, TransformerOptions} from './transformers';
+import type {GetTransformer, LineSpacing} from './types';
 
-const LINE_SPACING_MAP = {
+export const LINE_SPACING_MAP: Record<LineSpacing, string> = {
   single: '1em',
   oneAndAHalf: '1.5em',
   double: '2em',
 };
 
-export type LineSpacing = keyof typeof LINE_SPACING_MAP;
-
 const getLineSpacingTransformer: GetTransformer = ({
   lineSpacing,
-}: TransformerOptions) => {
+}: {
+  lineSpacing: LineSpacing;
+}) => {
   return {
     line(node: Element) {
       const styled = [

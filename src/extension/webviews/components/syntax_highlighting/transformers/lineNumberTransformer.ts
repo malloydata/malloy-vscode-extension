@@ -6,17 +6,19 @@
  */
 
 import {Element} from 'hast';
-import {GetTransformer, TransformerOptions} from './transformers';
+import {GetTransformer} from './types';
 
 const getLineNumberTransformer: GetTransformer = ({
   showLineNumbers,
-}: TransformerOptions) => {
+}: {
+  showLineNumbers: boolean;
+}) => {
   if (!showLineNumbers) {
     return undefined;
   }
 
   return {
-    line(node: Element, line) {
+    line(node: Element, line: number) {
       const span: Element = {
         type: 'element',
         tagName: 'span',

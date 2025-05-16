@@ -17,7 +17,8 @@ import json from '@shikijs/langs/json';
 import {HtmlSanitizerBuilder} from 'safevalues';
 
 import MALLOY_GRAMMAR from '@malloydata/syntax-highlight/grammars/malloy/malloy.tmGrammar.json';
-import getTransformers, {TransformerOptions} from './transformers/transformers';
+import getTransformers from './transformers/transformers';
+import type {TransformerOptions} from './transformers/types';
 
 /**
  * JS engine is smaller and recommended for browser.

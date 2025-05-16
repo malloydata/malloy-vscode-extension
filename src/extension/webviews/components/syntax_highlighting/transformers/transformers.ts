@@ -6,16 +6,9 @@
  */
 
 import {ShikiTransformer} from '@shikijs/types';
-import lineSpacingTransformer, {LineSpacing} from './lineSpacingTransformer';
+import lineSpacingTransformer from './lineSpacingTransformer';
 import lineNumberTransformer from './lineNumberTransformer';
-
-export type TransformerOptions = {
-  showLineNumbers: boolean;
-  lineSpacing: LineSpacing;
-};
-export type GetTransformer = (
-  options: TransformerOptions
-) => ShikiTransformer | undefined;
+import {GetTransformer, TransformerOptions} from './types';
 
 const transformers: Array<GetTransformer> = [
   lineSpacingTransformer,
