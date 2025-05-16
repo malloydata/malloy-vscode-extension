@@ -113,10 +113,7 @@
         "title": "Run at Cursor",
         "category": "Malloy",
         "enablement": "editorLangId == malloy",
-        "icon": {
-          "dark": "img/play.svg",
-          "light": "img/play.svg"
-        }
+        "icon": "$(play)"
       },
       {
         "command": "malloy.showSQLFile",
@@ -333,12 +330,14 @@
         {
           "id": "malloyHelp",
           "name": "Help",
+          "icon": "$(question)",
           "type": "webview",
           "when": "resourceLangId == malloy || resourceLangId == malloy-notebook || resource =~ /malloy-notebook$/"
         },
         {
           "id": "malloyConnections",
           "name": "Malloy Connections",
+          "icon": "$(database)",
           "when": "resourceLangId == malloy || resourceLangId == malloy-notebook || resource =~ /malloy-notebook$/"
         }
       ],
@@ -346,6 +345,7 @@
         {
           "id": "malloySchema",
           "name": "Malloy Schema",
+          "icon": "$(type-hierarchy)",
           "when": "malloy.webviewPanelFocused == true || resourceLangId == malloy || resourceLangId == malloy-notebook || resource =~ /malloy-notebook$/"
         }
       ]
@@ -678,21 +678,21 @@
     ]
   },
   "dependencies": {
-    "@malloydata/db-bigquery": "0.0.275",
-    "@malloydata/db-duckdb": "0.0.275",
-    "@malloydata/db-mysql": "0.0.275",
-    "@malloydata/db-postgres": "0.0.275",
-    "@malloydata/db-publisher": "0.0.275",
-    "@malloydata/db-snowflake": "0.0.275",
-    "@malloydata/db-trino": "0.0.275",
-    "@malloydata/malloy": "0.0.275",
-    "@malloydata/malloy-explorer": "0.0.275-dev250509203914",
-    "@malloydata/malloy-interfaces": "0.0.275",
-    "@malloydata/malloy-query-builder": "0.0.275",
-    "@malloydata/malloy-sql": "0.0.275",
+    "@malloydata/db-bigquery": "0.0.278",
+    "@malloydata/db-duckdb": "0.0.278",
+    "@malloydata/db-mysql": "0.0.278",
+    "@malloydata/db-postgres": "0.0.278",
+    "@malloydata/db-publisher": "0.0.278",
+    "@malloydata/db-snowflake": "0.0.278",
+    "@malloydata/db-trino": "0.0.278",
+    "@malloydata/malloy": "0.0.278",
+    "@malloydata/malloy-explorer": "0.0.278-dev250515234639",
+    "@malloydata/malloy-interfaces": "0.0.278",
+    "@malloydata/malloy-query-builder": "0.0.278",
+    "@malloydata/malloy-sql": "0.0.278",
     "@malloydata/query-composer": "0.0.253-dev250412010506",
-    "@malloydata/render": "0.0.275",
-    "@malloydata/syntax-highlight": "0.0.275",
+    "@malloydata/render": "0.0.278",
+    "@malloydata/syntax-highlight": "0.0.278",
     "@vscode/webview-ui-toolkit": "^1.2.1",
     "duckdb": "^1.2.1",
     "lodash": "^4.17.21",
