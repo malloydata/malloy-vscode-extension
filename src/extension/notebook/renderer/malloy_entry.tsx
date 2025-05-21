@@ -47,6 +47,7 @@ export const activate: ActivationFunction = ({postMessage}) => {
         const root = element;
         const parent = document.createElement('div');
         parent.style.maxHeight = '400px';
+        parent.style.minHeight = '200px';
         parent.style.border = '1px solid #e5e7eb';
         parent.style.overflow = 'auto';
 
