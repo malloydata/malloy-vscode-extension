@@ -13,18 +13,14 @@ import {MALLOY_EXTENSION_STATE} from '../state';
 import {WorkerConnection} from '../worker_connection';
 import {ComposerMessageManager} from './utils/composer_message_manager';
 import {errorMessage} from '../../common/errors';
-import {getMalloyConfig} from '../utils/config';
 
 const icon = 'turtle.svg';
-
-const config = getMalloyConfig();
 
 export async function openComposer(
   worker: WorkerConnection,
   sourceName?: string,
   viewName?: string
 ) {
-  const newExplorer = config.get('useNewExplorer') as boolean;
   const documentMeta = getActiveDocumentMetadata();
   if (documentMeta) {
     const basename = Utils.basename(vscode.Uri.parse(documentMeta.uri));
@@ -47,22 +43,15 @@ export async function openComposer(
       worker,
       composerPanel,
       documentMeta,
-      newExplorer,
       sourceName,
       viewName
     );
 
-    if (newExplorer) {
-      composerPanel.webview.html = getWebviewHtml(
-        'explorer_page',
-        composerPanel.webview
-      );
-    } else {
-      composerPanel.webview.html = getWebviewHtml(
-        'composer_page',
-        composerPanel.webview
-      );
-    }
+    composerPanel.webview.html = getWebviewHtml(
+      'explorer_page',
+      composerPanel.webview
+    );
+
     try {
       void messageManager.newModel();
     } catch (error) {

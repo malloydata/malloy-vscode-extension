@@ -88,7 +88,7 @@
       },
       {
         "command": "malloy.openComposer",
-        "title": "Composer Preview",
+        "title": "Explorer Preview",
         "category": "Malloy"
       },
       {
@@ -690,7 +690,6 @@
     "@malloydata/malloy-interfaces": "0.0.280",
     "@malloydata/malloy-query-builder": "0.0.280",
     "@malloydata/malloy-sql": "0.0.280",
-    "@malloydata/query-composer": "0.0.269-dev250516202739",
     "@malloydata/render": "0.0.280",
     "@malloydata/syntax-highlight": "0.0.280",
     "@shikijs/core": "^3.2.1",
