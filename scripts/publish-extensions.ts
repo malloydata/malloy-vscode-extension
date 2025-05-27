@@ -25,7 +25,7 @@ import * as semver from 'semver';
 import {readFileSync} from 'fs';
 import {publishVSIX} from '@vscode/vsce';
 import {doPackage} from './package-extension';
-// import {publishOvsx} from './publish-ovsx';
+import {publishOvsx} from './publish-ovsx';
 import {Targets} from './constants';
 
 /**
@@ -84,7 +84,7 @@ async function doPublish(version: string) {
       pat: process.env['VSCE_PAT'],
     });
 
-    // await publishOvsx(packagePath, target, preRelease);
+    await publishOvsx(packagePath, target, preRelease);
   }
 }
 
