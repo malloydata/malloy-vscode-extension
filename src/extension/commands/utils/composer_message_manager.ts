@@ -39,7 +39,6 @@ export class ComposerMessageManager
     private worker: WorkerConnection,
     composerPanel: vscode.WebviewPanel,
     private documentMeta: DocumentMetadata,
-    private newExplorer: boolean,
     private sourceName?: string,
     private viewName?: string
   ) {
@@ -210,22 +209,13 @@ export class ComposerMessageManager
         query,
       });
       const sourceName = this.sourceName ?? Object.keys(modelDef.contents)[0];
-      if (this.newExplorer) {
-        const model = modelDefToModelInfo(modelDef);
-        this.postMessage({
-          type: ComposerMessageType.NewModelInfo,
-          documentMeta: this.documentMeta,
-          model,
-          sourceName,
-        });
-      } else {
-        this.postMessage({
-          type: ComposerMessageType.NewModel,
-          documentMeta: this.documentMeta,
-          modelDef,
-          sourceName,
-        });
-      }
+      const model = modelDefToModelInfo(modelDef);
+      this.postMessage({
+        type: ComposerMessageType.NewModelInfo,
+        documentMeta: this.documentMeta,
+        model,
+        sourceName,
+      });
       void vscode.window.showInformationMessage('Model refreshed');
     } catch (error) {
       const message = `${error instanceof Error ? error.message : error}`;
@@ -259,24 +249,14 @@ export class ComposerMessageManager
     });
 
     const sourceName = this.sourceName ?? Object.keys(modelDef.contents)[0];
-    if (this.newExplorer) {
-      const model = modelDefToModelInfo(modelDef);
-      this.postMessage({
-        type: ComposerMessageType.NewModelInfo,
-        documentMeta: this.documentMeta,
-        model,
-        sourceName,
-        viewName: this.viewName,
-      });
-    } else {
-      this.postMessage({
-        type: ComposerMessageType.NewModel,
-        documentMeta: this.documentMeta,
-        modelDef,
-        sourceName,
-        viewName: this.viewName,
-      });
-    }
+    const model = modelDefToModelInfo(modelDef);
+    this.postMessage({
+      type: ComposerMessageType.NewModelInfo,
+      documentMeta: this.documentMeta,
+      model,
+      sourceName,
+      viewName: this.viewName,
+    });
 
     void this.initializeIndex(modelDef, sourceName);
   }

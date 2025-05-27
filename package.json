@@ -88,7 +88,7 @@
       },
       {
         "command": "malloy.openComposer",
-        "title": "Composer Preview",
+        "title": "Explorer Preview",
         "category": "Malloy"
       },
       {
@@ -382,11 +382,6 @@
           "type": "number",
           "default": 100,
           "description": "Number of top values to fetch for index."
-        },
-        "malloy.useNewExplorer": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable the new Explorer page (Beta)."
         },
         "malloy.connections": {
           "type": "array",
@@ -690,7 +685,6 @@
     "@malloydata/malloy-interfaces": "0.0.280",
     "@malloydata/malloy-query-builder": "0.0.280",
     "@malloydata/malloy-sql": "0.0.280",
-    "@malloydata/query-composer": "0.0.269-dev250516202739",
     "@malloydata/render": "0.0.280",
     "@malloydata/syntax-highlight": "0.0.280",
     "@shikijs/core": "^3.2.1",
