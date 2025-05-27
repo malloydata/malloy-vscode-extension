@@ -383,11 +383,6 @@
           "default": 100,
           "description": "Number of top values to fetch for index."
         },
-        "malloy.useNewExplorer": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable the new Explorer page (Beta)."
-        },
         "malloy.connections": {
           "type": "array",
           "items": {
