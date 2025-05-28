@@ -14,3 +14,4 @@ CHANGELOG.md
 .DS_Store
 *.cpuprofile
 vscode.deb
+tsconfig.tsbuildinfo
