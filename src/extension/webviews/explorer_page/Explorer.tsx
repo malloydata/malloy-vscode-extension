@@ -55,6 +55,7 @@ export const Explorer: React.FC<ExplorerProps> = ({
   refreshModel,
 }) => {
   const [query, setQuery] = useState<Malloy.Query>();
+  const [focusedNestViewPath, setFocusedNestViewPath] = useState<string[]>([]);
 
   useEffect(() => {
     if (source && viewName) {
@@ -85,9 +86,11 @@ export const Explorer: React.FC<ExplorerProps> = ({
   return (
     <MalloyExplorerProvider
       source={source}
-      setQuery={setQuery}
+      onQueryChange={setQuery}
       query={query}
       topValues={topValues}
+      onFocusedNestViewPathChange={setFocusedNestViewPath}
+      focusedNestViewPath={focusedNestViewPath}
     >
       <div
         style={{
