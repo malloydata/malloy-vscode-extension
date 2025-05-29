@@ -6,6 +6,7 @@
  */
 
 import * as vscode from 'vscode';
+import * as Malloy from '@malloydata/malloy-interfaces';
 import * as QueryBuilder from '@malloydata/malloy-query-builder';
 import {v1 as uuid} from 'uuid';
 import {WebviewMessageManager} from '../../webview_message_manager';
@@ -40,7 +41,8 @@ export class ComposerMessageManager
     composerPanel: vscode.WebviewPanel,
     private documentMeta: DocumentMetadata,
     private sourceName?: string,
-    private viewName?: string
+    private viewName?: string,
+    private initialQuery?: Malloy.Query
   ) {
     super(composerPanel);
     this.onReceiveMessage(async message => {
@@ -57,6 +59,15 @@ export class ComposerMessageManager
         case ComposerPageMessageType.RefreshStableModel:
           await this.refreshStableModel(message);
           break;
+        case ComposerPageMessageType.OnDrill: {
+          await vscode.commands.executeCommand(
+            'malloy.openComposer',
+            this.sourceName,
+            undefined,
+            message.stableQuery,
+            this.documentMeta
+          );
+        }
       }
     });
   }
@@ -256,6 +267,7 @@ export class ComposerMessageManager
       model,
       sourceName,
       viewName: this.viewName,
+      initialQuery: this.initialQuery,
     });
 
     void this.initializeIndex(modelDef, sourceName);

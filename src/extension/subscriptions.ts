@@ -22,6 +22,7 @@
  */
 
 import * as vscode from 'vscode';
+import * as Malloy from '@malloydata/malloy-interfaces';
 import {SchemaProvider} from './tree_views/schema_view';
 import {
   copyFieldPathCommand,
@@ -67,6 +68,7 @@ import {noAwait} from '../util/no_await';
 import {createDefaultConnections} from './commands/create_default_connections';
 import {openComposer} from './commands/open_composer';
 import {showSchemaCommand} from './commands/show_schema';
+import {DocumentMetadata} from '../common/types/query_spec';
 
 function getNewClientId(): string {
   return uuid();
@@ -82,8 +84,19 @@ export const setupSubscriptions = async (
   context.subscriptions.push(
     vscode.commands.registerCommand(
       'malloy.openComposer',
-      async (sourceName: string, viewName?: string) => {
-        return openComposer(worker, sourceName, viewName);
+      async (
+        sourceName: string,
+        viewName?: string,
+        initialQuery?: Malloy.Query,
+        documentMeta?: DocumentMetadata
+      ) => {
+        return openComposer(
+          worker,
+          sourceName,
+          viewName,
+          initialQuery,
+          documentMeta
+        );
       }
     )
   );

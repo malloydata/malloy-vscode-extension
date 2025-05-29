@@ -17,7 +17,7 @@ import {
   ComposerPageMessageType,
   RunMalloyQueryStableResult,
 } from '../../../common/types/message_types';
-import {Explorer, findSource} from './Explorer';
+import {DrillData, Explorer, findSource} from './Explorer';
 import {DocumentMetadata} from '../../../common/types/query_spec';
 import {Result, SearchValueMapResult} from '@malloydata/malloy';
 import {LabeledSpinner} from '../components/LabeledSpinner';
@@ -54,6 +54,7 @@ export const App: React.FC<AppProps> = ({vscode}) => {
   const [model, setModel] = useState<Malloy.ModelInfo>();
   const [sourceName, setSourceName] = useState<string>();
   const [viewName, setViewName] = useState<string>();
+  const [initialQuery, setInitialQuery] = useState<Malloy.Query>();
   const [topValues, setTopValues] = useState<SearchValueMapResult[]>();
   const [response, setResponse] = useState<QueryResponse>();
   const [query, setQuery] = useState<Malloy.Query>();
@@ -86,12 +87,14 @@ export const App: React.FC<AppProps> = ({vscode}) => {
       switch (type) {
         case ComposerMessageType.NewModelInfo:
           {
-            const {documentMeta, model, sourceName, viewName} = data;
+            const {documentMeta, model, sourceName, viewName, initialQuery} =
+              data;
             console.info(JSON.stringify(documentMeta, null, 2));
             setDocumentMeta(documentMeta);
             setModel(model);
             setSourceName(sourceName);
             setViewName(viewName);
+            setInitialQuery(initialQuery);
           }
           break;
         case ComposerMessageType.StableResultSuccess:
@@ -182,6 +185,16 @@ export const App: React.FC<AppProps> = ({vscode}) => {
     [vscode]
   );
 
+  const onDrill = React.useCallback(
+    ({stableQuery, stableDrillClauses}: DrillData) =>
+      vscode.postMessage({
+        type: ComposerPageMessageType.OnDrill,
+        stableQuery,
+        stableDrillClauses,
+      }),
+    [vscode]
+  );
+
   if (documentMeta && model && sourceName) {
     return (
       <div style={{height: '100%'}}>
@@ -191,7 +204,9 @@ export const App: React.FC<AppProps> = ({vscode}) => {
           topValues={topValues}
           submittedQuery={submittedQuery}
           viewName={viewName}
+          initialQuery={initialQuery}
           refreshModel={refreshModel}
+          onDrill={onDrill}
         />
       </div>
     );
