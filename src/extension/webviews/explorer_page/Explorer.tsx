@@ -19,13 +19,9 @@ import {
 
 import type {SearchValueMapResult} from '@malloydata/malloy';
 
-export interface ExplorerProps {
-  source: Malloy.SourceInfo | undefined;
-  runQuery: (source: Malloy.SourceInfo, query: Malloy.Query) => Promise<void>;
-  submittedQuery: SubmittedQuery | undefined;
-  topValues: SearchValueMapResult[] | undefined;
-  viewName?: string;
-  refreshModel: (source: Malloy.SourceInfo, query: Malloy.Query) => void;
+export interface DrillData {
+  stableQuery: Malloy.Query | undefined;
+  stableDrillClauses: Malloy.DrillOperation[] | undefined;
 }
 
 export function findSource(
@@ -46,13 +42,26 @@ export function findView(
   );
 }
 
+export interface ExplorerProps {
+  source: Malloy.SourceInfo | undefined;
+  runQuery: (source: Malloy.SourceInfo, query: Malloy.Query) => Promise<void>;
+  submittedQuery: SubmittedQuery | undefined;
+  topValues: SearchValueMapResult[] | undefined;
+  viewName?: string;
+  initialQuery?: Malloy.Query;
+  refreshModel: (source: Malloy.SourceInfo, query: Malloy.Query) => void;
+  onDrill?: (props: DrillData) => void;
+}
+
 export const Explorer: React.FC<ExplorerProps> = ({
   source,
   runQuery,
   submittedQuery,
   topValues,
   viewName,
+  initialQuery,
   refreshModel,
+  onDrill,
 }) => {
   const [query, setQuery] = useState<Malloy.Query>();
   const [focusedNestViewPath, setFocusedNestViewPath] = useState<string[]>([]);
@@ -77,7 +86,10 @@ export const Explorer: React.FC<ExplorerProps> = ({
         setQuery(query);
       }
     }
-  }, [source, viewName]);
+    if (initialQuery) {
+      setQuery(initialQuery);
+    }
+  }, [initialQuery, source, viewName]);
 
   if (!source) {
     return <div>Invalid source name</div>;
@@ -91,6 +103,7 @@ export const Explorer: React.FC<ExplorerProps> = ({
       topValues={topValues}
       onFocusedNestViewPathChange={setFocusedNestViewPath}
       focusedNestViewPath={focusedNestViewPath}
+      onDrill={onDrill}
     >
       <div
         style={{

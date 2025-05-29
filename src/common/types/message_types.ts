@@ -329,6 +329,7 @@ export interface ComposerMessageNewModelInfo {
   model: Malloy.ModelInfo;
   sourceName: string;
   viewName?: string;
+  initialQuery?: Malloy.Query;
 }
 
 export interface ComposerMessageResultSuccess {
@@ -368,6 +369,7 @@ export enum ComposerPageMessageType {
   RunStableQuery = 'run-stable-query',
   RefreshModel = 'refresh-model',
   RefreshStableModel = 'refresh-stable-model',
+  OnDrill = 'on-drill',
 }
 
 export interface ComposerPageMessageReady {
@@ -399,9 +401,16 @@ export interface ComposerPageMessageRefreshStableModel {
   query: Malloy.Query;
 }
 
+export interface ComposerPageMessageOnDrill {
+  type: ComposerPageMessageType.OnDrill;
+  stableQuery: Malloy.Query | undefined;
+  stableDrillClauses: Malloy.DrillOperation[] | undefined;
+}
+
 export type ComposerPageMessage =
   | ComposerPageMessageReady
   | ComposerPageMessageRunQuery
   | ComposerPageMessageRunStableQuery
   | ComposerPageMessageRefreshModel
-  | ComposerPageMessageRefreshStableModel;
+  | ComposerPageMessageRefreshStableModel
+  | ComposerPageMessageOnDrill;

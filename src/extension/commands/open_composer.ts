@@ -6,6 +6,7 @@
  */
 
 import * as vscode from 'vscode';
+import * as Malloy from '@malloydata/malloy-interfaces';
 import {getWebviewHtml} from '../webviews';
 import {getActiveDocumentMetadata} from './utils/run_query_utils';
 import {Utils} from 'vscode-uri';
@@ -13,15 +14,19 @@ import {MALLOY_EXTENSION_STATE} from '../state';
 import {WorkerConnection} from '../worker_connection';
 import {ComposerMessageManager} from './utils/composer_message_manager';
 import {errorMessage} from '../../common/errors';
+import {DocumentMetadata} from '../../common/types/query_spec';
 
 const icon = 'turtle.svg';
 
 export async function openComposer(
   worker: WorkerConnection,
   sourceName?: string,
-  viewName?: string
+  viewName?: string,
+  initialQuery?: Malloy.Query,
+  documentMeta?: DocumentMetadata
 ) {
-  const documentMeta = getActiveDocumentMetadata();
+  const fromDrill = !!documentMeta;
+  documentMeta ??= getActiveDocumentMetadata();
   if (documentMeta) {
     const basename = Utils.basename(vscode.Uri.parse(documentMeta.uri));
     const sourcePart = sourceName || '*';
@@ -29,7 +34,12 @@ export async function openComposer(
     const composerPanel = vscode.window.createWebviewPanel(
       'malloyComposer',
       `Explore: ${basename} - ${sourcePart}${viewPart}`,
-      {viewColumn: vscode.ViewColumn.Beside, preserveFocus: true},
+      {
+        viewColumn: fromDrill
+          ? vscode.ViewColumn.Active
+          : vscode.ViewColumn.Beside,
+        preserveFocus: true,
+      },
       {enableScripts: true, retainContextWhenHidden: true}
     );
 
@@ -44,7 +54,8 @@ export async function openComposer(
       composerPanel,
       documentMeta,
       sourceName,
-      viewName
+      viewName,
+      initialQuery
     );
 
     composerPanel.webview.html = getWebviewHtml(
