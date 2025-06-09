@@ -166,7 +166,11 @@ class MalloySerializer implements vscode.NotebookSerializer {
         kind
       );
       const separator = `>>>${statementType}`;
-      malloySql += `${separator}\n${value.replaceAll(/^([>\\])/gm, '\\$1')}`;
+      if (value) {
+        malloySql += `${separator}\n${value.replaceAll(/^([>\\])/gm, '\\$1')}`;
+      } else {
+        malloySql += `${separator}\n\n`;
+      }
     }
 
     return new TextEncoder().encode(malloySql);
