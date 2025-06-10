@@ -9,14 +9,14 @@ import * as React from 'react';
 import {useCallback, useEffect, useState} from 'react';
 import styled from 'styled-components';
 import {
+  API,
   Explore,
   Field,
   NamedQuery,
   QueryField,
   Result,
 } from '@malloydata/malloy';
-import {HTMLView, getMalloyRenderHTML} from '@malloydata/render';
-import '@malloydata/render/webcomponent';
+import {HTMLView} from '@malloydata/render';
 
 import {
   QueryDownloadCopyData,
@@ -230,8 +230,9 @@ export function QueryPage({vscode}: QueryPageProps) {
           setSchema(schema);
 
           setProgressMessage('Rendering');
+          const malloyResult = API.util.wrapResult(result);
           new HTMLView(document)
-            .render(result, {
+            .render(malloyResult, {
               dataStyles: {},
               isDrillingEnabled: true,
               onDrill: (
@@ -251,6 +252,7 @@ export function QueryPage({vscode}: QueryPageProps) {
               },
             })
             .then(html => {
+              html.style.height = '100%';
               setProgressMessage('');
               setResults({
                 ...currentResults,
@@ -377,11 +379,11 @@ export function QueryPage({vscode}: QueryPageProps) {
           resultKind === ResultKind.PREVIEW) &&
         results.html ? (
           <div className="scroll result-container">
-            <StyledDOMElement element={results.html} />
+            <StyledDOMElement element={results.html} style={{height: '100%'}} />
             <CopyButton
               onCopy={async () => {
                 if (results.html) {
-                  const copiedHtml = await getMalloyRenderHTML(results.html);
+                  const copiedHtml = results.html.innerHTML;
                   copyToClipboard(copiedHtml, 'HTML Results');
                 }
               }}
