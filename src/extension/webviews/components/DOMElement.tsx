@@ -40,7 +40,6 @@ export const DOMElement: React.FC<DOMElementProps> = ({
   useEffect(() => {
     const parent = ref.current;
     if (parent) {
-      console.log({parent});
       parent.innerHTML = '';
       parent.appendChild(element);
     }
