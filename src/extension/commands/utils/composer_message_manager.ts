@@ -21,16 +21,11 @@ import {
   ComposerPageMessageType,
 } from '../../../common/types/message_types';
 import {DocumentMetadata, QuerySpec} from '../../../common/types/query_spec';
-import {
-  API,
-  ModelDef,
-  modelDefToModelInfo,
-  Result,
-  SearchValueMapResult,
-} from '@malloydata/malloy';
+import {API, ModelDef, modelDefToModelInfo, Result} from '@malloydata/malloy';
 import {runMalloyQuery} from './run_query_utils';
 import {WorkerConnection} from '../../worker_connection';
 import {getSourceDef} from '../../../common/schema';
+import {indexCache} from './index_cache';
 
 export class ComposerMessageManager
   extends WebviewMessageManager<ComposerMessage, ComposerPageMessage>
@@ -142,10 +137,16 @@ export class ComposerMessageManager
     }
   }
 
-  async initializeIndex(
-    modelDef: ModelDef,
-    sourceName: string
-  ): Promise<SearchValueMapResult[] | undefined> {
+  async initializeIndex(modelDef: ModelDef, sourceName: string): Promise<void> {
+    const cacheKey = this.documentMeta.fileName + ':' + sourceName;
+    const cachedResult = indexCache.get(cacheKey);
+    if (cachedResult) {
+      this.postMessage({
+        type: ComposerMessageType.SearchIndex,
+        result: cachedResult,
+      });
+      return;
+    }
     const sourceDef = getSourceDef(modelDef, sourceName);
     const indexQuery = sourceDef.fields.find(
       ({name, as}) => (as || name) === 'search_index'
@@ -177,13 +178,13 @@ export class ComposerMessageManager
         searchMapMalloy
       );
       if (result) {
+        indexCache.set(cacheKey, result);
         this.postMessage({
           type: ComposerMessageType.SearchIndex,
           result,
         });
       }
     }
-    return undefined;
   }
 
   async runQueryWithProgress(id: string, queryName: string, query: string) {
@@ -228,6 +229,8 @@ export class ComposerMessageManager
         sourceName,
       });
       void vscode.window.showInformationMessage('Model refreshed');
+      indexCache.invalidate(this.documentMeta.fileName + ':' + sourceName);
+      await this.initializeIndex(modelDef, sourceName);
     } catch (error) {
       const message = `${error instanceof Error ? error.message : error}`;
       const match = message.match(/FILE: internal:\/\/internal\.malloy\n(.*)/m);
