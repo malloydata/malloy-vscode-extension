@@ -25,18 +25,10 @@ import * as React from 'react';
 import {createRoot} from 'react-dom/client';
 import {ActivationFunction} from 'vscode-notebook-renderer';
 import './MalloyRenderer';
-import '@malloydata/render/webcomponent';
-import {Result} from '@malloydata/malloy';
-import type {MalloyRenderProps} from '@malloydata/render';
+import {API, Result} from '@malloydata/malloy';
+import {MalloyRenderer} from '@malloydata/render';
 import {StyleSheetManager} from 'styled-components';
 import {SchemaRendererWrapper} from './schema_entry';
-
-// TODO: Figure out how to make this part of @malloydata/render/webcomponent export
-declare global {
-  interface HTMLElementTagNameMap {
-    'malloy-render': HTMLElement & MalloyRenderProps;
-  }
-}
 
 export const activate: ActivationFunction = ({postMessage}) => {
   return {
@@ -50,27 +42,39 @@ export const activate: ActivationFunction = ({postMessage}) => {
         parent.style.minHeight = '200px';
         parent.style.border = '1px solid #e5e7eb';
         parent.style.overflow = 'auto';
+        parent.style.display = 'grid';
 
-        const malloyRender = document.createElement('malloy-render');
-        malloyRender.result = result;
-        malloyRender.scrollEl = parent;
-        malloyRender.tableConfig = {
-          enableDrill: true,
-        };
-        malloyRender.onDrill = drillData => {
-          const command = 'malloy.copyToClipboard';
-          const args = [drillData.query, 'Query'];
-          postMessage?.({command, args});
-        };
         const style = document.createElement('style');
+        // Align top table border with cell border
+        // Prevent table from overflowing since cell handles overflow
         style.innerHTML = `
-          malloy-render::part(table-container) {
-            overflow: visible;
+          .malloy-render > .malloy-table.root {
+            transform: translateY(-1px);
+            overflow: hidden;
           }
         `;
-        parent.appendChild(malloyRender);
-        parent.appendChild(style);
-        root.replaceChildren(parent);
+        root.replaceChildren(style);
+        root.appendChild(parent);
+
+        const renderer = new MalloyRenderer({});
+        const viz = renderer.createViz({
+          tableConfig: {
+            enableDrill: true,
+          },
+          onDrill: (
+            drillQuery: string,
+            _target: HTMLElement,
+            _drillFilters: string[]
+          ) => {
+            const command = 'malloy.copyToClipboard';
+            const args = [drillQuery, 'Query'];
+            postMessage?.({command, args});
+          },
+          scrollEl: parent,
+        });
+        const malloyResult = API.util.wrapResult(result);
+        viz.setResult(malloyResult);
+        viz.render(parent);
       } else {
         let shadow = element.shadowRoot;
         if (!shadow) {

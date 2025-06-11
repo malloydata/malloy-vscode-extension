@@ -22,9 +22,8 @@
  */
 
 import * as React from 'react';
-import {Result} from '@malloydata/malloy';
+import {API, Result} from '@malloydata/malloy';
 import {HTMLView} from '@malloydata/render';
-import '@malloydata/render/webcomponent';
 import {MalloyRendererMessage} from '../types';
 import {useEffect, useState} from 'react';
 import {DOMElement} from '../../webviews/components/DOMElement';
@@ -51,8 +50,9 @@ export const MalloyRenderer = ({postMessage, result}: MalloyRendererProps) => {
   const [resultHtml, setResultHtml] = useState<HTMLElement | null>(null);
   useEffect(() => {
     if (result) {
+      const malloyResult = API.util.wrapResult(result);
       new HTMLView(document)
-        .render(result, {
+        .render(malloyResult, {
           dataStyles: {},
           isDrillingEnabled: true,
           onDrill: (
