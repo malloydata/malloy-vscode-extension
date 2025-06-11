@@ -37,8 +37,6 @@ export const DOMElement: React.FC<DOMElementProps> = ({
 }) => {
   const ref = useRef<HTMLDivElement>(null);
 
-  console.log('style', style, element, ref.current);
-
   useEffect(() => {
     const parent = ref.current;
     if (parent) {

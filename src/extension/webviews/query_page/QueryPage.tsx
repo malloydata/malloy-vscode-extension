@@ -51,6 +51,7 @@ interface Results {
   name?: string;
   result?: Result;
   html?: HTMLElement;
+  view?: HTMLView;
   sql?: string;
   json?: string;
   metadata?: string;
@@ -231,7 +232,8 @@ export function QueryPage({vscode}: QueryPageProps) {
 
           setProgressMessage('Rendering');
           const malloyResult = API.util.wrapResult(result);
-          new HTMLView(document)
+          const view = new HTMLView(document);
+          view
             .render(malloyResult, {
               dataStyles: {},
               isDrillingEnabled: true,
@@ -257,6 +259,7 @@ export function QueryPage({vscode}: QueryPageProps) {
               setResults({
                 ...currentResults,
                 html,
+                view,
               });
             })
             .catch(console.error);
@@ -382,8 +385,8 @@ export function QueryPage({vscode}: QueryPageProps) {
             <StyledDOMElement element={results.html} style={{height: '100%'}} />
             <CopyButton
               onCopy={async () => {
-                if (results.html) {
-                  const copiedHtml = results.html.innerHTML;
+                if (results.view) {
+                  const copiedHtml = await results.view.getHTML();
                   copyToClipboard(copiedHtml, 'HTML Results');
                 }
               }}
