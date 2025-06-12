@@ -26,6 +26,7 @@ import {TextDocument} from 'vscode-languageserver-textdocument';
 import {parseWithCache} from '../parse_cache';
 import {ConnectionManager} from '../../common/types/connection_manager_types';
 import {getSourceUrl, unquoteIdentifier} from './utils';
+import {DocumentMetadata} from '../../common/types/query_spec';
 
 // const explain = `
 //   index
@@ -255,12 +256,23 @@ export async function getMalloyLenses(
             });
           }
           symbol.children.forEach((child, idx) => {
+            const documentMeta: DocumentMetadata = {
+              uri: url.toString(),
+              fileName: url.pathname,
+              languageId: 'malloy',
+              version: 0,
+            };
             lenses.push({
               range: child.lensRange.toJSON(),
               command: {
                 title: idx === 0 ? `Explore: ${child.name}` : child.name,
                 command: 'malloy.openComposer',
-                arguments: [unquoteIdentifier(child.name)],
+                arguments: [
+                  unquoteIdentifier(child.name),
+                  undefined,
+                  undefined,
+                  documentMeta,
+                ],
               },
             });
           });

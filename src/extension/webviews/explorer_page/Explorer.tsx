@@ -18,6 +18,7 @@ import {
 } from '@malloydata/malloy-explorer';
 
 import type {SearchValueMapResult} from '@malloydata/malloy';
+import {ErrorPanel} from '../components/ErrorPanel';
 
 export interface DrillData {
   stableQuery: Malloy.Query | undefined;
@@ -92,7 +93,7 @@ export const Explorer: React.FC<ExplorerProps> = ({
   }, [initialQuery, source, viewName]);
 
   if (!source) {
-    return <div>Invalid source name</div>;
+    return <ErrorPanel message="Invalid source" />;
   }
 
   return (
