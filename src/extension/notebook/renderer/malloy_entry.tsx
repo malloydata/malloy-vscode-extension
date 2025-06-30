@@ -26,7 +26,7 @@ import {createRoot} from 'react-dom/client';
 import {ActivationFunction} from 'vscode-notebook-renderer';
 import './MalloyRenderer';
 import {API, Result} from '@malloydata/malloy';
-import {MalloyRenderer} from '@malloydata/render';
+import {DrillData, MalloyRenderer} from '@malloydata/render';
 import {StyleSheetManager} from 'styled-components';
 import {SchemaRendererWrapper} from './schema_entry';
 
@@ -61,13 +61,9 @@ export const activate: ActivationFunction = ({postMessage}) => {
           tableConfig: {
             enableDrill: true,
           },
-          onDrill: (
-            drillQuery: string,
-            _target: HTMLElement,
-            _drillFilters: string[]
-          ) => {
+          onDrill: ({query}: DrillData) => {
             const command = 'malloy.copyToClipboard';
-            const args = [drillQuery, 'Query'];
+            const args = [query, 'Query'];
             postMessage?.({command, args});
           },
           scrollEl: parent,
