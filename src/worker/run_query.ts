@@ -399,7 +399,33 @@ export const runQuery = async (
       sql,
       dialect,
     });
-    const queryResult = await runnable.run({rowLimit, abortSignal});
+
+    const sourceType = preparedResult.sourceExplore?.sourceStructDef?.type;
+    const sourceName = preparedResult.sourceExplore?.name;
+    // a query might not live in the same file as the source; pull location from the source
+    const sourceLocation =
+      preparedResult.sourceExplore?.sourceStructDef?.location;
+    const sourceAnnotation =
+      preparedResult.sourceExplore?.sourceStructDef?.annotation;
+    const sourceComponentInfos =
+      preparedResult.sourceExplore?.getSourceComponents();
+
+    let sourceRefWithMetadata = undefined;
+    if (sourceName && sourceLocation && sourceType) {
+      sourceRefWithMetadata = {
+        type: sourceType,
+        name: sourceName,
+        location: sourceLocation,
+        annotation: sourceAnnotation,
+        sourceComponentInfos,
+      };
+    }
+
+    const queryResult = await runnable.run({
+      rowLimit,
+      abortSignal,
+      clientMetadata: {sourceRefWithMetadata},
+    });
     if (cancellationToken.isCancellationRequested) return;
 
     // Calculate execution times.
