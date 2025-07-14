@@ -399,7 +399,29 @@ export const runQuery = async (
       sql,
       dialect,
     });
-    const queryResult = await runnable.run({rowLimit, abortSignal});
+
+    let sourceRefWithMetadata = undefined;
+    const {sourceExplore} = preparedResult;
+    if (sourceExplore?.sourceStructDef) {
+      const {name, sourceStructDef} = sourceExplore;
+      // a query might not live in the same file as the source; pull location from the source
+      const {type, location, annotation} = sourceStructDef;
+      const sourceComponentInfos = sourceExplore.getSourceComponents();
+
+      sourceRefWithMetadata = {
+        type,
+        name,
+        location,
+        annotation,
+        sourceComponentInfos,
+      };
+    }
+
+    const queryResult = await runnable.run({
+      rowLimit,
+      abortSignal,
+      clientMetadata: {sourceRefWithMetadata},
+    });
     if (cancellationToken.isCancellationRequested) return;
 
     // Calculate execution times.
