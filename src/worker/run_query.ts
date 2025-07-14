@@ -400,23 +400,19 @@ export const runQuery = async (
       dialect,
     });
 
-    const sourceType = preparedResult.sourceExplore?.sourceStructDef?.type;
-    const sourceName = preparedResult.sourceExplore?.name;
-    // a query might not live in the same file as the source; pull location from the source
-    const sourceLocation =
-      preparedResult.sourceExplore?.sourceStructDef?.location;
-    const sourceAnnotation =
-      preparedResult.sourceExplore?.sourceStructDef?.annotation;
-    const sourceComponentInfos =
-      preparedResult.sourceExplore?.getSourceComponents();
-
     let sourceRefWithMetadata = undefined;
-    if (sourceName && sourceLocation && sourceType) {
+    const {sourceExplore} = preparedResult;
+    if (sourceExplore?.sourceStructDef) {
+      const {name, sourceStructDef} = sourceExplore;
+      // a query might not live in the same file as the source; pull location from the source
+      const {type, location, annotation} = sourceStructDef;
+      const sourceComponentInfos = sourceExplore.getSourceComponents();
+
       sourceRefWithMetadata = {
-        type: sourceType,
-        name: sourceName,
-        location: sourceLocation,
-        annotation: sourceAnnotation,
+        type,
+        name,
+        location,
+        annotation,
         sourceComponentInfos,
       };
     }
