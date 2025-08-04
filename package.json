@@ -681,7 +681,7 @@
     "@malloydata/db-snowflake": "0.0.299",
     "@malloydata/db-trino": "0.0.299",
     "@malloydata/malloy": "0.0.299",
-    "@malloydata/malloy-explorer": "0.0.295-dev250710213205",
+    "@malloydata/malloy-explorer": "0.0.299-dev250804170242",
     "@malloydata/malloy-interfaces": "0.0.299",
     "@malloydata/malloy-query-builder": "0.0.299",
     "@malloydata/malloy-sql": "0.0.299",
