@@ -327,6 +327,7 @@ export interface ComposerMessageNewModelInfo {
   type: ComposerMessageType.NewModelInfo;
   documentMeta: DocumentMetadata;
   model: Malloy.ModelInfo;
+  modelDef: ModelDef; // TODO: remove once modelInfo can be used to parse/compile
   sourceName: string;
   viewName?: string;
   initialQuery?: Malloy.Query;
