@@ -46,19 +46,26 @@ export function getWebviewHtml(
       'malloy-explorer.css'
     )
   );
+  const monacoCss = webview.asWebviewUri(
+    vscode.Uri.joinPath(
+      MALLOY_EXTENSION_STATE.getExtensionUri(),
+      'node_modules',
+      'monaco-editor-core/min/vs/editor/editor.main.css'
+    )
+  );
 
   const nonce = getNonce();
   return /* html */ `<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="base-uri 'none'; default-src blob:; style-src 'unsafe-inline' ${cspSrc} https://rsms.me/; font-src ${cspSrc} https://rsms.me/; img-src ${cspSrc} https:; script-src 'nonce-${nonce}' 'unsafe-eval';">
+    <meta http-equiv="Content-Security-Policy" content="base-uri 'none'; default-src blob:; style-src 'unsafe-inline' ${cspSrc} https://rsms.me/; font-src ${cspSrc} data: https://rsms.me/; img-src ${cspSrc} data: https:; script-src 'nonce-${nonce}' blob: 'unsafe-eval';">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="preconnect" href="https://rsms.me/" />
     <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
     <link rel="stylesheet" href="${explorerCss}" />
+    <link rel="stylesheet" href="${monacoCss}" />
     <title>Malloy Results</title>
-  </head>
   <style>
     :root {
       --malloy-font-family: var(--vscode-font-family, Arial);
@@ -144,6 +151,7 @@ export function getWebviewHtml(
       font-size: 15px;
     }
   </style>
+  </head>
   <body>
     <div id="app">
       <div class="placeholder-vertical-center">

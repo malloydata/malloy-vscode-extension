@@ -24,6 +24,7 @@
 import fs from 'fs';
 import {build, BuildOptions, context, Plugin} from 'esbuild';
 import {nativeNodeModulesPlugin} from '../third_party/github.com/evanw/esbuild/native-modules-plugin';
+
 import * as path from 'path';
 import {execSync} from 'child_process';
 // import {noNodeModulesSourceMaps} from '../third_party/github.com/evanw/esbuild/no-node-modules-sourcemaps';
@@ -175,6 +176,9 @@ export async function doBuild(
     metafile: metadata,
     logLevel: 'info',
     define: DEFINITIONS,
+    loader: {
+      '.ttf': 'file', // Add this line
+    },
   };
 
   const buildOptions: Record<string, BuildOptions> = {};

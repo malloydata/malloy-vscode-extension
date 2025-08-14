@@ -19,13 +19,28 @@ import {
 } from '../../../common/types/message_types';
 import {DrillData, Explorer, findSource} from './Explorer';
 import {DocumentMetadata} from '../../../common/types/query_spec';
-import {Result, SearchValueMapResult} from '@malloydata/malloy';
+import {
+  API,
+  ModelDef,
+  Result,
+  SearchValueMapResult,
+  malloyToQuery,
+} from '@malloydata/malloy';
 import {LabeledSpinner} from '../components/LabeledSpinner';
 import {
+  CodeEditorContext,
   QueryExecutionState,
   QueryResponse,
   SubmittedQuery,
 } from '@malloydata/malloy-explorer';
+import * as monaco from 'monaco-editor-core';
+
+// @ts-expect-error no types
+window.MonacoEnvironment = {
+  getWorker(_workerId: string, _label: string) {
+    return null; // Force work onto main thread for now
+  },
+};
 
 // TODO(whscullin) fix when properly exported from @malloydata/malloy-explorer
 export type SeverityLevel = 'INFO' | 'DEBUG' | 'WARN' | 'ERROR' | 'FATAL';
@@ -52,17 +67,22 @@ const QueriesInFlight: Record<string, QueryPromiseResolver | undefined> = {};
 export const App: React.FC<AppProps> = ({vscode}) => {
   const [documentMeta, setDocumentMeta] = useState<DocumentMetadata>();
   const [model, setModel] = useState<Malloy.ModelInfo>();
+  const [modelDef, setModelDef] = useState<ModelDef>();
   const [sourceName, setSourceName] = useState<string>();
   const [viewName, setViewName] = useState<string>();
   const [initialQuery, setInitialQuery] = useState<Malloy.Query>();
   const [topValues, setTopValues] = useState<SearchValueMapResult[]>();
   const [response, setResponse] = useState<QueryResponse>();
-  const [query, setQuery] = useState<Malloy.Query>();
+  const [query, setQuery] = useState<Malloy.Query | string>();
   const [executionState, setExecutionState] =
     useState<QueryExecutionState>('finished');
   const [queryResolutionStartMillis, setQueryResolutionStartMillis] = useState<
     number | null
   >(null);
+  const modelUri = useMemo(
+    () => (documentMeta ? new URL(documentMeta.uri) : undefined),
+    [documentMeta]
+  );
 
   const source =
     model && sourceName ? findSource(model, sourceName) : undefined;
@@ -87,14 +107,34 @@ export const App: React.FC<AppProps> = ({vscode}) => {
       switch (type) {
         case ComposerMessageType.NewModelInfo:
           {
-            const {documentMeta, model, sourceName, viewName, initialQuery} =
-              data;
+            const {
+              documentMeta,
+              model,
+              modelDef,
+              sourceName,
+              viewName,
+              initialQuery,
+            } = data;
             console.info(JSON.stringify(documentMeta, null, 2));
             setDocumentMeta(documentMeta);
             setModel(model);
+            setModelDef(modelDef);
             setSourceName(sourceName);
             setViewName(viewName);
             setInitialQuery(initialQuery);
+          }
+          break;
+        case ComposerMessageType.ResultSuccess:
+          {
+            const {id, result} = data;
+            if (QueriesInFlight[id]) {
+              const stableResult: RunMalloyQueryStableResult = {
+                ...result,
+                result: API.util.wrapResult(Result.fromJSON(result.resultJson)),
+              };
+              QueriesInFlight[id]?.resolve(stableResult);
+              delete QueriesInFlight[id];
+            }
           }
           break;
         case ComposerMessageType.StableResultSuccess:
@@ -134,7 +174,10 @@ export const App: React.FC<AppProps> = ({vscode}) => {
   }, [vscode]);
 
   const runQuery = useCallback(
-    async (source: Malloy.SourceInfo, query: Malloy.Query): Promise<void> => {
+    async (
+      source: Malloy.SourceInfo,
+      query: Malloy.Query | string
+    ): Promise<void> => {
       if (!source) {
         throw new Error('Undefined source');
       }
@@ -150,12 +193,21 @@ export const App: React.FC<AppProps> = ({vscode}) => {
           };
         }
       );
-      vscode.postMessage({
-        type: ComposerPageMessageType.RunStableQuery,
-        id,
-        query,
-        source,
-      });
+      if (typeof query === 'string') {
+        vscode.postMessage({
+          type: ComposerPageMessageType.RunQuery,
+          id,
+          query,
+          queryName: 'query',
+        });
+      } else {
+        vscode.postMessage({
+          type: ComposerPageMessageType.RunStableQuery,
+          id,
+          query,
+          source,
+        });
+      }
       try {
         const {result} = await promise;
         setResponse({result});
@@ -176,12 +228,20 @@ export const App: React.FC<AppProps> = ({vscode}) => {
   );
 
   const refreshModel = React.useCallback(
-    (source: Malloy.SourceInfo, query: Malloy.Query) =>
-      vscode.postMessage({
-        type: ComposerPageMessageType.RefreshStableModel,
-        source,
-        query,
-      }),
+    (source: Malloy.SourceInfo, query: Malloy.Query | string) => {
+      if (typeof query === 'string') {
+        vscode.postMessage({
+          type: ComposerPageMessageType.RefreshModel,
+          query,
+        });
+      } else {
+        vscode.postMessage({
+          type: ComposerPageMessageType.RefreshStableModel,
+          source,
+          query,
+        });
+      }
+    },
     [vscode]
   );
 
@@ -198,16 +258,21 @@ export const App: React.FC<AppProps> = ({vscode}) => {
   if (documentMeta && model && sourceName) {
     return (
       <div style={{height: '100%'}}>
-        <Explorer
-          source={source}
-          runQuery={runQuery}
-          topValues={topValues}
-          submittedQuery={submittedQuery}
-          viewName={viewName}
-          initialQuery={initialQuery}
-          refreshModel={refreshModel}
-          onDrill={onDrill}
-        />
+        <CodeEditorContext.Provider
+          value={{monaco, modelDef, malloyToQuery, modelUri}}
+        >
+          <Explorer
+            source={source}
+            runQuery={runQuery}
+            runRawQuery={runQuery}
+            topValues={topValues}
+            submittedQuery={submittedQuery}
+            viewName={viewName}
+            initialQuery={initialQuery}
+            refreshModel={refreshModel}
+            onDrill={onDrill}
+          />
+        </CodeEditorContext.Provider>
       </div>
     );
   } else {

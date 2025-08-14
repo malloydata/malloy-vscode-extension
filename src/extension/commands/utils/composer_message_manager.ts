@@ -226,6 +226,7 @@ export class ComposerMessageManager
         type: ComposerMessageType.NewModelInfo,
         documentMeta: this.documentMeta,
         model,
+        modelDef,
         sourceName,
       });
       void vscode.window.showInformationMessage('Model refreshed');
@@ -268,6 +269,7 @@ export class ComposerMessageManager
       type: ComposerMessageType.NewModelInfo,
       documentMeta: this.documentMeta,
       model,
+      modelDef, // TODO: remove once modelInfo can be used to parse/compile
       sourceName,
       viewName: this.viewName,
       initialQuery: this.initialQuery,

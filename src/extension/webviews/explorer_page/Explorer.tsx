@@ -46,17 +46,22 @@ export function findView(
 export interface ExplorerProps {
   source: Malloy.SourceInfo | undefined;
   runQuery: (source: Malloy.SourceInfo, query: Malloy.Query) => Promise<void>;
+  runRawQuery: (source: Malloy.SourceInfo, query: string) => Promise<void>;
   submittedQuery: SubmittedQuery | undefined;
   topValues: SearchValueMapResult[] | undefined;
   viewName?: string;
   initialQuery?: Malloy.Query;
-  refreshModel: (source: Malloy.SourceInfo, query: Malloy.Query) => void;
+  refreshModel: (
+    source: Malloy.SourceInfo,
+    query: Malloy.Query | string
+  ) => void;
   onDrill?: (props: DrillData) => void;
 }
 
 export const Explorer: React.FC<ExplorerProps> = ({
   source,
   runQuery,
+  runRawQuery,
   submittedQuery,
   topValues,
   viewName,
@@ -64,7 +69,7 @@ export const Explorer: React.FC<ExplorerProps> = ({
   refreshModel,
   onDrill,
 }) => {
-  const [query, setQuery] = useState<Malloy.Query>();
+  const [query, setQuery] = useState<Malloy.Query | string>();
   const [focusedNestViewPath, setFocusedNestViewPath] = useState<string[]>([]);
 
   useEffect(() => {
@@ -130,7 +135,7 @@ export const Explorer: React.FC<ExplorerProps> = ({
           >
             <SourcePanel
               onRefresh={() => {
-                if (source && query) refreshModel(source, query);
+                if (query) refreshModel(source, query);
               }}
             />
           </ResizableCollapsiblePanel>
@@ -141,7 +146,7 @@ export const Explorer: React.FC<ExplorerProps> = ({
             icon="filterSliders"
             title="Query"
           >
-            <QueryPanel runQuery={runQuery} />
+            <QueryPanel runQuery={runQuery} runQueryString={runRawQuery} />
           </ResizableCollapsiblePanel>
           <div style={{height: '100%', flex: '1 1 auto'}}>
             <ResultPanel
