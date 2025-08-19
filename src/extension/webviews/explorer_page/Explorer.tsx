@@ -72,6 +72,20 @@ export const Explorer: React.FC<ExplorerProps> = ({
   const [query, setQuery] = useState<Malloy.Query | string>();
   const [focusedNestViewPath, setFocusedNestViewPath] = useState<string[]>([]);
 
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    const updateDarkMode = () => {
+      setIsDarkMode(document.body.dataset['vscodeThemeKind'] === 'vscode-dark');
+    };
+    const observer = new MutationObserver(updateDarkMode);
+    observer.observe(document.body, {
+      attributes: true,
+    });
+    updateDarkMode();
+    return () => observer.disconnect();
+  }, []);
+
   useEffect(() => {
     if (source && viewName) {
       const view = findView(source, viewName);
@@ -110,6 +124,7 @@ export const Explorer: React.FC<ExplorerProps> = ({
       onFocusedNestViewPathChange={setFocusedNestViewPath}
       focusedNestViewPath={focusedNestViewPath}
       onDrill={onDrill}
+      dark={isDarkMode}
     >
       <div
         style={{
