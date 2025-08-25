@@ -87,7 +87,7 @@ export async function doBuild(
 
   const isDuckDBAvailable = !target || !!targetDuckDBMap[target];
 
-  if (isDuckDBAvailable && target) {
+  if (target) {
     await fetchDuckDB(target);
   }
 

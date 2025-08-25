@@ -52,19 +52,21 @@ export const fetchDuckDB = async (target: string): Promise<void> => {
     }
   });
 
-  console.log(`Installing duckdb ${target} architecture`);
+  if (targetDuckDBMap[target]) {
+    console.log(`Installing duckdb ${target} architecture`);
 
-  const {os, cpu} = targetDuckDBMap[target];
+    const {os, cpu} = targetDuckDBMap[target];
 
-  await new Promise<void>((resolve, reject) => {
-    exec(
-      `npm install --no-save --os ${os} --cpu ${cpu} --force @duckdb/node-bindings-${os}-${cpu}@${DUCKDB_VERSION}`,
-      error => {
-        if (error) {
-          reject(error);
+    await new Promise<void>((resolve, reject) => {
+      exec(
+        `npm install --no-save --os ${os} --cpu ${cpu} --force @duckdb/node-bindings-${os}-${cpu}@${DUCKDB_VERSION}`,
+        error => {
+          if (error) {
+            reject(error);
+          }
+          resolve();
         }
-        resolve();
-      }
-    );
-  });
+      );
+    });
+  }
 };
