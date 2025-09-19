@@ -6,6 +6,7 @@ let malloyPackages = Object.keys(packageJson.dependencies).filter(name =>
 );
 
 const nonCorePackages = ['@malloydata/malloy-explorer'];
+// [NODE, SCRIPT-PATH, real arguments ]
 const args = process.argv.slice(2);
 
 const corePackagesOnly = args.includes('--core-packages-only');
