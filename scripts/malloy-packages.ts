@@ -11,7 +11,9 @@ const args = process.argv.slice(2);
 
 const corePackagesOnly = args.includes('--core-packages-only');
 if (corePackagesOnly) {
-  malloyPackages = malloyPackages.filter(name => !nonCorePackages.includes(name));
+  malloyPackages = malloyPackages.filter(
+    name => !nonCorePackages.includes(name)
+  );
 }
 
 const versionArg = args.find(arg => !arg.startsWith('--'));
