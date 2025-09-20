@@ -30,6 +30,7 @@ class ConnectionConfigManagerNode extends ConnectionConfigManagerBase {
     const available = [
       ConnectionBackend.BigQuery,
       ConnectionBackend.Postgres,
+      ConnectionBackend.MySQL,
       ConnectionBackend.Snowflake,
       ConnectionBackend.Trino,
       ConnectionBackend.Presto,

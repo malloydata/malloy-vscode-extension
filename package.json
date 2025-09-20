@@ -425,6 +425,36 @@
                 "properties": {
                   "backend": {
                     "type": "string",
+                    "const": "mysql"
+                  },
+                  "host": {
+                    "type": "string"
+                  },
+                  "port": {
+                    "type": "number"
+                  },
+                  "user": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "database": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "backend": {
+                    "type": "string",
                     "const": "bigquery"
                   },
                   "name": {

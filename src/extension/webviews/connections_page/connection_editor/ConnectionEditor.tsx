@@ -43,6 +43,7 @@ import {PostgresConnectionEditor} from './PostgresConnectionEditor';
 import {SnowflakeConnectionEditor} from './SnowflakeConnectionEditor';
 import {TrinoPrestoConnectionEditor} from './TrinoPrestoConnectionEditor';
 import {PublisherConnectionEditor} from './PublisherConnectionEditor';
+import { MysqlConnectionEditor } from './MysqlConnectionEditor';
 
 interface ConnectionHeaderProps {
   config: {name?: string};
@@ -108,6 +109,7 @@ export const ConnectionEditor = ({
   const allBackendOptions: ConnectionBackend[] = [
     ConnectionBackend.BigQuery,
     ConnectionBackend.Postgres,
+    ConnectionBackend.MySQL,
     ConnectionBackend.DuckDB,
     ConnectionBackend.Snowflake,
     ConnectionBackend.Presto,
@@ -165,6 +167,11 @@ export const ConnectionEditor = ({
           config={config}
           setConfig={setConfig}
         ></PostgresConnectionEditor>
+      ) : config.backend === ConnectionBackend.MySQL ? (
+        <MysqlConnectionEditor
+          config={config}
+          setConfig={setConfig}
+        ></MysqlConnectionEditor>
       ) : config.backend === ConnectionBackend.DuckDB ? (
         <DuckDBConnectionEditor
           config={config}

@@ -41,12 +41,12 @@ export enum ConnectionBackend {
 export const ConnectionBackendNames: Record<ConnectionBackend, string> = {
   [ConnectionBackend.BigQuery]: 'BigQuery',
   [ConnectionBackend.Postgres]: 'Postgres',
+  [ConnectionBackend.MySQL]: 'MySQL',
   [ConnectionBackend.DuckDB]: 'DuckDB',
   // TODO(whscullin): Remove beta once ready.
   [ConnectionBackend.Snowflake]: 'Snowflake (Beta)',
   [ConnectionBackend.Trino]: 'Trino',
   [ConnectionBackend.Presto]: 'Presto',
-  [ConnectionBackend.MySQL]: 'MySQL',
   [ConnectionBackend.Publisher]: 'Publisher',
 };
 
@@ -78,6 +78,15 @@ export interface PostgresConnectionConfig extends BaseConnectionConfig {
   port?: number;
   databaseName?: string;
   connectionString?: string;
+}
+
+export interface MysqlConnectionConfig extends BaseConnectionConfig {
+  backend: ConnectionBackend.MySQL;
+  user?: string;
+  password?: string;
+  host?: string;
+  port?: number;
+  database?: string;
 }
 
 export interface DuckDBConnectionConfig extends BaseConnectionConfig {
@@ -123,11 +132,6 @@ export interface PrestoConnectionConfig
   backend: ConnectionBackend.Presto;
 }
 
-export interface MySQLConnectionConfig extends BaseConnectionConfig {
-  backend: ConnectionBackend.MySQL;
-  // TODO(figutierrez): add options.
-}
-
 export interface PublisherConnectionConfig extends BaseConnectionConfig {
   backend: ConnectionBackend.Publisher;
   connectionUri?: string;
@@ -142,7 +146,7 @@ export type ConnectionConfig =
   | SnowflakeConnectionConfig
   | TrinoConnectionConfig
   | PrestoConnectionConfig
-  | MySQLConnectionConfig
+  | MysqlConnectionConfig
   | PublisherConnectionConfig;
 
 export interface ConfigOptions {

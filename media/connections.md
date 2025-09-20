@@ -1,6 +1,14 @@
 # Connect a Database
 
-Currently, BigQuery and PostgreSQL are supported.
+Supported databases:
+- PostgreSQL
+- MySQL
+- BigQuery
+- SnowFlake
+- MotherDuck
+- DuckDb
+- Presto
+- Trino
 
 1. Click on the Malloy icon on the left side of VS Code. This opens the Malloy view - a view that allows you to view schemas as you work with Malloy models and edit database connections.
 
