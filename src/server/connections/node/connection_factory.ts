@@ -37,7 +37,6 @@ import {createPublisherConnection} from './publisher_connection';
 
 import {fileURLToPath} from 'url';
 import {GenericConnection} from '../../../common/types/worker_message_types';
-import {MySQLExecutor} from '@malloydata/db-mysql';
 import {createMySQLConnection} from './mysql_connection';
 
 export class NodeConnectionFactory implements ConnectionFactory {
@@ -78,6 +77,14 @@ export class NodeConnectionFactory implements ConnectionFactory {
         );
         break;
       }
+      case ConnectionBackend.MySQL: {
+        connection = await createMySQLConnection(
+          this.client,
+          connectionConfig,
+          configOptions
+        );
+        break;
+      }
       case ConnectionBackend.DuckDB: {
         connection = await createDuckDbConnection(
           this.client,
@@ -108,10 +115,6 @@ export class NodeConnectionFactory implements ConnectionFactory {
           connectionConfig,
           configOptions
         );
-        break;
-      }
-      case ConnectionBackend.MySQL: {
-        connection = await createMySQLConnection();
         break;
       }
       case ConnectionBackend.Publisher: {
@@ -197,23 +200,6 @@ export class NodeConnectionFactory implements ConnectionFactory {
       });
     }
 
-    if (!configs.find(config => config.backend === ConnectionBackend.MySQL)) {
-      try {
-        const mySQLOptions = MySQLExecutor.getConnectionOptionsFromEnv();
-        if (mySQLOptions !== null) {
-          // TODO(figutierrez): add default.
-          configs.push({
-            name: 'mysql',
-            backend: ConnectionBackend.MySQL,
-            id: 'mysql-default',
-          });
-        }
-      } catch (error) {
-        console.info(
-          `Could not get connection options for Presto connection. ${error}`
-        );
-      }
-    }
     return configs;
   }
 }

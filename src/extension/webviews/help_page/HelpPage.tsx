@@ -70,7 +70,8 @@ const HelpPageRaw = ({className}: HelpPageProps) => {
             Malloy is an open source language for describing data relationships
             and transformations. It is both a semantic modeling language and a
             querying language that runs queries against a relational database.
-            Malloy currently supports BigQuery, Postgres, and DuckDB.
+            Malloy currently supports PostgreSQL, MySQL, BigQuery, SnowFlake,
+            MotherDuck, DuckDb, Presto and Trino.
             <br />
             <br />
             The installed Visual Studio Code extension supports building Malloy
