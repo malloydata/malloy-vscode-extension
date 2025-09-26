@@ -78,4 +78,3 @@ ORDER BY flight_count desc         -- malloy automatically orders by the first a
 ```
 
 Learn more about the syntax and language features of Malloy in the [Quickstart](https://malloydata.github.io/documentation/user_guides/basic.html).
-
