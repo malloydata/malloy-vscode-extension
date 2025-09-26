@@ -1,3 +1,4 @@
+import * as React from 'react';
 import {VSCodeTextField} from '@vscode/webview-ui-toolkit/react';
 import {MysqlConnectionConfig} from '../../../../common/types/connection_manager_types';
 import {SecretEditor} from './components/SecretEditor';

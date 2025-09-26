@@ -43,7 +43,7 @@ import {PostgresConnectionEditor} from './PostgresConnectionEditor';
 import {SnowflakeConnectionEditor} from './SnowflakeConnectionEditor';
 import {TrinoPrestoConnectionEditor} from './TrinoPrestoConnectionEditor';
 import {PublisherConnectionEditor} from './PublisherConnectionEditor';
-import { MysqlConnectionEditor } from './MysqlConnectionEditor';
+import {MysqlConnectionEditor} from './MysqlConnectionEditor';
 
 interface ConnectionHeaderProps {
   config: {name?: string};

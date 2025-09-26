@@ -37,7 +37,6 @@ import {createPublisherConnection} from './publisher_connection';
 
 import {fileURLToPath} from 'url';
 import {GenericConnection} from '../../../common/types/worker_message_types';
-import {MySQLExecutor} from '@malloydata/db-mysql';
 import {createMySQLConnection} from './mysql_connection';
 
 export class NodeConnectionFactory implements ConnectionFactory {
