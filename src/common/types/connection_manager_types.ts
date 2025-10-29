@@ -31,6 +31,7 @@ export enum ConnectionBackend {
   BigQuery = 'bigquery',
   Postgres = 'postgres',
   DuckDB = 'duckdb',
+  GizmoSQL = 'gizmosql',
   Snowflake = 'snowflake',
   Trino = 'trino',
   Presto = 'presto',
@@ -43,6 +44,7 @@ export const ConnectionBackendNames: Record<ConnectionBackend, string> = {
   [ConnectionBackend.Postgres]: 'Postgres',
   [ConnectionBackend.MySQL]: 'MySQL',
   [ConnectionBackend.DuckDB]: 'DuckDB',
+  [ConnectionBackend.GizmoSQL]: 'GizmoSQL',
   // TODO(whscullin): Remove beta once ready.
   [ConnectionBackend.Snowflake]: 'Snowflake (Beta)',
   [ConnectionBackend.Trino]: 'Trino',
@@ -97,6 +99,14 @@ export interface DuckDBConnectionConfig extends BaseConnectionConfig {
   motherDuckToken?: string;
 }
 
+export interface GizmoSQLConnectionConfig extends BaseConnectionConfig {
+  backend: ConnectionBackend.GizmoSQL;
+  gizmosqlUri?: string;
+  gizmosqlUsername?: string;
+  gizmosqlPassword?: string;
+  gizmosqlCatalog?: string;
+}
+
 export interface SnowflakeConnectionConfig extends BaseConnectionConfig {
   backend: ConnectionBackend.Snowflake;
   account?: string;
@@ -143,6 +153,7 @@ export type ConnectionConfig =
   | BigQueryConnectionConfig
   | PostgresConnectionConfig
   | DuckDBConnectionConfig
+  | GizmoSQLConnectionConfig
   | SnowflakeConnectionConfig
   | TrinoConnectionConfig
   | PrestoConnectionConfig
