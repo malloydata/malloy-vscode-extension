@@ -249,6 +249,24 @@ export class EditConnectionPanel {
           };
         }
       }
+      if ('privateKeyPass' in connection) {
+        const key = `connections.${connection.id}.privateKeyPass`;
+        if (connection.privateKeyPass) {
+          await this.context.secrets.store(key, connection.privateKeyPass);
+          connection = {
+            ...connection,
+            // Change the config to trigger a connection reload
+            privateKeyPass: `$secret-${Date.now().toString()}$`,
+          };
+        } else {
+          await this.context.secrets.delete(key);
+          connection = {
+            ...connection,
+            // Change the config to trigger a connection reload
+            privateKeyPass: '',
+          };
+        }
+      }
       modifiedConnections.push(connection);
     }
     return modifiedConnections;
