@@ -24,6 +24,7 @@
 import * as React from 'react';
 import {useState} from 'react';
 import {
+  VSCodeButton,
   VSCodeCheckbox,
   VSCodeTextField,
 } from '@vscode/webview-ui-toolkit/react';
@@ -34,13 +35,26 @@ import {SecretEditor} from './components/SecretEditor';
 export interface SnowflakeConnectionEditorProps {
   config: SnowflakeConnectionConfig;
   setConfig: (config: SnowflakeConnectionConfig) => void;
+  requestFilePath: (
+    connectionId: string,
+    configKey: string,
+    filters: {[key: string]: string[]}
+  ) => void;
 }
 
 export const SnowflakeConnectionEditor = ({
   config,
   setConfig,
+  requestFilePath,
 }: SnowflakeConnectionEditorProps) => {
   const [showPassword, setShowPassword] = useState(false);
+
+  const requestPrivateKeyPath = () => {
+    requestFilePath(config.id, 'privateKeyPath', {
+      'Private Key Files': ['pem', 'key', 'rsa'],
+      'All Files': ['*'],
+    });
+  };
 
   return (
     <ConnectionEditorTable>
@@ -109,6 +123,39 @@ export const SnowflakeConnectionEditor = ({
             >
               Show Password
             </VSCodeCheckbox>
+          </td>
+        </tr>
+        <tr>
+          <td className="label-cell">
+            <label>Private Key File:</label>
+          </td>
+          <td>
+            <VSCodeTextField
+              value={config.privateKeyPath || ''}
+              onChange={({target}) => {
+                const value = (target as HTMLInputElement).value;
+                setConfig({...config, privateKeyPath: value});
+              }}
+              placeholder="Optional"
+            ></VSCodeTextField>
+          </td>
+          <td>
+            <VSCodeButton onClick={requestPrivateKeyPath}>
+              Pick File
+            </VSCodeButton>
+          </td>
+        </tr>
+        <tr>
+          <td className="label-cell">
+            <label>Private Key Passphrase:</label>
+          </td>
+          <td>
+            <SecretEditor
+              secret={config.privateKeyPass}
+              setSecret={(secret: string) => {
+                setConfig({...config, privateKeyPass: secret});
+              }}
+            />
           </td>
         </tr>
         <tr>

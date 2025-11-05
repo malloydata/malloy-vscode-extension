@@ -50,6 +50,18 @@ export const createSnowflakeConnection = async (
     password = connectionConfig.password;
   }
 
+  let privateKeyPass: string | undefined;
+  if (connectionConfig.privateKeyPath) {
+    // If using privateKeyPath, get the passphrase from keyStore or config
+    if (useKeyStore) {
+      privateKeyPass = await client.sendRequest('malloy/getSecret', {
+        key: `connections.${connectionConfig.id}.privateKeyPass`,
+      });
+    } else if (connectionConfig.privateKeyPass !== undefined) {
+      privateKeyPass = connectionConfig.privateKeyPass;
+    }
+  }
+
   const connOptions = {
     account,
     username,
@@ -57,17 +69,20 @@ export const createSnowflakeConnection = async (
     schema,
     warehouse,
     timeoutMs,
+    ...(password !== undefined && {password}),
+    ...(connectionConfig.privateKeyPath !== undefined && {
+      privateKeyPath: connectionConfig.privateKeyPath,
+      authenticator: 'SNOWFLAKE_JWT',
+      ...(privateKeyPass !== undefined && {privateKeyPass}),
+    }),
   };
 
   const options = {
-    connOptions: {...connOptions, password},
+    connOptions,
     queryOptions: {
       rowLimit,
     },
   };
-  if (connectionConfig.password !== undefined) {
-    password = connectionConfig.password;
-  }
   console.info('Creating snowflake connection with', connOptions);
   const connection = new SnowflakeConnection(connectionConfig.name, options);
   return connection;
