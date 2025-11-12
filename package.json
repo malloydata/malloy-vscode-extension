@@ -509,6 +509,33 @@
                 "properties": {
                   "backend": {
                     "type": "string",
+                    "const": "gizmosql"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "gizmosqlUri": {
+                    "type": "string"
+                  },
+                  "gizmosqlUsername": {
+                    "type": "string"
+                  },
+                  "gizmosqlPassword": {
+                    "type": "string"
+                  },
+                  "gizmosqlCatalog": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "backend": {
+                    "type": "string",
                     "const": "snowflake"
                   },
                   "account": {
