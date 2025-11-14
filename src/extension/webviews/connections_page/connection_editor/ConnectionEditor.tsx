@@ -182,6 +182,7 @@ export const ConnectionEditor = ({
         <SnowflakeConnectionEditor
           config={config}
           setConfig={setConfig}
+          requestFilePath={requestFilePath}
         ></SnowflakeConnectionEditor>
       ) : config.backend === ConnectionBackend.Presto ||
         config.backend === ConnectionBackend.Trino ? (

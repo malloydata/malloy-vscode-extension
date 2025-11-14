@@ -102,6 +102,8 @@ export interface SnowflakeConnectionConfig extends BaseConnectionConfig {
   account?: string;
   username?: string;
   password?: string;
+  privateKeyPath?: string;
+  privateKeyPass?: string;
   warehouse?: string;
   database?: string;
   schema?: string;
