@@ -38,6 +38,7 @@ import {ConnectionMessageTest} from '../../../../common/types/message_types';
 import ChevronDownIcon from '../../assets/chevron_down.svg';
 import {BigQueryConnectionEditor} from './BigQueryConnectionEditor';
 import {DuckDBConnectionEditor} from './DuckDBConnectionEditor';
+import {GizmoSQLConnectionEditor} from './GizmoSQLConnectionEditor';
 import {ConnectionEditorTable} from './ConnectionEditorTable';
 import {PostgresConnectionEditor} from './PostgresConnectionEditor';
 import {SnowflakeConnectionEditor} from './SnowflakeConnectionEditor';
@@ -111,6 +112,7 @@ export const ConnectionEditor = ({
     ConnectionBackend.Postgres,
     ConnectionBackend.MySQL,
     ConnectionBackend.DuckDB,
+    ConnectionBackend.GizmoSQL,
     ConnectionBackend.Snowflake,
     ConnectionBackend.Presto,
     ConnectionBackend.Trino,
@@ -178,6 +180,11 @@ export const ConnectionEditor = ({
           setConfig={setConfig}
           requestFilePath={requestFilePath}
         ></DuckDBConnectionEditor>
+      ) : config.backend === ConnectionBackend.GizmoSQL ? (
+        <GizmoSQLConnectionEditor
+          config={config}
+          setConfig={setConfig}
+        ></GizmoSQLConnectionEditor>
       ) : config.backend === ConnectionBackend.Snowflake ? (
         <SnowflakeConnectionEditor
           config={config}

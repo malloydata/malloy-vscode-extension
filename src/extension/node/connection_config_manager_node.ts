@@ -35,6 +35,7 @@ class ConnectionConfigManagerNode extends ConnectionConfigManagerBase {
       ConnectionBackend.Trino,
       ConnectionBackend.Presto,
       ConnectionBackend.Publisher,
+      ConnectionBackend.GizmoSQL,
     ];
     if (isDuckDBAvailable) {
       available.push(ConnectionBackend.DuckDB);

@@ -30,6 +30,7 @@ import {
 } from '../../../common/types/connection_manager_types';
 import {createBigQueryConnection} from './bigquery_connection';
 import {createDuckDbConnection} from './duckdb_connection';
+import {createGizmoSQLConnection} from './gizmosql_connection';
 import {createPostgresConnection} from './postgres_connection';
 import {createSnowflakeConnection} from './snowflake_connection';
 import {createTrinoPrestoConnection} from './trino_presto_connection';
@@ -87,6 +88,14 @@ export class NodeConnectionFactory implements ConnectionFactory {
       }
       case ConnectionBackend.DuckDB: {
         connection = await createDuckDbConnection(
+          this.client,
+          connectionConfig,
+          configOptions
+        );
+        break;
+      }
+      case ConnectionBackend.GizmoSQL: {
+        connection = await createGizmoSQLConnection(
           this.client,
           connectionConfig,
           configOptions
