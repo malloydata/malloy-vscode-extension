@@ -194,6 +194,14 @@ export class EditConnectionPanel {
           motherDuckToken,
         };
       }
+      if ('privateKeyPass' in connection && connection.privateKeyPass) {
+        const key = `connections.${connection.id}.privateKeyPass`;
+        const privateKeyPass = await this.context.secrets.get(key);
+        connection = {
+          ...connection,
+          privateKeyPass,
+        };
+      }
       modifiedConnections.push(connection);
     }
     return modifiedConnections;
