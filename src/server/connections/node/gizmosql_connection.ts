@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {DuckDBConnection} from '@malloydata/db-duckdb';
+import {GizmoSQLConnection} from '@malloydata/db-duckdb';
 import {
   ConfigOptions,
   GizmoSQLConnectionConfig,
@@ -37,6 +37,13 @@ export const createGizmoSQLConnection = async (
   try {
     const {name} = connectionConfig;
 
+    if (!connectionConfig.gizmosqlUri) {
+      throw new Error('GizmoSQL URI is required');
+    }
+    if (!connectionConfig.gizmosqlUsername) {
+      throw new Error('GizmoSQL username is required');
+    }
+
     let gizmosqlPassword = connectionConfig.gizmosqlPassword;
     if (useKeyStore && connectionConfig.gizmosqlUri) {
       gizmosqlPassword = await client.sendRequest('malloy/getSecret', {
@@ -44,11 +51,12 @@ export const createGizmoSQLConnection = async (
         promptIfMissing: 'Enter your GizmoSQL password:',
       });
     }
+    if (!gizmosqlPassword) {
+      throw new Error('GizmoSQL password is required');
+    }
 
     const options = {
       name,
-      // GizmoSQL Flight SQL options
-      useGizmoSQL: true,
       gizmosqlUri: connectionConfig.gizmosqlUri,
       gizmosqlUsername: connectionConfig.gizmosqlUsername,
       gizmosqlPassword,
@@ -58,10 +66,10 @@ export const createGizmoSQLConnection = async (
       'Creating GizmoSQL connection with',
       JSON.stringify({
         ...options,
-        gizmosqlPassword: options.gizmosqlPassword ? '[REDACTED]' : undefined,
+        gizmosqlPassword: '[REDACTED]',
       })
     );
-    const connection = new DuckDBConnection(options, () => ({rowLimit}));
+    const connection = new GizmoSQLConnection(options, () => ({rowLimit}));
     return connection;
   } catch (error) {
     console.error('Could not create GizmoSQL connection:', error);
