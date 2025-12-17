@@ -327,6 +327,7 @@ function getIconPath(
         break;
       case 'date':
       case 'timestamp':
+      case 'timestamptz':
         imageFileName = timeIcon;
         break;
       case 'struct_base':

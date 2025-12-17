@@ -131,6 +131,7 @@ function getIconElement(fieldType: string, isAggregate: boolean) {
         break;
       case 'date':
       case 'timestamp':
+      case 'timestamptz':
         imageElement = <TimeIcon />;
         break;
       case 'struct_base':
