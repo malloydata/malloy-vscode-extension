@@ -2,6 +2,12 @@
 cloudbuild
 integration
 node_modules
+!node_modules/@duckdb/node-bindings
+!node_modules/@duckdb/node-bindings-darwin-arm64
+!node_modules/@duckdb/node-bindings-darwin-x64
+!node_modules/@duckdb/node-bindings-linux-arm64
+!node_modules/@duckdb/node-bindings-linux-x64
+!node_modules/@duckdb/node-bindings-win32-x64
 !node_modules/@malloydata/syntax-highlight/grammars
 !node_modules/@malloydata/malloy-explorer/dist/malloy-explorer.css
 !node_modules/monaco-editor-core/min/vs/editor/editor.main.css

@@ -23,98 +23,15 @@
 
 import fs from 'fs';
 import {build, BuildOptions, context, Plugin} from 'esbuild';
-import {nativeNodeModulesPlugin} from '../third_party/github.com/evanw/esbuild/native-modules-plugin';
 
 import * as path from 'path';
 import {execSync} from 'child_process';
-// import {noNodeModulesSourceMaps} from '../third_party/github.com/evanw/esbuild/no-node-modules-sourcemaps';
+import {replace} from 'esbuild-plugin-replace';
 import svgrPlugin from 'esbuild-plugin-svgr';
 import {fetchDuckDB, targetDuckDBMap} from './utils/fetch_duckdb';
 import {outDir, Target} from './constants';
 
 import {generateDisclaimer} from './license_disclaimer';
-
-function makeDuckdbNoNodePreGypPlugin(target: Target | undefined): Plugin {
-  const localPath = require.resolve('duckdb/lib/binding/duckdb.node');
-  const posixPath = localPath.split(path.sep).join(path.posix.sep);
-  const isDuckDBAvailable =
-    target === undefined || targetDuckDBMap[target] !== undefined;
-  return {
-    name: 'duckdbNoNodePreGypPlugin',
-    setup(build) {
-      build.onResolve({filter: /duckdb-binding\.js/}, args => {
-        return {
-          path: args.path,
-          namespace: 'duckdb-no-node-pre-gyp-plugin',
-        };
-      });
-      build.onLoad(
-        {
-          filter: /duckdb-binding\.js/,
-          namespace: 'duckdb-no-node-pre-gyp-plugin',
-        },
-        _args => {
-          return {
-            contents: /* javascript */ `
-              var path = require("path");
-              var os = require("os");
-
-              var binding_path = ${
-                target
-                  ? 'require.resolve("./duckdb-native.node")'
-                  : `"${posixPath}"`
-              };
-
-              // dlopen is used because we need to specify the RTLD_GLOBAL flag to be able to resolve duckdb symbols
-              // on linux where RTLD_LOCAL is the default.
-              process.dlopen(module, binding_path, os.constants.dlopen.RTLD_NOW | os.constants.dlopen.RTLD_GLOBAL);
-            `,
-            resolveDir: '.',
-          };
-        }
-      );
-      build.onResolve({filter: /duckdb_availability/}, args => {
-        return {
-          path: args.path,
-          namespace: 'duckdb-no-node-pre-gyp-plugin',
-        };
-      });
-      build.onLoad(
-        {
-          filter: /duckdb_availability/,
-          namespace: 'duckdb-no-node-pre-gyp-plugin',
-        },
-        _args => {
-          return {
-            contents: `
-              export const isDuckDBAvailable = ${isDuckDBAvailable};
-            `,
-            resolveDir: '.',
-          };
-        }
-      );
-      if (!isDuckDBAvailable) {
-        build.onResolve({filter: /^duckdb$/}, args => {
-          return {
-            path: args.path,
-            namespace: 'duckdb-no-node-pre-gyp-plugin',
-          };
-        });
-        build.onLoad(
-          {filter: /^duckdb$/, namespace: 'duckdb-no-node-pre-gyp-plugin'},
-          _args => {
-            return {
-              contents: `
-              module.exports = {};
-            `,
-              resolveDir: '.',
-            };
-          }
-        );
-      }
-    },
-  };
-}
 
 const DEFINITIONS: Record<string, string> = {
   'process.env.NODE_DEBUG': 'false', // TODO this is a hack because some package we include assumed process.env exists :(
@@ -188,26 +105,23 @@ export async function doBuild(
     target = 'linux-x64';
   }
 
+  const isDuckDBAvailable = !target || !!targetDuckDBMap[target];
+
   if (target) {
-    const duckDBBinaryName = targetDuckDBMap[target];
-    const isDuckDBAvailable = duckDBBinaryName !== undefined;
-    if (isDuckDBAvailable) {
-      const file = await fetchDuckDB(target);
-      fs.copyFileSync(file, path.join(outDir, 'duckdb-native.node'));
-    }
+    await fetchDuckDB(target);
   }
-  const duckDBPlugin = makeDuckdbNoNodePreGypPlugin(target);
-  const extensionPlugins = [duckDBPlugin];
+
+  const extensionPlugins: Plugin[] = [
+    replace({
+      'isDuckDBAvailable = true': `isDuckDBAvailable = ${isDuckDBAvailable}`,
+    }),
+  ];
 
   if (development) {
-    // extensionPlugins.push(noNodeModulesSourceMaps);
     console.log('Entering watch mode');
   }
 
   const nodeExtensionPlugins = extensionPlugins;
-  if (!target) {
-    nodeExtensionPlugins.push(nativeNodeModulesPlugin);
-  }
 
   // build the extension and servers
   const commonNodeOptions: BuildOptions = {
@@ -221,16 +135,16 @@ export async function doBuild(
   buildOptions['node'] = {
     ...commonNodeOptions,
     entryPoints: ['./src/extension/node/extension_node.ts'],
-    external: ['vscode', 'pg-native', './duckdb-native.node'],
+    external: ['vscode', 'pg-native', '@duckdb/node-bindings'],
   };
 
   buildOptions['nodeServer'] = {
     ...commonNodeOptions,
     entryPoints: ['./src/server/node/server_node.ts'],
-    external: ['pg-native', './duckdb-native.node'],
+    external: ['pg-native', '@duckdb/node-bindings'],
   };
 
-  nodeWebviewPlugins = [duckDBPlugin];
+  nodeWebviewPlugins = [];
 
   const webviewPlugins = [
     svgrPlugin({
