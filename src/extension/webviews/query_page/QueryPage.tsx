@@ -190,7 +190,7 @@ export function QueryPage({vscode}: QueryPageProps) {
           }
 
           const queryCostBytes = result.runStats?.queryCostBytes;
-          const json = JSON.stringify(data.toObject(), null, 2);
+          const json = JSON.stringify(data.toJSON(), null, 2);
 
           const schema =
             isPreview && result.resultExplore.parentExplore
