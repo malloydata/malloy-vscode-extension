@@ -27,9 +27,9 @@ import path from 'node:path';
 
 import duckdbPackage from '@malloydata/db-duckdb/package.json';
 
-const DUCKDB_VERSION = (
-  duckdbPackage.dependencies as Record<string, string>
-)['@duckdb/node-api'];
+const DUCKDB_VERSION = (duckdbPackage.dependencies as Record<string, string>)[
+  '@duckdb/node-api'
+];
 
 export const targetDuckDBMap: Record<string, {os: string; cpu: string}> = {
   'darwin-arm64': {os: 'darwin', cpu: 'arm64'},
