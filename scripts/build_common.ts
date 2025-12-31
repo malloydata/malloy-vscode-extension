@@ -67,7 +67,18 @@ function makeDuckdbNoNodePreGypPlugin(target: Target | undefined): Plugin {
 
               // dlopen is used because we need to specify the RTLD_GLOBAL flag to be able to resolve duckdb symbols
               // on linux where RTLD_LOCAL is the default.
-              process.dlopen(module, binding_path, os.constants.dlopen.RTLD_NOW | os.constants.dlopen.RTLD_GLOBAL);
+              // Wrapped in try-catch to handle runtime failures (e.g., GLIBC version mismatch in devcontainers)
+              try {
+                process.dlopen(module, binding_path, os.constants.dlopen.RTLD_NOW | os.constants.dlopen.RTLD_GLOBAL);
+                module.exports.__duckdb_load_success__ = true;
+              } catch (e) {
+                console.error("Failed to load DuckDB native module:", e.message);
+                if (e.message && e.message.includes("GLIBC")) {
+                  console.error("This typically occurs when running in a container or environment with an older glibc version.");
+                  console.error("Consider using a base image with glibc 2.32 or newer, or use Malloy with a different database backend.");
+                }
+                module.exports = { __duckdb_load_error__: e.message };
+              }
             `,
             resolveDir: '.',
           };
@@ -88,6 +99,29 @@ function makeDuckdbNoNodePreGypPlugin(target: Target | undefined): Plugin {
           return {
             contents: `
               export const isDuckDBAvailable = ${isDuckDBAvailable};
+
+              // Runtime check to verify DuckDB actually loaded (handles GLIBC issues, etc.)
+              let _runtimeCheckDone = false;
+              let _duckDBLoadError = null;
+
+              export function getDuckDBLoadError() {
+                if (!_runtimeCheckDone && ${isDuckDBAvailable}) {
+                  try {
+                    const duckdb = require('duckdb');
+                    if (duckdb.__duckdb_load_error__) {
+                      _duckDBLoadError = duckdb.__duckdb_load_error__;
+                    }
+                  } catch (e) {
+                    _duckDBLoadError = e.message;
+                  }
+                  _runtimeCheckDone = true;
+                }
+                return _duckDBLoadError;
+              }
+
+              export function isDuckDBRuntimeAvailable() {
+                return isDuckDBAvailable && getDuckDBLoadError() === null;
+              }
             `,
             resolveDir: '.',
           };

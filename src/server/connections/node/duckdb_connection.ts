@@ -26,7 +26,11 @@ import {
   ConfigOptions,
   DuckDBConnectionConfig,
 } from '../../../common/types/connection_manager_types';
-import {isDuckDBAvailable} from '../../../common/duckdb_availability';
+import {
+  isDuckDBAvailable,
+  isDuckDBRuntimeAvailable,
+  getDuckDBLoadError,
+} from '../../../common/duckdb_availability';
 import {GenericConnection} from '../../../common/types/worker_message_types';
 
 export const createDuckDbConnection = async (
@@ -36,7 +40,15 @@ export const createDuckDbConnection = async (
 ) => {
   useKeyStore ??= true;
   if (!isDuckDBAvailable) {
-    throw new Error('DuckDB is not available.');
+    throw new Error('DuckDB is not available for this platform.');
+  }
+  if (!isDuckDBRuntimeAvailable()) {
+    const loadError = getDuckDBLoadError();
+    throw new Error(
+      `DuckDB failed to load: ${loadError}. ` +
+        'This may occur in environments with older glibc versions (< 2.32). ' +
+        'Consider using a different database backend or updating your environment.'
+    );
   }
   try {
     const {name, additionalExtensions} = connectionConfig;

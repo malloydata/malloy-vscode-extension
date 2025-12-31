@@ -26,3 +26,22 @@
  * See the build script for details.
  */
 export const isDuckDBAvailable = true;
+
+/**
+ * Returns the error message if DuckDB failed to load at runtime.
+ * This can happen when the native module has GLIBC version requirements
+ * that the current environment doesn't satisfy (e.g., in devcontainers
+ * with older glibc versions).
+ */
+export function getDuckDBLoadError(): string | null {
+  return null;
+}
+
+/**
+ * Returns true if DuckDB is available both at build time AND successfully
+ * loaded at runtime. Use this instead of isDuckDBAvailable for accurate
+ * runtime checks.
+ */
+export function isDuckDBRuntimeAvailable(): boolean {
+  return isDuckDBAvailable && getDuckDBLoadError() === null;
+}
