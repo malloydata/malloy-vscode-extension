@@ -21,32 +21,54 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
+import {exec} from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
 
 import duckdbPackage from '@malloydata/db-duckdb/package.json';
-import {fetchNode} from './fetch_node';
 
-const DUCKDB_VERSION = duckdbPackage.dependencies.duckdb;
+const DUCKDB_VERSION = (duckdbPackage.dependencies as Record<string, string>)[
+  '@duckdb/node-api'
+];
 
-export const targetDuckDBMap: Record<string, string> = {
-  'darwin-arm64': `duckdb-v${DUCKDB_VERSION}-node-v108-darwin-arm64.node`,
-  'darwin-x64': `duckdb-v${DUCKDB_VERSION}-node-v108-darwin-x64.node`,
-  'linux-arm64': `duckdb-v${DUCKDB_VERSION}-node-v108-linux-arm64.node`,
-  'linux-x64': `duckdb-v${DUCKDB_VERSION}-node-v108-linux-x64.node`,
-  'win32-x64': `duckdb-v${DUCKDB_VERSION}-node-v108-win32-x64.node`,
+export const targetDuckDBMap: Record<string, {os: string; cpu: string}> = {
+  'darwin-arm64': {os: 'darwin', cpu: 'arm64'},
+  'darwin-x64': {os: 'darwin', cpu: 'x64'},
+  'linux-arm64': {os: 'linux', cpu: 'arm64'},
+  'linux-x64': {os: 'linux', cpu: 'x64'},
+  'win32-x64': {os: 'win32', cpu: 'x64'},
 };
 
-export const fetchDuckDB = async (target: string): Promise<string> => {
-  const file = targetDuckDBMap[target];
-  const url = `https://npm.duckdb.org/duckdb/duckdb-v${DUCKDB_VERSION}-node-v108-${target}.tar.gz`;
-  const directoryPath = path.resolve(
-    path.join('third_party', 'github.com', 'duckdb', 'duckdb')
-  );
-  fs.mkdirSync(directoryPath, {recursive: true});
-  const filePath = path.join(directoryPath, file);
+export const fetchDuckDB = async (target: string): Promise<void> => {
+  console.log('Removing other architectures');
+  Object.values(targetDuckDBMap).forEach(({os, cpu}) => {
+    const dirName = path.resolve(
+      'node_modules',
+      '@duckdb',
+      `node-bindings-${os}-${cpu}`
+    );
+    console.log(`Checking for ${dirName}`);
+    if (fs.existsSync(dirName)) {
+      console.log(`Removing ${dirName}`);
+      fs.rmSync(dirName, {recursive: true, force: true});
+    }
+  });
 
-  await fetchNode(filePath, url);
+  if (targetDuckDBMap[target]) {
+    console.log(`Installing duckdb ${target} architecture`);
 
-  return filePath;
+    const {os, cpu} = targetDuckDBMap[target];
+
+    await new Promise<void>((resolve, reject) => {
+      exec(
+        `npm install --no-save --os ${os} --cpu ${cpu} --force @duckdb/node-bindings-${os}-${cpu}@${DUCKDB_VERSION}`,
+        error => {
+          if (error) {
+            reject(error);
+          }
+          resolve();
+        }
+      );
+    });
+  }
 };
