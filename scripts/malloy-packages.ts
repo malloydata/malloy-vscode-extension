@@ -1,9 +1,10 @@
 #!/usr/bin/env ts-node
 import packageJson from '../package.json';
 
-let malloyPackages = Object.keys(packageJson.dependencies).filter(name =>
-  name.startsWith('@malloy')
-);
+let malloyPackages = Object.keys({
+  ...packageJson.dependencies,
+  ...packageJson.devDependencies,
+}).filter(name => name.startsWith('@malloydata/'));
 
 const nonCorePackages = ['@malloydata/malloy-explorer'];
 // [NODE, SCRIPT-PATH, real arguments ]
