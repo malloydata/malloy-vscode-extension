@@ -244,10 +244,38 @@ const runMSQLCell = async (
   const runTime = elapsedTime(runBegin, runFinish);
   const totalTime = elapsedTime(allBegin, runFinish);
 
+  // For DDL statements (INSTALL, LOAD, CREATE, etc.) that don't return a schema,
+  // we can't call toJSON() because it tries to access resultExplore which throws.
+  // Create a minimal result object that the controller can display.
+  const hasSchema = queryResult._queryResult.structs.length > 0;
+  const resultJson = hasSchema
+    ? queryResult.toJSON()
+    : {
+        queryResult: {
+          structs: [],
+          sql: compiledStatement,
+          result: sqlResults.rows,
+          totalRows: sqlResults.totalRows,
+          runStats: sqlResults.runStats,
+          lastStageName: compiledStatement,
+          malloy: '',
+          connectionName,
+          sourceExplore: '',
+          sourceFilters: [],
+        },
+        modelDef: {
+          name: 'empty_model',
+          exports: [],
+          contents: {},
+          queryList: [],
+          dependencies: {},
+        },
+      };
+
   sendMessage({
     status: QueryRunStatus.Done,
     name,
-    resultJson: queryResult.toJSON(),
+    resultJson,
     canDownloadStream: false,
     stats: {
       compileTime,
