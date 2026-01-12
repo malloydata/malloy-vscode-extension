@@ -28,6 +28,26 @@ import {
 } from '../../../common/types/connection_manager_types';
 import {isDuckDBAvailable} from '../../../common/duckdb_availability';
 import {GenericConnection} from '../../../common/types/worker_message_types';
+import * as fs from 'fs';
+import * as path from 'path';
+
+/**
+ * Find the nearest publisher.json by walking up the directory tree.
+ * Returns the directory containing publisher.json, or undefined if not found.
+ */
+function findPackageRoot(startDir: string): string | undefined {
+  let dir = startDir;
+  const root = path.parse(dir).root;
+
+  while (dir !== root) {
+    const publisherJsonPath = path.join(dir, 'publisher.json');
+    if (fs.existsSync(publisherJsonPath)) {
+      return dir;
+    }
+    dir = path.dirname(dir);
+  }
+  return undefined;
+}
 
 export const createDuckDbConnection = async (
   client: GenericConnection,
@@ -43,7 +63,24 @@ export const createDuckDbConnection = async (
     const databasePath = connectionConfig.databasePath || ':memory:';
     const isMotherDuck =
       databasePath.startsWith('md:') || databasePath.startsWith('motherduck:');
-    workingDirectory = connectionConfig.workingDirectory || workingDirectory;
+    // Handle special "packageRoot" value - find nearest publisher.json
+    if (connectionConfig.workingDirectory === 'packageRoot') {
+      if (workingDirectory) {
+        const packageRoot = findPackageRoot(workingDirectory);
+        if (packageRoot) {
+          console.info(
+            `Using package root "${packageRoot}" as working directory (found publisher.json)`
+          );
+          workingDirectory = packageRoot;
+        } else {
+          console.info(
+            'workingDirectory set to "packageRoot" but no publisher.json found, using file directory'
+          );
+        }
+      }
+    } else {
+      workingDirectory = connectionConfig.workingDirectory || workingDirectory;
+    }
     let motherDuckToken = connectionConfig.motherDuckToken;
     const hasEnv =
       process.env['motherduck_token'] || process.env['MOTHERDUCK_TOKEN'];
