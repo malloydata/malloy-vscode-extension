@@ -765,10 +765,7 @@
   },
   "devDependencies": {
     "@chialab/esbuild-plugin-worker": "^0.18.1",
-    "@duckdb/node-api": "^1.4.3-r.2",
     "@jest/globals": "^26.6.2",
-    "@malloydata/malloy-filter": "0.0.334",
-    "@malloydata/malloy-tag": "0.0.334",
     "@types/jest": "^29.2.1",
     "@types/jsdom": "^16.2.11",
     "@types/lodash": "^4.14.191",
