@@ -26,6 +26,7 @@ import {runMalloyQuery} from './run_query_utils';
 import {WorkerConnection} from '../../worker_connection';
 import {getSourceDef} from '../../../common/schema';
 import {indexCache} from './index_cache';
+import {MessageDownload} from '../../../common/types/worker_message_types';
 
 export class ComposerMessageManager
   extends WebviewMessageManager<ComposerMessage, ComposerPageMessage>
@@ -54,15 +55,20 @@ export class ComposerMessageManager
         case ComposerPageMessageType.RefreshStableModel:
           await this.refreshStableModel(message);
           break;
-        case ComposerPageMessageType.OnDrill: {
-          await vscode.commands.executeCommand(
-            'malloy.openComposer',
-            this.sourceName,
-            undefined,
-            message.stableQuery,
-            this.documentMeta
-          );
-        }
+        case ComposerPageMessageType.OnDrill:
+          {
+            await vscode.commands.executeCommand(
+              'malloy.openComposer',
+              this.sourceName,
+              undefined,
+              message.stableQuery,
+              this.documentMeta
+            );
+          }
+          break;
+        case ComposerPageMessageType.OnDownload:
+          await this.downloadResult(message);
+          break;
       }
     });
   }
@@ -276,6 +282,72 @@ export class ComposerMessageManager
     });
 
     void this.initializeIndex(modelDef, sourceName);
+  }
+
+  async downloadResult({
+    source,
+    query,
+    name,
+    format,
+  }: {
+    source: Malloy.SourceInfo;
+    query: Malloy.Query | string;
+    result: Malloy.Result | undefined;
+    name: string;
+    format: 'json' | 'csv';
+  }): Promise<void> {
+    const fileName = `${name}.${format}`;
+    // TODO: pick location from user settings
+    const downloadUri = await vscode.window.showSaveDialog({
+      defaultUri: vscode.Uri.file(fileName),
+      filters: {
+        // Optional: Restrict file types if needed
+        'CSV Files': ['csv'],
+        'All Files': ['*'],
+      },
+    });
+
+    if (!downloadUri) {
+      return;
+    }
+
+    await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: `Malloy Download (${fileName}.)`,
+        cancellable: true,
+      },
+      async (_progress, cancellationToken) => {
+        let text: string;
+        if (typeof query === 'string') {
+          text = query;
+        } else {
+          const qb = new QueryBuilder.ASTQuery({
+            source,
+            query,
+          });
+          text = qb.toMalloy();
+        }
+        const querySpec: QuerySpec = {
+          type: 'string',
+          text,
+          documentMeta: this.documentMeta,
+        };
+        const downloadOptions = {format, amount: 'current' as const};
+        const message: MessageDownload = {
+          query: querySpec,
+          panelId: fileName,
+          downloadUri: downloadUri.toString(),
+          downloadOptions,
+        };
+        // TODO: progress reporting
+        return this.worker.sendRequest(
+          'malloy/download',
+          message,
+          cancellationToken
+        );
+      }
+    );
   }
 
   dispose() {}
