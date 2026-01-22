@@ -56,6 +56,17 @@ export interface ExplorerProps {
     query: Malloy.Query | string
   ) => void;
   onDrill?: (props: DrillData) => void;
+  onDownload?: ({
+    source,
+    submittedQuery,
+    name,
+    format,
+  }: {
+    source: Malloy.SourceInfo;
+    submittedQuery: SubmittedQuery;
+    name: string;
+    format: 'json' | 'csv';
+  }) => void;
 }
 
 export const Explorer: React.FC<ExplorerProps> = ({
@@ -68,6 +79,7 @@ export const Explorer: React.FC<ExplorerProps> = ({
   initialQuery,
   refreshModel,
   onDrill,
+  onDownload,
 }) => {
   const [query, setQuery] = useState<Malloy.Query | string>();
   const [focusedNestViewPath, setFocusedNestViewPath] = useState<string[]>([]);
@@ -124,6 +136,7 @@ export const Explorer: React.FC<ExplorerProps> = ({
       onFocusedNestViewPathChange={setFocusedNestViewPath}
       focusedNestViewPath={focusedNestViewPath}
       onDrill={onDrill}
+      onDownload={onDownload}
       dark={isDarkMode}
     >
       <div

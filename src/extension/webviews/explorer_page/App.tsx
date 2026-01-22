@@ -255,6 +255,29 @@ export const App: React.FC<AppProps> = ({vscode}) => {
     [vscode]
   );
 
+  const onDownload = React.useCallback(
+    ({
+      source,
+      submittedQuery,
+      name,
+      format,
+    }: {
+      source: Malloy.SourceInfo;
+      submittedQuery: SubmittedQuery;
+      name: string;
+      format: 'json' | 'csv';
+    }) =>
+      vscode.postMessage({
+        type: ComposerPageMessageType.OnDownload,
+        source: source,
+        query: submittedQuery.query,
+        result: submittedQuery.response?.result,
+        name,
+        format,
+      }),
+    [vscode]
+  );
+
   if (documentMeta && model && sourceName) {
     return (
       <div style={{height: '100%'}}>
@@ -271,6 +294,7 @@ export const App: React.FC<AppProps> = ({vscode}) => {
             initialQuery={initialQuery}
             refreshModel={refreshModel}
             onDrill={onDrill}
+            onDownload={onDownload}
           />
         </CodeEditorContext.Provider>
       </div>

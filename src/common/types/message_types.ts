@@ -371,6 +371,7 @@ export enum ComposerPageMessageType {
   RefreshModel = 'refresh-model',
   RefreshStableModel = 'refresh-stable-model',
   OnDrill = 'on-drill',
+  OnDownload = 'on-download',
 }
 
 export interface ComposerPageMessageReady {
@@ -408,10 +409,20 @@ export interface ComposerPageMessageOnDrill {
   stableDrillClauses: Malloy.DrillOperation[] | undefined;
 }
 
+export interface ComposerPageMessageOnDownload {
+  type: ComposerPageMessageType.OnDownload;
+  source: Malloy.SourceInfo;
+  query: Malloy.Query | string;
+  result: Malloy.Result | undefined;
+  name: string;
+  format: 'json' | 'csv';
+}
+
 export type ComposerPageMessage =
   | ComposerPageMessageReady
   | ComposerPageMessageRunQuery
   | ComposerPageMessageRunStableQuery
   | ComposerPageMessageRefreshModel
   | ComposerPageMessageRefreshStableModel
-  | ComposerPageMessageOnDrill;
+  | ComposerPageMessageOnDrill
+  | ComposerPageMessageOnDownload;
