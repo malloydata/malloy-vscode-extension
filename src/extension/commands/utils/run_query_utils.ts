@@ -109,6 +109,7 @@ export function getDocumentMetadataFromUri(uri: string) {
 }
 
 export async function runMalloyQuery(
+  context: vscode.ExtensionContext,
   worker: WorkerConnection,
   query: QuerySpec,
   panelId: string,
@@ -151,6 +152,7 @@ export async function runMalloyQuery(
 
     if (withWebview) {
       current = createOrReuseWebviewPanel(
+        context,
         'malloyQuery',
         'query_page',
         name,
@@ -310,6 +312,7 @@ function logTime(name: string, time: number) {
 }
 
 export function runMalloyQueryWithProgress(
+  context: vscode.ExtensionContext,
   worker: WorkerConnection,
   query: QuerySpec,
   panelId: string,
@@ -324,6 +327,7 @@ export function runMalloyQueryWithProgress(
     },
     (progress, cancellationToken) => {
       return runMalloyQuery(
+        context,
         worker,
         query,
         panelId,

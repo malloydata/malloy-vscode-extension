@@ -32,6 +32,7 @@ import {noAwait} from '../../../util/no_await';
 const turtleIcon = 'turtle.svg';
 
 export function createOrReuseWebviewPanel(
+  context: vscode.ExtensionContext,
   viewType: string,
   webView: string,
   title: string,
@@ -71,19 +72,27 @@ export function createOrReuseWebviewPanel(
       document,
     };
     current.panel.iconPath = Utils.joinPath(
-      MALLOY_EXTENSION_STATE.getExtensionUri(),
+      context.extensionUri,
       'img',
       turtleIcon
     );
     MALLOY_EXTENSION_STATE.setRunState(panelId, current);
-    loadQueryWebview(current, webView);
+    loadQueryWebview(context, current, webView);
   }
 
   return current;
 }
 
-export function loadQueryWebview(current: RunState, module: string): void {
-  current.panel.webview.html = getWebviewHtml(module, current.panel.webview);
+export function loadQueryWebview(
+  context: vscode.ExtensionContext,
+  current: RunState,
+  module: string
+): void {
+  current.panel.webview.html = getWebviewHtml(
+    context.extensionUri,
+    module,
+    current.panel.webview
+  );
 
   current.panel.onDidDispose(() => {
     current.cancel();

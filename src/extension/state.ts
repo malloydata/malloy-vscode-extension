@@ -37,8 +37,6 @@ export interface RunState {
 
 class MalloyExtensionState {
   private activeWebviewPanelId: string | undefined;
-  private clientId: string | undefined;
-  private extensionUri: vscode.Uri | undefined;
   private runStates: Map<string, RunState> = new Map();
   private homeUri: vscode.Uri | undefined;
   private position: Position | undefined;
@@ -74,28 +72,6 @@ class MalloyExtensionState {
 
   getRunState(panelId: string) {
     return this.runStates.get(panelId);
-  }
-
-  setClientId(clientId: string): void {
-    this.clientId = clientId;
-  }
-
-  getClientId(): string {
-    if (this.clientId === undefined) {
-      throw new Error('Client ID has not been set');
-    }
-    return this.clientId;
-  }
-
-  getExtensionUri(): vscode.Uri {
-    if (this.extensionUri === undefined) {
-      throw new Error('extensionUri has not been set');
-    }
-    return this.extensionUri;
-  }
-
-  setExtensionUri(uri: vscode.Uri) {
-    this.extensionUri = uri;
   }
 
   setHomeUri(uri: vscode.Uri) {

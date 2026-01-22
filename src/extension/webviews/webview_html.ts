@@ -23,23 +23,19 @@
 
 import * as vscode from 'vscode';
 import {v1 as uuid} from 'uuid';
-import {MALLOY_EXTENSION_STATE} from '../state';
 import {Utils} from 'vscode-uri';
 
 export function getWebviewHtml(
+  extensionUri: vscode.Uri,
   module: string,
   webview: vscode.Webview
 ): string {
-  const onDiskPath = Utils.joinPath(
-    MALLOY_EXTENSION_STATE.getExtensionUri(),
-    'dist',
-    `${module}.js`
-  );
+  const onDiskPath = Utils.joinPath(extensionUri, 'dist', `${module}.js`);
   const entrySrc = webview.asWebviewUri(onDiskPath);
   const cspSrc = webview.cspSource;
   const explorerCss = webview.asWebviewUri(
     vscode.Uri.joinPath(
-      MALLOY_EXTENSION_STATE.getExtensionUri(),
+      extensionUri,
       'node_modules',
       '@malloydata/malloy-explorer',
       'dist',
@@ -48,7 +44,7 @@ export function getWebviewHtml(
   );
   const monacoCss = webview.asWebviewUri(
     vscode.Uri.joinPath(
-      MALLOY_EXTENSION_STATE.getExtensionUri(),
+      extensionUri,
       'node_modules',
       'monaco-editor-core/min/vs/editor/editor.main.css'
     )

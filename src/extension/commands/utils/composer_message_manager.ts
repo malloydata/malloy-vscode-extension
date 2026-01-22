@@ -33,6 +33,7 @@ export class ComposerMessageManager
   implements vscode.Disposable
 {
   constructor(
+    private context: vscode.ExtensionContext,
     private worker: WorkerConnection,
     composerPanel: vscode.WebviewPanel,
     private documentMeta: DocumentMetadata,
@@ -207,6 +208,7 @@ export class ComposerMessageManager
           documentMeta: this.documentMeta,
         };
         const result = await runMalloyQuery(
+          this.context,
           this.worker,
           querySpec,
           id,
