@@ -21,6 +21,8 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import * as vscode from 'vscode';
+
 import {RunMalloyQueryResult} from '../../common/types/message_types';
 import {WorkerConnection} from '../worker_connection';
 import {
@@ -30,6 +32,7 @@ import {
 } from './utils/run_query_utils';
 
 export async function runQueryCommand(
+  context: vscode.ExtensionContext,
   worker: WorkerConnection,
   query: string,
   name?: string,
@@ -41,6 +44,7 @@ export async function runQueryCommand(
     : getActiveDocumentMetadata();
   if (documentMeta) {
     return runMalloyQueryWithProgress(
+      context,
       worker,
       {type: 'string', text: query, documentMeta},
       `${documentMeta.uri} ${name}`,

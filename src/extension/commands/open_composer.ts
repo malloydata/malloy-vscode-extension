@@ -10,7 +10,6 @@ import * as Malloy from '@malloydata/malloy-interfaces';
 import {getWebviewHtml} from '../webviews';
 import {getActiveDocumentMetadata} from './utils/run_query_utils';
 import {Utils} from 'vscode-uri';
-import {MALLOY_EXTENSION_STATE} from '../state';
 import {WorkerConnection} from '../worker_connection';
 import {ComposerMessageManager} from './utils/composer_message_manager';
 import {errorMessage} from '../../common/errors';
@@ -19,6 +18,7 @@ import {DocumentMetadata} from '../../common/types/query_spec';
 const icon = 'turtle.svg';
 
 export async function openComposer(
+  context: vscode.ExtensionContext,
   worker: WorkerConnection,
   sourceName?: string,
   viewName?: string,
@@ -43,13 +43,10 @@ export async function openComposer(
       {enableScripts: true, retainContextWhenHidden: true}
     );
 
-    composerPanel.iconPath = Utils.joinPath(
-      MALLOY_EXTENSION_STATE.getExtensionUri(),
-      'img',
-      icon
-    );
+    composerPanel.iconPath = Utils.joinPath(context.extensionUri, 'img', icon);
 
     const messageManager = new ComposerMessageManager(
+      context,
       worker,
       composerPanel,
       documentMeta,
@@ -59,6 +56,7 @@ export async function openComposer(
     );
 
     composerPanel.webview.html = getWebviewHtml(
+      context.extensionUri,
       'explorer_page',
       composerPanel.webview
     );

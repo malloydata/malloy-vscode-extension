@@ -58,6 +58,7 @@ export class EditConnectionPanel {
     this.onDidDispose = this.panel.onDidDispose;
 
     this.panel.webview.html = getWebviewHtml(
+      context.extensionUri,
       'connections_page',
       this.panel.webview
     );

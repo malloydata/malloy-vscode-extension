@@ -114,7 +114,7 @@ export function activateNotebookController(
   );
 
   context.subscriptions.push(
-    new MalloyController(worker, client, statusBarProvider)
+    new MalloyController(context, worker, client, statusBarProvider)
   );
 
   const relayEvent = (event: MessageEvent) => {
@@ -143,6 +143,7 @@ class MalloyController {
   private _executionOrder = 0;
 
   constructor(
+    private context: vscode.ExtensionContext,
     private worker: WorkerConnection,
     private client: BaseLanguageClient,
     private statusBarProvider: MalloyNotebookCellStatusBarItemProvider
@@ -194,6 +195,7 @@ class MalloyController {
 
       const documentMeta = getDocumentMetadata(document);
       const result = await runMalloyQuery(
+        this.context,
         this.worker,
         {type: 'file', index: -1, documentMeta},
         uri,

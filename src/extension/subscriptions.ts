@@ -79,8 +79,6 @@ export const setupSubscriptions = async (
   worker: WorkerConnection,
   client: BaseLanguageClient
 ) => {
-  MALLOY_EXTENSION_STATE.setExtensionUri(context.extensionUri);
-
   context.subscriptions.push(
     vscode.commands.registerCommand(
       'malloy.openComposer',
@@ -91,6 +89,7 @@ export const setupSubscriptions = async (
         documentMeta?: DocumentMetadata
       ) => {
         return openComposer(
+          context,
           worker,
           sourceName,
           viewName,
@@ -105,7 +104,7 @@ export const setupSubscriptions = async (
   context.subscriptions.push(
     vscode.commands.registerCommand(
       'malloy.runQueryFile',
-      (queryIndex?: number) => runQueryFileCommand(worker, queryIndex)
+      (queryIndex?: number) => runQueryFileCommand(context, worker, queryIndex)
     )
   );
 
@@ -114,14 +113,14 @@ export const setupSubscriptions = async (
     vscode.commands.registerCommand(
       'malloy.runQuery',
       (query: string, name?: string, defaultTab?: string) =>
-        runQueryCommand(worker, query, name, defaultTab)
+        runQueryCommand(context, worker, query, name, defaultTab)
     )
   );
 
   // Run named query
   context.subscriptions.push(
     vscode.commands.registerCommand('malloy.runNamedQuery', (name: string) =>
-      runNamedQuery(worker, name)
+      runNamedQuery(context, worker, name)
     )
   );
 
@@ -135,14 +134,14 @@ export const setupSubscriptions = async (
   // Show Schema (whole file)
   context.subscriptions.push(
     vscode.commands.registerCommand('malloy.showSchemaFile', (uri: string) =>
-      showSchemaFileCommand(worker, uri)
+      showSchemaFileCommand(context, worker, uri)
     )
   );
 
   // Show Schema (source)
   context.subscriptions.push(
     vscode.commands.registerCommand('malloy.showSchema', (explore: string) =>
-      showSchemaCommand(worker, explore)
+      showSchemaCommand(context, worker, explore)
     )
   );
 
@@ -150,7 +149,7 @@ export const setupSubscriptions = async (
   context.subscriptions.push(
     vscode.commands.registerCommand(
       'malloy.showSQLFile',
-      (queryIndex?: number) => showSQLFileCommand(worker, queryIndex)
+      (queryIndex?: number) => showSQLFileCommand(context, worker, queryIndex)
     )
   );
 
@@ -158,7 +157,8 @@ export const setupSubscriptions = async (
   context.subscriptions.push(
     vscode.commands.registerCommand(
       'malloy.showSQL',
-      (query: string, name?: string) => showSQLCommand(worker, query, name)
+      (query: string, name?: string) =>
+        showSQLCommand(context, worker, query, name)
     )
   );
 
@@ -166,7 +166,7 @@ export const setupSubscriptions = async (
   context.subscriptions.push(
     vscode.commands.registerCommand(
       'malloy.showSQLNamedQuery',
-      (name: string) => showSQLNamedQueryCommand(worker, name)
+      (name: string) => showSQLNamedQueryCommand(context, worker, name)
     )
   );
 
@@ -252,7 +252,6 @@ export const setupSubscriptions = async (
     clientId = getNewClientId();
     noAwait(context.globalState.update('malloy_client_id', clientId));
   }
-  MALLOY_EXTENSION_STATE.setClientId(clientId);
 
   // Connection Defaults
   context.globalState.setKeysForSync(['malloy_created_default']);

@@ -5,6 +5,8 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+import * as vscode from 'vscode';
+
 import {WorkerConnection} from '../worker_connection';
 import {
   getActiveDocumentMetadata,
@@ -13,12 +15,14 @@ import {
 import {RunMalloyQueryResult} from '../../common/types/message_types';
 
 export async function showSchemaCommand(
+  context: vscode.ExtensionContext,
   worker: WorkerConnection,
   exploreName: string
 ): Promise<RunMalloyQueryResult | undefined> {
   const documentMeta = getActiveDocumentMetadata();
   if (documentMeta) {
     return runMalloyQueryWithProgress(
+      context,
       worker,
       {type: 'file', exploreName, documentMeta},
       `${documentMeta.uri} ${exploreName}`,

@@ -21,6 +21,8 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import * as vscode from 'vscode';
+
 import {WorkerConnection} from '../worker_connection';
 import {
   getActiveDocumentMetadata,
@@ -30,6 +32,7 @@ import {
 import {RunMalloyQueryResult} from '../../common/types/message_types';
 
 export async function showSchemaFileCommand(
+  context: vscode.ExtensionContext,
   worker: WorkerConnection,
   uri?: string
 ): Promise<RunMalloyQueryResult | undefined> {
@@ -38,6 +41,7 @@ export async function showSchemaFileCommand(
     : getActiveDocumentMetadata();
   if (documentMeta) {
     return runMalloyQueryWithProgress(
+      context,
       worker,
       {type: 'file', index: -1, documentMeta},
       documentMeta.uri,

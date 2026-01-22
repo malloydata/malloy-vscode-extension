@@ -25,7 +25,7 @@ import * as vscode from 'vscode';
 import {getWebviewHtml} from '../webviews';
 
 export class HelpViewProvider implements vscode.WebviewViewProvider {
-  constructor(private readonly _extensionUri: vscode.Uri) {}
+  constructor(private readonly extensionUri: vscode.Uri) {}
 
   public resolveWebviewView(
     webviewView: vscode.WebviewView,
@@ -36,6 +36,10 @@ export class HelpViewProvider implements vscode.WebviewViewProvider {
       enableScripts: true,
     };
 
-    webviewView.webview.html = getWebviewHtml('help_page', webviewView.webview);
+    webviewView.webview.html = getWebviewHtml(
+      this.extensionUri,
+      'help_page',
+      webviewView.webview
+    );
   }
 }
