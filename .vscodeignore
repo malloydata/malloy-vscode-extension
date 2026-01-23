@@ -11,7 +11,6 @@ node_modules
 !node_modules/@malloydata/syntax-highlight/grammars
 !node_modules/@malloydata/malloy-explorer/dist/malloy-explorer.css
 !node_modules/monaco-editor-core/min/vs/editor/editor.main.css
-!node_modules/snowflake-sdk
 out/
 src/
 scripts/
