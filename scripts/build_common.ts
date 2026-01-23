@@ -135,13 +135,13 @@ export async function doBuild(
   buildOptions['node'] = {
     ...commonNodeOptions,
     entryPoints: ['./src/extension/node/extension_node.ts'],
-    external: ['vscode', 'pg-native', '@duckdb/node-bindings'],
+    external: ['vscode', 'pg-native', '@duckdb/node-bindings', 'snowflake-sdk'],
   };
 
   buildOptions['nodeServer'] = {
     ...commonNodeOptions,
     entryPoints: ['./src/server/node/server_node.ts'],
-    external: ['pg-native', '@duckdb/node-bindings'],
+    external: ['pg-native', '@duckdb/node-bindings', 'snowflake-sdk'],
   };
 
   nodeWebviewPlugins = [];
