@@ -23,7 +23,7 @@
 
 import * as React from 'react';
 
-import {Explore, Field, NamedQuery, QueryField} from '@malloydata/malloy';
+import {Explore, Field, NamedQueryDef, QueryField} from '@malloydata/malloy';
 import {
   exploreSubtype,
   fieldType,
@@ -225,9 +225,9 @@ function FieldItem({field, path, onFieldClick}: FieldItemProps) {
 }
 
 interface QueryItemProps {
-  query: NamedQuery | QueryField;
+  query: NamedQueryDef | QueryField;
   path: string;
-  onQueryClick?: (query: NamedQuery | QueryField) => void;
+  onQueryClick?: (query: NamedQueryDef | QueryField) => void;
 }
 
 const QueryItem = ({query, path, onQueryClick}: QueryItemProps) => {
@@ -272,7 +272,7 @@ export interface StructItemProps {
   explore: Explore;
   path: string;
   onFieldClick?: (field: Field) => void;
-  onQueryClick?: (query: NamedQuery | QueryField) => void;
+  onQueryClick?: (query: NamedQueryDef | QueryField) => void;
   onPreviewClick?: (explore: Explore) => void;
   startHidden: boolean;
 }
@@ -401,9 +401,9 @@ export function StructItem({
 
 export interface SchemaRendererProps {
   explores: Explore[];
-  queries: NamedQuery[];
+  queries: NamedQueryDef[];
   onFieldClick?: (field: Field) => void;
-  onQueryClick?: (query: NamedQuery | QueryField) => void;
+  onQueryClick?: (query: NamedQueryDef | QueryField) => void;
   onPreviewClick?: (explore: Explore) => void;
   defaultShow: boolean;
 }

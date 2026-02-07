@@ -23,7 +23,7 @@
 
 import {
   ModelDef,
-  NamedQuery,
+  NamedQueryDef,
   ResultJSON,
   SerializedExplore,
 } from '@malloydata/malloy';
@@ -299,7 +299,7 @@ export const downloadProgress = new ProgressType<QueryDownloadMessage>();
 
 export interface FetchModelMessage {
   explores: SerializedExplore[];
-  queries: NamedQuery[];
+  queries: NamedQueryDef[];
 }
 
 /**

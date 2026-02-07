@@ -87,6 +87,7 @@ const fakeMalloyResult = (
       contents: {},
       queryList: [],
       dependencies: {},
+      sourceRegistry: {},
     }
   );
 };

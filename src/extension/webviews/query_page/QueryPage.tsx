@@ -12,7 +12,7 @@ import {
   API,
   Explore,
   Field,
-  NamedQuery,
+  NamedQueryDef,
   QueryField,
   Result,
 } from '@malloydata/malloy';
@@ -328,7 +328,7 @@ export function QueryPage({vscode}: QueryPageProps) {
     }
   };
 
-  const onQueryClick = (query: NamedQuery | QueryField) => {
+  const onQueryClick = (query: NamedQueryDef | QueryField) => {
     if ('parentExplore' in query) {
       const status = QueryRunStatus.RunCommand;
       const command = 'malloy.runQuery';
