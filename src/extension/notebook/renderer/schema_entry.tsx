@@ -23,7 +23,7 @@
 
 import * as React from 'react';
 import {createRoot} from 'react-dom/client';
-import {Explore, Field, NamedQuery, QueryField} from '@malloydata/malloy';
+import {Explore, Field, NamedQueryDef, QueryField} from '@malloydata/malloy';
 import {ActivationFunction} from 'vscode-notebook-renderer';
 import {FetchModelMessage} from '../../../common/types/message_types';
 import {fieldType} from '../../../common/schema';
@@ -88,7 +88,7 @@ export function SchemaRendererWrapper({
     }
   };
 
-  const onQueryClick = (query: NamedQuery | QueryField) => {
+  const onQueryClick = (query: NamedQueryDef | QueryField) => {
     if ('parentExplore' in query) {
       const {fieldPath} = query;
       const topLevelExplore = fieldPath.shift();
