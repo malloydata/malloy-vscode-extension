@@ -27,6 +27,11 @@ import {
 } from '../types/connection_manager_types';
 import {TestableConnection} from '@malloydata/malloy';
 
+export interface MalloyConfigResult {
+  configText: string;
+  configDir: string;
+}
+
 export interface ConnectionFactory {
   reset(): void;
 
@@ -38,4 +43,9 @@ export interface ConnectionFactory {
   getWorkingDirectory(url: URL): string;
 
   addDefaults(configs: ConnectionConfig[]): ConnectionConfig[];
+
+  findMalloyConfig?(
+    fileURL: URL,
+    workspaceRoots: string[]
+  ): MalloyConfigResult | undefined;
 }

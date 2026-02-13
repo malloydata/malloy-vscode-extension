@@ -22,7 +22,11 @@
  */
 
 import {TestableConnection} from '@malloydata/malloy';
-import {ConnectionFactory} from '../../../common/connections/types';
+import '@malloydata/malloy-connections';
+import {
+  ConnectionFactory,
+  MalloyConfigResult,
+} from '../../../common/connections/types';
 import {
   ConfigOptions,
   ConnectionBackend,
@@ -36,6 +40,8 @@ import {createSnowflakeConnection} from './snowflake_connection';
 import {createTrinoPrestoConnection} from './trino_presto_connection';
 import {createPublisherConnection} from './publisher_connection';
 
+import * as fs from 'fs';
+import * as path from 'path';
 import {fileURLToPath} from 'url';
 import {GenericConnection} from '../../../common/types/worker_message_types';
 import {createMySQLConnection} from './mysql_connection';
@@ -210,5 +216,36 @@ export class NodeConnectionFactory implements ConnectionFactory {
     }
 
     return configs;
+  }
+
+  findMalloyConfig(
+    fileURL: URL,
+    workspaceRoots: string[]
+  ): MalloyConfigResult | undefined {
+    let fileDir: string;
+    try {
+      const filePath = fileURLToPath(fileURL);
+      fileDir = path.dirname(filePath);
+    } catch {
+      return undefined;
+    }
+
+    // Find the workspace root that contains this file, or fall back
+    // to the file's own directory if there are no workspace roots.
+    const normalizedRoots = workspaceRoots.map(r => path.resolve(r));
+    const normalizedFileDir = path.resolve(fileDir);
+    const root =
+      normalizedRoots.find(
+        r =>
+          normalizedFileDir.startsWith(r + path.sep) || normalizedFileDir === r
+      ) ?? normalizedFileDir;
+
+    const configPath = path.join(root, 'malloy-config.json');
+    try {
+      const configText = fs.readFileSync(configPath, 'utf-8');
+      return {configText, configDir: root};
+    } catch {
+      return undefined;
+    }
   }
 }
