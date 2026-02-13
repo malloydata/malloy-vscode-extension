@@ -34,6 +34,7 @@ import {
   DidChangeConfigurationParams,
 } from 'vscode-languageserver';
 import debounce from 'lodash/debounce';
+import {URI} from 'vscode-uri';
 
 import {TextDocument} from 'vscode-languageserver-textdocument';
 import {
@@ -49,14 +50,14 @@ import {
 import {getHover} from './hover/hover';
 import {getMalloyDefinitionReference} from './definitions/definitions';
 import {TranslateCache} from './translate_cache';
-import {ConnectionManager} from '../common/types/connection_manager_types';
+import {CommonConnectionManager} from '../common/connection_manager';
 import {findMalloyLensesAt} from './lenses/lenses';
 import {prettyLogUri} from '../common/log';
 import {getMalloyCodeAction} from './code_actions/code_actions';
 
 export const initServer = (
   connection: Connection,
-  connectionManager: ConnectionManager,
+  connectionManager: CommonConnectionManager,
   onDidChangeConfiguration?: (params: DidChangeConfigurationParams) => void
 ) => {
   const documents = new TextDocuments(TextDocument);
@@ -89,6 +90,12 @@ export const initServer = (
           supported: true,
         },
       };
+    }
+
+    if (params.workspaceFolders) {
+      connectionManager.setWorkspaceRoots(
+        params.workspaceFolders.map(f => URI.parse(f.uri).fsPath)
+      );
     }
 
     return result;

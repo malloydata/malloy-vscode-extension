@@ -25,6 +25,8 @@ import {
   Connection,
   LookupConnection,
   TestableConnection,
+  readConnectionsConfig,
+  createConnectionsFromConfig,
 } from '@malloydata/malloy';
 import {
   ConfigOptions,
@@ -65,8 +67,23 @@ export class CommonConnectionManager {
   configMap: Record<string | symbol, ConnectionConfig> = {};
   connectionCache: Record<string | symbol, TestableConnection> = {};
   currentRowLimit = 50;
+  workspaceRoots: string[] = [];
+
+  // Cache: configDir -> parsed lookup + the configText it was parsed from
+  private configLookups: Record<
+    string,
+    {lookup: LookupConnection<Connection>; configText: string}
+  > = {};
 
   constructor(private connectionFactory: ConnectionFactory) {}
+
+  public setWorkspaceRoots(roots: string[]): void {
+    this.workspaceRoots = roots;
+  }
+
+  public clearConfigCaches(): void {
+    this.configLookups = {};
+  }
 
   public async connectionForConfig(
     connectionConfig: ConnectionConfig,
@@ -78,7 +95,54 @@ export class CommonConnectionManager {
     );
   }
 
+  private resolveConfigForFile(
+    fileURL: URL
+  ): LookupConnection<Connection> | undefined {
+    if (!this.connectionFactory.findMalloyConfig) {
+      return undefined;
+    }
+
+    const result = this.connectionFactory.findMalloyConfig(
+      fileURL,
+      this.workspaceRoots
+    );
+
+    if (!result) {
+      return undefined;
+    }
+
+    // Return cached lookup if the config text hasn't changed
+    const cached = this.configLookups[result.configDir];
+    if (cached && cached.configText === result.configText) {
+      return cached.lookup;
+    }
+
+    // Parse and create connections
+    try {
+      const config = readConnectionsConfig(result.configText);
+      const lookup = createConnectionsFromConfig(config);
+      this.configLookups[result.configDir] = {
+        lookup,
+        configText: result.configText,
+      };
+      return lookup;
+    } catch (error) {
+      console.warn(
+        `Failed to parse malloy-config.json in ${result.configDir}:`,
+        error
+      );
+      return undefined;
+    }
+  }
+
   public getConnectionLookup(fileURL: URL): LookupConnection<Connection> {
+    // Try malloy-config.json first
+    const configLookup = this.resolveConfigForFile(fileURL);
+    if (configLookup) {
+      return configLookup;
+    }
+
+    // Fall back to VS Code settings
     const workingDirectory =
       this.connectionFactory.getWorkingDirectory(fileURL);
 
@@ -114,6 +178,7 @@ export class CommonConnectionManager {
   private buildConfigMap(): void {
     this.connectionLookups = {};
     this.connectionCache = {};
+    this.clearConfigCaches();
 
     const configs = this.connectionFactory.addDefaults(this.configList);
     configs.forEach(config => {
