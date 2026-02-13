@@ -36,7 +36,10 @@ import {
 import debounce from 'lodash/debounce';
 
 import {TextDocument} from 'vscode-languageserver-textdocument';
-import {getMalloyDiagnostics} from './diagnostics';
+import {
+  getMalloyDiagnostics,
+  aggregateNotebookDiagnostics,
+} from './diagnostics';
 import {getMalloySymbols} from './symbols';
 import {getMalloyLenses} from './lenses';
 import {
@@ -121,6 +124,25 @@ export const initServer = (
             version: documents.get(uri)?.version,
           });
         }
+      }
+
+      // Also publish notebook cell diagnostics to the notebook file URI
+      // This enables external tools (like Cursor) that query by file URI to see them
+      try {
+        const notebookDiagnostics = await aggregateNotebookDiagnostics(
+          diagnostics,
+          translateCache
+        );
+        for (const notebookUri in notebookDiagnostics) {
+          await connection.sendDiagnostics({
+            uri: notebookUri,
+            diagnostics: notebookDiagnostics[notebookUri],
+          });
+        }
+      } catch (error) {
+        connection.console.error(
+          `Failed to aggregate notebook diagnostics: ${error}`
+        );
       }
 
       // Trigger diagnostics for all documents we know that import this one,

@@ -56,6 +56,8 @@ export interface Cell {
   text: string;
   languageId: string;
   metadata?: CellMetadata;
+  /** Starting line of this cell's content in the notebook file (0-indexed) */
+  lineOffset: number;
 }
 export interface CellData {
   baseUri: string;

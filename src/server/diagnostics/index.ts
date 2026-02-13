@@ -21,4 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-export {getMalloyDiagnostics} from './diagnostics';
+export {
+  getMalloyDiagnostics,
+  aggregateNotebookDiagnostics,
+} from './diagnostics';

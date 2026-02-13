@@ -132,8 +132,14 @@ async function setupLanguageServer(
       {language: 'malloy'},
       {language: 'malloy-sql'},
       // Notebook cells
-      {language: 'malloy', notebook: {notebookType: 'malloy-notebook', scheme: '*'}},
-      {language: 'malloy-sql', notebook: {notebookType: 'malloy-notebook', scheme: '*'}},
+      {
+        language: 'malloy',
+        notebook: {notebookType: 'malloy-notebook', scheme: '*'},
+      },
+      {
+        language: 'malloy-sql',
+        notebook: {notebookType: 'malloy-notebook', scheme: '*'},
+      },
     ],
     synchronize: {
       configurationSection: ['malloy', 'cloudcode'],
