@@ -78,9 +78,18 @@ async function setupLanguageServer(
   context: vscode.ExtensionContext
 ): Promise<void> {
   const documentSelector = [
+    // Regular files
     {language: 'malloy'},
     {language: 'malloy-sql'},
-    {language: 'malloy-notebook'},
+    // Notebook cells
+    {
+      language: 'malloy',
+      notebook: {notebookType: 'malloy-notebook', scheme: '*'},
+    },
+    {
+      language: 'malloy-sql',
+      notebook: {notebookType: 'malloy-notebook', scheme: '*'},
+    },
   ];
 
   // Options to control the language client

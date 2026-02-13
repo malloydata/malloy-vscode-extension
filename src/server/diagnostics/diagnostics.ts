@@ -113,3 +113,74 @@ export async function getMalloyDiagnostics(
 
   return byURI;
 }
+
+/**
+ * Aggregates notebook cell diagnostics to the notebook file URI.
+ * This allows external tools (like Cursor) that query by file URI
+ * to see diagnostics for notebook cells.
+ *
+ * @param diagnostics Diagnostics keyed by URI (may include cell URIs)
+ * @param translateCache Cache for fetching cell data with line offsets
+ * @returns Diagnostics aggregated by notebook file URI with adjusted line numbers
+ */
+export async function aggregateNotebookDiagnostics(
+  diagnostics: {[uri: string]: Diagnostic[]},
+  translateCache: TranslateCache
+): Promise<{[notebookUri: string]: Diagnostic[]}> {
+  const result: {[uri: string]: Diagnostic[]} = {};
+
+  for (const [uri, diags] of Object.entries(diagnostics)) {
+    let url: URL;
+    try {
+      url = new URL(uri);
+    } catch {
+      continue; // Skip invalid URIs
+    }
+
+    // Only process notebook cell URIs
+    if (url.protocol !== 'vscode-notebook-cell:') continue;
+
+    // Convert cell URI to file URI (same path, file: scheme)
+    const notebookUri = `file://${url.pathname}`;
+
+    // Always initialize the notebook entry (even if empty) to clear old diagnostics
+    if (!result[notebookUri]) {
+      result[notebookUri] = [];
+    }
+
+    // Skip further processing if no diagnostics for this cell
+    if (diags.length === 0) continue;
+
+    try {
+      // Get cell data to find line offset
+      const cellData = await translateCache.getCellData(url);
+      const cell = cellData.cells.find(c => c.uri === uri);
+      const lineOffset = cell?.lineOffset ?? 0;
+
+      // Map diagnostics with adjusted line numbers
+      const mappedDiags = diags.map(d => ({
+        ...d,
+        range: {
+          start: {
+            line: d.range.start.line + lineOffset,
+            character: d.range.start.character,
+          },
+          end: {
+            line: d.range.end.line + lineOffset,
+            character: d.range.end.character,
+          },
+        },
+      }));
+
+      // Aggregate diagnostics for this notebook
+      result[notebookUri].push(...mappedDiags);
+    } catch (error) {
+      console.error(
+        `Failed to aggregate diagnostics for notebook cell ${uri}:`,
+        error
+      );
+    }
+  }
+
+  return result;
+}

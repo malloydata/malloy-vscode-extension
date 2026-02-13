@@ -127,7 +127,20 @@ async function setupLanguageServer(
   };
 
   const clientOptions: LanguageClientOptions = {
-    documentSelector: [{language: 'malloy'}, {language: 'malloy-sql'}],
+    documentSelector: [
+      // Regular files
+      {language: 'malloy'},
+      {language: 'malloy-sql'},
+      // Notebook cells
+      {
+        language: 'malloy',
+        notebook: {notebookType: 'malloy-notebook', scheme: '*'},
+      },
+      {
+        language: 'malloy-sql',
+        notebook: {notebookType: 'malloy-notebook', scheme: '*'},
+      },
+    ],
     synchronize: {
       configurationSection: ['malloy', 'cloudcode'],
     },
