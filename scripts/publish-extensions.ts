@@ -51,7 +51,9 @@ async function retry<T>(
         throw error;
       }
       console.log(
-        `Attempt ${attempt}/${maxAttempts} failed, retrying in ${delayMs / 1000}s...`,
+        `Attempt ${attempt}/${maxAttempts} failed, retrying in ${
+          delayMs / 1000
+        }s...`,
         error
       );
       await new Promise(resolve => setTimeout(resolve, delayMs));
