@@ -42,14 +42,10 @@ async function retry<T>(
   maxAttempts = 3,
   delayMs = 10000
 ): Promise<T> {
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+  for (let attempt = 1; attempt < maxAttempts; attempt++) {
     try {
-      await fn();
-      return;
+      return await fn();
     } catch (error) {
-      if (attempt === maxAttempts) {
-        throw error;
-      }
       console.log(
         `Attempt ${attempt}/${maxAttempts} failed, retrying in ${
           delayMs / 1000
@@ -59,6 +55,7 @@ async function retry<T>(
       await new Promise(resolve => setTimeout(resolve, delayMs));
     }
   }
+  return await fn();
 }
 
 async function doPublish(version: string) {
