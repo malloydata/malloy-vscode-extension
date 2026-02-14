@@ -37,6 +37,30 @@ function getVersionBits(): Array<number> {
     .map(Number);
 }
 
+async function retry<T>(
+  fn: () => Promise<T>,
+  maxAttempts = 3,
+  delayMs = 10000
+): Promise<T> {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      await fn();
+      return;
+    } catch (error) {
+      if (attempt === maxAttempts) {
+        throw error;
+      }
+      console.log(
+        `Attempt ${attempt}/${maxAttempts} failed, retrying in ${
+          delayMs / 1000
+        }s...`,
+        error
+      );
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+  }
+}
+
 async function doPublish(version: string) {
   let preRelease = false;
   const versionBits = getVersionBits();
@@ -77,14 +101,16 @@ async function doPublish(version: string) {
   for (const target of Targets) {
     const packagePath = await doPackage(target, versionCode, preRelease);
 
-    await publishVSIX(packagePath, {
-      githubBranch: 'main',
-      preRelease: preRelease,
-      useYarn: false,
-      pat: process.env['VSCE_PAT'],
-    });
+    await retry(() =>
+      publishVSIX(packagePath, {
+        githubBranch: 'main',
+        preRelease: preRelease,
+        useYarn: false,
+        pat: process.env['VSCE_PAT'],
+      })
+    );
 
-    await publishOvsx(packagePath, target, preRelease);
+    await retry(() => publishOvsx(packagePath, target, preRelease));
   }
 }
 
