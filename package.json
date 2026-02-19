@@ -201,11 +201,6 @@
           "command": "malloy.refreshSchema",
           "when": "view == malloySchema",
           "group": "navigation"
-        },
-        {
-          "command": "malloy.editConnections",
-          "when": "view == malloyConnections",
-          "group": "navigation"
         }
       ],
       "view/item/context": [
