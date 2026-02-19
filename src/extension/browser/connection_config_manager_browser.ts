@@ -21,14 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {ConnectionBackend} from '../../common/types/connection_manager_types';
 import {ConnectionConfigManagerBase} from '../connection_config_manager';
 
-class ConnectionConfigManagerBrowser extends ConnectionConfigManagerBase {
-  public getAvailableBackends(): ConnectionBackend[] {
-    const available = [ConnectionBackend.DuckDB];
-    return available;
-  }
-}
-
-export const connectionConfigManager = new ConnectionConfigManagerBrowser();
+export const connectionConfigManager = new ConnectionConfigManagerBase();

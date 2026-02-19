@@ -21,86 +21,11 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {TestableConnection} from '@malloydata/malloy';
 import {ConnectionFactory} from '../../../common/connections/types';
-import {
-  ConfigOptions,
-  ConnectionBackend,
-  ConnectionConfig,
-} from '../../../common/types/connection_manager_types';
-import {createDuckDbWasmConnection} from './duckdb_wasm_connection';
-import {DuckDBWASMConnection} from '@malloydata/db-duckdb/wasm';
-import {GenericConnection} from '../../../common/types/worker_message_types';
-import {errorMessage} from '../../../common/errors';
-
-export type FetchCallback = (uri: string) => Promise<Uint8Array>;
 
 export class WebConnectionFactory implements ConnectionFactory {
-  connectionCache: Record<string, TestableConnection> = {};
-
-  constructor(private client: GenericConnection) {}
-
-  async reset() {
-    await Promise.all(
-      Object.values(this.connectionCache).map(connection => connection.close())
-    );
-    this.connectionCache = {};
-  }
-
-  getAvailableBackends(): ConnectionBackend[] {
-    return [ConnectionBackend.DuckDB];
-  }
-
-  private fetchBinaryFile = async (uri: string): Promise<Uint8Array> => {
-    try {
-      console.info(`fetchBinaryFile requesting ${uri}`);
-      return await this.client.sendRequest('malloy/fetchBinaryFile', {uri});
-    } catch (error) {
-      console.error(errorMessage(error));
-      throw new Error(
-        `fetchBinaryFile: unable to load '${uri}': ${errorMessage(error)}`
-      );
-    }
-  };
-
-  async getConnectionForConfig(
-    connectionConfig: ConnectionConfig,
-    configOptions: ConfigOptions = {}
-  ): Promise<TestableConnection> {
-    const {useCache, workingDirectory} = configOptions;
-    const cacheKey = `${connectionConfig.name}::${workingDirectory}`;
-    let connection: TestableConnection | undefined;
-    if (useCache && this.connectionCache[cacheKey]) {
-      return this.connectionCache[cacheKey];
-    }
-    switch (connectionConfig.backend) {
-      case ConnectionBackend.DuckDB:
-        {
-          const remoteTableCallback = async (tableName: string) => {
-            const url = new URL(tableName, workingDirectory);
-            return this.fetchBinaryFile(url.toString());
-          };
-          const duckDBConnection: DuckDBWASMConnection =
-            await createDuckDbWasmConnection(
-              this.client,
-              connectionConfig,
-              configOptions
-            );
-          duckDBConnection.registerRemoteTableCallback(remoteTableCallback);
-          connection = duckDBConnection;
-        }
-        break;
-    }
-    if (useCache && connection) {
-      this.connectionCache[cacheKey] = connection;
-    }
-    if (!connection) {
-      throw new Error(
-        `Unsupported connection back end "${connectionConfig.backend}"`
-      );
-    }
-
-    return connection;
+  reset() {
+    // No-op: connections are now created fresh per-operation via the registry.
   }
 
   getWorkingDirectory(url: URL): string {
@@ -110,17 +35,5 @@ export class WebConnectionFactory implements ConnectionFactory {
     } catch {
       return url.toString();
     }
-  }
-
-  addDefaults(configs: ConnectionConfig[]): ConnectionConfig[] {
-    // Create a default duckdb connection if one isn't configured
-    if (!configs.find(config => config.name === 'duckdb')) {
-      configs.push({
-        name: 'duckdb',
-        backend: ConnectionBackend.DuckDB,
-        id: 'duckdb-default',
-      });
-    }
-    return configs;
   }
 }

@@ -22,55 +22,37 @@
  */
 
 import {
-  ConnectionBackend,
-  ConnectionConfig,
   ConnectionConfigManager,
+  UnresolvedConnectionConfigEntry,
 } from '../common/types/connection_manager_types';
 import {noAwait} from '../util/no_await';
 import {getMalloyConfig} from './utils/config';
 
-const getConnectionsConfig = (): ConnectionConfig[] => {
+const getConnectionsSettingValue = ():
+  | Record<string, UnresolvedConnectionConfigEntry>
+  | undefined => {
   const malloyConfig = getMalloyConfig();
-  const connectionConfig = malloyConfig.get<ConnectionConfig[]>('connections');
-  console.info('Using connection config', connectionConfig);
-  return connectionConfig || [];
+  const connectionMap = malloyConfig.get('connectionMap');
+  if (connectionMap && typeof connectionMap === 'object') {
+    return connectionMap as Record<string, UnresolvedConnectionConfigEntry>;
+  }
+  return undefined;
 };
 
-export abstract class ConnectionConfigManagerBase
-  implements ConnectionConfigManager
-{
-  private configList: ConnectionConfig[] = [];
+export class ConnectionConfigManagerBase implements ConnectionConfigManager {
+  private config: Record<string, UnresolvedConnectionConfigEntry> | undefined;
 
   constructor() {
     noAwait(this.onConfigurationUpdated());
   }
 
-  public abstract getAvailableBackends(): ConnectionBackend[];
-
-  public getAllConnectionConfigs() {
-    return this.configList;
-  }
-
-  public getConnectionConfigs() {
-    return this.filterUnavailableConnectionBackends(this.configList);
-  }
-
-  protected filterUnavailableConnectionBackends(
-    connectionsConfig: ConnectionConfig[]
-  ): ConnectionConfig[] {
-    const availableBackends = this.getAvailableBackends();
-    return connectionsConfig.filter(config =>
-      availableBackends.includes(config.backend)
-    );
-  }
-
-  public setConnectionsConfig(connectionsConfig: ConnectionConfig[]): void {
-    // Force existing connections to be regenerated
-    console.info('Using connection config', connectionsConfig);
-    this.configList = connectionsConfig;
+  public getConnectionsConfig():
+    | Record<string, UnresolvedConnectionConfigEntry>
+    | undefined {
+    return this.config;
   }
 
   async onConfigurationUpdated(): Promise<void> {
-    return this.setConnectionsConfig(getConnectionsConfig());
+    this.config = getConnectionsSettingValue();
   }
 }

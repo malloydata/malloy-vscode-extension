@@ -22,23 +22,31 @@
  */
 
 export const errorMessage = (error: unknown): string => {
-  let message = 'Something went wrong';
+  let message = '';
   if (error instanceof Error) {
     message = error.message;
   } else if (typeof error === 'string') {
     message = error;
-    // Handle case when its an instance of Error but it is not detecting it as such.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } else if ((error as any).message) {
+  } else if (error && typeof error === 'object') {
+    // Handle case when its an instance of Error but it is not detecting it
+    // as such, or LSP ResponseError objects with data/message fields.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    message = (error as any).message;
-  } else {
-    console.error(error);
+    const obj = error as any;
+    if (typeof obj.message === 'string' && obj.message) {
+      message = obj.message;
+    } else if (typeof obj.data === 'string' && obj.data) {
+      message = obj.data;
+    } else {
+      try {
+        message = JSON.stringify(error);
+      } catch {
+        // ignore
+      }
+    }
   }
-  // In cases where the error had a blank message, we still want to communicate
-  // a string, because a blank error message might be wrongly interpreted as
-  // not being an error at all.
   if (!message) {
+    console.error('Unknown error object:', error);
     message = 'Something went wrong';
   }
   return message;

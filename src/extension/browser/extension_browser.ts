@@ -30,11 +30,13 @@ import {
 
 import {setupFileMessaging, setupSubscriptions} from '../subscriptions';
 import {connectionConfigManager} from './connection_config_manager_browser';
+import {ConnectionsProvider} from '../tree_views/connections_view';
 import {
-  ConnectionItem,
-  ConnectionsProvider,
-} from '../tree_views/connections_view';
-import {editConnectionsCommand} from './commands/edit_connections';
+  editConnectionsCommand,
+  createConnectionCommand,
+  viewConfigConnectionCommand,
+} from './commands/edit_connections';
+import {ConnectionConfigEntry} from '@malloydata/malloy';
 import {fileHandler} from '../utils/files';
 import {WorkerConnectionBrowser} from './worker_connection_browser';
 let client: LanguageClient;
@@ -49,6 +51,7 @@ export async function activate(context: vscode.ExtensionContext) {
     connectionConfigManager
   );
   context.subscriptions.push(
+    connectionsTree,
     vscode.window.registerTreeDataProvider('malloyConnections', connectionsTree)
   );
   context.subscriptions.push(
@@ -62,10 +65,48 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand(
       'malloy.editConnections',
-      (item?: ConnectionItem) =>
-        editConnectionsCommand(context, worker, item?.id)
+      (connectionNameOrItem?: unknown) => {
+        void editConnectionsCommand(context, worker, connectionNameOrItem);
+      }
     )
   );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      'malloy.viewConfigConnection',
+      (name: string, entry: unknown, configFileUri: string) => {
+        viewConfigConnectionCommand(
+          context,
+          worker,
+          name,
+          entry as ConnectionConfigEntry,
+          configFileUri
+        );
+      }
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      'malloy.createConnection',
+      (typeName: string) => {
+        createConnectionCommand(context, worker, typeName);
+      }
+    )
+  );
+
+  // Fetch registered connection types from the worker and inject into tree view
+  worker
+    .sendRequest('malloy/getConnectionTypeInfo', {})
+    .then(typeInfo => {
+      connectionsTree.setRegisteredTypes(
+        typeInfo.registeredTypes,
+        typeInfo.typeDisplayNames
+      );
+    })
+    .catch(err => {
+      console.warn('Failed to fetch connection type info:', err);
+    });
 }
 
 export async function deactivate(): Promise<void | undefined> {

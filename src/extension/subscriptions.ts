@@ -65,7 +65,7 @@ import {WorkerConnection} from './worker_connection';
 import {runQueryAtCursorCommand} from './commands/run_query_at_cursor';
 import {showSchemaFileCommand} from './commands/show_schema_file';
 import {noAwait} from '../util/no_await';
-import {createDefaultConnections} from './commands/create_default_connections';
+
 import {openComposer} from './commands/open_composer';
 import {showSchemaCommand} from './commands/show_schema';
 import {DocumentMetadata} from '../common/types/query_spec';
@@ -252,19 +252,6 @@ export const setupSubscriptions = async (
     clientId = getNewClientId();
     noAwait(context.globalState.update('malloy_client_id', clientId));
   }
-
-  // Connection Defaults
-  context.globalState.setKeysForSync(['malloy_created_default']);
-  context.subscriptions.push(
-    vscode.commands.registerCommand(
-      'malloy.createDefaultConnections',
-      (force: boolean) => createDefaultConnections(context, force)
-    )
-  );
-  await vscode.commands.executeCommand(
-    'malloy.createDefaultConnections',
-    false
-  );
 
   context.subscriptions.push(
     vscode.workspace.onDidOpenTextDocument(async e => {

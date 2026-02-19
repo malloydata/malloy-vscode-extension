@@ -174,13 +174,19 @@
         "icon": "$(refresh)"
       },
       {
-        "command": "malloy.createDefaultConnections",
-        "title": "Create Default Connections",
+        "command": "malloy.editConnections",
+        "title": "Edit Connections",
+        "category": "Malloy",
+        "icon": "$(add)"
+      },
+      {
+        "command": "malloy.viewConfigConnection",
+        "title": "View Config Connection",
         "category": "Malloy"
       },
       {
-        "command": "malloy.editConnections",
-        "title": "Edit Connections",
+        "command": "malloy.createConnection",
+        "title": "Create Connection",
         "category": "Malloy"
       },
       {
@@ -203,6 +209,11 @@
         }
       ],
       "view/item/context": [
+        {
+          "command": "malloy.editConnections",
+          "when": "view == malloyConnections && viewItem == connectionGroup.settings",
+          "group": "inline"
+        },
         {
           "command": "malloy.runTurtleFromSchema",
           "when": "view == malloySchema && viewItem == query",
@@ -350,313 +361,123 @@
         }
       ]
     },
-    "viewsWelcome": [
-      {
-        "view": "malloyConnections",
-        "contents": "No configured connections.\n[Edit Connections](command:malloy.editConnections)"
-      }
-    ],
+    "viewsWelcome": [],
     "configuration": {
       "title": "Malloy",
       "properties": {
+        "malloy.globalConfigDirectory": {
+          "order": 1,
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Directory containing a global `malloy-config.json`. Used when no workspace config file is found. Example: `~/.config/malloy`"
+        },
+        "malloy.projectConnectionsOnly": {
+          "order": 2,
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "When enabled, only connections from the workspace `malloy-config.json` are used. As a **workspace** setting, this ensures Malloy code in the project can only access workspace-defined connections. As a **user** setting, this disables non-workspace connections everywhere."
+        },
         "malloy.rowLimit": {
+          "order": 10,
           "type": "number",
           "description": "Maximum number of top-level rows to fetch when running queries.",
           "default": 50
         },
         "malloy.downloadsPath": {
+          "order": 11,
           "type": "string",
-          "description": "Path to directory to save downloaded results",
+          "description": "Path to directory to save downloaded results.",
           "default": "~/Downloads"
         },
-        "malloy.telemetry": {
-          "type": "boolean",
-          "description": "Whether telemetry is enabled for the Malloy extension. Used in conjunction with the `telemetry.telemetryLevel` setting and the --disable-telemetry CLI flag.",
-          "default": true
-        },
-        "malloy.nodePath": {
-          "type": "string",
-          "description": "Path to a Node.js executable to use for running the language server. Set this option if you're having trouble with Malloy running out of memory. Node version >= 20 recommended."
-        },
         "malloy.indexSearchLimit": {
+          "order": 12,
           "type": "number",
           "default": 100,
           "description": "Number of top values to fetch for index."
         },
+        "malloy.nodePath": {
+          "order": 13,
+          "type": "string",
+          "description": "Path to a Node.js executable to use for running the language server. Set this option if you're having trouble with Malloy running out of memory. Node version >= 20 recommended."
+        },
+        "malloy.telemetry": {
+          "order": 14,
+          "type": "boolean",
+          "description": "Whether telemetry is enabled for the Malloy extension. Used in conjunction with the `telemetry.telemetryLevel` setting and the --disable-telemetry CLI flag.",
+          "default": true
+        },
+        "malloy.connectionMap": {
+          "order": 90,
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "is"
+            ],
+            "properties": {
+              "is": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "object",
+                  "required": [
+                    "secretKey"
+                  ],
+                  "properties": {
+                    "secretKey": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "required": [
+                    "env"
+                  ],
+                  "properties": {
+                    "env": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "markdownDescription": "Managed automatically. Use the **Malloy Connections** sidebar to add or edit connections."
+        },
         "malloy.connections": {
+          "order": 91,
           "type": "array",
           "items": {
-            "anyOf": [
-              {
-                "type": "object",
-                "properties": {
-                  "backend": {
-                    "type": "string",
-                    "const": "postgres"
-                  },
-                  "host": {
-                    "type": "string"
-                  },
-                  "port": {
-                    "type": "number"
-                  },
-                  "username": {
-                    "type": "string"
-                  },
-                  "password": {
-                    "type": "string"
-                  },
-                  "name": {
-                    "type": "string"
-                  },
-                  "id": {
-                    "type": "string"
-                  },
-                  "databaseName": {
-                    "type": "string"
-                  },
-                  "connectionString": {
-                    "type": "string"
-                  }
-                }
+            "type": "object",
+            "properties": {
+              "backend": {
+                "type": "string"
               },
-              {
-                "type": "object",
-                "properties": {
-                  "backend": {
-                    "type": "string",
-                    "const": "mysql"
-                  },
-                  "host": {
-                    "type": "string"
-                  },
-                  "port": {
-                    "type": "number"
-                  },
-                  "user": {
-                    "type": "string"
-                  },
-                  "password": {
-                    "type": "string"
-                  },
-                  "name": {
-                    "type": "string"
-                  },
-                  "id": {
-                    "type": "string"
-                  },
-                  "database": {
-                    "type": "string"
-                  }
-                }
+              "name": {
+                "type": "string"
               },
-              {
-                "type": "object",
-                "properties": {
-                  "backend": {
-                    "type": "string",
-                    "const": "bigquery"
-                  },
-                  "name": {
-                    "type": "string"
-                  },
-                  "id": {
-                    "type": "string"
-                  },
-                  "projectId": {
-                    "type": "string"
-                  },
-                  "location": {
-                    "type": "string"
-                  },
-                  "serviceAccountKeyPath": {
-                    "type": "string"
-                  },
-                  "maximumBytesBilled": {
-                    "type": "string"
-                  },
-                  "timeoutMs": {
-                    "type": "string"
-                  }
-                }
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "backend": {
-                    "type": "string",
-                    "const": "duckdb"
-                  },
-                  "name": {
-                    "type": "string"
-                  },
-                  "id": {
-                    "type": "string"
-                  },
-                  "motherDuckToken": {
-                    "type": "string"
-                  },
-                  "workingDirectory": {
-                    "type": "string"
-                  },
-                  "additionalExtensions": {
-                    "type": "array"
-                  }
-                }
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "backend": {
-                    "type": "string",
-                    "const": "gizmosql"
-                  },
-                  "name": {
-                    "type": "string"
-                  },
-                  "id": {
-                    "type": "string"
-                  },
-                  "gizmosqlUri": {
-                    "type": "string"
-                  },
-                  "gizmosqlUsername": {
-                    "type": "string"
-                  },
-                  "gizmosqlPassword": {
-                    "type": "string"
-                  },
-                  "gizmosqlCatalog": {
-                    "type": "string"
-                  }
-                }
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "backend": {
-                    "type": "string",
-                    "const": "snowflake"
-                  },
-                  "account": {
-                    "type": "string"
-                  },
-                  "username": {
-                    "type": "string"
-                  },
-                  "password": {
-                    "type": "string"
-                  },
-                  "warehouse": {
-                    "type": "string"
-                  },
-                  "database": {
-                    "type": "string"
-                  },
-                  "schema": {
-                    "type": "string"
-                  },
-                  "name": {
-                    "type": "string"
-                  },
-                  "id": {
-                    "type": "string"
-                  },
-                  "isDefault": {
-                    "type": "boolean"
-                  },
-                  "timeoutMs": {
-                    "type": "number"
-                  }
-                }
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "backend": {
-                    "type": "string",
-                    "const": "trino"
-                  },
-                  "server": {
-                    "type": "string"
-                  },
-                  "port": {
-                    "type": "number"
-                  },
-                  "catalog": {
-                    "type": "string"
-                  },
-                  "schema": {
-                    "type": "string"
-                  },
-                  "user": {
-                    "type": "string"
-                  },
-                  "password": {
-                    "type": "string"
-                  },
-                  "name": {
-                    "type": "string"
-                  },
-                  "id": {
-                    "type": "string"
-                  }
-                }
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "backend": {
-                    "type": "string",
-                    "const": "presto"
-                  },
-                  "server": {
-                    "type": "string"
-                  },
-                  "port": {
-                    "type": "number"
-                  },
-                  "catalog": {
-                    "type": "string"
-                  },
-                  "schema": {
-                    "type": "string"
-                  },
-                  "user": {
-                    "type": "string"
-                  },
-                  "password": {
-                    "type": "string"
-                  },
-                  "name": {
-                    "type": "string"
-                  },
-                  "id": {
-                    "type": "string"
-                  }
-                }
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "backend": {
-                    "type": "string",
-                    "const": "publisher"
-                  },
-                  "connectionUri": {
-                    "type": "string"
-                  },
-                  "accessToken": {
-                    "type": "string"
-                  },
-                  "readOnly": {
-                    "type": "boolean"
-                  }
-                }
+              "id": {
+                "type": "string"
               }
-            ]
+            }
           },
-          "description": "Connections for Malloy to use to access data when compiling and querying."
+          "deprecationMessage": "Use malloy.connectionMap instead. Legacy connections are auto-migrated on activation.",
+          "description": "Legacy connection format. Use malloy.connectionMap instead."
         }
       }
     },
@@ -730,21 +551,21 @@
     ]
   },
   "dependencies": {
-    "@malloydata/db-bigquery": "0.0.340",
-    "@malloydata/db-duckdb": "0.0.340",
-    "@malloydata/db-mysql": "0.0.340",
-    "@malloydata/db-postgres": "0.0.340",
-    "@malloydata/db-publisher": "0.0.340",
-    "@malloydata/db-snowflake": "0.0.340",
-    "@malloydata/db-trino": "0.0.340",
-    "@malloydata/malloy": "0.0.340",
-    "@malloydata/malloy-connections": "0.0.340",
+    "@malloydata/db-bigquery": "0.0.343",
+    "@malloydata/db-duckdb": "0.0.343",
+    "@malloydata/db-mysql": "0.0.343",
+    "@malloydata/db-postgres": "0.0.343",
+    "@malloydata/db-publisher": "0.0.343",
+    "@malloydata/db-snowflake": "0.0.343",
+    "@malloydata/db-trino": "0.0.343",
+    "@malloydata/malloy": "0.0.343",
+    "@malloydata/malloy-connections": "0.0.343",
     "@malloydata/malloy-explorer": "0.0.338-dev260215172810",
-    "@malloydata/malloy-interfaces": "0.0.340",
-    "@malloydata/malloy-query-builder": "0.0.340",
-    "@malloydata/malloy-sql": "0.0.340",
-    "@malloydata/render": "0.0.340",
-    "@malloydata/syntax-highlight": "0.0.340",
+    "@malloydata/malloy-interfaces": "0.0.343",
+    "@malloydata/malloy-query-builder": "0.0.343",
+    "@malloydata/malloy-sql": "0.0.343",
+    "@malloydata/render": "0.0.343",
+    "@malloydata/syntax-highlight": "0.0.343",
     "@shikijs/core": "^3.2.1",
     "@shikijs/engine-javascript": "^3.2.1",
     "@shikijs/langs": "^3.2.1",
