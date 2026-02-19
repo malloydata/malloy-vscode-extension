@@ -21,8 +21,14 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import {
+  getRegisteredConnectionTypes,
+  getConnectionProperties,
+  getConnectionTypeDisplayName,
+} from '@malloydata/malloy';
+import {ConnectionPropertyInfo} from '../common/types/message_types';
 import {runQuery} from './run_query';
-import {testConnection} from './test_connection';
+import {testConnectionEntry} from './test_connection';
 import {
   GenericConnection,
   ListenerType,
@@ -62,13 +68,34 @@ export class MessageHandler implements WorkerMessageHandler {
       )
     );
 
-    this.onRequest('malloy/testConnection', async message => {
+    this.onRequest('malloy/testConnectionEntry', async message => {
       try {
-        await testConnection(connectionManager, message.config);
+        await testConnectionEntry(message.name, message.entry);
       } catch (error) {
         return errorMessage(error);
       }
       return '';
+    });
+
+    this.onRequest('malloy/getConnectionTypeInfo', async () => {
+      const types = getRegisteredConnectionTypes();
+      const typeDisplayNames: Record<string, string> = {};
+      const typeProperties: Record<string, ConnectionPropertyInfo[]> = {};
+      for (const typeName of types) {
+        typeDisplayNames[typeName] =
+          getConnectionTypeDisplayName(typeName) ?? typeName;
+        const props = getConnectionProperties(typeName) ?? [];
+        typeProperties[typeName] = props.map(p => ({
+          name: p.name,
+          displayName: p.displayName,
+          type: p.type,
+          optional: p.optional,
+          default: p.default,
+          description: p.description,
+          fileFilters: p.fileFilters,
+        }));
+      }
+      return {registeredTypes: types, typeDisplayNames, typeProperties};
     });
   }
 

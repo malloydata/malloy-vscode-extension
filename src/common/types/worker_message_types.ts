@@ -28,11 +28,10 @@ import {
   NotificationHandler,
   ProgressType,
 } from 'vscode-jsonrpc';
-import {QueryDownloadOptions} from './message_types';
+import {ConnectionPropertyInfo, QueryDownloadOptions} from './message_types';
 import {CellData} from './file_handler';
 import {DocumentMetadata, QuerySpec} from './query_spec';
-import {ConnectionConfig} from './connection_manager_types';
-import {ModelDef} from '@malloydata/malloy';
+import {ConnectionConfigEntry, ModelDef} from '@malloydata/malloy';
 
 /*
  * Incoming messages
@@ -84,8 +83,18 @@ export interface MessageRefreshSchemaCache {
   uri: string;
 }
 
-export interface MessageTest {
-  config: ConnectionConfig;
+export interface MessageTestEntry {
+  name: string;
+  entry: ConnectionConfigEntry;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface MessageGetConnectionTypeInfo {}
+
+export interface ConnectionTypeInfoResponse {
+  registeredTypes: string[];
+  typeDisplayNames: Record<string, string>;
+  typeProperties: Record<string, ConnectionPropertyInfo[]>;
 }
 
 export interface MessageFetchWorkspaceFolders {
@@ -105,14 +114,16 @@ export interface MessageMap {
   'malloy/compile': MessageCompile;
   'malloy/run': MessageRun;
   'malloy/download': MessageDownload;
-  'malloy/testConnection': MessageTest;
+  'malloy/testConnectionEntry': MessageTestEntry;
+  'malloy/getConnectionTypeInfo': MessageGetConnectionTypeInfo;
 }
 
 export interface MessageResponseMap {
   'malloy/compile': ModelDef;
   'malloy/run': void;
   'malloy/download': void;
-  'malloy/testConnection': string;
+  'malloy/testConnectionEntry': string;
+  'malloy/getConnectionTypeInfo': ConnectionTypeInfoResponse;
 }
 
 /**

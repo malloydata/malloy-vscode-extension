@@ -21,12 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {
-  ConfigOptions,
-  ConnectionConfig,
-} from '../types/connection_manager_types';
-import {TestableConnection} from '@malloydata/malloy';
-
 export interface MalloyConfigResult {
   configText: string;
   configDir: string;
@@ -35,17 +29,11 @@ export interface MalloyConfigResult {
 export interface ConnectionFactory {
   reset(): void;
 
-  getConnectionForConfig(
-    connectionConfig: ConnectionConfig,
-    configOptions: ConfigOptions
-  ): Promise<TestableConnection>;
-
   getWorkingDirectory(url: URL): string;
-
-  addDefaults(configs: ConnectionConfig[]): ConnectionConfig[];
 
   findMalloyConfig?(
     fileURL: URL,
-    workspaceRoots: string[]
+    workspaceRoots: string[],
+    globalConfigDirectory?: string
   ): MalloyConfigResult | undefined;
 }

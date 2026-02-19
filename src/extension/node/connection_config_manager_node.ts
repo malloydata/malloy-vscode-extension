@@ -21,27 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {isDuckDBAvailable} from '../../common/duckdb_availability';
-import {ConnectionBackend} from '../../common/types/connection_manager_types';
 import {ConnectionConfigManagerBase} from '../connection_config_manager';
 
-class ConnectionConfigManagerNode extends ConnectionConfigManagerBase {
-  getAvailableBackends(): ConnectionBackend[] {
-    const available = [
-      ConnectionBackend.BigQuery,
-      ConnectionBackend.Postgres,
-      ConnectionBackend.MySQL,
-      ConnectionBackend.Snowflake,
-      ConnectionBackend.Trino,
-      ConnectionBackend.Presto,
-      ConnectionBackend.Publisher,
-      ConnectionBackend.GizmoSQL,
-    ];
-    if (isDuckDBAvailable) {
-      available.push(ConnectionBackend.DuckDB);
-    }
-    return available;
-  }
-}
-
-export const connectionConfigManager = new ConnectionConfigManagerNode();
+export const connectionConfigManager = new ConnectionConfigManagerBase();

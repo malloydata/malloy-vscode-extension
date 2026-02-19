@@ -22,17 +22,35 @@
  */
 
 import {
-  ConnectionConfig,
-  ConnectionManager,
-} from '../common/types/connection_manager_types';
+  ConnectionConfigEntry,
+  ConnectionsConfig,
+  TestableConnection,
+  createConnectionsFromConfig,
+} from '@malloydata/malloy';
 
-export async function testConnection(
-  connectionManager: ConnectionManager,
-  config: ConnectionConfig
-) {
-  const connection = await connectionManager.connectionForConfig(config, {
-    useCache: false,
-    useKeyStore: false,
-  });
+function isTestable(connection: unknown): connection is TestableConnection {
+  return (
+    typeof connection === 'object' &&
+    connection !== null &&
+    'test' in connection &&
+    typeof (connection as TestableConnection).test === 'function'
+  );
+}
+
+/**
+ * Test a connection using the registry-based format.
+ */
+export async function testConnectionEntry(
+  name: string,
+  entry: ConnectionConfigEntry
+): Promise<void> {
+  const config: ConnectionsConfig = {connections: {[name]: entry}};
+  const lookup = createConnectionsFromConfig(config);
+  const connection = await lookup.lookupConnection(name);
+  if (!isTestable(connection)) {
+    throw new Error(
+      `Connection '${name}' (type '${entry.is}') does not support testing`
+    );
+  }
   await connection.test();
 }

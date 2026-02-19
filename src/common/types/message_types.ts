@@ -28,7 +28,6 @@ import {
   SerializedExplore,
 } from '@malloydata/malloy';
 import * as Malloy from '@malloydata/malloy-interfaces';
-import {ConnectionBackend, ConnectionConfig} from './connection_manager_types';
 import {ProgressType} from 'vscode-jsonrpc';
 import {DocumentMetadata} from './query_spec';
 
@@ -184,31 +183,8 @@ export type QueryDownloadMessage =
   | QueryDownloadStatusRunning;
 
 /**
- * Edit Connections webview messages
+ * Connection editor panel messages
  */
-
-export enum ConnectionMessageType {
-  EditConnection = 'edit-connection',
-  SetConnections = 'set-connections',
-  AppReady = 'app-ready',
-  TestConnection = 'test-connection',
-  RequestFile = 'request-file',
-}
-
-interface ConnectionMessageEditConnection {
-  type: ConnectionMessageType.EditConnection;
-  id: string | null;
-}
-
-interface ConnectionMessageSetConnections {
-  type: ConnectionMessageType.SetConnections;
-  connections: ConnectionConfig[];
-  availableBackends: ConnectionBackend[];
-}
-
-interface ConnectionMessageAppReady {
-  type: ConnectionMessageType.AppReady;
-}
 
 export enum ConnectionTestStatus {
   Waiting = 'waiting',
@@ -216,63 +192,122 @@ export enum ConnectionTestStatus {
   Error = 'error',
 }
 
-interface ConnectionMessageTestConnectionWaiting {
-  type: ConnectionMessageType.TestConnection;
-  status: ConnectionTestStatus.Waiting;
-  connection: ConnectionConfig;
-}
-
-interface ConnectionMessageTestConnectionSuccess {
-  type: ConnectionMessageType.TestConnection;
-  status: ConnectionTestStatus.Success;
-  connection: ConnectionConfig;
-}
-
-interface ConnectionMessageTestConnectionError {
-  type: ConnectionMessageType.TestConnection;
-  status: ConnectionTestStatus.Error;
-  error: string;
-  connection: ConnectionConfig;
-}
-
-export type ConnectionMessageTest =
-  | ConnectionMessageTestConnectionWaiting
-  | ConnectionMessageTestConnectionSuccess
-  | ConnectionMessageTestConnectionError;
-
 export enum ConnectionServiceFileRequestStatus {
   Waiting = 'waiting',
   Success = 'success',
 }
 
-interface ConnectionMessageServiceFileRequestWaiting {
-  type: ConnectionMessageType.RequestFile;
-  status: ConnectionServiceFileRequestStatus.Waiting;
-  connectionId: string;
-  configKey: string;
-  filters: {
-    [name: string]: string[];
-  };
+export enum SingleConnectionMessageType {
+  AppReady = 'app-ready',
+  LoadConnection = 'load-connection',
+  SaveConnection = 'save-connection',
+  DeleteConnection = 'delete-connection',
+  TestConnection = 'test-connection',
+  RequestFile = 'request-file',
+  CancelConnection = 'cancel-connection',
+  DuplicateConnection = 'duplicate-connection',
 }
 
-interface ConnectionMessageServiceFileRequestSuccess {
-  type: ConnectionMessageType.RequestFile;
+export interface ConnectionPropertyInfo {
+  name: string;
+  displayName: string;
+  type: string;
+  optional?: true;
+  default?: string;
+  description?: string;
+  fileFilters?: Record<string, string[]>;
+}
+
+export interface SingleConnectionMessageAppReady {
+  type: SingleConnectionMessageType.AppReady;
+}
+
+export interface SingleConnectionMessageLoadConnection {
+  type: SingleConnectionMessageType.LoadConnection;
+  name: string;
+  uuid: string;
+  typeName: string;
+  typeDisplayName: string;
+  properties: ConnectionPropertyInfo[];
+  values: Record<string, string | number | boolean>;
+  existingNames: string[];
+  registeredTypes: string[];
+  isNew: boolean;
+  readonly?: boolean;
+}
+
+export interface SingleConnectionMessageSaveConnection {
+  type: SingleConnectionMessageType.SaveConnection;
+  originalName: string;
+  name: string;
+  values: Record<string, string | number | boolean>;
+}
+
+export interface SingleConnectionMessageDeleteConnection {
+  type: SingleConnectionMessageType.DeleteConnection;
+  name: string;
+}
+
+export interface SingleConnectionMessageTestConnectionRequest {
+  type: SingleConnectionMessageType.TestConnection;
+  status: ConnectionTestStatus.Waiting;
+  name: string;
+  values: Record<string, string | number | boolean>;
+}
+
+export interface SingleConnectionMessageTestConnectionSuccess {
+  type: SingleConnectionMessageType.TestConnection;
+  status: ConnectionTestStatus.Success;
+}
+
+export interface SingleConnectionMessageTestConnectionError {
+  type: SingleConnectionMessageType.TestConnection;
+  status: ConnectionTestStatus.Error;
+  error: string;
+}
+
+export type SingleConnectionMessageTestConnection =
+  | SingleConnectionMessageTestConnectionRequest
+  | SingleConnectionMessageTestConnectionSuccess
+  | SingleConnectionMessageTestConnectionError;
+
+export interface SingleConnectionMessageRequestFileWaiting {
+  type: SingleConnectionMessageType.RequestFile;
+  status: ConnectionServiceFileRequestStatus.Waiting;
+  propName: string;
+  filters: Record<string, string[]>;
+}
+
+export interface SingleConnectionMessageRequestFileSuccess {
+  type: SingleConnectionMessageType.RequestFile;
   status: ConnectionServiceFileRequestStatus.Success;
-  connectionId: string;
-  configKey: string;
+  propName: string;
   fsPath: string;
 }
 
-export type ConnectionMessageServiceAccountKeyRequest =
-  | ConnectionMessageServiceFileRequestWaiting
-  | ConnectionMessageServiceFileRequestSuccess;
+export type SingleConnectionMessageRequestFile =
+  | SingleConnectionMessageRequestFileWaiting
+  | SingleConnectionMessageRequestFileSuccess;
 
-export type ConnectionPanelMessage =
-  | ConnectionMessageAppReady
-  | ConnectionMessageEditConnection
-  | ConnectionMessageSetConnections
-  | ConnectionMessageTest
-  | ConnectionMessageServiceAccountKeyRequest;
+export interface SingleConnectionMessageCancelConnection {
+  type: SingleConnectionMessageType.CancelConnection;
+}
+
+export interface SingleConnectionMessageDuplicateConnection {
+  type: SingleConnectionMessageType.DuplicateConnection;
+  name: string;
+  values: Record<string, string | number | boolean>;
+}
+
+export type SingleConnectionMessage =
+  | SingleConnectionMessageAppReady
+  | SingleConnectionMessageLoadConnection
+  | SingleConnectionMessageSaveConnection
+  | SingleConnectionMessageDeleteConnection
+  | SingleConnectionMessageTestConnection
+  | SingleConnectionMessageRequestFile
+  | SingleConnectionMessageCancelConnection
+  | SingleConnectionMessageDuplicateConnection;
 
 /**
  * Help panel messages

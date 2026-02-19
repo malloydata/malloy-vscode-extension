@@ -36,7 +36,7 @@ const messageWriter = new BrowserMessageWriter(self as unknown as Worker);
 
 const connection = createConnection(messageReader, messageWriter);
 const connectionManager = new CommonConnectionManager(
-  new WebConnectionFactory(connection)
+  new WebConnectionFactory()
 );
 
 initServer(connection, connectionManager);

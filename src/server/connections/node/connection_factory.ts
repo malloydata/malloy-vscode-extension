@@ -1,162 +1,23 @@
 /*
- * Copyright 2023 Google LLC
- *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files
- * (the "Software"), to deal in the Software without restriction,
- * including without limitation the rights to use, copy, modify, merge,
- * publish, distribute, sublicense, and/or sell copies of the Software,
- * and to permit persons to whom the Software is furnished to do so,
- * subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
- * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
- * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
- * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
- * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * Copyright Contributors to the Malloy project
+ * SPDX-License-Identifier: MIT
  */
 
-import {TestableConnection} from '@malloydata/malloy';
 import '@malloydata/malloy-connections';
+import '@malloydata/db-publisher';
 import {
   ConnectionFactory,
   MalloyConfigResult,
 } from '../../../common/connections/types';
-import {
-  ConfigOptions,
-  ConnectionBackend,
-  ConnectionConfig,
-} from '../../../common/types/connection_manager_types';
-import {createBigQueryConnection} from './bigquery_connection';
-import {createDuckDbConnection} from './duckdb_connection';
-import {createGizmoSQLConnection} from './gizmosql_connection';
-import {createPostgresConnection} from './postgres_connection';
-import {createSnowflakeConnection} from './snowflake_connection';
-import {createTrinoPrestoConnection} from './trino_presto_connection';
-import {createPublisherConnection} from './publisher_connection';
 
 import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
 import {fileURLToPath} from 'url';
-import {GenericConnection} from '../../../common/types/worker_message_types';
-import {createMySQLConnection} from './mysql_connection';
 
 export class NodeConnectionFactory implements ConnectionFactory {
-  connectionCache: Record<string, TestableConnection> = {};
-
-  constructor(private client: GenericConnection) {}
-
   reset() {
-    Object.values(this.connectionCache).forEach(connection =>
-      connection.close()
-    );
-    this.connectionCache = {};
-  }
-
-  async getConnectionForConfig(
-    connectionConfig: ConnectionConfig,
-    configOptions: ConfigOptions = {}
-  ): Promise<TestableConnection> {
-    const {useCache, workingDirectory} = configOptions;
-    const cacheKey = `${connectionConfig.name}::${workingDirectory}`;
-
-    let connection: TestableConnection | undefined;
-    if (useCache && this.connectionCache[cacheKey]) {
-      return this.connectionCache[cacheKey];
-    }
-    switch (connectionConfig.backend) {
-      case ConnectionBackend.BigQuery:
-        connection = await createBigQueryConnection(
-          connectionConfig,
-          configOptions
-        );
-        break;
-      case ConnectionBackend.Postgres: {
-        connection = await createPostgresConnection(
-          this.client,
-          connectionConfig,
-          configOptions
-        );
-        break;
-      }
-      case ConnectionBackend.MySQL: {
-        connection = await createMySQLConnection(
-          this.client,
-          connectionConfig,
-          configOptions
-        );
-        break;
-      }
-      case ConnectionBackend.DuckDB: {
-        connection = await createDuckDbConnection(
-          this.client,
-          connectionConfig,
-          configOptions
-        );
-        break;
-      }
-      case ConnectionBackend.GizmoSQL: {
-        connection = await createGizmoSQLConnection(
-          this.client,
-          connectionConfig,
-          configOptions
-        );
-        break;
-      }
-      case ConnectionBackend.Snowflake: {
-        connection = await createSnowflakeConnection(
-          this.client,
-          connectionConfig,
-          configOptions
-        );
-        break;
-      }
-      case ConnectionBackend.Trino: {
-        connection = await createTrinoPrestoConnection(
-          this.client,
-          connectionConfig,
-          configOptions
-        );
-        break;
-      }
-      case ConnectionBackend.Presto: {
-        connection = await createTrinoPrestoConnection(
-          this.client,
-          connectionConfig,
-          configOptions
-        );
-        break;
-      }
-      case ConnectionBackend.Publisher: {
-        connection = await createPublisherConnection(
-          this.client,
-          connectionConfig
-        );
-        break;
-      }
-    }
-    if (useCache && connection) {
-      this.connectionCache[cacheKey] = connection;
-    }
-    if (!connection) {
-      throw new Error(
-        `Unsupported connection back end "${connectionConfig.backend}"`
-      );
-    }
-
-    console.info(
-      'Created',
-      connectionConfig.backend,
-      'connection:',
-      connectionConfig.name
-    );
-
-    return connection;
+    // No-op: connections are now created fresh per-operation via the registry.
   }
 
   getWorkingDirectory(url: URL): string {
@@ -169,58 +30,10 @@ export class NodeConnectionFactory implements ConnectionFactory {
     }
   }
 
-  addDefaults(configs: ConnectionConfig[]): ConnectionConfig[] {
-    // Create a default bigquery connection if one isn't configured
-    if (
-      !configs.find(config => config.backend === ConnectionBackend.BigQuery)
-    ) {
-      configs.push({
-        name: 'bigquery',
-        backend: ConnectionBackend.BigQuery,
-        id: 'bigquery-default',
-      });
-    }
-
-    // Create a default duckdb connection if one isn't configured
-    if (!configs.find(config => config.name === 'duckdb')) {
-      configs.push({
-        name: 'duckdb',
-        backend: ConnectionBackend.DuckDB,
-        id: 'duckdb-default',
-      });
-    }
-
-    // Create a default motherduck connection if one isn't configured
-    if (!configs.find(config => config.name === 'md')) {
-      configs.push({
-        name: 'md',
-        backend: ConnectionBackend.DuckDB,
-        id: 'motherduck-default',
-      });
-    }
-
-    if (!configs.find(config => config.backend === ConnectionBackend.Trino)) {
-      configs.push({
-        name: 'trino',
-        backend: ConnectionBackend.Trino,
-        id: 'trino-default',
-      });
-    }
-
-    if (!configs.find(config => config.backend === ConnectionBackend.Presto)) {
-      configs.push({
-        name: 'presto',
-        backend: ConnectionBackend.Presto,
-        id: 'presto-default',
-      });
-    }
-
-    return configs;
-  }
-
   findMalloyConfig(
     fileURL: URL,
-    workspaceRoots: string[]
+    workspaceRoots: string[],
+    globalConfigDirectory = ''
   ): MalloyConfigResult | undefined {
     let fileDir: string;
     try {
@@ -240,12 +53,27 @@ export class NodeConnectionFactory implements ConnectionFactory {
           normalizedFileDir.startsWith(r + path.sep) || normalizedFileDir === r
       ) ?? normalizedFileDir;
 
-    const configPath = path.join(root, 'malloy-config.json');
+    // 1. Workspace config: malloy-config.json at the workspace root
+    const workspaceConfigPath = path.join(root, 'malloy-config.json');
     try {
-      const configText = fs.readFileSync(configPath, 'utf-8');
+      const configText = fs.readFileSync(workspaceConfigPath, 'utf-8');
       return {configText, configDir: root};
     } catch {
-      return undefined;
+      // Not found in workspace, try global
     }
+
+    // 2. Global config directory fallback
+    if (globalConfigDirectory) {
+      const expandedDir = globalConfigDirectory.replace(/^~/, os.homedir());
+      const globalConfigPath = path.join(expandedDir, 'malloy-config.json');
+      try {
+        const configText = fs.readFileSync(globalConfigPath, 'utf-8');
+        return {configText, configDir: expandedDir};
+      } catch {
+        // Not found
+      }
+    }
+
+    return undefined;
   }
 }

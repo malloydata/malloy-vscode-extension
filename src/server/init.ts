@@ -60,6 +60,10 @@ export const initServer = (
   connectionManager: CommonConnectionManager,
   onDidChangeConfiguration?: (params: DidChangeConfigurationParams) => void
 ) => {
+  connectionManager.setSecretResolver(async (key: string) => {
+    return connection.sendRequest('malloy/getSecret', {key});
+  });
+
   const documents = new TextDocuments(TextDocument);
   let haveConnectionsBeenSet = false;
   connection.onInitialize((params: InitializeParams) => {
@@ -281,9 +285,14 @@ export const initServer = (
 
   connection.onDidChangeConfiguration(change => {
     onDidChangeConfiguration?.(change);
-    connectionManager.setConnectionsConfig(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (change?.settings as any)?.malloy?.connections ?? []
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const settings = (change?.settings as any)?.malloy ?? {};
+    connectionManager.setConnectionsConfig(settings.connectionMap ?? {});
+    connectionManager.setProjectConnectionsOnly(
+      settings.projectConnectionsOnly ?? false
+    );
+    connectionManager.setGlobalConfigDirectory(
+      settings.globalConfigDirectory ?? ''
     );
     haveConnectionsBeenSet = true;
     translateCache.deleteAllModels();

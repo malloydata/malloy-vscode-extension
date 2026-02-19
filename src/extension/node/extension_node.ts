@@ -30,16 +30,19 @@ import {
   ServerOptions,
   TransportKind,
 } from 'vscode-languageclient/node';
-import {editConnectionsCommand} from './commands/edit_connections';
 import {
-  ConnectionItem,
-  ConnectionsProvider,
-} from '../tree_views/connections_view';
+  editConnectionsCommand,
+  createConnectionCommand,
+  viewConfigConnectionCommand,
+} from './commands/edit_connections';
+import {ConnectionsProvider} from '../tree_views/connections_view';
 import {connectionConfigManager} from './connection_config_manager_node';
 import {setupFileMessaging, setupSubscriptions} from '../subscriptions';
 import {fileHandler} from '../utils/files';
 import {MALLOY_EXTENSION_STATE} from '../state';
 import {WorkerConnectionNode} from './worker_connection_node';
+import {migrateConnectionSettings} from '../connection_migration';
+import {ConnectionConfigEntry} from '@malloydata/malloy';
 
 let client: LanguageClient;
 
@@ -58,6 +61,8 @@ const cloudCodeEnv = () => {
 
 export async function activate(context: vscode.ExtensionContext) {
   cloudCodeEnv();
+  await migrateConnectionSettings();
+  await connectionConfigManager.onConfigurationUpdated();
   await setupLanguageServer(context);
   const worker = new WorkerConnectionNode(context, client, fileHandler);
   await setupSubscriptions(context, worker, client);
@@ -69,16 +74,55 @@ export async function activate(context: vscode.ExtensionContext) {
   MALLOY_EXTENSION_STATE.setHomeUri(vscode.Uri.file(os.homedir()));
 
   context.subscriptions.push(
+    connectionsTree,
     vscode.window.registerTreeDataProvider('malloyConnections', connectionsTree)
   );
 
   context.subscriptions.push(
     vscode.commands.registerCommand(
       'malloy.editConnections',
-      (item?: ConnectionItem) =>
-        editConnectionsCommand(context, worker, item?.id)
+      (connectionNameOrItem?: unknown) => {
+        void editConnectionsCommand(context, worker, connectionNameOrItem);
+      }
     )
   );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      'malloy.viewConfigConnection',
+      (name: string, entry: unknown, configFileUri: string) => {
+        viewConfigConnectionCommand(
+          context,
+          worker,
+          name,
+          entry as ConnectionConfigEntry,
+          configFileUri
+        );
+      }
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      'malloy.createConnection',
+      (typeName: string) => {
+        createConnectionCommand(context, worker, typeName);
+      }
+    )
+  );
+
+  // Fetch registered connection types from the worker and inject into tree view
+  worker
+    .sendRequest('malloy/getConnectionTypeInfo', {})
+    .then(typeInfo => {
+      connectionsTree.setRegisteredTypes(
+        typeInfo.registeredTypes,
+        typeInfo.typeDisplayNames
+      );
+    })
+    .catch(err => {
+      console.warn('Failed to fetch connection type info:', err);
+    });
 
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration(async e => {

@@ -53,7 +53,7 @@ const onDidChangeConfiguration = (change: DidChangeConfigurationParams) => {
 
 const connection = createConnection(ProposedFeatures.all);
 const connectionManager = new CommonConnectionManager(
-  new NodeConnectionFactory(connection)
+  new NodeConnectionFactory()
 );
 
 initServer(connection, connectionManager, onDidChangeConfiguration);

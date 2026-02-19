@@ -23,51 +23,111 @@
 
 import {
   Connection,
+  ConnectionConfigEntry,
+  ConnectionsConfig,
   LookupConnection,
-  TestableConnection,
   readConnectionsConfig,
   createConnectionsFromConfig,
+  getRegisteredConnectionTypes,
 } from '@malloydata/malloy';
-import {
-  ConfigOptions,
-  ConnectionConfig,
-} from './types/connection_manager_types';
+import {UnresolvedConnectionConfigEntry} from './types/connection_manager_types';
 import {ConnectionFactory} from './connections/types';
 
-export class DynamicConnectionLookup implements LookupConnection<Connection> {
-  connections: Record<string | symbol, Promise<Connection>> = {};
+export type SecretResolver = (key: string) => Promise<string | undefined>;
 
+export function isSecretKeyReference(
+  value: unknown
+): value is {secretKey: string} {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'secretKey' in value &&
+    typeof (value as Record<string, unknown>)['secretKey'] === 'string'
+  );
+}
+
+/**
+ * Build default connections from the registry: one `{is: typeName}` entry
+ * per registered type, plus the legacy `md` (MotherDuck) alias.
+ */
+function getDefaultConnections(): Record<string, ConnectionConfigEntry> {
+  const defaults: Record<string, ConnectionConfigEntry> = {};
+  for (const typeName of getRegisteredConnectionTypes()) {
+    defaults[typeName] = {is: typeName};
+  }
+  defaults['md'] = {is: 'duckdb', databasePath: 'md:'};
+  return defaults;
+}
+
+export class MergedConnectionLookup implements LookupConnection<Connection> {
   constructor(
-    private connectionFactory: ConnectionFactory,
-    private configs: Record<string | symbol, ConnectionConfig>,
-    private options: ConfigOptions
+    private primary: LookupConnection<Connection>,
+    private fallback: LookupConnection<Connection>
   ) {}
 
-  async lookupConnection(connectionName: string): Promise<Connection> {
-    const connectionKey = connectionName;
-    if (!this.connections[connectionKey]) {
-      const connectionConfig = this.configs[connectionKey];
-      if (connectionConfig) {
-        this.connections[connectionKey] =
-          this.connectionFactory.getConnectionForConfig(connectionConfig, {
-            useCache: true,
-            ...this.options,
-          });
+  async lookupConnection(name: string): Promise<Connection> {
+    try {
+      return await this.primary.lookupConnection(name);
+    } catch {
+      return await this.fallback.lookupConnection(name);
+    }
+  }
+}
+
+export class SettingsConnectionLookup implements LookupConnection<Connection> {
+  constructor(
+    private config: Record<string, UnresolvedConnectionConfigEntry>,
+    private secretResolver: SecretResolver
+  ) {}
+
+  async lookupConnection(name: string): Promise<Connection> {
+    const entry = this.config[name];
+    if (!entry) throw new Error(`No connection named '${name}'`);
+
+    const resolved = await this.resolveEntry(entry);
+
+    const config: ConnectionsConfig = {connections: {[name]: resolved}};
+    const lookup = createConnectionsFromConfig(config);
+    return lookup.lookupConnection(name);
+  }
+
+  private async resolveEntry(
+    entry: UnresolvedConnectionConfigEntry
+  ): Promise<ConnectionConfigEntry> {
+    const resolved: ConnectionConfigEntry = {is: entry.is};
+    for (const [key, value] of Object.entries(entry)) {
+      if (key === 'is') continue;
+      if (isSecretKeyReference(value)) {
+        const secret = await this.secretResolver(value.secretKey);
+        if (secret !== undefined) {
+          resolved[key] = secret;
+        }
       } else {
-        throw new Error(`No connection found with name ${connectionName}`);
+        resolved[key] = value as
+          | string
+          | number
+          | boolean
+          | {env: string}
+          | undefined;
       }
     }
-    return this.connections[connectionKey];
+    return resolved;
   }
 }
 
 export class CommonConnectionManager {
-  private connectionLookups: Record<string, DynamicConnectionLookup> = {};
-  private configList: ConnectionConfig[] = [];
-  configMap: Record<string | symbol, ConnectionConfig> = {};
-  connectionCache: Record<string | symbol, TestableConnection> = {};
   currentRowLimit = 50;
   workspaceRoots: string[] = [];
+  private projectConnectionsOnly = false;
+  private globalConfigDirectory = '';
+  private secretResolver: SecretResolver | undefined;
+
+  /** New-format settings lookup (registry-based). */
+  private settingsLookup: LookupConnection<Connection> | undefined;
+  /** New-format settings config (for tree view / config manager). */
+  private settingsConfig:
+    | Record<string, UnresolvedConnectionConfigEntry>
+    | undefined;
 
   // Cache: configDir -> parsed lookup + the configText it was parsed from
   private configLookups: Record<
@@ -77,22 +137,27 @@ export class CommonConnectionManager {
 
   constructor(private connectionFactory: ConnectionFactory) {}
 
+  public setProjectConnectionsOnly(value: boolean): void {
+    this.projectConnectionsOnly = value;
+  }
+
+  public setGlobalConfigDirectory(dir: string): void {
+    if (this.globalConfigDirectory !== dir) {
+      this.globalConfigDirectory = dir;
+      this.clearConfigCaches();
+    }
+  }
+
+  public setSecretResolver(resolver: SecretResolver): void {
+    this.secretResolver = resolver;
+  }
+
   public setWorkspaceRoots(roots: string[]): void {
     this.workspaceRoots = roots;
   }
 
   public clearConfigCaches(): void {
     this.configLookups = {};
-  }
-
-  public async connectionForConfig(
-    connectionConfig: ConnectionConfig,
-    options: ConfigOptions
-  ): Promise<TestableConnection> {
-    return this.connectionFactory.getConnectionForConfig(
-      connectionConfig,
-      options
-    );
   }
 
   private resolveConfigForFile(
@@ -102,9 +167,13 @@ export class CommonConnectionManager {
       return undefined;
     }
 
+    const globalDir = this.projectConnectionsOnly
+      ? ''
+      : this.globalConfigDirectory;
     const result = this.connectionFactory.findMalloyConfig(
       fileURL,
-      this.workspaceRoots
+      this.workspaceRoots,
+      globalDir
     );
 
     if (!result) {
@@ -136,27 +205,27 @@ export class CommonConnectionManager {
   }
 
   public getConnectionLookup(fileURL: URL): LookupConnection<Connection> {
-    // Try malloy-config.json first
     const configLookup = this.resolveConfigForFile(fileURL);
-    if (configLookup) {
-      return configLookup;
-    }
 
-    // Fall back to VS Code settings
-    const workingDirectory =
-      this.connectionFactory.getWorkingDirectory(fileURL);
-
-    if (!this.connectionLookups[workingDirectory]) {
-      this.connectionLookups[workingDirectory] = new DynamicConnectionLookup(
-        this.connectionFactory,
-        this.configMap,
-        {
-          workingDirectory,
-          rowLimit: this.getCurrentRowLimit(),
+    if (this.projectConnectionsOnly) {
+      return (
+        configLookup ?? {
+          lookupConnection: (name: string) =>
+            Promise.reject(
+              new Error(
+                `No connection '${name}' found in config file (projectConnectionsOnly is enabled)`
+              )
+            ),
         }
       );
     }
-    return this.connectionLookups[workingDirectory];
+
+    // Merged: config file takes precedence, settings as fallback
+    const settingsLookup = this.getSettingsLookup();
+    if (configLookup && settingsLookup) {
+      return new MergedConnectionLookup(configLookup, settingsLookup);
+    }
+    return configLookup ?? settingsLookup ?? this.emptyLookup();
   }
 
   public setCurrentRowLimit(rowLimit: number): void {
@@ -167,22 +236,67 @@ export class CommonConnectionManager {
     return this.currentRowLimit;
   }
 
-  public setConnectionsConfig(connectionsConfig: ConnectionConfig[]): void {
-    // Force existing connections to be regenerated
-    this.connectionFactory.reset();
-    console.info('Using connection config', connectionsConfig);
-    this.configList = connectionsConfig;
-    this.buildConfigMap();
+  /**
+   * Returns the new-format connections config, if settings are in the new
+   * format. Used by the tree view and config manager.
+   */
+  public getNewFormatConfig():
+    | Record<string, UnresolvedConnectionConfigEntry>
+    | undefined {
+    return this.settingsConfig;
   }
 
-  private buildConfigMap(): void {
-    this.connectionLookups = {};
-    this.connectionCache = {};
+  public setConnectionsConfig(
+    connectionsConfig: Record<string, UnresolvedConnectionConfigEntry>
+  ): void {
+    this.connectionFactory.reset();
     this.clearConfigCaches();
+    console.info('Using connection config', connectionsConfig);
 
-    const configs = this.connectionFactory.addDefaults(this.configList);
-    configs.forEach(config => {
-      this.configMap[config.name] = config;
-    });
+    this.settingsConfig = connectionsConfig;
+    this.buildSettingsLookup(connectionsConfig);
+  }
+
+  private buildSettingsLookup(
+    userConnections: Record<string, UnresolvedConnectionConfigEntry>
+  ): void {
+    // Merge defaults under user connections (user entries take precedence)
+    const merged: Record<string, UnresolvedConnectionConfigEntry> = {
+      ...getDefaultConnections(),
+      ...userConnections,
+    };
+
+    if (this.secretResolver) {
+      // Lazy resolution: secrets are resolved at lookupConnection() time
+      this.settingsLookup = new SettingsConnectionLookup(
+        merged,
+        this.secretResolver
+      );
+    } else {
+      // No resolver (e.g., browser) — create connections eagerly
+      const config: ConnectionsConfig = {
+        connections: merged as Record<string, ConnectionConfigEntry>,
+      };
+      try {
+        this.settingsLookup = createConnectionsFromConfig(config);
+      } catch (error) {
+        console.warn(
+          'Failed to create connections from settings config:',
+          error
+        );
+        this.settingsLookup = undefined;
+      }
+    }
+  }
+
+  private getSettingsLookup(): LookupConnection<Connection> | undefined {
+    return this.settingsLookup;
+  }
+
+  private emptyLookup(): LookupConnection<Connection> {
+    return {
+      lookupConnection: (name: string) =>
+        Promise.reject(new Error(`No connection '${name}' configured`)),
+    };
   }
 }
