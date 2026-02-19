@@ -33,16 +33,23 @@ export async function editConnectionsCommand(
 ): Promise<void> {
   const p = ensurePanel(context, worker);
 
-  const connectionName =
-    connectionNameOrItem instanceof ConnectionItem
-      ? (connectionNameOrItem.label as string)
-      : typeof connectionNameOrItem === 'string'
-      ? connectionNameOrItem
-      : undefined;
+  // If called with a settings connection item or a name string, edit it.
+  // If called with a default connection item, create a new one for that type.
+  // If called with no argument (or a group item), show the type picker.
+  if (connectionNameOrItem instanceof ConnectionItem) {
+    if (connectionNameOrItem.contextValue === 'connection.defaults') {
+      void p.createConnection(connectionNameOrItem.label as string);
+      return;
+    }
+    void p.editConnection(connectionNameOrItem.label as string);
+    return;
+  }
+  if (typeof connectionNameOrItem === 'string') {
+    void p.editConnection(connectionNameOrItem);
+    return;
+  }
 
-  if (connectionName) {
-    void p.editConnection(connectionName);
-  } else {
+  {
     const typeInfo = await worker.sendRequest(
       'malloy/getConnectionTypeInfo',
       {}
