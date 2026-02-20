@@ -10,9 +10,38 @@ Central class `CommonConnectionManager` provides connection lookups per file:
 - `setConnectionsConfig()` — updates settings-based connections with lazy secret resolution
 - `resolveConfigForFile()` — finds and parses the nearest `malloy-config.json`
 
+Default connections are built dynamically from the registry — one `{is: typeName}` per registered type, plus a legacy `md` MotherDuck alias (`{is: 'duckdb', databasePath: 'md:'}`).
+
 Helper classes:
 - `MergedConnectionLookup` — tries primary (config file) then falls back to secondary (settings/defaults)
 - `SettingsConnectionLookup` — resolves `{secretKey: "..."}` values at lookup time via extension host RPC
+
+### Config File Format
+
+Both workspace and global config use the same `malloy-config.json` format. Connection entries use an `is` field to identify the backend type:
+
+```json
+{
+  "connections": {
+    "my_pg": {
+      "is": "postgres",
+      "host": "localhost",
+      "port": 5432,
+      "password": { "env": "PG_PASSWORD" }
+    }
+  }
+}
+```
+
+Any property can use `{env: "VAR_NAME"}` to reference an environment variable, resolved at connection creation time.
+
+### Secrets
+
+Settings connections (stored in VS Code's `malloy.connectionMap`) keep sensitive values in the VS Code keychain rather than in plaintext settings:
+
+- **Storage key format:** `connections.<uuid>.<fieldName>`
+- **Settings reference:** the property value is replaced with `{secretKey: "connections.<uuid>.<fieldName>"}`
+- **Resolution:** `SettingsConnectionLookup` reads secrets from the keychain via extension host RPC before creating the connection
 
 ### `connections/types.ts`
 `ConnectionFactory` interface — platform-specific implementations:

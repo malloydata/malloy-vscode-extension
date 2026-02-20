@@ -23,7 +23,15 @@ React-based panels in `webviews/`. Every page follows the same structure:
 
 `webview_html.ts` generates the HTML shell (CSP headers, nonce, script/style injection). `WebviewMessageManager` queues messages until the webview is visible.
 
-The connection editor (`webviews/connection_editor_page/GenericConnectionForm.tsx`) is notable: it builds form fields dynamically from the connection type schema returned by the registry — no per-backend UI code.
+The connection editor (`webviews/connection_editor_page/GenericConnectionForm.tsx`) builds form fields dynamically from the connection type schema returned by the registry — no per-backend UI code.
+
+### Connection Editor Modes
+
+`SingleConnectionPanel` (`single_connection_editor.ts`) manages a single webview with three modes:
+
+- **Edit** — settings connections. All fields editable. Buttons: Cancel, Duplicate, Delete (left); Test, Save (right).
+- **Create** — new connections (from "+" or clicking a default). Name pre-filled with the type name. Buttons: Cancel (left); Test, Save (right).
+- **View** — config file connections. All fields disabled, no Save/Delete. Buttons: Close (left); Test (right).
 
 ### Worker Communication
 `worker_connection.ts` is the abstract base for RPC with the worker process. Platform variants in `node/` (child process) and `browser/` (Web Worker). Handles compile, run, test, download operations.
