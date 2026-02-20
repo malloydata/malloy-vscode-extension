@@ -291,7 +291,9 @@ export class SingleConnectionPanel {
       if (value === undefined || value === '') continue;
 
       if (prop.type === 'password' || prop.type === 'secret') {
-        // Store in keychain, save reference
+        // Store sensitive values in VS Code keychain using key format
+        // "connections.<uuid>.<field>", and save a {secretKey} reference
+        // in settings so the value is never stored in plaintext.
         const secretKey = `connections.${this.currentUuid}.${prop.name}`;
         await this.context.secrets.store(secretKey, String(value));
         entry[prop.name] = {secretKey};

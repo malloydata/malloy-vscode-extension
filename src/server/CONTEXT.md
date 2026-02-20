@@ -65,3 +65,5 @@ Uses `translateWithTruncatedCache()` to avoid full compilation for responsivenes
 Platform-specific `ConnectionFactory` implementations:
 - `connections/node/connection_factory.ts` — Node.js: reads config files from disk, registers backends via side-effect imports
 - `connections/browser/connection_factory.ts` — Browser: limited, no file system access
+
+`findMalloyConfig` in the Node factory checks for `malloy-config.json` at the workspace root first. The global config directory is only used as a fallback when no workspace config exists — it is never merged with workspace config.
