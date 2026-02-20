@@ -130,9 +130,15 @@ export class CommonConnectionManager {
     | undefined;
 
   // Cache: configDir -> parsed lookup + the configText it was parsed from
+  // `connections` tracks every Connection created via the lookup so we can
+  // close them when the config changes (which clears DuckDB's static cache).
   private configLookups: Record<
     string,
-    {lookup: LookupConnection<Connection>; configText: string}
+    {
+      lookup: LookupConnection<Connection>;
+      configText: string;
+      connections: Connection[];
+    }
   > = {};
 
   constructor(private connectionFactory: ConnectionFactory) {}
@@ -156,7 +162,20 @@ export class CommonConnectionManager {
     this.workspaceRoots = roots;
   }
 
+  /** Close all connections tracked by a config cache entry. */
+  private closeConfigConnections(entry: {connections: Connection[]}): void {
+    for (const conn of entry.connections) {
+      conn.close().catch(err => {
+        console.warn('Error closing config connection:', err);
+      });
+    }
+    entry.connections = [];
+  }
+
   public clearConfigCaches(): void {
+    for (const entry of Object.values(this.configLookups)) {
+      this.closeConfigConnections(entry);
+    }
     this.configLookups = {};
   }
 
@@ -177,6 +196,7 @@ export class CommonConnectionManager {
     );
 
     if (!result) {
+      // TODO: if config was deleted, old connections in configLookups stay open until clearConfigCaches()
       return undefined;
     }
 
@@ -186,13 +206,34 @@ export class CommonConnectionManager {
       return cached.lookup;
     }
 
+    // Close connections from the previous config before replacing
+    if (cached) {
+      this.closeConfigConnections(cached);
+    }
+
     // Parse and create connections
     try {
       const config = readConnectionsConfig(result.configText);
-      const lookup = createConnectionsFromConfig(config);
+      const innerLookup = createConnectionsFromConfig(config);
+      const connections: Connection[] = [];
+
+      // Wrap the lookup to track every connection it creates
+      const lookup: LookupConnection<Connection> = {
+        lookupConnection: async (
+          connectionName: string
+        ): Promise<Connection> => {
+          const conn = await innerLookup.lookupConnection(connectionName);
+          if (!connections.includes(conn)) {
+            connections.push(conn);
+          }
+          return conn;
+        },
+      };
+
       this.configLookups[result.configDir] = {
         lookup,
         configText: result.configText,
+        connections,
       };
       return lookup;
     } catch (error) {

@@ -332,8 +332,10 @@ describe('malloy-config.json support', () => {
   });
 
   describe('projectConnectionsOnly', () => {
-    it('returns config lookup when projectConnectionsOnly is set and config exists', () => {
+    it('returns config lookup when projectConnectionsOnly is set and config exists', async () => {
+      const mockConn = {} as Connection;
       const mockLookup = makeMockLookup();
+      (mockLookup.lookupConnection as jest.Mock).mockResolvedValue(mockConn);
       mockReadConnectionsConfig.mockReturnValue({connections: {}});
       mockCreateConnectionsFromConfig.mockReturnValue(mockLookup);
 
@@ -349,7 +351,10 @@ describe('malloy-config.json support', () => {
         new URL('file:///project/test.malloy')
       );
 
-      expect(result).toBe(mockLookup);
+      // The lookup is wrapped to track connections, so check it delegates correctly
+      const conn = await result.lookupConnection('test');
+      expect(conn).toBe(mockConn);
+      expect(mockLookup.lookupConnection).toHaveBeenCalledWith('test');
     });
 
     it('rejects lookups when projectConnectionsOnly is set and no config exists', async () => {
