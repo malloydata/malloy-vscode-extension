@@ -24,6 +24,7 @@
 export interface MalloyConfigResult {
   configText: string;
   configDir: string;
+  manifestText?: string;
 }
 
 export interface ConnectionFactory {

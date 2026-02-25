@@ -21,12 +21,12 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {Connection, LookupConnection} from '@malloydata/malloy';
+import {BuildManifest, Connection, LookupConnection} from '@malloydata/malloy';
 
 /**
  * A ConnectionConfigEntry that may contain unresolved {secretKey: ...} values.
  * These are resolved lazily by SettingsConnectionLookup before being passed
- * to the core's createConnectionsFromConfig().
+ * to MalloyConfig for connection creation.
  */
 export type UnresolvedConnectionConfigEntry = {
   is: string;
@@ -52,4 +52,5 @@ export interface ConnectionManager {
   setConnectionsConfig(
     connectionsConfig: Record<string, UnresolvedConnectionConfigEntry>
   ): void;
+  getBuildManifest(fileURL: URL): BuildManifest | undefined;
 }

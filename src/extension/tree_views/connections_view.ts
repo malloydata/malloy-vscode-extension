@@ -22,7 +22,7 @@
  */
 
 import * as vscode from 'vscode';
-import {readConnectionsConfig, ConnectionConfigEntry} from '@malloydata/malloy';
+import {MalloyConfig, ConnectionConfigEntry} from '@malloydata/malloy';
 
 import {ConnectionConfigManager} from '../../common/types/connection_manager_types';
 import {getMalloyConfig} from '../utils/config';
@@ -227,13 +227,13 @@ export class ConnectionsProvider
     try {
       const content = await vscode.workspace.fs.readFile(fileUri);
       const text = new TextDecoder().decode(content);
-      const parsed = readConnectionsConfig(text);
+      const parsed = new MalloyConfig(text);
       const relativePath =
         labelOverride ?? vscode.workspace.asRelativePath(fileUri, true);
       this.configFiles.set(fileUri.toString(), {
         uri: fileUri,
         relativePath,
-        connections: parsed.connections,
+        connections: parsed.connectionMap ?? {},
       });
     } catch (error) {
       console.warn(`Failed to parse config file ${fileUri.fsPath}:`, error);

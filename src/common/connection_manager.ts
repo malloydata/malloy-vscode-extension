@@ -22,13 +22,14 @@
  */
 
 import {
+  BuildManifest,
   Connection,
   ConnectionConfigEntry,
-  ConnectionsConfig,
   LookupConnection,
-  readConnectionsConfig,
-  createConnectionsFromConfig,
+  Manifest,
+  MalloyConfig,
   getRegisteredConnectionTypes,
+  getConnectionProperties,
 } from '@malloydata/malloy';
 import {UnresolvedConnectionConfigEntry} from './types/connection_manager_types';
 import {ConnectionFactory} from './connections/types';
@@ -59,6 +60,34 @@ function getDefaultConnections(): Record<string, ConnectionConfigEntry> {
   return defaults;
 }
 
+/**
+ * Inject `workingDirectory` into connection config entries whose registered
+ * type supports it, unless the entry already sets it explicitly.
+ */
+function injectWorkingDirectory(
+  connections: Record<string, ConnectionConfigEntry>,
+  workingDir: string
+): Record<string, ConnectionConfigEntry> {
+  const result = {...connections};
+  for (const [name, entry] of Object.entries(result)) {
+    if (entry['workingDirectory'] !== undefined) continue;
+    const props = getConnectionProperties(entry.is);
+    if (props?.some(p => p.name === 'workingDirectory')) {
+      result[name] = {...entry, workingDirectory: workingDir};
+    }
+  }
+  return result;
+}
+
+/** Create a LookupConnection from a connection map via MalloyConfig. */
+function connectionsFromMap(
+  map: Record<string, ConnectionConfigEntry>
+): LookupConnection<Connection> {
+  const config = new MalloyConfig('{"connections":{}}');
+  config.connectionMap = map;
+  return config.connections;
+}
+
 export class MergedConnectionLookup implements LookupConnection<Connection> {
   constructor(
     private primary: LookupConnection<Connection>,
@@ -77,7 +106,8 @@ export class MergedConnectionLookup implements LookupConnection<Connection> {
 export class SettingsConnectionLookup implements LookupConnection<Connection> {
   constructor(
     private config: Record<string, UnresolvedConnectionConfigEntry>,
-    private secretResolver: SecretResolver
+    private secretResolver: SecretResolver,
+    private workingDirectory?: string
   ) {}
 
   async lookupConnection(name: string): Promise<Connection> {
@@ -86,8 +116,15 @@ export class SettingsConnectionLookup implements LookupConnection<Connection> {
 
     const resolved = await this.resolveEntry(entry);
 
-    const config: ConnectionsConfig = {connections: {[name]: resolved}};
-    const lookup = createConnectionsFromConfig(config);
+    // Inject workingDirectory if the type supports it and entry doesn't set it
+    if (this.workingDirectory && resolved['workingDirectory'] === undefined) {
+      const props = getConnectionProperties(resolved.is);
+      if (props?.some(p => p.name === 'workingDirectory')) {
+        resolved['workingDirectory'] = this.workingDirectory;
+      }
+    }
+
+    const lookup = connectionsFromMap({[name]: resolved});
     return lookup.lookupConnection(name);
   }
 
@@ -122,8 +159,13 @@ export class CommonConnectionManager {
   private globalConfigDirectory = '';
   private secretResolver: SecretResolver | undefined;
 
-  /** New-format settings lookup (registry-based). */
-  private settingsLookup: LookupConnection<Connection> | undefined;
+  /** Merged settings config (defaults + user) for lazy per-directory lookups. */
+  private mergedSettingsConfig:
+    | Record<string, UnresolvedConnectionConfigEntry>
+    | undefined;
+  /** Cached per-workingDir settings lookups (non-resolver path only). */
+  private settingsLookupsByDir: Record<string, LookupConnection<Connection>> =
+    {};
   /** New-format settings config (for tree view / config manager). */
   private settingsConfig:
     | Record<string, UnresolvedConnectionConfigEntry>
@@ -140,6 +182,15 @@ export class CommonConnectionManager {
       connections: Connection[];
     }
   > = {};
+
+  // Cache: configDir -> parsed manifest + the manifestText it was parsed from
+  private manifestCache: Record<
+    string,
+    {manifestText: string; buildManifest: BuildManifest}
+  > = {};
+
+  // Mapping: fileURL.toString() -> configDir, populated by resolveConfigForFile
+  private fileConfigDir: Record<string, string> = {};
 
   constructor(private connectionFactory: ConnectionFactory) {}
 
@@ -177,10 +228,14 @@ export class CommonConnectionManager {
       this.closeConfigConnections(entry);
     }
     this.configLookups = {};
+    this.settingsLookupsByDir = {};
+    this.manifestCache = {};
+    this.fileConfigDir = {};
   }
 
   private resolveConfigForFile(
-    fileURL: URL
+    fileURL: URL,
+    workingDir: string
   ): LookupConnection<Connection> | undefined {
     if (!this.connectionFactory.findMalloyConfig) {
       return undefined;
@@ -200,8 +255,30 @@ export class CommonConnectionManager {
       return undefined;
     }
 
+    // Record fileURL → configDir mapping for getBuildManifest
+    this.fileConfigDir[fileURL.toString()] = result.configDir;
+
+    // Update manifest cache if manifest text changed
+    if (result.manifestText !== undefined) {
+      const cached = this.manifestCache[result.configDir];
+      if (!cached || cached.manifestText !== result.manifestText) {
+        const manifest = new Manifest();
+        manifest.loadText(result.manifestText);
+        this.manifestCache[result.configDir] = {
+          manifestText: result.manifestText,
+          buildManifest: manifest.buildManifest,
+        };
+      }
+    } else {
+      delete this.manifestCache[result.configDir];
+    }
+
+    // Cache key includes working directory so files in different directories
+    // get separate connection instances with correct workingDirectory.
+    const cacheKey = `${result.configDir}::${workingDir}`;
+
     // Return cached lookup if the config text hasn't changed
-    const cached = this.configLookups[result.configDir];
+    const cached = this.configLookups[cacheKey];
     if (cached && cached.configText === result.configText) {
       return cached.lookup;
     }
@@ -213,8 +290,12 @@ export class CommonConnectionManager {
 
     // Parse and create connections
     try {
-      const config = readConnectionsConfig(result.configText);
-      const innerLookup = createConnectionsFromConfig(config);
+      const malloyConfig = new MalloyConfig(result.configText);
+      const map = injectWorkingDirectory(
+        malloyConfig.connectionMap ?? {},
+        workingDir
+      );
+      const innerLookup = connectionsFromMap(map);
       const connections: Connection[] = [];
 
       // Wrap the lookup to track every connection it creates
@@ -230,7 +311,7 @@ export class CommonConnectionManager {
         },
       };
 
-      this.configLookups[result.configDir] = {
+      this.configLookups[cacheKey] = {
         lookup,
         configText: result.configText,
         connections,
@@ -246,7 +327,8 @@ export class CommonConnectionManager {
   }
 
   public getConnectionLookup(fileURL: URL): LookupConnection<Connection> {
-    const configLookup = this.resolveConfigForFile(fileURL);
+    const workingDir = this.connectionFactory.getWorkingDirectory(fileURL);
+    const configLookup = this.resolveConfigForFile(fileURL, workingDir);
 
     if (this.projectConnectionsOnly) {
       return (
@@ -262,11 +344,16 @@ export class CommonConnectionManager {
     }
 
     // Merged: config file takes precedence, settings as fallback
-    const settingsLookup = this.getSettingsLookup();
+    const settingsLookup = this.getSettingsLookup(workingDir);
     if (configLookup && settingsLookup) {
       return new MergedConnectionLookup(configLookup, settingsLookup);
     }
     return configLookup ?? settingsLookup ?? this.emptyLookup();
+  }
+
+  public getBuildManifest(fileURL: URL): BuildManifest | undefined {
+    const configDir = this.fileConfigDir[fileURL.toString()];
+    return configDir ? this.manifestCache[configDir]?.buildManifest : undefined;
   }
 
   public setCurrentRowLimit(rowLimit: number): void {
@@ -295,43 +382,47 @@ export class CommonConnectionManager {
     console.info('Using connection config', connectionsConfig);
 
     this.settingsConfig = connectionsConfig;
-    this.buildSettingsLookup(connectionsConfig);
+
+    // Merge defaults under user connections (user entries take precedence)
+    this.mergedSettingsConfig = {
+      ...getDefaultConnections(),
+      ...connectionsConfig,
+    };
+    this.settingsLookupsByDir = {};
   }
 
-  private buildSettingsLookup(
-    userConnections: Record<string, UnresolvedConnectionConfigEntry>
-  ): void {
-    // Merge defaults under user connections (user entries take precedence)
-    const merged: Record<string, UnresolvedConnectionConfigEntry> = {
-      ...getDefaultConnections(),
-      ...userConnections,
-    };
+  private getSettingsLookup(
+    workingDir: string
+  ): LookupConnection<Connection> | undefined {
+    if (!this.mergedSettingsConfig) return undefined;
 
     if (this.secretResolver) {
-      // Lazy resolution: secrets are resolved at lookupConnection() time
-      this.settingsLookup = new SettingsConnectionLookup(
-        merged,
-        this.secretResolver
+      // Lazy resolution: secrets are resolved at lookupConnection() time.
+      // SettingsConnectionLookup is lightweight (just holds references),
+      // so creating one per call is fine.
+      return new SettingsConnectionLookup(
+        this.mergedSettingsConfig,
+        this.secretResolver,
+        workingDir
       );
-    } else {
-      // No resolver (e.g., browser) — create connections eagerly
-      const config: ConnectionsConfig = {
-        connections: merged as Record<string, ConnectionConfigEntry>,
-      };
-      try {
-        this.settingsLookup = createConnectionsFromConfig(config);
-      } catch (error) {
-        console.warn(
-          'Failed to create connections from settings config:',
-          error
-        );
-        this.settingsLookup = undefined;
-      }
     }
-  }
 
-  private getSettingsLookup(): LookupConnection<Connection> | undefined {
-    return this.settingsLookup;
+    // No resolver (e.g., browser) — create connections eagerly, cached per dir
+    const cached = this.settingsLookupsByDir[workingDir];
+    if (cached) return cached;
+
+    const map = injectWorkingDirectory(
+      this.mergedSettingsConfig as Record<string, ConnectionConfigEntry>,
+      workingDir
+    );
+    try {
+      const lookup = connectionsFromMap(map);
+      this.settingsLookupsByDir[workingDir] = lookup;
+      return lookup;
+    } catch (error) {
+      console.warn('Failed to create connections from settings config:', error);
+      return undefined;
+    }
   }
 
   private emptyLookup(): LookupConnection<Connection> {

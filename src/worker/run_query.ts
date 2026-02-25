@@ -130,8 +130,9 @@ const runMSQLCell = async (
   } = query;
   const url = new URL(uri);
   const connections = connectionManager.getConnectionLookup(url);
+  const buildManifest = connectionManager.getBuildManifest(url);
 
-  const runtime = new Runtime({urlReader, connections});
+  const runtime = new Runtime({urlReader, connections, buildManifest});
   const allBegin = Date.now();
   const compileBegin = allBegin;
   sendMessage({
@@ -286,6 +287,7 @@ export const runQuery = async (
   try {
     const url = new URL(uri);
     const connections = connectionManager.getConnectionLookup(url);
+    const buildManifest = connectionManager.getBuildManifest(url);
     let cellData: CellData | null = null;
     let currentCell: Cell | null = null;
     let isMalloySql = false;
@@ -324,7 +326,11 @@ export const runQuery = async (
       return;
     }
 
-    const runtime = new Runtime({urlReader: fileHandler, connections});
+    const runtime = new Runtime({
+      urlReader: fileHandler,
+      connections,
+      buildManifest,
+    });
     const allBegin = Date.now();
     const compileBegin = allBegin;
     sendMessage({

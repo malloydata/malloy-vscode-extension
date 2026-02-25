@@ -23,9 +23,8 @@
 
 import {
   ConnectionConfigEntry,
-  ConnectionsConfig,
+  MalloyConfig,
   TestableConnection,
-  createConnectionsFromConfig,
 } from '@malloydata/malloy';
 
 function isTestable(connection: unknown): connection is TestableConnection {
@@ -44,8 +43,9 @@ export async function testConnectionEntry(
   name: string,
   entry: ConnectionConfigEntry
 ): Promise<void> {
-  const config: ConnectionsConfig = {connections: {[name]: entry}};
-  const lookup = createConnectionsFromConfig(config);
+  const config = new MalloyConfig('{"connections":{}}');
+  config.connectionMap = {[name]: entry};
+  const lookup = config.connections;
   const connection = await lookup.lookupConnection(name);
   if (!isTestable(connection)) {
     throw new Error(
