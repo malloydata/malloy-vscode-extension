@@ -64,6 +64,7 @@ export async function downloadQuery(
   const runtime = new Runtime({
     urlReader: fileHandler,
     connections: connectionManager.getConnectionLookup(url),
+    buildManifest: connectionManager.getBuildManifest(url),
   });
 
   sendMessage({

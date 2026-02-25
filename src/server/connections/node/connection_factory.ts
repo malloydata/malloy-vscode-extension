@@ -57,7 +57,8 @@ export class NodeConnectionFactory implements ConnectionFactory {
     const workspaceConfigPath = path.join(root, 'malloy-config.json');
     try {
       const configText = fs.readFileSync(workspaceConfigPath, 'utf-8');
-      return {configText, configDir: root};
+      const manifestText = this.readManifestFile(configText, root);
+      return {configText, configDir: root, manifestText};
     } catch {
       // Not found in workspace, try global
     }
@@ -68,12 +69,39 @@ export class NodeConnectionFactory implements ConnectionFactory {
       const globalConfigPath = path.join(expandedDir, 'malloy-config.json');
       try {
         const configText = fs.readFileSync(globalConfigPath, 'utf-8');
-        return {configText, configDir: expandedDir};
+        const manifestText = this.readManifestFile(configText, expandedDir);
+        return {configText, configDir: expandedDir, manifestText};
       } catch {
         // Not found
       }
     }
 
     return undefined;
+  }
+
+  private readManifestFile(
+    configText: string,
+    configDir: string
+  ): string | undefined {
+    let manifestPath = 'MANIFESTS';
+    try {
+      const parsed = JSON.parse(configText);
+      if (typeof parsed.manifestPath === 'string') {
+        manifestPath = parsed.manifestPath;
+      }
+    } catch {
+      // If config JSON is invalid, use default manifest path
+    }
+
+    const manifestFile = path.join(
+      configDir,
+      manifestPath,
+      'malloy-manifest.json'
+    );
+    try {
+      return fs.readFileSync(manifestFile, 'utf-8');
+    } catch {
+      return undefined;
+    }
   }
 }

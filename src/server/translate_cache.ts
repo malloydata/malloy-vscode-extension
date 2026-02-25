@@ -251,10 +251,12 @@ export class TranslateCache {
       };
       // TODO: Possibly look into having remaining statements run "in the background" and having
       // new runs preempt the current fetch
+      const fileURL = new URL(uri);
       const runtime = new Runtime({
         urlReader,
-        connections: this.connectionManager.getConnectionLookup(new URL(uri)),
+        connections: this.connectionManager.getConnectionLookup(fileURL),
         cacheManager: this.cacheManager,
+        buildManifest: this.connectionManager.getBuildManifest(fileURL),
       });
       const modelMaterializer = await this.createModelMaterializer(
         uri,
@@ -287,13 +289,15 @@ export class TranslateCache {
     const urlReader = {
       readURL: (url: URL) => this.getDocumentText(this.documents, url),
     };
-    const text = await urlReader.readURL(new URL(uri));
+    const fileURL = new URL(uri);
+    const text = await urlReader.readURL(fileURL);
     if (languageId === 'malloy-sql') {
       const parse = MalloySQLSQLParser.parse(text, uri);
       const runtime = new Runtime({
         urlReader,
-        connections: this.connectionManager.getConnectionLookup(new URL(uri)),
+        connections: this.connectionManager.getConnectionLookup(fileURL),
         cacheManager: this.cacheManager,
+        buildManifest: this.connectionManager.getBuildManifest(fileURL),
       });
 
       const modelMaterializer = await this.createModelMaterializer(
@@ -331,8 +335,9 @@ export class TranslateCache {
     } else {
       const runtime = new Runtime({
         urlReader,
-        connections: this.connectionManager.getConnectionLookup(new URL(uri)),
+        connections: this.connectionManager.getConnectionLookup(fileURL),
         cacheManager: this.cacheManager,
+        buildManifest: this.connectionManager.getBuildManifest(fileURL),
       });
 
       const modelMaterializer = await this.createModelMaterializer(

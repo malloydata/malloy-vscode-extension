@@ -20,9 +20,11 @@ export const compileQuery = async (
   const {uri} = documentMeta;
   const url = new URL(uri);
   const connectionLookup = connectionManager.getConnectionLookup(url);
+  const buildManifest = connectionManager.getBuildManifest(url);
   const runtime = new Runtime({
     urlReader: fileHandler,
     connections: connectionLookup,
+    buildManifest,
   });
 
   let workspaceFolders: string[] = [];

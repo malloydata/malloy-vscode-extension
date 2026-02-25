@@ -73,7 +73,13 @@ import {
 import {ConnectionConfigManager} from '../../src/common/types/connection_manager_types';
 
 jest.mock('@malloydata/malloy', () => ({
-  readConnectionsConfig: (text: string) => JSON.parse(text),
+  MalloyConfig: class {
+    connectionMap: Record<string, unknown> | undefined;
+    constructor(text: string) {
+      const parsed = JSON.parse(text);
+      this.connectionMap = parsed.connections;
+    }
+  },
 }));
 
 function makeMockConfigManager(
