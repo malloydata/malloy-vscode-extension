@@ -28,6 +28,7 @@ import {WebviewMessageManager} from '../../webview_message_manager';
 import {getWebviewHtml} from '../../webviews';
 import {DocumentMetadata} from '../../../common/types/query_spec';
 import {noAwait} from '../../../util/no_await';
+import {clearRenderDiagnostics} from '../../render_diagnostics';
 
 const turtleIcon = 'turtle.svg';
 
@@ -96,6 +97,7 @@ export function loadQueryWebview(
 
   current.panel.onDidDispose(() => {
     current.cancel();
+    clearRenderDiagnostics(current.panelId);
     const actuallyCurrent = MALLOY_EXTENSION_STATE.getRunState(current.panelId);
     if (actuallyCurrent?.panel === current.panel) {
       MALLOY_EXTENSION_STATE.setRunState(current.panelId, undefined);

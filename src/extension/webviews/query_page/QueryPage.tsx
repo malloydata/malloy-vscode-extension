@@ -16,7 +16,11 @@ import {
   QueryField,
   Result,
 } from '@malloydata/malloy';
-import {HTMLView} from '@malloydata/render';
+import {
+  MalloyRenderer,
+  type MalloyViz,
+  type DrillData,
+} from '@malloydata/render';
 
 import {
   QueryDownloadCopyData,
@@ -51,7 +55,7 @@ interface Results {
   name?: string;
   result?: Result;
   html?: HTMLElement;
-  view?: HTMLView;
+  viz?: MalloyViz;
   sql?: string;
   json?: string;
   metadata?: string;
@@ -232,41 +236,35 @@ export function QueryPage({vscode}: QueryPageProps) {
 
           setProgressMessage('Rendering');
           const malloyResult = API.util.wrapResult(result);
-          const view = new HTMLView(document);
-          view
-            .render(malloyResult, {
-              dataStyles: {},
-              isDrillingEnabled: true,
-              onDrill: (
-                drillQuery: string,
-                _target: HTMLElement,
-                _drillFilters: string[]
-              ) => {
-                copyToClipboard(drillQuery, 'Drill Query');
-              },
-              nextRendererOptions: {
-                onDrill: drillData => {
-                  copyToClipboard(drillData.query, 'Drill Query');
-                },
-                tableConfig: {
-                  enableDrill: true,
-                },
-              },
-            })
-            .then(html => {
-              html.style.height = '100%';
-              setProgressMessage('');
-              setResults({
-                ...currentResults,
-                html,
-                view,
-              });
-            })
-            .catch(console.error);
+          const renderer = new MalloyRenderer({});
+          const viz = renderer.createViz({
+            onDrill: (drillData: DrillData) => {
+              copyToClipboard(drillData.query, 'Drill Query');
+            },
+            tableConfig: {
+              enableDrill: true,
+            },
+          });
+          viz.setResult(malloyResult);
+          const container = document.createElement('div');
+          container.style.height = '100%';
+          viz.render(container);
+          setProgressMessage('');
+          setResults({
+            ...currentResults,
+            html: container,
+            viz,
+          });
+          viz.onReady(() => {
+            vscode.postMessage({
+              status: QueryRunStatus.RenderLogs,
+              logs: viz.getLogs(),
+            });
+          });
         }
       }
     },
-    [copyToClipboard]
+    [copyToClipboard, vscode]
   );
 
   useEffect(() => {
@@ -385,8 +383,8 @@ export function QueryPage({vscode}: QueryPageProps) {
             <StyledDOMElement element={results.html} style={{height: '100%'}} />
             <CopyButton
               onCopy={async () => {
-                if (results.view) {
-                  const copiedHtml = await results.view.getHTML();
+                if (results.viz) {
+                  const copiedHtml = await results.viz.getHTML();
                   copyToClipboard(copiedHtml, 'HTML Results');
                 }
               }}

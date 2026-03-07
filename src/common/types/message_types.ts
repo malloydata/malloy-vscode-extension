@@ -59,6 +59,7 @@ export enum QueryRunStatus {
   StartDownload = 'start-download',
   RunCommand = 'run-command',
   Schema = 'schema',
+  RenderLogs = 'render-logs',
 }
 
 export enum QueryMessageType {
@@ -109,6 +110,11 @@ interface QueryMessageStatusSchema {
   schema: SerializedExplore[];
 }
 
+export interface QueryMessageRenderLogs {
+  status: QueryRunStatus.RenderLogs;
+  logs: Malloy.LogMessage[];
+}
+
 interface QueryMessageStatusDone {
   status: QueryRunStatus.Done;
   name: string;
@@ -143,7 +149,8 @@ export type QueryMessageStatus =
   | QueryMessageStatusRunning
   | QueryMessageStatusDone
   | QueryMessageStatusStableDone
-  | QueryMessageStatusSchema;
+  | QueryMessageStatusSchema
+  | QueryMessageRenderLogs;
 
 interface QueryMessageAppReady {
   type: QueryMessageType.AppReady;
