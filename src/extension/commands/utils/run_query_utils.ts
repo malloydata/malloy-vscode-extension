@@ -41,6 +41,10 @@ import {
   disposeWebviewPanel,
   showSchemaTreeViewWhenFocused,
 } from './vscode_utils';
+import {
+  setRenderDiagnostics,
+  clearRenderDiagnostics,
+} from '../../render_diagnostics';
 import {WorkerConnection} from '../../worker_connection';
 import {noAwait} from '../../../util/no_await';
 
@@ -122,6 +126,7 @@ export async function runMalloyQuery(
   const showSchemaOnly = options.showSchemaOnly ?? false;
   const withWebview = options.withWebview ?? true;
   const {defaultTab} = options;
+  const queryLine = MALLOY_EXTENSION_STATE.getActivePosition()?.line ?? 0;
 
   return new Promise((resolve, reject) => {
     const cancellationTokenSource = new CancellationTokenSource();
@@ -207,6 +212,7 @@ export async function runMalloyQuery(
       switch (message.status) {
         case QueryRunStatus.Compiling:
           {
+            clearRenderDiagnostics(panelId);
             progress?.report({increment: 20, message: 'Compiling'});
           }
           break;
@@ -280,6 +286,13 @@ export async function runMalloyQuery(
                     message.command,
                     ...message.args
                   )
+                );
+              } else if (message.status === QueryRunStatus.RenderLogs) {
+                setRenderDiagnostics(
+                  panelId,
+                  message.logs,
+                  query.documentMeta.uri,
+                  queryLine
                 );
               }
             });
