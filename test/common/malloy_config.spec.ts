@@ -1214,6 +1214,20 @@ describe('NodeConnectionFactory.findMalloyConfig', () => {
     expect(result!.manifestText).toBe(manifestContent);
   });
 
+  it('finds config when file URL uses vscode-notebook-cell: scheme', () => {
+    const configContent = '{"connections":{}}';
+    fs.writeFileSync(path.join(tmpDir, 'malloy-config.json'), configContent);
+
+    // Simulate a notebook cell URI: vscode-notebook-cell:///path/to/file.malloynb#W5sODI=
+    const notebookPath = path.join(tmpDir, 'notebook.malloynb');
+    const cellURL = new URL(`vscode-notebook-cell://${notebookPath}#W5sODI=`);
+    const result = factory.findMalloyConfig(cellURL, [tmpDir]);
+
+    expect(result).toBeDefined();
+    expect(result!.configText).toBe(configContent);
+    expect(result!.configDir).toBe(tmpDir);
+  });
+
   it('returns undefined manifestText when no manifest file exists', () => {
     fs.writeFileSync(
       path.join(tmpDir, 'malloy-config.json'),
