@@ -255,11 +255,9 @@ export function QueryPage({vscode}: QueryPageProps) {
             html: container,
             viz,
           });
-          viz.onReady(() => {
-            vscode.postMessage({
-              status: QueryRunStatus.RenderLogs,
-              logs: viz.getLogs(),
-            });
+          vscode.postMessage({
+            status: QueryRunStatus.RenderLogs,
+            logs: viz.getLogs(),
           });
         }
       }
