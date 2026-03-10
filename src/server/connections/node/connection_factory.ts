@@ -20,11 +20,19 @@ export class NodeConnectionFactory implements ConnectionFactory {
     // No-op: connections are now created fresh per-operation via the registry.
   }
 
+  /**
+   * Convert a URL to a filesystem path, handling non-file: schemes
+   * (e.g. vscode-notebook-cell:) by extracting the pathname.
+   */
+  private toFilePath(url: URL): string {
+    const fileUrl =
+      url.protocol === 'file:' ? url : new URL(url.pathname, 'file:');
+    return fileURLToPath(fileUrl);
+  }
+
   getWorkingDirectory(url: URL): string {
     try {
-      const baseUrl = new URL('.', url);
-      const fileUrl = new URL(baseUrl.pathname, 'file:');
-      return fileURLToPath(fileUrl);
+      return path.dirname(this.toFilePath(url));
     } catch {
       return '.';
     }
@@ -37,8 +45,7 @@ export class NodeConnectionFactory implements ConnectionFactory {
   ): MalloyConfigResult | undefined {
     let fileDir: string;
     try {
-      const filePath = fileURLToPath(fileURL);
-      fileDir = path.dirname(filePath);
+      fileDir = path.dirname(this.toFilePath(fileURL));
     } catch {
       return undefined;
     }
