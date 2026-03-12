@@ -38,6 +38,11 @@ import {BaseLanguageClient} from 'vscode-languageclient';
 import {FetchModelMessage} from '../../common/types/message_types';
 import {noAwait} from '../../util/no_await';
 import {MalloyRendererMessage} from './types';
+import {
+  setRenderDiagnostics,
+  clearRenderDiagnostics,
+} from '../render_diagnostics';
+import type * as Malloy from '@malloydata/malloy-interfaces';
 
 const NO_QUERY = 'Model has no queries.';
 
@@ -117,19 +122,44 @@ export function activateNotebookController(
     new MalloyController(context, worker, client, statusBarProvider)
   );
 
-  const relayEvent = (event: MessageEvent) => {
+  context.subscriptions.push(
+    vscode.workspace.onDidCloseNotebookDocument(notebook => {
+      for (const cell of notebook.getCells()) {
+        clearRenderDiagnostics(cell.document.uri.toString());
+      }
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeNotebookDocument(event => {
+      for (const change of event.contentChanges) {
+        for (const cell of change.removedCells) {
+          clearRenderDiagnostics(cell.document.uri.toString());
+        }
+      }
+    })
+  );
+
+  const handleRendererMessage = (event: MessageEvent) => {
     const {command, args} = event.message;
-    noAwait(vscode.commands.executeCommand(command, ...args));
+    if (command === 'malloy.renderLogs') {
+      const [cellUri, logs] = args as [string, Malloy.LogMessage[]];
+      if (cellUri && logs?.length) {
+        setRenderDiagnostics(cellUri, logs, cellUri, 0);
+      }
+    } else {
+      noAwait(vscode.commands.executeCommand(command, ...args));
+    }
   };
   context.subscriptions.push(
     vscode.notebooks
       .createRendererMessaging('malloy.notebook-renderer')
-      .onDidReceiveMessage(relayEvent)
+      .onDidReceiveMessage(handleRendererMessage)
   );
   context.subscriptions.push(
     vscode.notebooks
       .createRendererMessaging('malloy.notebook-renderer-schema')
-      .onDidReceiveMessage(relayEvent)
+      .onDidReceiveMessage(handleRendererMessage)
   );
 }
 
@@ -175,6 +205,7 @@ class MalloyController {
   ): Promise<void> {
     const {document} = cell;
     const uri = document.uri.toString();
+    clearRenderDiagnostics(uri);
     const execution = this._controller.createNotebookCellExecution(cell);
     execution.executionOrder = ++this._executionOrder;
     execution.start(Date.now());
@@ -225,7 +256,9 @@ class MalloyController {
             'text/x-sql'
           )
         );
-        output.push(new vscode.NotebookCellOutput(items, meta));
+        output.push(
+          new vscode.NotebookCellOutput(items, {...meta, cellUri: uri})
+        );
 
         const queryCostBytes = jsonResults.queryResult.runStats?.queryCostBytes;
         if (typeof queryCostBytes === 'number') {

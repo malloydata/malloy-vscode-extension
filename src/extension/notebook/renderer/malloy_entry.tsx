@@ -71,6 +71,16 @@ export const activate: ActivationFunction = ({postMessage}) => {
         const malloyResult = API.util.wrapResult(result);
         viz.setResult(malloyResult);
         viz.render(parent);
+
+        const logs = viz.getLogs();
+        if (logs.length > 0) {
+          const meta = info.metadata as Record<string, unknown> | undefined;
+          const cellUri = meta?.['cellUri'];
+          postMessage?.({
+            command: 'malloy.renderLogs',
+            args: [cellUri, logs],
+          });
+        }
       } else {
         let shadow = element.shadowRoot;
         if (!shadow) {

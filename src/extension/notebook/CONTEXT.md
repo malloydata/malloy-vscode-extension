@@ -16,6 +16,9 @@ Support for `.malloynb` files — interactive notebooks combining Malloy code, S
 - Handles cell execution requests
 - Compiles and runs Malloy code in cells
 - Manages cell execution order and cancellation
+- Surfaces renderer validation errors (from `viz.getLogs()`) in the VS Code Problems pane via `setRenderDiagnostics`
+- Passes cell URI through output metadata (`cellUri`) so the renderer can identify the source cell
+- Clears render diagnostics on cell re-execution, cell deletion, and notebook close
 
 ### `malloy_serializer.ts`
 `MalloyNotebookSerializer` — implements `NotebookSerializer`:
@@ -27,7 +30,7 @@ Notebook-specific type definitions.
 
 ### `renderer/`
 Custom notebook output renderers:
-- `malloy_entry.tsx` — renders query results in notebook cells
+- `malloy_entry.tsx` — renders query results in notebook cells; posts `malloy.renderLogs` messages back to the extension host with render validation logs
 - `MalloyRenderer.tsx` — result display component
 - `schema_entry.tsx` — renders schema output in notebook cells
 
