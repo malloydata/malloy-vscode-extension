@@ -131,6 +131,24 @@ export function activateNotebookController(
   );
 
   context.subscriptions.push(
+    vscode.window.tabGroups.onDidChangeTabs(event => {
+      for (const tab of event.closed) {
+        const input = tab.input;
+        if (input instanceof vscode.TabInputNotebook) {
+          const notebook = vscode.workspace.notebookDocuments.find(
+            doc => doc.uri.toString() === input.uri.toString()
+          );
+          if (notebook?.notebookType === 'malloy-notebook') {
+            for (const cell of notebook.getCells()) {
+              clearRenderDiagnostics(cell.document.uri.toString());
+            }
+          }
+        }
+      }
+    })
+  );
+
+  context.subscriptions.push(
     vscode.workspace.onDidChangeNotebookDocument(event => {
       for (const change of event.contentChanges) {
         for (const cell of change.removedCells) {
