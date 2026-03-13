@@ -140,12 +140,7 @@ export class SettingsConnectionLookup implements LookupConnection<Connection> {
           resolved[key] = secret;
         }
       } else {
-        resolved[key] = value as
-          | string
-          | number
-          | boolean
-          | {env: string}
-          | undefined;
+        resolved[key] = value;
       }
     }
     return resolved;

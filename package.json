@@ -190,6 +190,12 @@
         "category": "Malloy"
       },
       {
+        "command": "malloy.openConfigFile",
+        "title": "Open Config File",
+        "category": "Malloy",
+        "icon": "$(go-to-file)"
+      },
+      {
         "category": "Create",
         "command": "malloy.newUntitledNotebook",
         "title": "Malloy Notebook"
@@ -204,6 +210,11 @@
         }
       ],
       "view/item/context": [
+        {
+          "command": "malloy.openConfigFile",
+          "when": "view == malloyConnections && viewItem == connectionGroup.config",
+          "group": "inline"
+        },
         {
           "command": "malloy.editConnections",
           "when": "view == malloyConnections && viewItem == connectionGroup.settings",
@@ -546,21 +557,21 @@
     ]
   },
   "dependencies": {
-    "@malloydata/db-bigquery": "0.0.359",
-    "@malloydata/db-duckdb": "0.0.359",
-    "@malloydata/db-mysql": "0.0.359",
-    "@malloydata/db-postgres": "0.0.359",
-    "@malloydata/db-publisher": "0.0.359",
-    "@malloydata/db-snowflake": "0.0.359",
-    "@malloydata/db-trino": "0.0.359",
-    "@malloydata/malloy": "0.0.359",
-    "@malloydata/malloy-connections": "0.0.359",
+    "@malloydata/db-bigquery": "0.0.360",
+    "@malloydata/db-duckdb": "0.0.360",
+    "@malloydata/db-mysql": "0.0.360",
+    "@malloydata/db-postgres": "0.0.360",
+    "@malloydata/db-publisher": "0.0.360",
+    "@malloydata/db-snowflake": "0.0.360",
+    "@malloydata/db-trino": "0.0.360",
+    "@malloydata/malloy": "0.0.360",
+    "@malloydata/malloy-connections": "0.0.360",
     "@malloydata/malloy-explorer": "0.0.338-dev260215172810",
-    "@malloydata/malloy-interfaces": "0.0.359",
-    "@malloydata/malloy-query-builder": "0.0.359",
-    "@malloydata/malloy-sql": "0.0.359",
-    "@malloydata/render": "0.0.359",
-    "@malloydata/syntax-highlight": "0.0.359",
+    "@malloydata/malloy-interfaces": "0.0.360",
+    "@malloydata/malloy-query-builder": "0.0.360",
+    "@malloydata/malloy-sql": "0.0.360",
+    "@malloydata/render": "0.0.360",
+    "@malloydata/syntax-highlight": "0.0.360",
     "@shikijs/core": "^3.2.1",
     "@shikijs/engine-javascript": "^3.2.1",
     "@shikijs/langs": "^3.2.1",
