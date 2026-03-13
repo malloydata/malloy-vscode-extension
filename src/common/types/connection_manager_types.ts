@@ -21,7 +21,12 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {BuildManifest, Connection, LookupConnection} from '@malloydata/malloy';
+import {
+  BuildManifest,
+  Connection,
+  JsonConfigValue,
+  LookupConnection,
+} from '@malloydata/malloy';
 
 /**
  * A ConnectionConfigEntry that may contain unresolved {secretKey: ...} values.
@@ -34,6 +39,7 @@ export type UnresolvedConnectionConfigEntry = {
     | string
     | number
     | boolean
+    | JsonConfigValue
     | {env: string}
     | {secretKey: string}
     | undefined;

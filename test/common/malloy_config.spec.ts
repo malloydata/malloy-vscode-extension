@@ -1060,20 +1060,53 @@ describe('NodeConnectionFactory.findMalloyConfig', () => {
     expect(result!.configDir).toBe(tmpDir);
   });
 
-  it('does NOT find config in intermediate directories (no walk)', () => {
+  it('finds config in intermediate directory (walk up)', () => {
     // Config in src/ (intermediate), NOT in workspace root
     const srcDir = path.join(tmpDir, 'src');
     fs.mkdirSync(srcDir, {recursive: true});
     fs.mkdirSync(path.join(srcDir, 'models'), {recursive: true});
-    fs.writeFileSync(
-      path.join(srcDir, 'malloy-config.json'),
-      '{"connections":{}}'
-    );
+    const configContent = '{"connections":{}}';
+    fs.writeFileSync(path.join(srcDir, 'malloy-config.json'), configContent);
 
     const fileURL = pathToFileURL(path.join(srcDir, 'models', 'test.malloy'));
     const result = factory.findMalloyConfig(fileURL, [tmpDir]);
 
-    // Should NOT find it — only checks workspace root, not intermediate dirs
+    expect(result).toBeDefined();
+    expect(result!.configText).toBe(configContent);
+    expect(result!.configDir).toBe(srcDir);
+  });
+
+  it('nearest config wins over workspace root config', () => {
+    const srcDir = path.join(tmpDir, 'src');
+    fs.mkdirSync(srcDir, {recursive: true});
+
+    const rootConfig = '{"connections":{"db":{"is":"postgres"}}}';
+    const nearConfig = '{"connections":{"db":{"is":"duckdb"}}}';
+    fs.writeFileSync(path.join(tmpDir, 'malloy-config.json'), rootConfig);
+    fs.writeFileSync(path.join(srcDir, 'malloy-config.json'), nearConfig);
+
+    const fileURL = pathToFileURL(path.join(srcDir, 'test.malloy'));
+    const result = factory.findMalloyConfig(fileURL, [tmpDir]);
+
+    expect(result).toBeDefined();
+    expect(result!.configText).toBe(nearConfig);
+    expect(result!.configDir).toBe(srcDir);
+  });
+
+  it('does not walk above workspace root', () => {
+    // Config exists ABOVE the workspace root — should not be found
+    const workspaceRoot = path.join(tmpDir, 'workspace');
+    fs.mkdirSync(path.join(workspaceRoot, 'src'), {recursive: true});
+    fs.writeFileSync(
+      path.join(tmpDir, 'malloy-config.json'),
+      '{"connections":{"db":{"is":"duckdb"}}}'
+    );
+
+    const fileURL = pathToFileURL(
+      path.join(workspaceRoot, 'src', 'test.malloy')
+    );
+    const result = factory.findMalloyConfig(fileURL, [workspaceRoot]);
+
     expect(result).toBeUndefined();
   });
 

@@ -5,7 +5,6 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-const mockFindFiles = jest.fn().mockResolvedValue([]);
 const mockReadFile = jest.fn();
 const mockGetConfiguration = jest.fn();
 const mockAsRelativePath = jest.fn((uri: any) => uri.fsPath ?? uri.toString());
@@ -15,6 +14,9 @@ const mockCreateFileSystemWatcher = jest.fn(() => ({
   onDidDelete: jest.fn(() => ({dispose: jest.fn()})),
   dispose: jest.fn(),
 }));
+const mockGetWorkspaceFolder = jest.fn();
+const mockOnDidChangeActiveTextEditor = jest.fn(() => ({dispose: jest.fn()}));
+let mockActiveTextEditor: any = undefined;
 
 jest.mock(
   'vscode',
@@ -40,22 +42,47 @@ jest.mock(
       fire = jest.fn();
     },
     Uri: {
-      file: (path: string) => ({
+      file: (p: string) => ({
         scheme: 'file',
-        fsPath: path,
-        toString: () => `file://${path}`,
+        fsPath: p,
+        path: p,
+        toString: () => `file://${p}`,
       }),
       parse: (s: string) => ({scheme: 'file', fsPath: s, toString: () => s}),
+      joinPath: (base: any, ...segments: string[]) => {
+        // Resolve '..' segments to mimic real Uri.joinPath
+        const parts = (base.fsPath || base.path).split('/');
+        for (const seg of segments) {
+          if (seg === '..') {
+            parts.pop();
+          } else {
+            parts.push(seg);
+          }
+        }
+        const resolved = parts.join('/');
+        return {
+          scheme: 'file',
+          fsPath: resolved,
+          path: resolved,
+          toString: () => `file://${resolved}`,
+        };
+      },
     },
     Disposable: {
       from: (..._disposables: any[]) => ({dispose: jest.fn()}),
     },
     workspace: {
-      findFiles: mockFindFiles,
       fs: {readFile: mockReadFile},
       getConfiguration: mockGetConfiguration,
       asRelativePath: mockAsRelativePath,
       createFileSystemWatcher: mockCreateFileSystemWatcher,
+      getWorkspaceFolder: mockGetWorkspaceFolder,
+    },
+    window: {
+      get activeTextEditor() {
+        return mockActiveTextEditor;
+      },
+      onDidChangeActiveTextEditor: mockOnDidChangeActiveTextEditor,
     },
   }),
   {virtual: true}
@@ -133,10 +160,64 @@ function injectTypes(
   provider.setRegisteredTypes(types, displayNames);
 }
 
+/**
+ * Set up a workspace folder with an optional config file.
+ * @param workspaceRoot — workspace root path
+ * @param configJson — config contents (undefined = no config anywhere)
+ * @param filePath — path to the active file (defaults to workspaceRoot/test.malloy)
+ * @param configDir — directory containing the config (defaults to workspaceRoot)
+ */
+function setupWorkspaceWithConfig(
+  workspaceRoot: string,
+  configJson?: string,
+  filePath?: string,
+  configDir?: string
+): void {
+  const folder = {
+    uri: {
+      scheme: 'file',
+      fsPath: workspaceRoot,
+      path: workspaceRoot,
+      toString: () => `file://${workspaceRoot}`,
+    },
+  };
+  const activeFilePath = filePath ?? `${workspaceRoot}/test.malloy`;
+  mockActiveTextEditor = {
+    document: {
+      uri: {
+        scheme: 'file',
+        fsPath: activeFilePath,
+        path: activeFilePath,
+        toString: () => `file://${activeFilePath}`,
+      },
+    },
+  };
+  mockGetWorkspaceFolder.mockReturnValue(folder);
+
+  if (configJson) {
+    const expectedConfigDir = configDir ?? workspaceRoot;
+    mockReadFile.mockImplementation((uri: any) => {
+      const uriPath = uri.fsPath ?? uri.path ?? '';
+      if (uriPath === `${expectedConfigDir}/malloy-config.json`) {
+        return Promise.resolve(new TextEncoder().encode(configJson));
+      }
+      return Promise.reject(new Error('File not found'));
+    });
+  } else {
+    mockReadFile.mockRejectedValue(new Error('File not found'));
+  }
+}
+
+function clearActiveEditor(): void {
+  mockActiveTextEditor = undefined;
+  mockGetWorkspaceFolder.mockReturnValue(undefined);
+  mockReadFile.mockRejectedValue(new Error('File not found'));
+}
+
 describe('ConnectionsProvider', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockFindFiles.mockResolvedValue([]);
+    clearActiveEditor();
     setupMalloyConfig({});
   });
 
@@ -227,22 +308,15 @@ describe('ConnectionsProvider', () => {
   });
 
   describe('config file connections', () => {
-    it('shows config group when config file exists', async () => {
-      const configUri = {
-        scheme: 'file',
-        fsPath: '/workspace/malloy-config.json',
-        toString: () => 'file:///workspace/malloy-config.json',
-      };
-      mockFindFiles.mockResolvedValue([configUri]);
-      mockReadFile.mockResolvedValue(
-        new TextEncoder().encode(
-          JSON.stringify({
-            connections: {
-              mydb: {is: 'duckdb'},
-              analytics: {is: 'bigquery'},
-            },
-          })
-        )
+    it('shows config group when config file exists for active file', async () => {
+      setupWorkspaceWithConfig(
+        '/workspace',
+        JSON.stringify({
+          connections: {
+            mydb: {is: 'duckdb'},
+            analytics: {is: 'bigquery'},
+          },
+        })
       );
       mockAsRelativePath.mockReturnValue('malloy-config.json');
 
@@ -264,16 +338,9 @@ describe('ConnectionsProvider', () => {
     });
 
     it('config connection click opens the readonly editor', async () => {
-      const configUri = {
-        scheme: 'file',
-        fsPath: '/workspace/malloy-config.json',
-        toString: () => 'file:///workspace/malloy-config.json',
-      };
-      mockFindFiles.mockResolvedValue([configUri]);
-      mockReadFile.mockResolvedValue(
-        new TextEncoder().encode(
-          JSON.stringify({connections: {mydb: {is: 'duckdb'}}})
-        )
+      setupWorkspaceWithConfig(
+        '/workspace',
+        JSON.stringify({connections: {mydb: {is: 'duckdb'}}})
       );
 
       const manager = makeMockConfigManager();
@@ -289,18 +356,45 @@ describe('ConnectionsProvider', () => {
     });
 
     it('handles config file parse errors gracefully', async () => {
-      const configUri = {
-        scheme: 'file',
-        fsPath: '/workspace/malloy-config.json',
-        toString: () => 'file:///workspace/malloy-config.json',
-      };
-      mockFindFiles.mockResolvedValue([configUri]);
-      mockReadFile.mockResolvedValue(
-        new TextEncoder().encode('invalid json {{{')
-      );
+      setupWorkspaceWithConfig('/workspace', 'invalid json {{{');
 
       const manager = makeMockConfigManager();
       const provider = new ConnectionsProvider(makeMockContext(), manager);
+      const groups = (await provider.getChildren()) as ConnectionGroupItem[];
+
+      const configGroup = groups.find(
+        g => g.contextValue === 'connectionGroup.config'
+      );
+      expect(configGroup).toBeUndefined();
+    });
+
+    it('finds config in intermediate directory via walk-up', async () => {
+      setupWorkspaceWithConfig(
+        '/workspace',
+        JSON.stringify({connections: {mydb: {is: 'duckdb'}}}),
+        '/workspace/src/models/test.malloy',
+        '/workspace/src'
+      );
+      mockAsRelativePath.mockReturnValue('src/malloy-config.json');
+
+      const manager = makeMockConfigManager();
+      const provider = new ConnectionsProvider(makeMockContext(), manager);
+      const groups = (await provider.getChildren()) as ConnectionGroupItem[];
+
+      const configGroup = groups.find(
+        g => g.contextValue === 'connectionGroup.config'
+      );
+      expect(configGroup).toBeDefined();
+      expect(configGroup!.children).toHaveLength(1);
+      expect(configGroup!.children[0].label).toBe('mydb');
+    });
+
+    it('shows no config group when no file is open', async () => {
+      clearActiveEditor();
+
+      const manager = makeMockConfigManager();
+      const provider = new ConnectionsProvider(makeMockContext(), manager);
+      injectTypes(provider);
       const groups = (await provider.getChildren()) as ConnectionGroupItem[];
 
       const configGroup = groups.find(
@@ -312,16 +406,9 @@ describe('ConnectionsProvider', () => {
 
   describe('shadowing', () => {
     it('settings connection shows (shadowed) when config has same name', async () => {
-      const configUri = {
-        scheme: 'file',
-        fsPath: '/workspace/malloy-config.json',
-        toString: () => 'file:///workspace/malloy-config.json',
-      };
-      mockFindFiles.mockResolvedValue([configUri]);
-      mockReadFile.mockResolvedValue(
-        new TextEncoder().encode(
-          JSON.stringify({connections: {mydb: {is: 'duckdb'}}})
-        )
+      setupWorkspaceWithConfig(
+        '/workspace',
+        JSON.stringify({connections: {mydb: {is: 'duckdb'}}})
       );
 
       const manager = makeMockConfigManager({
@@ -345,16 +432,9 @@ describe('ConnectionsProvider', () => {
     });
 
     it('config connection names hide defaults', async () => {
-      const configUri = {
-        scheme: 'file',
-        fsPath: '/workspace/malloy-config.json',
-        toString: () => 'file:///workspace/malloy-config.json',
-      };
-      mockFindFiles.mockResolvedValue([configUri]);
-      mockReadFile.mockResolvedValue(
-        new TextEncoder().encode(
-          JSON.stringify({connections: {duckdb: {is: 'duckdb'}}})
-        )
+      setupWorkspaceWithConfig(
+        '/workspace',
+        JSON.stringify({connections: {duckdb: {is: 'duckdb'}}})
       );
 
       const manager = makeMockConfigManager();
@@ -375,17 +455,9 @@ describe('ConnectionsProvider', () => {
   describe('projectConnectionsOnly', () => {
     it('hides settings and defaults when projectConnectionsOnly is true', async () => {
       setupMalloyConfig({projectConnectionsOnly: true});
-
-      const configUri = {
-        scheme: 'file',
-        fsPath: '/workspace/malloy-config.json',
-        toString: () => 'file:///workspace/malloy-config.json',
-      };
-      mockFindFiles.mockResolvedValue([configUri]);
-      mockReadFile.mockResolvedValue(
-        new TextEncoder().encode(
-          JSON.stringify({connections: {mydb: {is: 'duckdb'}}})
-        )
+      setupWorkspaceWithConfig(
+        '/workspace',
+        JSON.stringify({connections: {mydb: {is: 'duckdb'}}})
       );
 
       const manager = makeMockConfigManager({
@@ -403,6 +475,7 @@ describe('ConnectionsProvider', () => {
 
     it('returns empty when projectConnectionsOnly and no config files', async () => {
       setupMalloyConfig({projectConnectionsOnly: true});
+      clearActiveEditor();
 
       const manager = makeMockConfigManager({
         getConnectionsConfig: jest.fn().mockReturnValue({
@@ -478,6 +551,25 @@ describe('ConnectionsProvider', () => {
       expect(settingsGroup.children[0].command!.command).toBe(
         'malloy.editConnections'
       );
+    });
+  });
+
+  describe('config group header', () => {
+    it('stores configFileUri on config group for open action', async () => {
+      setupWorkspaceWithConfig(
+        '/workspace',
+        JSON.stringify({connections: {mydb: {is: 'duckdb'}}})
+      );
+
+      const manager = makeMockConfigManager();
+      const provider = new ConnectionsProvider(makeMockContext(), manager);
+      const groups = (await provider.getChildren()) as ConnectionGroupItem[];
+
+      const configGroup = groups.find(
+        g => g.contextValue === 'connectionGroup.config'
+      )!;
+      expect(configGroup.configFileUri).toBeDefined();
+      expect(configGroup.configFileUri).toContain('malloy-config.json');
     });
   });
 });

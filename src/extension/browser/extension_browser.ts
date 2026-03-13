@@ -30,7 +30,10 @@ import {
 
 import {setupFileMessaging, setupSubscriptions} from '../subscriptions';
 import {connectionConfigManager} from './connection_config_manager_browser';
-import {ConnectionsProvider} from '../tree_views/connections_view';
+import {
+  ConnectionGroupItem,
+  ConnectionsProvider,
+} from '../tree_views/connections_view';
 import {
   editConnectionsCommand,
   createConnectionCommand,
@@ -91,6 +94,21 @@ export async function activate(context: vscode.ExtensionContext) {
       'malloy.createConnection',
       (typeName: string) => {
         createConnectionCommand(context, worker, typeName);
+      }
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      'malloy.openConfigFile',
+      (groupItem: unknown) => {
+        if (
+          groupItem instanceof ConnectionGroupItem &&
+          groupItem.configFileUri
+        ) {
+          const uri = vscode.Uri.parse(groupItem.configFileUri);
+          void vscode.window.showTextDocument(uri);
+        }
       }
     )
   );

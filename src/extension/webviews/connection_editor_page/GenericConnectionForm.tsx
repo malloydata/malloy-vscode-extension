@@ -60,7 +60,8 @@ export const GenericConnectionForm = ({
   const nameError = isReadonly
     ? null
     : validateName(name, existingNames, registeredTypes, typeName);
-  const isValid = name.trim() !== '' && !nameError;
+  const jsonErrors = validateJsonProperties(properties, values);
+  const isValid = name.trim() !== '' && !nameError && jsonErrors.size === 0;
 
   return (
     <FormContainer>
@@ -165,6 +166,36 @@ function validateName(
   return null;
 }
 
+function validateJsonValue(value: string): string | null {
+  if (value.trim() === '') return null;
+  try {
+    const parsed = JSON.parse(value);
+    if (parsed === null || typeof parsed !== 'object') {
+      return 'Value must be a JSON object or array, not a scalar.';
+    }
+    return null;
+  } catch {
+    return 'Invalid JSON.';
+  }
+}
+
+function validateJsonProperties(
+  properties: ConnectionPropertyInfo[],
+  values: Record<string, string | number | boolean>
+): Map<string, string> {
+  const errors = new Map<string, string>();
+  for (const prop of properties) {
+    if (prop.type !== 'json') continue;
+    const value = values[prop.name];
+    if (value === undefined || value === '') continue;
+    const error = validateJsonValue(String(value));
+    if (error) {
+      errors.set(prop.name, error);
+    }
+  }
+  return errors;
+}
+
 interface PropertyFieldProps {
   property: ConnectionPropertyInfo;
   value: string | number | boolean | undefined;
@@ -247,17 +278,22 @@ const PropertyField = ({
 
     case 'text':
       return (
-        <FieldGroup>
-          <FieldLabel>{property.displayName}</FieldLabel>
-          <TextArea
-            value={typeof value === 'string' ? value : ''}
-            onChange={e => onChange(e.target.value)}
-            placeholder={placeholder}
-            readOnly={isReadonly}
-            rows={4}
-          />
-          {property.description && <HelpText>{property.description}</HelpText>}
-        </FieldGroup>
+        <ExpandableTextField
+          property={property}
+          value={value}
+          onChange={onChange}
+          readonly={isReadonly}
+        />
+      );
+
+    case 'json':
+      return (
+        <JsonField
+          property={property}
+          value={value}
+          onChange={onChange}
+          readonly={isReadonly}
+        />
       );
 
     case 'number':
@@ -367,6 +403,96 @@ const SecretField = ({value, onChange}: SecretFieldProps) => {
       )}
       {value && <SecretIndicator>Secret is set</SecretIndicator>}
     </ButtonRow>
+  );
+};
+
+interface ExpandableTextFieldProps {
+  property: ConnectionPropertyInfo;
+  value: string | number | boolean | undefined;
+  onChange: (value: string) => void;
+  readonly?: boolean;
+  error?: string | null;
+}
+
+const ExpandableTextField = ({
+  property,
+  value,
+  onChange,
+  readonly: isReadonly,
+  error,
+}: ExpandableTextFieldProps) => {
+  const strValue = typeof value === 'string' ? value : '';
+  const [expanded, setExpanded] = useState(strValue !== '');
+
+  if (!expanded && !strValue) {
+    if (isReadonly) {
+      return (
+        <InlineField>
+          <InlineLabel>{property.displayName}</InlineLabel>
+          <InlineControl>
+            <SecretIndicator>Not set</SecretIndicator>
+          </InlineControl>
+        </InlineField>
+      );
+    }
+    return (
+      <InlineField>
+        <InlineLabel>{property.displayName}</InlineLabel>
+        <InlineControl>
+          <VSCodeButton onClick={() => setExpanded(true)}>Set</VSCodeButton>
+        </InlineControl>
+      </InlineField>
+    );
+  }
+
+  return (
+    <FieldGroup>
+      <FieldLabel>{property.displayName}</FieldLabel>
+      <TextArea
+        value={strValue}
+        onChange={e => onChange(e.target.value)}
+        readOnly={isReadonly}
+        rows={4}
+      />
+      {error && <ErrorText>{error}</ErrorText>}
+      <SpaceBetweenRow>
+        {property.description ? (
+          <HelpText>{property.description}</HelpText>
+        ) : (
+          <span />
+        )}
+        {!isReadonly && (
+          <VSCodeButton
+            appearance="secondary"
+            onClick={() => {
+              onChange('');
+              setExpanded(false);
+            }}
+          >
+            Clear
+          </VSCodeButton>
+        )}
+      </SpaceBetweenRow>
+    </FieldGroup>
+  );
+};
+
+const JsonField = ({
+  property,
+  value,
+  onChange,
+  readonly: isReadonly,
+}: Omit<ExpandableTextFieldProps, 'error'>) => {
+  const strValue = typeof value === 'string' ? value : '';
+  const error = strValue ? validateJsonValue(strValue) : null;
+  return (
+    <ExpandableTextField
+      property={property}
+      value={value}
+      onChange={onChange}
+      readonly={isReadonly}
+      error={error}
+    />
   );
 };
 
@@ -491,6 +617,13 @@ const ButtonRow = styled.div`
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+`;
+
+const SpaceBetweenRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
 `;
 
 const FileRow = styled.div`

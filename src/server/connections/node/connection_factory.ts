@@ -60,14 +60,17 @@ export class NodeConnectionFactory implements ConnectionFactory {
           normalizedFileDir.startsWith(r + path.sep) || normalizedFileDir === r
       ) ?? normalizedFileDir;
 
-    // 1. Workspace config: malloy-config.json at the workspace root
-    const workspaceConfigPath = path.join(root, 'malloy-config.json');
-    try {
-      const configText = fs.readFileSync(workspaceConfigPath, 'utf-8');
-      const manifestText = this.readManifestFile(configText, root);
-      return {configText, configDir: root, manifestText};
-    } catch {
-      // Not found in workspace, try global
+    // 1. Walk up from file directory to workspace root looking for config
+    for (let dir = normalizedFileDir; ; dir = path.dirname(dir)) {
+      const configPath = path.join(dir, 'malloy-config.json');
+      try {
+        const configText = fs.readFileSync(configPath, 'utf-8');
+        const manifestText = this.readManifestFile(configText, dir);
+        return {configText, configDir: dir, manifestText};
+      } catch {
+        // Not found at this level, keep walking
+      }
+      if (dir === root || path.dirname(dir) === dir) break;
     }
 
     // 2. Global config directory fallback

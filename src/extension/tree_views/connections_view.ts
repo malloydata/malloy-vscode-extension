@@ -39,17 +39,27 @@ interface ConfigFileInfo {
 export class ConnectionsProvider
   implements vscode.TreeDataProvider<ConnectionTreeItem>, vscode.Disposable
 {
-  private configFiles: Map<string, ConfigFileInfo> = new Map();
+  private activeConfigFile: ConfigFileInfo | undefined;
   private watcher: vscode.Disposable | undefined;
+  private editorWatcher: vscode.Disposable | undefined;
   private dirty = true;
   private registeredTypes: string[] = [];
   private typeDisplayNames: Record<string, string> = {};
+  private activeFileUri: vscode.Uri | undefined;
 
   constructor(
     private context: vscode.ExtensionContext,
     private connectionConfigManager: ConnectionConfigManager
   ) {
     this.watcher = this.setupWatcher();
+    this.activeFileUri = vscode.window.activeTextEditor?.document.uri;
+    this.editorWatcher = vscode.window.onDidChangeActiveTextEditor(editor => {
+      const newUri = editor?.document.uri;
+      if (newUri?.toString() !== this.activeFileUri?.toString()) {
+        this.activeFileUri = newUri;
+        this.refresh();
+      }
+    });
   }
 
   setRegisteredTypes(
@@ -67,6 +77,7 @@ export class ConnectionsProvider
 
   dispose(): void {
     this.watcher?.dispose();
+    this.editorWatcher?.dispose();
   }
 
   getTreeItem(element: ConnectionTreeItem): vscode.TreeItem {
@@ -102,17 +113,18 @@ export class ConnectionsProvider
     const projectOnly =
       getMalloyConfig().get<boolean>('projectConnectionsOnly') ?? false;
 
-    // 1. Config file section(s) — one per discovered config file
+    // 1. Config file section — the one config that applies to the active file
     if (this.dirty) {
-      await this.discoverConfigFiles();
+      await this.resolveActiveConfigFile();
       this.dirty = false;
     }
 
-    const allConfigNames = new Set<string>();
-    for (const [, configFile] of this.configFiles) {
+    const configNames = new Set<string>();
+    if (this.activeConfigFile) {
+      const configFile = this.activeConfigFile;
       const children = Object.entries(configFile.connections).map(
         ([name, entry]) => {
-          allConfigNames.add(name);
+          configNames.add(name);
           return ConnectionItem.config(
             name,
             this.displayName(entry.is),
@@ -142,7 +154,7 @@ export class ConnectionsProvider
     const settingsConfig = this.connectionConfigManager.getConnectionsConfig();
     if (settingsConfig) {
       const children = Object.entries(settingsConfig).map(([name, entry]) => {
-        const shadowed = allConfigNames.has(name);
+        const shadowed = configNames.has(name);
         const displayType = this.displayName(entry.is);
         const suffix = shadowed ? ' (shadowed)' : '';
         return ConnectionItem.settings(name, `${displayType}${suffix}`);
@@ -164,10 +176,7 @@ export class ConnectionsProvider
       settingsConfig ? Object.keys(settingsConfig) : []
     );
     const defaultChildren = this.registeredTypes
-      .filter(
-        typeName =>
-          !allConfigNames.has(typeName) && !settingsNames.has(typeName)
-      )
+      .filter(t => !configNames.has(t) && !settingsNames.has(t))
       .map(typeName =>
         ConnectionItem.defaultConnection(typeName, this.displayName(typeName))
       );
@@ -185,29 +194,42 @@ export class ConnectionsProvider
     return groups;
   }
 
-  private async discoverConfigFiles(): Promise<void> {
-    this.configFiles.clear();
+  /**
+   * Resolve the single config file that applies to the active editor's file.
+   * Mirrors the logic in NodeConnectionFactory.findMalloyConfig:
+   * 1. Walk up from the file's directory to the workspace root
+   * 2. Return the first malloy-config.json found
+   * 3. Fall back to the global config directory
+   */
+  private async resolveActiveConfigFile(): Promise<void> {
+    this.activeConfigFile = undefined;
 
-    // 1. Workspace config files
-    let files: vscode.Uri[];
-    try {
-      files = await vscode.workspace.findFiles(
-        '**/malloy-config.json',
-        '**/node_modules/**',
-        10
+    // Walk up from file directory to workspace root looking for config
+    if (this.activeFileUri) {
+      const workspaceFolder = vscode.workspace.getWorkspaceFolder(
+        this.activeFileUri
       );
-    } catch {
-      files = [];
+      if (workspaceFolder) {
+        // Walk from file's parent directory up to (and including) workspace root
+        const rootPath = workspaceFolder.uri.path;
+        let dir = vscode.Uri.joinPath(this.activeFileUri, '..');
+        for (;;) {
+          const configUri = vscode.Uri.joinPath(dir, 'malloy-config.json');
+          if (await this.loadConfigFile(configUri)) {
+            return;
+          }
+          if (dir.path === rootPath) break;
+          const parent = vscode.Uri.joinPath(dir, '..');
+          if (parent.path === dir.path) break; // filesystem root
+          dir = parent;
+        }
+      }
     }
 
-    for (const fileUri of files) {
-      await this.loadConfigFile(fileUri);
-    }
-
-    // 2. Global config directory (fallback when no workspace config found)
+    // Fall back to global config directory
     const projectOnly =
       getMalloyConfig().get<boolean>('projectConnectionsOnly') ?? false;
-    if (this.configFiles.size === 0 && !projectOnly) {
+    if (!projectOnly) {
       const globalDir = getMalloyConfig().get<string>('globalConfigDirectory');
       if (globalDir) {
         const homeUri = MALLOY_EXTENSION_STATE.getHomeUri();
@@ -223,20 +245,21 @@ export class ConnectionsProvider
   private async loadConfigFile(
     fileUri: vscode.Uri,
     labelOverride?: string
-  ): Promise<void> {
+  ): Promise<boolean> {
     try {
       const content = await vscode.workspace.fs.readFile(fileUri);
       const text = new TextDecoder().decode(content);
       const parsed = new MalloyConfig(text);
       const relativePath =
         labelOverride ?? vscode.workspace.asRelativePath(fileUri, true);
-      this.configFiles.set(fileUri.toString(), {
+      this.activeConfigFile = {
         uri: fileUri,
         relativePath,
         connections: parsed.connectionMap ?? {},
-      });
-    } catch (error) {
-      console.warn(`Failed to parse config file ${fileUri.fsPath}:`, error);
+      };
+      return true;
+    } catch {
+      return false;
     }
   }
 
@@ -262,6 +285,8 @@ type GroupContextValue =
   | 'connectionGroup.defaults';
 
 export class ConnectionGroupItem extends vscode.TreeItem {
+  public readonly configFileUri?: string;
+
   constructor(
     label: string,
     public override readonly contextValue: GroupContextValue,
@@ -272,6 +297,9 @@ export class ConnectionGroupItem extends vscode.TreeItem {
     super(label, vscode.TreeItemCollapsibleState.Expanded);
     this.id = `group:${contextValue}${uriKey ? `:${uriKey}` : ''}`;
     this.iconPath = icon;
+    if (contextValue === 'connectionGroup.config' && uriKey) {
+      this.configFileUri = uriKey;
+    }
   }
 }
 
