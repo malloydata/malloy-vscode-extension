@@ -23,7 +23,7 @@ Every process has Node.js and browser variants. Node runs in desktop VS Code; br
 Registry-driven — connection types come from `@malloydata/malloy` registry at runtime. No hardcoded backend knowledge.
 
 Four config sources (highest priority first):
-1. Workspace `malloy-config.json`
+1. Workspace `malloy-config.json` (found by walking up from the file's directory to the workspace root)
 2. Global `malloy-config.json` (via `malloy.globalConfigDirectory` setting)
 3. VS Code settings (`malloy.connectionMap`)
 4. Dynamic defaults from registry

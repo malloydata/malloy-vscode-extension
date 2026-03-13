@@ -41,7 +41,7 @@ The connection editor (`webviews/connection_editor_page/GenericConnectionForm.ts
 
 ## Tree Views
 
-- `tree_views/connections_view.ts` — Sidebar tree showing connections grouped by config source. Watches `malloy-config.json` files for changes.
+- `tree_views/connections_view.ts` — Sidebar tree showing the effective connections for the active editor file, grouped by source (config/settings/defaults). Updates automatically when switching files. Watches `malloy-config.json` files for changes.
 - `tree_views/schema_view.ts` — Schema tree (explores, fields, relationships) for the active file.
 
 ## Child Contexts

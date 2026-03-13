@@ -8,7 +8,7 @@ Used by extension host, language server, and worker. Must be browser-safe.
 Central class `CommonConnectionManager` provides connection lookups per file:
 - `getConnectionLookup(fileURL)` — returns a `LookupConnection` that merges config sources
 - `setConnectionsConfig()` — updates settings-based connections with lazy secret resolution
-- `resolveConfigForFile()` — finds and parses the nearest `malloy-config.json`
+- `resolveConfigForFile()` — walks up from the file's directory to the workspace root to find the nearest `malloy-config.json`
 
 Default connections are built dynamically from the registry — one `{is: typeName}` per registered type, plus a legacy `md` MotherDuck alias (`{is: 'duckdb', databasePath: 'md:'}`).
 
