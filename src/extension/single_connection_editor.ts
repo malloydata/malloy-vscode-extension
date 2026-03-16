@@ -136,6 +136,8 @@ export class SingleConnectionPanel {
         }
       } else if (rawValue !== undefined && typeof rawValue !== 'object') {
         values[prop.name] = rawValue;
+      } else if (rawValue !== undefined && prop.type === 'json') {
+        values[prop.name] = JSON.stringify(rawValue);
       }
     }
 
@@ -211,6 +213,8 @@ export class SingleConnectionPanel {
         }
       } else if (typeof rawValue !== 'object') {
         values[prop.name] = rawValue;
+      } else if (prop.type === 'json') {
+        values[prop.name] = JSON.stringify(rawValue);
       }
     }
 
@@ -297,6 +301,14 @@ export class SingleConnectionPanel {
         const secretKey = `connections.${this.currentUuid}.${prop.name}`;
         await this.context.secrets.store(secretKey, String(value));
         entry[prop.name] = {secretKey};
+      } else if (prop.type === 'json' && typeof value === 'string') {
+        // JSON fields arrive as strings from the webview;
+        // parse them so they are stored as objects in settings.
+        try {
+          entry[prop.name] = JSON.parse(value);
+        } catch {
+          entry[prop.name] = value;
+        }
       } else {
         entry[prop.name] = value;
       }
@@ -355,7 +367,15 @@ export class SingleConnectionPanel {
     for (const prop of properties) {
       const value = values[prop.name];
       if (value !== undefined && value !== '') {
-        entry[prop.name] = value;
+        if (prop.type === 'json' && typeof value === 'string') {
+          try {
+            entry[prop.name] = JSON.parse(value);
+          } catch {
+            entry[prop.name] = value;
+          }
+        } else {
+          entry[prop.name] = value;
+        }
       }
     }
 
