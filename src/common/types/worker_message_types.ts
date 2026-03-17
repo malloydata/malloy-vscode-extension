@@ -95,6 +95,8 @@ export interface ConnectionTypeInfoResponse {
   registeredTypes: string[];
   typeDisplayNames: Record<string, string>;
   typeProperties: Record<string, ConnectionPropertyInfo[]>;
+  /** Maps default connection name → registered type (e.g. {duckdb: 'duckdb_wasm'} in browser). */
+  defaultConnections: Record<string, string>;
 }
 
 export interface MessageFetchWorkspaceFolders {

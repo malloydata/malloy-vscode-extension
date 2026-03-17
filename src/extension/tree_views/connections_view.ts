@@ -45,6 +45,8 @@ export class ConnectionsProvider
   private dirty = true;
   private registeredTypes: string[] = [];
   private typeDisplayNames: Record<string, string> = {};
+  /** Maps default connection name → registered type name. */
+  private defaultConnections: Record<string, string> = {};
   private activeFileUri: vscode.Uri | undefined;
 
   constructor(
@@ -64,10 +66,12 @@ export class ConnectionsProvider
 
   setRegisteredTypes(
     types: string[],
-    displayNames: Record<string, string>
+    displayNames: Record<string, string>,
+    defaultConnections: Record<string, string>
   ): void {
     this.registeredTypes = types;
     this.typeDisplayNames = displayNames;
+    this.defaultConnections = defaultConnections;
     this.refresh();
   }
 
@@ -171,14 +175,14 @@ export class ConnectionsProvider
       }
     }
 
-    // 3. Defaults section — from connection registry
+    // 3. Defaults section — from getDefaultConnections()
     const settingsNames = new Set(
       settingsConfig ? Object.keys(settingsConfig) : []
     );
-    const defaultChildren = this.registeredTypes
-      .filter(t => !configNames.has(t) && !settingsNames.has(t))
-      .map(typeName =>
-        ConnectionItem.defaultConnection(typeName, this.displayName(typeName))
+    const defaultChildren = Object.entries(this.defaultConnections)
+      .filter(([name]) => !configNames.has(name) && !settingsNames.has(name))
+      .map(([name, typeName]) =>
+        ConnectionItem.defaultConnection(name, this.displayName(typeName))
       );
     if (defaultChildren.length > 0) {
       groups.push(

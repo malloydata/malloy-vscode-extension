@@ -117,6 +117,7 @@ const mockTypeInfo = {
   registeredTypes: ['trino', 'duckdb'],
   typeDisplayNames: {trino: 'Trino', duckdb: 'DuckDB'},
   typeProperties: {trino: trinoProperties},
+  defaultConnections: {trino: 'trino', duckdb: 'duckdb', md: 'duckdb'},
 };
 
 function makePanel(): SingleConnectionPanel {

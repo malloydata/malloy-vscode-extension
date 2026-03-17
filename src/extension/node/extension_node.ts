@@ -108,8 +108,8 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand(
       'malloy.createConnection',
-      (typeName: string) => {
-        createConnectionCommand(context, worker, typeName);
+      (connectionName: string) => {
+        createConnectionCommand(context, worker, connectionName);
       }
     )
   );
@@ -135,7 +135,8 @@ export async function activate(context: vscode.ExtensionContext) {
     .then(typeInfo => {
       connectionsTree.setRegisteredTypes(
         typeInfo.registeredTypes,
-        typeInfo.typeDisplayNames
+        typeInfo.typeDisplayNames,
+        typeInfo.defaultConnections
       );
     })
     .catch(err => {
