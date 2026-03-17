@@ -27,6 +27,8 @@ export interface MalloyConfigResult {
   manifestText?: string;
 }
 
+import {Connection} from '@malloydata/malloy';
+
 export interface ConnectionFactory {
   reset(): void;
 
@@ -37,4 +39,6 @@ export interface ConnectionFactory {
     workspaceRoots: string[],
     globalConfigDirectory?: string
   ): MalloyConfigResult | undefined;
+
+  postProcessConnection?(conn: Connection, workingDir: string): void;
 }

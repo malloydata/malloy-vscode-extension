@@ -340,25 +340,67 @@ export class CommonConnectionManager {
     const workingDir = this.connectionFactory.getWorkingDirectory(fileURL);
     const configLookup = this.resolveConfigForFile(fileURL, workingDir);
 
+    let lookup: LookupConnection<Connection>;
+
     if (this.projectConnectionsOnly) {
-      return (
-        configLookup ?? {
-          lookupConnection: (name: string) =>
-            Promise.reject(
-              new Error(
-                `No connection '${name}' found in config file (projectConnectionsOnly is enabled)`
-              )
-            ),
-        }
-      );
+      lookup = configLookup ?? {
+        lookupConnection: (name: string) =>
+          Promise.reject(
+            new Error(
+              `No connection '${name}' found in config file (projectConnectionsOnly is enabled)`
+            )
+          ),
+      };
+    } else {
+      // Merged: config file takes precedence, settings as fallback
+      const settingsLookup = this.getSettingsLookup(workingDir);
+      if (configLookup && settingsLookup) {
+        lookup = new MergedConnectionLookup(configLookup, settingsLookup);
+      } else {
+        lookup = configLookup ?? settingsLookup ?? this.emptyLookup();
+      }
     }
 
-    // Merged: config file takes precedence, settings as fallback
-    const settingsLookup = this.getSettingsLookup(workingDir);
-    if (configLookup && settingsLookup) {
-      return new MergedConnectionLookup(configLookup, settingsLookup);
-    }
-    return configLookup ?? settingsLookup ?? this.emptyLookup();
+    return this.wrapLookup(lookup, workingDir);
+  }
+
+  /**
+   * Wrap a lookup with a per-name cache so repeated lookupConnection()
+   * calls within one compile→run cycle return the same Connection.
+   *
+   * This is critical for DuckDB WASM: each connection creates an isolated
+   * database with its own Web Worker. Without caching, files registered
+   * during schema fetch (findTables) live in one database while SQL
+   * execution runs on another, causing "file not found" errors. Unbounded
+   * connection creation also crashes the renderer via Worker accumulation.
+   *
+   * Also applies postProcessConnection (e.g. registering the remote table
+   * callback for WASM file fetching) once per cached connection.
+   *
+   * Cache lifetime is per getConnectionLookup() call — each file operation
+   * gets its own cache, matching the old DynamicConnectionLookup behavior.
+   */
+  private wrapLookup(
+    lookup: LookupConnection<Connection>,
+    workingDir: string
+  ): LookupConnection<Connection> {
+    const cache = new Map<string, Promise<Connection>>();
+    const postProcess = this.connectionFactory.postProcessConnection?.bind(
+      this.connectionFactory
+    );
+    return {
+      lookupConnection: (name: string): Promise<Connection> => {
+        let promise = cache.get(name);
+        if (!promise) {
+          promise = lookup.lookupConnection(name).then(conn => {
+            postProcess?.(conn, workingDir);
+            return conn;
+          });
+          cache.set(name, promise);
+        }
+        return promise;
+      },
+    };
   }
 
   public getBuildManifest(fileURL: URL): BuildManifest | undefined {
@@ -409,7 +451,11 @@ export class CommonConnectionManager {
     if (this.secretResolver) {
       // Lazy resolution: secrets are resolved at lookupConnection() time.
       // SettingsConnectionLookup is lightweight (just holds references),
-      // so creating one per call is fine.
+      // so creating one per call is fine. Note: each lookupConnection()
+      // call on SettingsConnectionLookup creates a new MalloyConfig (and
+      // thus a new connection). The wrapLookup() cache in
+      // getConnectionLookup() prevents this from causing duplicate
+      // connections within a single operation.
       return new SettingsConnectionLookup(
         this.mergedSettingsConfig,
         this.secretResolver,
