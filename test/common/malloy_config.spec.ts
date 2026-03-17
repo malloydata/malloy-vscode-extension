@@ -112,7 +112,11 @@ describe('malloy-config.json support', () => {
   });
 
   describe('config file discovery', () => {
-    it('returns merged lookup when findMalloyConfig finds a config file (default merged mode)', () => {
+    it('returns merged lookup when findMalloyConfig finds a config file (default merged mode)', async () => {
+      const mockConn = {name: 'mydb'} as unknown as Connection;
+      mockConnectionsLookup = {
+        lookupConnection: jest.fn().mockResolvedValue(mockConn),
+      };
       const factory = makeMockFactory(() => ({
         configText: '{"connections": {"mydb": {"is": "duckdb"}}}',
         configDir: '/project',
@@ -124,7 +128,9 @@ describe('malloy-config.json support', () => {
         new URL('file:///project/test.malloy')
       );
 
-      expect(result).toBeInstanceOf(MergedConnectionLookup);
+      // Lookup resolves connections (config + settings merged, wrapped with cache)
+      const conn = await result.lookupConnection('mydb');
+      expect(conn).toBe(mockConn);
       // MalloyConfig should have been constructed with the config text
       expect(MockMalloyConfig).toHaveBeenCalledWith(
         '{"connections": {"mydb": {"is": "duckdb"}}}'
@@ -297,8 +303,12 @@ describe('malloy-config.json support', () => {
       expect(MockMalloyConfig.mock.calls.length).toBe(callsAfterFirst);
     });
 
-    it('picks up newly created config file', () => {
+    it('picks up newly created config file', async () => {
       let hasConfig = false;
+      const mockConn = {name: 'duckdb'} as unknown as Connection;
+      mockConnectionsLookup = {
+        lookupConnection: jest.fn().mockResolvedValue(mockConn),
+      };
       const factory = makeMockFactory(() =>
         hasConfig ? {configText: '{}', configDir: '/project'} : undefined
       );
@@ -307,14 +317,16 @@ describe('malloy-config.json support', () => {
       manager.setConnectionsConfig({});
       const url = new URL('file:///project/test.malloy');
 
-      // No config file yet — falls back to settings
+      // No config file yet — falls back to settings, should still resolve
       const result1 = manager.getConnectionLookup(url);
-      expect(result1).not.toBeInstanceOf(MergedConnectionLookup);
+      const conn1 = await result1.lookupConnection('duckdb');
+      expect(conn1).toBe(mockConn);
 
-      // Config file appears — returns merged lookup
+      // Config file appears — should still resolve (now via merged lookup)
       hasConfig = true;
       const result2 = manager.getConnectionLookup(url);
-      expect(result2).toBeInstanceOf(MergedConnectionLookup);
+      const conn2 = await result2.lookupConnection('duckdb');
+      expect(conn2).toBe(mockConn);
     });
   });
 
@@ -576,7 +588,11 @@ describe('malloy-config.json support', () => {
       );
     });
 
-    it('returns MergedConnectionLookup when config exists (default behavior)', () => {
+    it('returns working lookup when config exists (default behavior)', async () => {
+      const mockConn = {name: 'mydb'} as unknown as Connection;
+      mockConnectionsLookup = {
+        lookupConnection: jest.fn().mockResolvedValue(mockConn),
+      };
       const factory = makeMockFactory(() => ({
         configText: '{}',
         configDir: '/project',
@@ -589,7 +605,9 @@ describe('malloy-config.json support', () => {
         new URL('file:///project/test.malloy')
       );
 
-      expect(result).toBeInstanceOf(MergedConnectionLookup);
+      // Config + settings both exist → merged lookup (wrapped with cache)
+      const conn = await result.lookupConnection('mydb');
+      expect(conn).toBe(mockConn);
     });
 
     it('falls back to settings when no config exists (default behavior)', () => {
@@ -1003,18 +1021,26 @@ describe('CommonConnectionManager with secretResolver', () => {
     mockConnectionsLookup = makeMockLookup();
   });
 
-  it('uses SettingsConnectionLookup when secretResolver is set', () => {
+  it('uses SettingsConnectionLookup when secretResolver is set', async () => {
+    const mockConn = {name: 'duckdb'} as unknown as Connection;
+    mockConnectionsLookup = {
+      lookupConnection: jest.fn().mockResolvedValue(mockConn),
+    };
+
+    const resolver = jest.fn().mockResolvedValue('resolved');
     const factory = makeMockFactory();
     const manager = new CommonConnectionManager(factory);
-    manager.setSecretResolver(async () => 'resolved');
+    manager.setSecretResolver(resolver);
     manager.setConnectionsConfig({mydb: {is: 'duckdb'}});
 
     const lookup = manager.getConnectionLookup(
       new URL('file:///project/test.malloy')
     );
 
-    // Should be a SettingsConnectionLookup (not a plain registry lookup)
-    expect(lookup).toBeInstanceOf(SettingsConnectionLookup);
+    // The lookup is wrapped for caching, but should still resolve connections
+    // via SettingsConnectionLookup (which uses the secret resolver)
+    const conn = await lookup.lookupConnection('mydb');
+    expect(conn).toBe(mockConn);
   });
 
   it('uses MalloyConfig directly when no secretResolver is set', () => {
@@ -1031,6 +1057,132 @@ describe('CommonConnectionManager with secretResolver', () => {
     expect(lookup).not.toBeInstanceOf(SettingsConnectionLookup);
     // MalloyConfig is used to create the connections
     expect(connectionMapsSet.length).toBeGreaterThan(0);
+  });
+});
+
+describe('postProcessConnection', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    connectionMapsSet = [];
+    mockConnectionsLookup = makeMockLookup();
+  });
+
+  it('calls postProcessConnection on connections from settings lookup', async () => {
+    const mockConn = {name: 'duckdb'} as unknown as Connection;
+    mockConnectionsLookup = {
+      lookupConnection: jest.fn().mockResolvedValue(mockConn),
+    };
+
+    const postProcess = jest.fn();
+    const factory = makeMockFactory();
+    factory.postProcessConnection = postProcess;
+
+    const manager = new CommonConnectionManager(factory);
+    manager.setConnectionsConfig({});
+
+    const lookup = manager.getConnectionLookup(
+      new URL('file:///project/src/test.malloy')
+    );
+    const conn = await lookup.lookupConnection('duckdb');
+
+    expect(conn).toBe(mockConn);
+    expect(postProcess).toHaveBeenCalledWith(mockConn, '/project/src');
+
+    // Second call returns cached connection; postProcess is NOT called again
+    const conn2 = await lookup.lookupConnection('duckdb');
+    expect(conn2).toBe(mockConn);
+    expect(postProcess).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls postProcessConnection on connections from config file lookup', async () => {
+    const mockConn = {name: 'mydb'} as unknown as Connection;
+    mockConnectionsLookup = {
+      lookupConnection: jest.fn().mockResolvedValue(mockConn),
+    };
+
+    const postProcess = jest.fn();
+    const factory = makeMockFactory(() => ({
+      configText: '{"connections": {"mydb": {"is": "duckdb"}}}',
+      configDir: '/project',
+    }));
+    factory.postProcessConnection = postProcess;
+
+    const manager = new CommonConnectionManager(factory);
+    manager.setConnectionsConfig({});
+
+    const lookup = manager.getConnectionLookup(
+      new URL('file:///project/src/test.malloy')
+    );
+    const conn = await lookup.lookupConnection('mydb');
+
+    expect(conn).toBe(mockConn);
+    expect(postProcess).toHaveBeenCalledWith(mockConn, '/project/src');
+  });
+
+  it('calls postProcessConnection on connections in projectConnectionsOnly mode', async () => {
+    const mockConn = {name: 'mydb'} as unknown as Connection;
+    mockConnectionsLookup = {
+      lookupConnection: jest.fn().mockResolvedValue(mockConn),
+    };
+
+    const postProcess = jest.fn();
+    const factory = makeMockFactory(() => ({
+      configText: '{"connections": {"mydb": {"is": "duckdb"}}}',
+      configDir: '/project',
+    }));
+    factory.postProcessConnection = postProcess;
+
+    const manager = new CommonConnectionManager(factory);
+    manager.setProjectConnectionsOnly(true);
+
+    const lookup = manager.getConnectionLookup(
+      new URL('file:///project/src/test.malloy')
+    );
+    const conn = await lookup.lookupConnection('mydb');
+
+    expect(conn).toBe(mockConn);
+    expect(postProcess).toHaveBeenCalledWith(mockConn, '/project/src');
+  });
+
+  it('does not wrap lookup when postProcessConnection is not defined', async () => {
+    const mockConn = {name: 'duckdb'} as unknown as Connection;
+    mockConnectionsLookup = {
+      lookupConnection: jest.fn().mockResolvedValue(mockConn),
+    };
+
+    const factory = makeMockFactory(); // no postProcessConnection
+    const manager = new CommonConnectionManager(factory);
+    manager.setConnectionsConfig({});
+
+    const lookup = manager.getConnectionLookup(
+      new URL('file:///project/src/test.malloy')
+    );
+    const conn = await lookup.lookupConnection('duckdb');
+
+    expect(conn).toBe(mockConn);
+  });
+
+  it('caches connections within a single lookup result', async () => {
+    const mockConn = {name: 'duckdb'} as unknown as Connection;
+    mockConnectionsLookup = {
+      lookupConnection: jest.fn().mockResolvedValue(mockConn),
+    };
+
+    const factory = makeMockFactory();
+    const manager = new CommonConnectionManager(factory);
+    manager.setConnectionsConfig({});
+
+    const lookup = manager.getConnectionLookup(
+      new URL('file:///project/src/test.malloy')
+    );
+
+    const conn1 = await lookup.lookupConnection('duckdb');
+    const conn2 = await lookup.lookupConnection('duckdb');
+
+    // Same object must be returned (cached)
+    expect(conn1).toBe(conn2);
+    // The underlying lookup should only be called once
+    expect(mockConnectionsLookup.lookupConnection).toHaveBeenCalledTimes(1);
   });
 });
 
