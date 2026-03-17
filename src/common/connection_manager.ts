@@ -48,12 +48,27 @@ export function isSecretKeyReference(
 }
 
 /**
- * Build default connections from the registry: one `{is: typeName}` entry
- * per registered type, plus the legacy `md` (MotherDuck) alias.
+ * Build default connections from the registry.
+ *
+ * - **Browser** (`duckdb_wasm` registered, `duckdb` not): returns a single
+ *   `duckdb` connection backed by the wasm type.
+ * - **Node**: one `{is: typeName}` entry per registered type, plus the
+ *   legacy `md` (MotherDuck) alias.
  */
-function getDefaultConnections(): Record<string, ConnectionConfigEntry> {
+export function getDefaultConnections(): Record<string, ConnectionConfigEntry> {
+  const registeredTypes = getRegisteredConnectionTypes();
+
+  // Browser: only duckdb_wasm is available — alias it as 'duckdb'
+  if (
+    registeredTypes.includes('duckdb_wasm') &&
+    !registeredTypes.includes('duckdb')
+  ) {
+    return {duckdb: {is: 'duckdb_wasm'}};
+  }
+
+  // Node: one entry per registered type + md (MotherDuck) alias
   const defaults: Record<string, ConnectionConfigEntry> = {};
-  for (const typeName of getRegisteredConnectionTypes()) {
+  for (const typeName of registeredTypes) {
     defaults[typeName] = {is: typeName};
   }
   defaults['md'] = {is: 'duckdb', databasePath: 'md:'};
