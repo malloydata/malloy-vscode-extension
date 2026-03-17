@@ -22,8 +22,8 @@ function ensurePanel(
   return panel;
 }
 
-interface ConnectionTypeQuickPickItem extends vscode.QuickPickItem {
-  typeName: string;
+interface ConnectionQuickPickItem extends vscode.QuickPickItem {
+  connectionName: string;
 }
 
 export async function editConnectionsCommand(
@@ -54,18 +54,18 @@ export async function editConnectionsCommand(
       'malloy/getConnectionTypeInfo',
       {}
     );
-    const items: ConnectionTypeQuickPickItem[] = typeInfo.registeredTypes.map(
-      t => ({
-        label: typeInfo.typeDisplayNames[t] ?? t,
-        description: t,
-        typeName: t,
-      })
-    );
+    const items: ConnectionQuickPickItem[] = Object.entries(
+      typeInfo.defaultConnections
+    ).map(([name, typeName]) => ({
+      label: typeInfo.typeDisplayNames[typeName] ?? typeName,
+      description: name,
+      connectionName: name,
+    }));
     const picked = await vscode.window.showQuickPick(items, {
       placeHolder: 'Select connection type',
     });
     if (picked) {
-      void p.createConnection(picked.typeName);
+      void p.createConnection(picked.connectionName);
     }
   }
 }
@@ -73,10 +73,10 @@ export async function editConnectionsCommand(
 export function createConnectionCommand(
   context: vscode.ExtensionContext,
   worker: WorkerConnection,
-  typeName: string
+  connectionName: string
 ): void {
   const p = ensurePanel(context, worker);
-  void p.createConnection(typeName);
+  void p.createConnection(connectionName);
 }
 
 export function viewConfigConnectionCommand(

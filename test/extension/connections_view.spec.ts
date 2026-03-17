@@ -146,6 +146,18 @@ const ALL_DISPLAY_NAMES: Record<string, string> = {
   mysql: 'MySQL',
 };
 
+/** Default connections map: same name→type for each type, plus md→duckdb. */
+function buildDefaultConnections(types: string[]): Record<string, string> {
+  const defaults: Record<string, string> = {};
+  for (const t of types) {
+    defaults[t] = t;
+  }
+  defaults['md'] = 'duckdb';
+  return defaults;
+}
+
+const ALL_DEFAULT_CONNECTIONS = buildDefaultConnections(ALL_TYPES);
+
 function setupMalloyConfig(values: Record<string, any> = {}): void {
   mockGetConfiguration.mockReturnValue({
     get: (key: string) => values[key],
@@ -155,9 +167,10 @@ function setupMalloyConfig(values: Record<string, any> = {}): void {
 function injectTypes(
   provider: ConnectionsProvider,
   types = ALL_TYPES,
-  displayNames = ALL_DISPLAY_NAMES
+  displayNames = ALL_DISPLAY_NAMES,
+  defaultConnections = ALL_DEFAULT_CONNECTIONS
 ): void {
-  provider.setRegisteredTypes(types, displayNames);
+  provider.setRegisteredTypes(types, displayNames, defaultConnections);
 }
 
 /**
@@ -279,11 +292,17 @@ describe('ConnectionsProvider', () => {
         getConnectionsConfig: jest.fn().mockReturnValue({
           duckdb: {is: 'duckdb'},
           bigquery: {is: 'bigquery'},
+          md: {is: 'duckdb', databasePath: 'md:'},
         }),
       });
 
       const provider = new ConnectionsProvider(makeMockContext(), manager);
-      injectTypes(provider, ['duckdb', 'bigquery'], ALL_DISPLAY_NAMES);
+      injectTypes(
+        provider,
+        ['duckdb', 'bigquery'],
+        ALL_DISPLAY_NAMES,
+        buildDefaultConnections(['duckdb', 'bigquery'])
+      );
       const groups = (await provider.getChildren()) as ConnectionGroupItem[];
 
       const defaultsGroup = groups.find(

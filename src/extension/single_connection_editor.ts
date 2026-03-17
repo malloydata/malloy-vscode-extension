@@ -157,9 +157,11 @@ export class SingleConnectionPanel {
     });
   }
 
-  async createConnection(typeName: string): Promise<void> {
+  async createConnection(connectionName: string): Promise<void> {
     const {panel, messages} = this.ensurePanel();
     const typeInfo = await this.getTypeInfo();
+    const typeName =
+      typeInfo.defaultConnections[connectionName] ?? connectionName;
     panel.title = `New Connection: ${this.displayName(typeInfo, typeName)}`;
     panel.reveal();
 
@@ -173,7 +175,7 @@ export class SingleConnectionPanel {
 
     messages.postMessage({
       type: SingleConnectionMessageType.LoadConnection,
-      name: typeName,
+      name: connectionName,
       uuid: this.currentUuid,
       typeName,
       typeDisplayName: this.displayName(typeInfo, typeName),

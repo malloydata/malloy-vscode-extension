@@ -42,6 +42,7 @@ import {RpcFileHandler} from './file_handler';
 import {FileHandler} from '../common/types/file_handler';
 import {ProgressType} from 'vscode-jsonrpc';
 import {errorMessage} from '../common/errors';
+import {getDefaultConnections} from '../common/connection_manager';
 import {compileQuery} from './compile_query';
 
 export class MessageHandler implements WorkerMessageHandler {
@@ -95,7 +96,17 @@ export class MessageHandler implements WorkerMessageHandler {
           fileFilters: p.fileFilters,
         }));
       }
-      return {registeredTypes: types, typeDisplayNames, typeProperties};
+      const defaults = getDefaultConnections();
+      const defaultConnections: Record<string, string> = {};
+      for (const [name, entry] of Object.entries(defaults)) {
+        defaultConnections[name] = entry.is;
+      }
+      return {
+        registeredTypes: types,
+        typeDisplayNames,
+        typeProperties,
+        defaultConnections,
+      };
     });
   }
 
