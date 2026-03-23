@@ -20,12 +20,17 @@ export const compileQuery = async (
   const {uri} = documentMeta;
   const url = new URL(uri);
   const connectionLookup = connectionManager.getConnectionLookup(url);
-  const buildManifest = connectionManager.getBuildManifest(url);
-  const runtime = new Runtime({
-    urlReader: fileHandler,
-    connections: connectionLookup,
-    buildManifest,
-  });
+  const config = connectionManager.getConfigForFile(url);
+  const runtime = config
+    ? new Runtime({
+        urlReader: fileHandler,
+        connections: connectionLookup,
+        config,
+      })
+    : new Runtime({
+        urlReader: fileHandler,
+        connections: connectionLookup,
+      });
 
   let workspaceFolders: string[] = [];
   if (url.protocol === 'untitled:') {

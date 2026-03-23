@@ -133,6 +133,13 @@ export class MessageHandler implements WorkerMessageHandler {
   }
 
   log(message: string) {
-    console.info(message);
+    const maybeConnection = this.connection as unknown as {
+      console?: {info: (msg: string) => void};
+    };
+    if (maybeConnection.console?.info) {
+      maybeConnection.console.info(message);
+    } else {
+      console.info(message);
+    }
   }
 }

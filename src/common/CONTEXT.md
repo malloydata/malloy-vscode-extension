@@ -6,7 +6,7 @@ Used by extension host, language server, and worker. Must be browser-safe.
 
 ### `connection_manager.ts`
 Central class `CommonConnectionManager` provides connection lookups per file:
-- `getConnectionLookup(fileURL)` — returns a `LookupConnection` that merges config sources
+- `getConnectionLookup(fileURL)` — returns a `LookupConnection` that merges config sources, wrapped with a per-call cache (`wrapLookup`) so repeated `lookupConnection()` calls within one compile→run cycle return the same connection. This is critical for DuckDB WASM where each connection has its own isolated database and Web Worker.
 - `setConnectionsConfig()` — updates settings-based connections with lazy secret resolution
 - `resolveConfigForFile()` — walks up from the file's directory to the workspace root to find the nearest `malloy-config.json`
 
@@ -46,6 +46,7 @@ Settings connections (stored in VS Code's `malloy.connectionMap`) keep sensitive
 ### `connections/types.ts`
 `ConnectionFactory` interface — platform-specific implementations:
 - `reset()`, `getWorkingDirectory(url)`, `findMalloyConfig(fileURL, workspaceRoots, globalConfigDir)`
+- `postProcessConnection?(conn, workingDir)` — optional hook called once per cached connection after creation. Used by the browser factory to register `remoteTableCallback` on DuckDB WASM connections for file fetching.
 - Node implementation: `src/server/connections/node/connection_factory.ts`
 - Browser implementation: `src/server/connections/browser/connection_factory.ts`
 

@@ -33,23 +33,95 @@ jest.mock('@malloydata/malloy', () => {
     ...actual,
     MalloyConfig: jest.fn().mockImplementation((text: string) => {
       let _map: Record<string, ConnectionConfigEntry> | undefined;
+      let _onConnectionCreated:
+        | ((name: string, conn: Connection) => void)
+        | undefined;
+      let _cachedConnections: LookupConnection<Connection> | undefined;
+      let _manifest: unknown = {};
       // Parse JSON like the real MalloyConfig does
       const parsed = JSON.parse(text);
       _map = parsed.connections;
+      const manifest = {
+        loadText(manifestText: string) {
+          _manifest = JSON.parse(manifestText);
+        },
+        get buildManifest() {
+          return _manifest;
+        },
+      };
       const instance = {
         get connectionMap(): Record<string, ConnectionConfigEntry> | undefined {
           return _map;
         },
         set connectionMap(m: Record<string, ConnectionConfigEntry>) {
           _map = m;
+          _cachedConnections = undefined;
           connectionMapsSet.push(m);
         },
         get connections(): LookupConnection<Connection> {
-          return mockConnectionsLookup;
+          if (!_cachedConnections) {
+            const cache = new Map<string, Promise<Connection>>();
+            _cachedConnections = {
+              lookupConnection: (name: string): Promise<Connection> => {
+                let promise = cache.get(name);
+                if (!promise) {
+                  promise = mockConnectionsLookup
+                    .lookupConnection(name)
+                    .then(conn => {
+                      if (_onConnectionCreated) {
+                        _onConnectionCreated(name, conn);
+                      }
+                      return conn;
+                    });
+                  cache.set(name, promise);
+                }
+                return promise;
+              },
+            };
+          }
+          return _cachedConnections;
+        },
+        set onConnectionCreated(
+          cb: ((name: string, conn: Connection) => void) | undefined
+        ) {
+          _onConnectionCreated = cb;
+        },
+        async close() {},
+        get manifest() {
+          return manifest;
+        },
+        get virtualMap() {
+          return undefined;
         },
       };
       return instance;
     }),
+    createConnectionsFromConfig: jest
+      .fn()
+      .mockImplementation(
+        (
+          _config: unknown,
+          onCreated?: (name: string, conn: Connection) => void
+        ) => {
+          const cache = new Map<string, Promise<Connection>>();
+          return {
+            lookupConnection: (name: string): Promise<Connection> => {
+              let promise = cache.get(name);
+              if (!promise) {
+                promise = mockConnectionsLookup
+                  .lookupConnection(name)
+                  .then(conn => {
+                    if (onCreated) onCreated(name, conn);
+                    return conn;
+                  });
+                cache.set(name, promise);
+              }
+              return promise;
+            },
+            async close() {},
+          };
+        }
+      ),
     Manifest: jest.fn().mockImplementation(() => {
       let _buildManifest = {};
       return {
@@ -372,8 +444,32 @@ describe('malloy-config.json support', () => {
     });
   });
 
-  describe('getBuildManifest', () => {
-    it('returns parsed manifest data when config has manifest', () => {
+  describe('getConfigForFile manifest propagation', () => {
+    it('returns previously resolved config for a file even if later discovery fails', () => {
+      let callCount = 0;
+      const factory = makeMockFactory(() => {
+        callCount += 1;
+        if (callCount === 1) {
+          return {
+            configText: '{}',
+            configDir: '/project',
+            manifestText: JSON.stringify({id1: {tableName: 't1'}}),
+          };
+        }
+        return undefined;
+      });
+
+      const manager = new CommonConnectionManager(factory);
+      const url = new URL('file:///project/test.malloy');
+      manager.getConnectionLookup(url);
+
+      // Should return the already-resolved config from cache mapping, not
+      // trigger a second discovery failure.
+      const config = manager.getConfigForFile(url);
+      expect(config).toBeDefined();
+      expect(config?.manifest.buildManifest).toEqual({id1: {tableName: 't1'}});
+    });
+    it('returns config with parsed manifest data when manifest exists', () => {
       const manifestText = JSON.stringify({
         abc123: {tableName: 'cached_mySource_abc123'},
       });
@@ -387,9 +483,9 @@ describe('malloy-config.json support', () => {
       const url = new URL('file:///project/test.malloy');
       manager.getConnectionLookup(url);
 
-      const manifest = manager.getBuildManifest(url);
-      expect(manifest).toBeDefined();
-      expect(manifest).toEqual({
+      const config = manager.getConfigForFile(url);
+      expect(config).toBeDefined();
+      expect(config?.manifest.buildManifest).toEqual({
         abc123: {tableName: 'cached_mySource_abc123'},
       });
     });
@@ -401,10 +497,10 @@ describe('malloy-config.json support', () => {
       const url = new URL('file:///project/test.malloy');
       manager.getConnectionLookup(url);
 
-      expect(manager.getBuildManifest(url)).toBeUndefined();
+      expect(manager.getConfigForFile(url)).toBeUndefined();
     });
 
-    it('returns undefined when no manifest file exists', () => {
+    it('returns empty manifest when no manifest file exists', () => {
       const factory = makeMockFactory(() => ({
         configText: '{}',
         configDir: '/project',
@@ -415,10 +511,10 @@ describe('malloy-config.json support', () => {
       const url = new URL('file:///project/test.malloy');
       manager.getConnectionLookup(url);
 
-      expect(manager.getBuildManifest(url)).toBeUndefined();
+      expect(manager.getConfigForFile(url)?.manifest.buildManifest).toEqual({});
     });
 
-    it('refreshes manifest cache when manifest text changes', () => {
+    it('refreshes cached config manifest when manifest text changes', () => {
       let manifestText = JSON.stringify({id1: {tableName: 't1'}});
       const factory = makeMockFactory(() => ({
         configText: '{}',
@@ -430,15 +526,19 @@ describe('malloy-config.json support', () => {
       const url = new URL('file:///project/test.malloy');
       manager.getConnectionLookup(url);
 
-      expect(manager.getBuildManifest(url)).toEqual({id1: {tableName: 't1'}});
+      expect(manager.getConfigForFile(url)?.manifest.buildManifest).toEqual({
+        id1: {tableName: 't1'},
+      });
 
       manifestText = JSON.stringify({id2: {tableName: 't2'}});
       manager.getConnectionLookup(url);
 
-      expect(manager.getBuildManifest(url)).toEqual({id2: {tableName: 't2'}});
+      expect(manager.getConfigForFile(url)?.manifest.buildManifest).toEqual({
+        id2: {tableName: 't2'},
+      });
     });
 
-    it('clears manifest when manifest file is deleted', () => {
+    it('clears cached config manifest when manifest file is deleted', () => {
       let manifestText: string | undefined = JSON.stringify({
         id1: {tableName: 't1'},
       });
@@ -452,16 +552,18 @@ describe('malloy-config.json support', () => {
       const url = new URL('file:///project/test.malloy');
       manager.getConnectionLookup(url);
 
-      expect(manager.getBuildManifest(url)).toEqual({id1: {tableName: 't1'}});
+      expect(manager.getConfigForFile(url)?.manifest.buildManifest).toEqual({
+        id1: {tableName: 't1'},
+      });
 
       // Manifest file deleted — manifestText becomes undefined
       manifestText = undefined;
       manager.getConnectionLookup(url);
 
-      expect(manager.getBuildManifest(url)).toBeUndefined();
+      expect(manager.getConfigForFile(url)?.manifest.buildManifest).toEqual({});
     });
 
-    it('clearConfigCaches clears manifest cache', () => {
+    it('clearConfigCaches clears cached config instances', () => {
       const factory = makeMockFactory(() => ({
         configText: '{}',
         configDir: '/project',
@@ -471,12 +573,14 @@ describe('malloy-config.json support', () => {
       const manager = new CommonConnectionManager(factory);
       const url = new URL('file:///project/test.malloy');
       manager.getConnectionLookup(url);
-
-      expect(manager.getBuildManifest(url)).toBeDefined();
+      const configBefore = manager.getConfigForFile(url);
+      expect(configBefore).toBeDefined();
 
       manager.clearConfigCaches();
 
-      expect(manager.getBuildManifest(url)).toBeUndefined();
+      const configAfter = manager.getConfigForFile(url);
+      expect(configAfter).toBeDefined();
+      expect(configAfter).not.toBe(configBefore);
     });
   });
 

@@ -130,9 +130,10 @@ const runMSQLCell = async (
   } = query;
   const url = new URL(uri);
   const connections = connectionManager.getConnectionLookup(url);
-  const buildManifest = connectionManager.getBuildManifest(url);
-
-  const runtime = new Runtime({urlReader, connections, buildManifest});
+  const config = connectionManager.getConfigForFile(url);
+  const runtime = config
+    ? new Runtime({urlReader, connections, config})
+    : new Runtime({urlReader, connections});
   const allBegin = Date.now();
   const compileBegin = allBegin;
   sendMessage({
@@ -287,7 +288,6 @@ export const runQuery = async (
   try {
     const url = new URL(uri);
     const connections = connectionManager.getConnectionLookup(url);
-    const buildManifest = connectionManager.getBuildManifest(url);
     let cellData: CellData | null = null;
     let currentCell: Cell | null = null;
     let isMalloySql = false;
@@ -326,11 +326,17 @@ export const runQuery = async (
       return;
     }
 
-    const runtime = new Runtime({
-      urlReader: fileHandler,
-      connections,
-      buildManifest,
-    });
+    const config = connectionManager.getConfigForFile(url);
+    const runtime = config
+      ? new Runtime({
+          urlReader: fileHandler,
+          connections,
+          config,
+        })
+      : new Runtime({
+          urlReader: fileHandler,
+          connections,
+        });
     const allBegin = Date.now();
     const compileBegin = allBegin;
     sendMessage({
@@ -371,13 +377,13 @@ export const runQuery = async (
     }
 
     const preparedQuery = await runnable.getPreparedQuery();
-    const {preparedResult} = preparedQuery;
+    const preparedResult = await runnable.getPreparedResult();
 
     // Set the row limit to the limit provided in the final stage of the query, if present
     const rowLimit = preparedResult.resultExplore.limit;
     const dialect = preparedQuery.dialect;
 
-    const sql = await runnable.getSQL();
+    const sql = preparedResult.sql;
     if (cancellationToken.isCancellationRequested) return;
     console.info(sql);
 

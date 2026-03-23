@@ -64,6 +64,6 @@ Uses `translateWithTruncatedCache()` to avoid full compilation for responsivenes
 
 Platform-specific `ConnectionFactory` implementations:
 - `connections/node/connection_factory.ts` — Node.js: reads config files from disk, registers backends via side-effect imports
-- `connections/browser/connection_factory.ts` — Browser: limited, no file system access
+- `connections/browser/connection_factory.ts` — Browser: implements `postProcessConnection` to register `remoteTableCallback` on DuckDB WASM connections, enabling file fetching (CSV, Parquet) via the extension host's `malloy/fetchBinaryFile` RPC
 
 `findMalloyConfig` in the Node factory walks up from the file's directory to the workspace root boundary, using the first `malloy-config.json` found. The global config directory is only used as a fallback when no workspace config exists — it is never merged with workspace config.

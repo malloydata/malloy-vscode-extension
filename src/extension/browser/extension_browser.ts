@@ -137,6 +137,13 @@ export async function deactivate(): Promise<void | undefined> {
 async function setupLanguageServer(
   context: vscode.ExtensionContext
 ): Promise<void> {
+  const outputChannel = vscode.window.createOutputChannel(
+    'Malloy Language Server'
+  );
+  const traceOutputChannel = vscode.window.createOutputChannel(
+    'Malloy Language Server Trace'
+  );
+  context.subscriptions.push(outputChannel, traceOutputChannel);
   const documentSelector = [
     // Regular files
     {language: 'malloy'},
@@ -155,6 +162,8 @@ async function setupLanguageServer(
   // Options to control the language client
   const clientOptions: LanguageClientOptions = {
     documentSelector,
+    outputChannel,
+    traceOutputChannel,
     synchronize: {
       configurationSection: 'malloy',
     },

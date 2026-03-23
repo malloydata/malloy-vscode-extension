@@ -22,10 +22,10 @@
  */
 
 import {
-  BuildManifest,
   Connection,
   JsonConfigValue,
   LookupConnection,
+  MalloyConfig,
 } from '@malloydata/malloy';
 
 /**
@@ -58,5 +58,5 @@ export interface ConnectionManager {
   setConnectionsConfig(
     connectionsConfig: Record<string, UnresolvedConnectionConfigEntry>
   ): void;
-  getBuildManifest(fileURL: URL): BuildManifest | undefined;
+  getConfigForFile(fileURL: URL): MalloyConfig | undefined;
 }

@@ -22,11 +22,9 @@
  */
 
 import {
-  BuildManifest,
   Connection,
   ConnectionConfigEntry,
   LookupConnection,
-  Manifest,
   MalloyConfig,
   getRegisteredConnectionTypes,
   getConnectionProperties,
@@ -94,15 +92,6 @@ function injectWorkingDirectory(
   return result;
 }
 
-/** Create a LookupConnection from a connection map via MalloyConfig. */
-function connectionsFromMap(
-  map: Record<string, ConnectionConfigEntry>
-): LookupConnection<Connection> {
-  const config = new MalloyConfig('{"connections":{}}');
-  config.connectionMap = map;
-  return config.connections;
-}
-
 export class MergedConnectionLookup implements LookupConnection<Connection> {
   constructor(
     private primary: LookupConnection<Connection>,
@@ -119,13 +108,25 @@ export class MergedConnectionLookup implements LookupConnection<Connection> {
 }
 
 export class SettingsConnectionLookup implements LookupConnection<Connection> {
+  private cache = new Map<string, Promise<Connection>>();
+
   constructor(
     private config: Record<string, UnresolvedConnectionConfigEntry>,
     private secretResolver: SecretResolver,
-    private workingDirectory?: string
+    private workingDirectory?: string,
+    private postProcess?: (conn: Connection, workingDir: string) => void
   ) {}
 
-  async lookupConnection(name: string): Promise<Connection> {
+  lookupConnection(name: string): Promise<Connection> {
+    let promise = this.cache.get(name);
+    if (!promise) {
+      promise = this.createConnection(name);
+      this.cache.set(name, promise);
+    }
+    return promise;
+  }
+
+  private async createConnection(name: string): Promise<Connection> {
     const entry = this.config[name];
     if (!entry) throw new Error(`No connection named '${name}'`);
 
@@ -139,8 +140,13 @@ export class SettingsConnectionLookup implements LookupConnection<Connection> {
       }
     }
 
-    const lookup = connectionsFromMap({[name]: resolved});
-    return lookup.lookupConnection(name);
+    const config = new MalloyConfig('{"connections":{}}');
+    config.connectionMap = {[name]: resolved};
+    const conn = await config.connections.lookupConnection(name);
+    if (this.postProcess && this.workingDirectory) {
+      this.postProcess(conn, this.workingDirectory);
+    }
+    return conn;
   }
 
   private async resolveEntry(
@@ -181,26 +187,13 @@ export class CommonConnectionManager {
     | Record<string, UnresolvedConnectionConfigEntry>
     | undefined;
 
-  // Cache: configDir -> parsed lookup + the configText it was parsed from
-  // `connections` tracks every Connection created via the lookup so we can
-  // close them when the config changes (which clears DuckDB's static cache).
-  private configLookups: Record<
+  // Cache: cacheKey -> MalloyConfig (handles connection caching + lifecycle)
+  private configCache: Record<
     string,
-    {
-      lookup: LookupConnection<Connection>;
-      configText: string;
-      connections: Connection[];
-    }
+    {config: MalloyConfig; configText: string; manifestText?: string}
   > = {};
-
-  // Cache: configDir -> parsed manifest + the manifestText it was parsed from
-  private manifestCache: Record<
-    string,
-    {manifestText: string; buildManifest: BuildManifest}
-  > = {};
-
-  // Mapping: fileURL.toString() -> configDir, populated by resolveConfigForFile
-  private fileConfigDir: Record<string, string> = {};
+  // Mapping: fileURL.toString() -> config cache key, populated by resolveConfigForFile
+  private fileConfigKey: Record<string, string> = {};
 
   constructor(private connectionFactory: ConnectionFactory) {}
 
@@ -223,30 +216,21 @@ export class CommonConnectionManager {
     this.workspaceRoots = roots;
   }
 
-  /** Close all connections tracked by a config cache entry. */
-  private closeConfigConnections(entry: {connections: Connection[]}): void {
-    for (const conn of entry.connections) {
-      conn.close().catch(err => {
-        console.warn('Error closing config connection:', err);
+  public clearConfigCaches(): void {
+    for (const entry of Object.values(this.configCache)) {
+      entry.config.close().catch(err => {
+        console.warn('Error closing config connections:', err);
       });
     }
-    entry.connections = [];
-  }
-
-  public clearConfigCaches(): void {
-    for (const entry of Object.values(this.configLookups)) {
-      this.closeConfigConnections(entry);
-    }
-    this.configLookups = {};
+    this.configCache = {};
     this.settingsLookupsByDir = {};
-    this.manifestCache = {};
-    this.fileConfigDir = {};
+    this.fileConfigKey = {};
   }
 
   private resolveConfigForFile(
     fileURL: URL,
     workingDir: string
-  ): LookupConnection<Connection> | undefined {
+  ): MalloyConfig | undefined {
     if (!this.connectionFactory.findMalloyConfig) {
       return undefined;
     }
@@ -261,72 +245,56 @@ export class CommonConnectionManager {
     );
 
     if (!result) {
-      // TODO: if config was deleted, old connections in configLookups stay open until clearConfigCaches()
       return undefined;
-    }
-
-    // Record fileURL → configDir mapping for getBuildManifest
-    this.fileConfigDir[fileURL.toString()] = result.configDir;
-
-    // Update manifest cache if manifest text changed
-    if (result.manifestText !== undefined) {
-      const cached = this.manifestCache[result.configDir];
-      if (!cached || cached.manifestText !== result.manifestText) {
-        const manifest = new Manifest();
-        manifest.loadText(result.manifestText);
-        this.manifestCache[result.configDir] = {
-          manifestText: result.manifestText,
-          buildManifest: manifest.buildManifest,
-        };
-      }
-    } else {
-      delete this.manifestCache[result.configDir];
     }
 
     // Cache key includes working directory so files in different directories
     // get separate connection instances with correct workingDirectory.
     const cacheKey = `${result.configDir}::${workingDir}`;
-
-    // Return cached lookup if the config text hasn't changed
-    const cached = this.configLookups[cacheKey];
+    this.fileConfigKey[fileURL.toString()] = cacheKey;
+    // Return cached config if the config text hasn't changed.
+    // Manifest can change independently; keep the same config and refresh
+    // only the embedded manifest when needed.
+    const cached = this.configCache[cacheKey];
     if (cached && cached.configText === result.configText) {
-      return cached.lookup;
+      if (cached.manifestText !== result.manifestText) {
+        cached.config.manifest.loadText(result.manifestText ?? '{}');
+        cached.manifestText = result.manifestText;
+      }
+      return cached.config;
     }
 
     // Close connections from the previous config before replacing
     if (cached) {
-      this.closeConfigConnections(cached);
+      cached.config.close().catch(err => {
+        console.warn('Error closing config connections:', err);
+      });
     }
 
-    // Parse and create connections
+    // Parse and create MalloyConfig with connection caching + postProcess
     try {
-      const malloyConfig = new MalloyConfig(result.configText);
+      const config = new MalloyConfig(result.configText);
       const map = injectWorkingDirectory(
-        malloyConfig.connectionMap ?? {},
+        config.connectionMap ?? {},
         workingDir
       );
-      const innerLookup = connectionsFromMap(map);
-      const connections: Connection[] = [];
+      config.connectionMap = map;
 
-      // Wrap the lookup to track every connection it creates
-      const lookup: LookupConnection<Connection> = {
-        lookupConnection: async (
-          connectionName: string
-        ): Promise<Connection> => {
-          const conn = await innerLookup.lookupConnection(connectionName);
-          if (!connections.includes(conn)) {
-            connections.push(conn);
-          }
-          return conn;
-        },
-      };
+      const postProcess = this.connectionFactory.postProcessConnection?.bind(
+        this.connectionFactory
+      );
+      if (postProcess) {
+        config.onConnectionCreated = (_name, conn) =>
+          postProcess(conn, workingDir);
+      }
+      config.manifest.loadText(result.manifestText ?? '{}');
 
-      this.configLookups[cacheKey] = {
-        lookup,
+      this.configCache[cacheKey] = {
+        config,
         configText: result.configText,
-        connections,
+        manifestText: result.manifestText,
       };
-      return lookup;
+      return config;
     } catch (error) {
       console.warn(
         `Failed to parse malloy-config.json in ${result.configDir}:`,
@@ -338,74 +306,43 @@ export class CommonConnectionManager {
 
   public getConnectionLookup(fileURL: URL): LookupConnection<Connection> {
     const workingDir = this.connectionFactory.getWorkingDirectory(fileURL);
-    const configLookup = this.resolveConfigForFile(fileURL, workingDir);
-
-    let lookup: LookupConnection<Connection>;
+    const config = this.resolveConfigForFile(fileURL, workingDir);
+    const configLookup = config?.connections;
 
     if (this.projectConnectionsOnly) {
-      lookup = configLookup ?? {
-        lookupConnection: (name: string) =>
-          Promise.reject(
-            new Error(
-              `No connection '${name}' found in config file (projectConnectionsOnly is enabled)`
-            )
-          ),
-      };
-    } else {
-      // Merged: config file takes precedence, settings as fallback
-      const settingsLookup = this.getSettingsLookup(workingDir);
-      if (configLookup && settingsLookup) {
-        lookup = new MergedConnectionLookup(configLookup, settingsLookup);
-      } else {
-        lookup = configLookup ?? settingsLookup ?? this.emptyLookup();
-      }
+      return (
+        configLookup ?? {
+          lookupConnection: (name: string) =>
+            Promise.reject(
+              new Error(
+                `No connection '${name}' found in config file (projectConnectionsOnly is enabled)`
+              )
+            ),
+        }
+      );
     }
 
-    return this.wrapLookup(lookup, workingDir);
+    // Merged: config file takes precedence, settings as fallback.
+    // Both sides handle their own caching and postProcessConnection
+    // internally, so no outer wrapLookup is needed.
+    const settingsLookup = this.getSettingsLookup(workingDir);
+    if (configLookup && settingsLookup) {
+      return new MergedConnectionLookup(configLookup, settingsLookup);
+    }
+    return configLookup ?? settingsLookup ?? this.emptyLookup();
   }
 
-  /**
-   * Wrap a lookup with a per-name cache so repeated lookupConnection()
-   * calls within one compile→run cycle return the same Connection.
-   *
-   * This is critical for DuckDB WASM: each connection creates an isolated
-   * database with its own Web Worker. Without caching, files registered
-   * during schema fetch (findTables) live in one database while SQL
-   * execution runs on another, causing "file not found" errors. Unbounded
-   * connection creation also crashes the renderer via Worker accumulation.
-   *
-   * Also applies postProcessConnection (e.g. registering the remote table
-   * callback for WASM file fetching) once per cached connection.
-   *
-   * Cache lifetime is per getConnectionLookup() call — each file operation
-   * gets its own cache, matching the old DynamicConnectionLookup behavior.
-   */
-  private wrapLookup(
-    lookup: LookupConnection<Connection>,
-    workingDir: string
-  ): LookupConnection<Connection> {
-    const cache = new Map<string, Promise<Connection>>();
-    const postProcess = this.connectionFactory.postProcessConnection?.bind(
-      this.connectionFactory
-    );
-    return {
-      lookupConnection: (name: string): Promise<Connection> => {
-        let promise = cache.get(name);
-        if (!promise) {
-          promise = lookup.lookupConnection(name).then(conn => {
-            postProcess?.(conn, workingDir);
-            return conn;
-          });
-          cache.set(name, promise);
-        }
-        return promise;
-      },
-    };
-  }
-
-  public getBuildManifest(fileURL: URL): BuildManifest | undefined {
-    const configDir = this.fileConfigDir[fileURL.toString()];
-    return configDir ? this.manifestCache[configDir]?.buildManifest : undefined;
+  /** Return the cached MalloyConfig for a file, if one exists. */
+  public getConfigForFile(fileURL: URL): MalloyConfig | undefined {
+    const existingKey = this.fileConfigKey[fileURL.toString()];
+    if (existingKey) {
+      const cached = this.configCache[existingKey];
+      if (cached) {
+        return cached.config;
+      }
+    }
+    const workingDir = this.connectionFactory.getWorkingDirectory(fileURL);
+    return this.resolveConfigForFile(fileURL, workingDir);
   }
 
   public setCurrentRowLimit(rowLimit: number): void {
@@ -431,7 +368,6 @@ export class CommonConnectionManager {
   ): void {
     this.connectionFactory.reset();
     this.clearConfigCaches();
-    console.info('Using connection config', connectionsConfig);
 
     this.settingsConfig = connectionsConfig;
 
@@ -448,22 +384,24 @@ export class CommonConnectionManager {
   ): LookupConnection<Connection> | undefined {
     if (!this.mergedSettingsConfig) return undefined;
 
+    const postProcess = this.connectionFactory.postProcessConnection?.bind(
+      this.connectionFactory
+    );
+
     if (this.secretResolver) {
       // Lazy resolution: secrets are resolved at lookupConnection() time.
-      // SettingsConnectionLookup is lightweight (just holds references),
-      // so creating one per call is fine. Note: each lookupConnection()
-      // call on SettingsConnectionLookup creates a new MalloyConfig (and
-      // thus a new connection). The wrapLookup() cache in
-      // getConnectionLookup() prevents this from causing duplicate
-      // connections within a single operation.
+      // SettingsConnectionLookup caches connections internally by name,
+      // so repeated lookupConnection() calls return the same Connection.
       return new SettingsConnectionLookup(
         this.mergedSettingsConfig,
         this.secretResolver,
-        workingDir
+        workingDir,
+        postProcess
       );
     }
 
-    // No resolver (e.g., browser) — create connections eagerly, cached per dir
+    // No resolver (e.g., browser) — create connections eagerly, cached per dir.
+    // MalloyConfig caches connections internally; we cache the lookup per dir.
     const cached = this.settingsLookupsByDir[workingDir];
     if (cached) return cached;
 
@@ -472,7 +410,13 @@ export class CommonConnectionManager {
       workingDir
     );
     try {
-      const lookup = connectionsFromMap(map);
+      const config = new MalloyConfig('{"connections":{}}');
+      config.connectionMap = map;
+      if (postProcess) {
+        config.onConnectionCreated = (_name, conn) =>
+          postProcess(conn, workingDir);
+      }
+      const lookup = config.connections;
       this.settingsLookupsByDir[workingDir] = lookup;
       return lookup;
     } catch (error) {
