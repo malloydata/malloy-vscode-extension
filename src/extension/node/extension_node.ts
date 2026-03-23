@@ -168,10 +168,7 @@ async function setupLanguageServer(
   const outputChannel = vscode.window.createOutputChannel(
     'Malloy Language Server'
   );
-  const traceOutputChannel = vscode.window.createOutputChannel(
-    'Malloy Language Server Trace'
-  );
-  context.subscriptions.push(outputChannel, traceOutputChannel);
+  context.subscriptions.push(outputChannel);
   const serverModule = context.asAbsolutePath('dist/server_node.js');
   const debugOptions = {
     execArgv: [
@@ -221,7 +218,6 @@ async function setupLanguageServer(
       maxRestartCount: 16,
     },
     outputChannel,
-    traceOutputChannel,
   };
 
   client = new LanguageClient(
