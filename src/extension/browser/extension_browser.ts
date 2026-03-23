@@ -140,10 +140,7 @@ async function setupLanguageServer(
   const outputChannel = vscode.window.createOutputChannel(
     'Malloy Language Server'
   );
-  const traceOutputChannel = vscode.window.createOutputChannel(
-    'Malloy Language Server Trace'
-  );
-  context.subscriptions.push(outputChannel, traceOutputChannel);
+  context.subscriptions.push(outputChannel);
   const documentSelector = [
     // Regular files
     {language: 'malloy'},
@@ -163,7 +160,6 @@ async function setupLanguageServer(
   const clientOptions: LanguageClientOptions = {
     documentSelector,
     outputChannel,
-    traceOutputChannel,
     synchronize: {
       configurationSection: 'malloy',
     },
