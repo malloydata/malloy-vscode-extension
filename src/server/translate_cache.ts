@@ -221,6 +221,26 @@ export class TranslateCache {
     });
   }
 
+  private makeRuntime(
+    fileURL: URL,
+    urlReader: {readURL: (url: URL) => Promise<string>}
+  ): Runtime {
+    const connections = this.connectionManager.getConnectionLookup(fileURL);
+    const config = this.connectionManager.getConfigForFile(fileURL);
+    return config
+      ? new Runtime({
+          urlReader,
+          connections,
+          config,
+          cacheManager: this.cacheManager,
+        })
+      : new Runtime({
+          urlReader,
+          connections,
+          cacheManager: this.cacheManager,
+        });
+  }
+
   async translateWithTruncatedCache(
     document: TextDocument,
     text: string,
@@ -252,12 +272,7 @@ export class TranslateCache {
       // TODO: Possibly look into having remaining statements run "in the background" and having
       // new runs preempt the current fetch
       const fileURL = new URL(uri);
-      const runtime = new Runtime({
-        urlReader,
-        connections: this.connectionManager.getConnectionLookup(fileURL),
-        cacheManager: this.cacheManager,
-        buildManifest: this.connectionManager.getBuildManifest(fileURL),
-      });
+      const runtime = this.makeRuntime(fileURL, urlReader);
       const modelMaterializer = await this.createModelMaterializer(
         uri,
         runtime,
@@ -293,12 +308,7 @@ export class TranslateCache {
     const text = await urlReader.readURL(fileURL);
     if (languageId === 'malloy-sql') {
       const parse = MalloySQLSQLParser.parse(text, uri);
-      const runtime = new Runtime({
-        urlReader,
-        connections: this.connectionManager.getConnectionLookup(fileURL),
-        cacheManager: this.cacheManager,
-        buildManifest: this.connectionManager.getBuildManifest(fileURL),
-      });
+      const runtime = this.makeRuntime(fileURL, urlReader);
 
       const modelMaterializer = await this.createModelMaterializer(
         uri,
@@ -333,12 +343,7 @@ export class TranslateCache {
       );
       return model;
     } else {
-      const runtime = new Runtime({
-        urlReader,
-        connections: this.connectionManager.getConnectionLookup(fileURL),
-        cacheManager: this.cacheManager,
-        buildManifest: this.connectionManager.getBuildManifest(fileURL),
-      });
+      const runtime = this.makeRuntime(fileURL, urlReader);
 
       const modelMaterializer = await this.createModelMaterializer(
         uri,
