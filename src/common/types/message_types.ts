@@ -220,7 +220,7 @@ export interface ConnectionPropertyInfo {
   displayName: string;
   type: string;
   optional?: true;
-  default?: string;
+  default?: string | number | boolean | {[source: string]: string | string[]};
   description?: string;
   fileFilters?: Record<string, string[]>;
 }

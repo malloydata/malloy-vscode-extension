@@ -278,6 +278,21 @@ export const setupSubscriptions = async (
     vscode.window.registerWebviewViewProvider('malloyHelp', provider)
   );
 
+  // Config file watcher — invalidate connection cache on changes
+  const configWatcher = vscode.workspace.createFileSystemWatcher(
+    '**/malloy-config{,-local}.json'
+  );
+  const onConfigFileChange = () => {
+    noAwait(client.sendRequest('malloy/invalidateConnectionCache'));
+    noAwait(worker.sendRequest('malloy/invalidateConnectionCache', {}));
+  };
+  context.subscriptions.push(
+    configWatcher,
+    configWatcher.onDidCreate(onConfigFileChange),
+    configWatcher.onDidChange(onConfigFileChange),
+    configWatcher.onDidDelete(onConfigFileChange)
+  );
+
   // Notebooks
   activateNotebookSerializer(context);
   activateNotebookController(context, client, worker);

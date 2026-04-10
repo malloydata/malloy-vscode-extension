@@ -61,11 +61,14 @@ describe('runQuery', () => {
     };
 
     const lookupConnection = jest.fn();
-    const config = {manifest: {buildManifest: {id: {tableName: 't'}}}};
+    const config = {
+      connections: {lookupConnection},
+      manifest: {buildManifest: {id: {tableName: 't'}}},
+    };
     const connectionManager: ConnectionManager = {
-      getConnectionLookup: jest.fn(() => ({lookupConnection})),
+      getConnectionLookup: jest.fn(async () => ({lookupConnection})),
       setConnectionsConfig: jest.fn(),
-      getConfigForFile: jest.fn(() => config as never),
+      getConfigForFile: jest.fn(async () => config as never),
     };
 
     const preparedResultSql = 'SELECT from_getPreparedResult';

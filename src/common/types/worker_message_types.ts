@@ -91,6 +91,9 @@ export interface MessageTestEntry {
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface MessageGetConnectionTypeInfo {}
 
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface MessageInvalidateConnectionCache {}
+
 export interface ConnectionTypeInfoResponse {
   registeredTypes: string[];
   typeDisplayNames: Record<string, string>;
@@ -118,6 +121,7 @@ export interface MessageMap {
   'malloy/download': MessageDownload;
   'malloy/testConnectionEntry': MessageTestEntry;
   'malloy/getConnectionTypeInfo': MessageGetConnectionTypeInfo;
+  'malloy/invalidateConnectionCache': MessageInvalidateConnectionCache;
 }
 
 export interface MessageResponseMap {
@@ -126,6 +130,7 @@ export interface MessageResponseMap {
   'malloy/download': void;
   'malloy/testConnectionEntry': string;
   'malloy/getConnectionTypeInfo': ConnectionTypeInfoResponse;
+  'malloy/invalidateConnectionCache': void;
 }
 
 /**

@@ -22,13 +22,17 @@
  */
 
 import * as vscode from 'vscode';
-import {MalloyConfig, ConnectionConfigEntry} from '@malloydata/malloy';
+import {ConnectionConfigEntry} from '@malloydata/malloy';
 
 import {ConnectionConfigManager} from '../../common/types/connection_manager_types';
-import {getMalloyConfig} from '../utils/config';
-import {MALLOY_EXTENSION_STATE} from '../state';
 
 export type ConnectionTreeItem = ConnectionGroupItem | ConnectionItem;
+
+/** Callback the sidebar uses to ask the runtime which config applies. */
+export type ConfigSourceResolver = (fileUri: string) => Promise<{
+  source: 'discovered' | 'global' | 'defaults';
+  configFileUri?: string;
+}>;
 
 interface ConfigFileInfo {
   uri: vscode.Uri;
@@ -40,14 +44,17 @@ export class ConnectionsProvider
   implements vscode.TreeDataProvider<ConnectionTreeItem>, vscode.Disposable
 {
   private activeConfigFile: ConfigFileInfo | undefined;
+  private activeConfigSource: 'discovered' | 'global' | 'defaults' = 'defaults';
   private watcher: vscode.Disposable | undefined;
   private editorWatcher: vscode.Disposable | undefined;
+  private notebookEditorWatcher: vscode.Disposable | undefined;
   private dirty = true;
   private registeredTypes: string[] = [];
   private typeDisplayNames: Record<string, string> = {};
   /** Maps default connection name → registered type name. */
   private defaultConnections: Record<string, string> = {};
   private activeFileUri: vscode.Uri | undefined;
+  private configSourceResolver: ConfigSourceResolver | undefined;
 
   constructor(
     private context: vscode.ExtensionContext,
@@ -62,6 +69,15 @@ export class ConnectionsProvider
         this.refresh();
       }
     });
+    this.notebookEditorWatcher = vscode.window.onDidChangeActiveNotebookEditor(
+      editor => {
+        const newUri = editor?.notebook.uri;
+        if (newUri?.toString() !== this.activeFileUri?.toString()) {
+          this.activeFileUri = newUri;
+          this.refresh();
+        }
+      }
+    );
   }
 
   setRegisteredTypes(
@@ -75,6 +91,15 @@ export class ConnectionsProvider
     this.refresh();
   }
 
+  /**
+   * Inject the resolver that asks the language server which config applies
+   * to a given file. Called after the LSP client is ready.
+   */
+  setConfigSourceResolver(resolver: ConfigSourceResolver): void {
+    this.configSourceResolver = resolver;
+    this.refresh();
+  }
+
   private displayName(typeName: string): string {
     return this.typeDisplayNames[typeName] ?? typeName;
   }
@@ -82,6 +107,7 @@ export class ConnectionsProvider
   dispose(): void {
     this.watcher?.dispose();
     this.editorWatcher?.dispose();
+    this.notebookEditorWatcher?.dispose();
   }
 
   getTreeItem(element: ConnectionTreeItem): vscode.TreeItem {
@@ -114,10 +140,8 @@ export class ConnectionsProvider
 
   private async buildGroups(): Promise<ConnectionGroupItem[]> {
     const groups: ConnectionGroupItem[] = [];
-    const projectOnly =
-      getMalloyConfig().get<boolean>('projectConnectionsOnly') ?? false;
 
-    // 1. Config file section — the one config that applies to the active file
+    // 1. Resolve which config applies to the active file
     if (this.dirty) {
       await this.resolveActiveConfigFile();
       this.dirty = false;
@@ -150,116 +174,135 @@ export class ConnectionsProvider
       }
     }
 
-    if (projectOnly) {
-      return groups;
-    }
+    // When a config file is authoritative (discovered or global),
+    // Settings and Defaults don't apply — don't show them.
+    const configIsAuthoritative =
+      this.activeConfigSource === 'discovered' ||
+      this.activeConfigSource === 'global';
 
-    // 2. Settings section
-    const settingsConfig = this.connectionConfigManager.getConnectionsConfig();
-    if (settingsConfig) {
-      const children = Object.entries(settingsConfig).map(([name, entry]) => {
-        const shadowed = configNames.has(name);
-        const displayType = this.displayName(entry.is);
-        const suffix = shadowed ? ' (shadowed)' : '';
-        return ConnectionItem.settings(name, `${displayType}${suffix}`);
-      });
-      if (children.length > 0) {
+    if (!configIsAuthoritative) {
+      // 2. Settings section
+      const settingsConfig =
+        this.connectionConfigManager.getConnectionsConfig();
+      if (settingsConfig) {
+        const children = Object.entries(settingsConfig).map(([name, entry]) => {
+          return ConnectionItem.settings(name, this.displayName(entry.is));
+        });
+        if (children.length > 0) {
+          groups.push(
+            new ConnectionGroupItem(
+              'Settings',
+              'connectionGroup.settings',
+              children,
+              new vscode.ThemeIcon('gear')
+            )
+          );
+        }
+      }
+
+      // 3. Defaults section
+      const settingsNames = new Set(
+        settingsConfig ? Object.keys(settingsConfig) : []
+      );
+      const defaultChildren = Object.entries(this.defaultConnections)
+        .filter(([name]) => !settingsNames.has(name))
+        .map(([name, typeName]) =>
+          ConnectionItem.defaultConnection(name, this.displayName(typeName))
+        );
+      if (defaultChildren.length > 0) {
         groups.push(
           new ConnectionGroupItem(
-            'Settings',
-            'connectionGroup.settings',
-            children,
-            new vscode.ThemeIcon('gear')
+            'Defaults',
+            'connectionGroup.defaults',
+            defaultChildren,
+            new vscode.ThemeIcon('package')
           )
         );
       }
-    }
-
-    // 3. Defaults section — from getDefaultConnections()
-    const settingsNames = new Set(
-      settingsConfig ? Object.keys(settingsConfig) : []
-    );
-    const defaultChildren = Object.entries(this.defaultConnections)
-      .filter(([name]) => !configNames.has(name) && !settingsNames.has(name))
-      .map(([name, typeName]) =>
-        ConnectionItem.defaultConnection(name, this.displayName(typeName))
-      );
-    if (defaultChildren.length > 0) {
-      groups.push(
-        new ConnectionGroupItem(
-          'Defaults',
-          'connectionGroup.defaults',
-          defaultChildren,
-          new vscode.ThemeIcon('package')
-        )
-      );
     }
 
     return groups;
   }
 
   /**
-   * Resolve the single config file that applies to the active editor's file.
-   * Mirrors the logic in NodeConnectionFactory.findMalloyConfig:
-   * 1. Walk up from the file's directory to the workspace root
-   * 2. Return the first malloy-config.json found
-   * 3. Fall back to the global config directory
+   * Resolve the config that applies to the active editor's file by asking
+   * the language server (via configSourceResolver). Falls back to no-config
+   * if the resolver is unavailable or the file is unknown.
    */
   private async resolveActiveConfigFile(): Promise<void> {
     this.activeConfigFile = undefined;
+    this.activeConfigSource = 'defaults';
 
-    // Walk up from file directory to workspace root looking for config
-    if (this.activeFileUri) {
-      const workspaceFolder = vscode.workspace.getWorkspaceFolder(
-        this.activeFileUri
-      );
-      if (workspaceFolder) {
-        // Walk from file's parent directory up to (and including) workspace root
-        const rootPath = workspaceFolder.uri.path;
-        let dir = vscode.Uri.joinPath(this.activeFileUri, '..');
-        for (;;) {
-          const configUri = vscode.Uri.joinPath(dir, 'malloy-config.json');
-          if (await this.loadConfigFile(configUri)) {
-            return;
-          }
-          if (dir.path === rootPath) break;
-          const parent = vscode.Uri.joinPath(dir, '..');
-          if (parent.path === dir.path) break; // filesystem root
-          dir = parent;
-        }
-      }
-    }
+    if (!this.activeFileUri || !this.configSourceResolver) return;
 
-    // Fall back to global config directory
-    const projectOnly =
-      getMalloyConfig().get<boolean>('projectConnectionsOnly') ?? false;
-    if (!projectOnly) {
-      const globalDir = getMalloyConfig().get<string>('globalConfigDirectory');
-      if (globalDir) {
-        const homeUri = MALLOY_EXTENSION_STATE.getHomeUri();
-        const expandedDir = homeUri
-          ? globalDir.replace(/^~/, homeUri.fsPath)
-          : globalDir;
-        const globalUri = vscode.Uri.file(`${expandedDir}/malloy-config.json`);
-        await this.loadConfigFile(globalUri, 'global');
+    try {
+      // Notebook cells have scheme vscode-notebook-cell: — normalize to
+      // the notebook's file: URI so config discovery works correctly.
+      let fileUri = this.activeFileUri;
+      if (fileUri.scheme === 'vscode-notebook-cell') {
+        const scheme =
+          vscode.workspace.workspaceFolders?.[0]?.uri.scheme ?? 'file';
+        fileUri = vscode.Uri.from({
+          scheme,
+          authority: fileUri.authority,
+          path: fileUri.path,
+          query: fileUri.query,
+        });
       }
+      const result = await this.configSourceResolver(fileUri.toString());
+      this.activeConfigSource = result.source;
+
+      if (result.configFileUri) {
+        const configUri = vscode.Uri.parse(result.configFileUri);
+        const label =
+          result.source === 'global'
+            ? 'global'
+            : vscode.workspace.asRelativePath(configUri, true);
+        await this.loadConfigFile(configUri, label, result.source);
+      }
+    } catch {
+      // Resolver not ready or failed — show defaults
     }
   }
 
   private async loadConfigFile(
     fileUri: vscode.Uri,
-    labelOverride?: string
+    labelOverride?: string,
+    source?: 'discovered' | 'global' | 'defaults'
   ): Promise<boolean> {
     try {
       const content = await vscode.workspace.fs.readFile(fileUri);
       const text = new TextDecoder().decode(content);
-      const parsed = new MalloyConfig(text);
+      const parsed = JSON.parse(text);
+      const connections: Record<string, ConnectionConfigEntry> =
+        parsed?.connections ?? {};
+
+      // Merge malloy-config-local.json only for discovered configs —
+      // runtime does not merge local into the global fallback.
+      if (source === 'discovered') {
+        const dirUri = vscode.Uri.joinPath(fileUri, '..');
+        const localUri = vscode.Uri.joinPath(
+          dirUri,
+          'malloy-config-local.json'
+        );
+        try {
+          const localContent = await vscode.workspace.fs.readFile(localUri);
+          const localText = new TextDecoder().decode(localContent);
+          const localParsed = JSON.parse(localText);
+          const localConns: Record<string, ConnectionConfigEntry> =
+            localParsed?.connections ?? {};
+          Object.assign(connections, localConns);
+        } catch {
+          // No local config — that's fine
+        }
+      }
+
       const relativePath =
         labelOverride ?? vscode.workspace.asRelativePath(fileUri, true);
       this.activeConfigFile = {
         uri: fileUri,
         relativePath,
-        connections: parsed.connectionMap ?? {},
+        connections,
       };
       return true;
     } catch {
@@ -269,7 +312,7 @@ export class ConnectionsProvider
 
   private setupWatcher(): vscode.Disposable {
     const watcher = vscode.workspace.createFileSystemWatcher(
-      '**/malloy-config.json'
+      '**/malloy-config{,-local}.json'
     );
 
     const onFileChange = () => this.refresh();

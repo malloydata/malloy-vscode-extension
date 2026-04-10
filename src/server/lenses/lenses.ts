@@ -80,7 +80,7 @@ export async function getMalloyLenses(
   const lenses: CodeLens[] = [];
   const parse = parseWithCache(document);
   const symbols = parse.symbols;
-  const connectionLookup = connectionManager.getConnectionLookup(
+  const connectionLookup = await connectionManager.getConnectionLookup(
     new URL(document.uri)
   );
 

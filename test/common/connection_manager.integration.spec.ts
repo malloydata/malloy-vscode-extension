@@ -1,71 +1,72 @@
-import {CommonConnectionManager} from '../../src/common/connection_manager';
-import {
-  ConnectionFactory,
-  MalloyConfigResult,
-} from '../../src/common/connections/types';
+/*
+ * Copyright Contributors to the Malloy project
+ * SPDX-License-Identifier: MIT
+ */
 
-function makeFactory(
-  findMalloyConfigImpl: (
-    fileURL: URL,
-    workspaceRoots: string[],
-    globalConfigDirectory?: string
-  ) => MalloyConfigResult | undefined
-): ConnectionFactory {
+import {CommonConnectionManager} from '../../src/common/connection_manager';
+import {ConnectionFactory} from '../../src/common/connections/types';
+import {MalloyConfig, URLReader} from '@malloydata/malloy';
+
+// Mock discoverConfig so we can control what it returns
+let mockDiscoverResult: MalloyConfig | null = null;
+
+jest.mock('@malloydata/malloy', () => {
+  const actual = jest.requireActual('@malloydata/malloy');
   return {
-    reset: jest.fn(),
-    getWorkingDirectory: jest.fn((url: URL) => {
-      const path = url.pathname;
-      const slash = path.lastIndexOf('/');
-      return slash >= 0 ? path.substring(0, slash) : path;
+    ...actual,
+    discoverConfig: jest.fn(async () => mockDiscoverResult),
+  };
+});
+
+function makeMockURLReader(): URLReader {
+  return {
+    readURL: jest.fn(async () => {
+      throw new Error('File not found');
     }),
-    findMalloyConfig: findMalloyConfigImpl,
   };
 }
 
-describe('CommonConnectionManager integration (real MalloyConfig)', () => {
-  it('parses virtualMap as Map and refreshes manifest on cached config', () => {
-    let manifestText = JSON.stringify({id1: {tableName: 'cached_table_1'}});
-    const configText = JSON.stringify({
-      connections: {},
-      virtualMap: {
-        vduckdb: {
-          flights: '/tmp/flights.parquet',
-        },
-      },
-    });
+describe('CommonConnectionManager integration', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockDiscoverResult = null;
+  });
 
-    const factory = makeFactory(() => ({
-      configText,
-      configDir: '/project',
-      manifestText,
-    }));
+  it('returns a MalloyConfig with connections at level 3 (defaults)', async () => {
+    const factory: ConnectionFactory = {};
     const manager = new CommonConnectionManager(factory);
-    const fileURL = new URL('file:///project/models/query.malloy');
+    manager.setURLReader(makeMockURLReader());
+    manager.setWorkspaceRoots(['file:///project/']);
 
-    const config1 = manager.getConfigForFile(fileURL);
-    expect(config1).toBeDefined();
-    expect(config1?.virtualMap).toBeInstanceOf(Map);
-    const byConnection = config1?.virtualMap?.get('vduckdb');
-    expect(byConnection).toBeInstanceOf(Map);
-    expect(byConnection?.get('flights')).toBe('/tmp/flights.parquet');
-    expect(config1?.manifest.buildManifest).toEqual(
-      expect.objectContaining({
-        entries: {
-          id1: {tableName: 'cached_table_1'},
-        },
-      })
+    const config = await manager.getConfigForFile(
+      new URL('file:///project/test.malloy')
     );
+    expect(config).toBeDefined();
+    expect(config.connections).toBeDefined();
+  });
 
-    manifestText = JSON.stringify({id2: {tableName: 'cached_table_2'}});
-    manager.getConnectionLookup(fileURL);
-    const config2 = manager.getConfigForFile(fileURL);
-    expect(config2).toBe(config1);
-    expect(config2?.manifest.buildManifest).toEqual(
-      expect.objectContaining({
-        entries: {
-          id2: {tableName: 'cached_table_2'},
-        },
-      })
-    );
+  it('getConnectionLookup returns the same lookup as getConfigForFile().connections', async () => {
+    const factory: ConnectionFactory = {};
+    const manager = new CommonConnectionManager(factory);
+    manager.setURLReader(makeMockURLReader());
+    manager.setWorkspaceRoots(['file:///project/']);
+
+    const url = new URL('file:///project/test.malloy');
+    const config = await manager.getConfigForFile(url);
+    const lookup = await manager.getConnectionLookup(url);
+    expect(lookup).toBe(config.connections);
+  });
+
+  it('caches per workspace folder', async () => {
+    const factory: ConnectionFactory = {};
+    const manager = new CommonConnectionManager(factory);
+    manager.setURLReader(makeMockURLReader());
+    manager.setWorkspaceRoots(['file:///project/']);
+
+    const url1 = new URL('file:///project/a.malloy');
+    const url2 = new URL('file:///project/sub/b.malloy');
+    const config1 = await manager.getConfigForFile(url1);
+    const config2 = await manager.getConfigForFile(url2);
+    expect(config1).toBe(config2);
   });
 });

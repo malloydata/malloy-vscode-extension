@@ -1,1532 +1,648 @@
-import * as fs from 'fs';
-import * as os from 'os';
-import * as path from 'path';
-import {pathToFileURL} from 'url';
+/*
+ * Copyright Contributors to the Malloy project
+ * SPDX-License-Identifier: MIT
+ */
+
 import {
   CommonConnectionManager,
-  MergedConnectionLookup,
-  SettingsConnectionLookup,
   isSecretKeyReference,
 } from '../../src/common/connection_manager';
-import {
-  ConnectionFactory,
-  MalloyConfigResult,
-} from '../../src/common/connections/types';
+import {ConnectionFactory} from '../../src/common/connections/types';
 import {
   LookupConnection,
   Connection,
-  ConnectionConfigEntry,
   MalloyConfig,
-  getRegisteredConnectionTypes,
-  getConnectionProperties,
+  URLReader,
 } from '@malloydata/malloy';
-import {NodeConnectionFactory} from '../../src/server/connections/node/connection_factory';
 
-// Track connectionMap values set on MalloyConfig instances
-let connectionMapsSet: Record<string, ConnectionConfigEntry>[] = [];
-// The lookup returned by MalloyConfig.connections
-let mockConnectionsLookup: LookupConnection<Connection>;
+// --- Mock discoverConfig ---
+let mockDiscoverResult: MalloyConfig | null = null;
+let discoverCalledWith: {startURL: URL; ceilingURL: URL}[] = [];
 
 jest.mock('@malloydata/malloy', () => {
   const actual = jest.requireActual('@malloydata/malloy');
   return {
     ...actual,
-    MalloyConfig: jest.fn().mockImplementation((text: string) => {
-      let _map: Record<string, ConnectionConfigEntry> | undefined;
-      let _onConnectionCreated:
-        | ((name: string, conn: Connection) => void)
-        | undefined;
-      let _cachedConnections: LookupConnection<Connection> | undefined;
-      let _manifest: unknown = {};
-      // Parse JSON like the real MalloyConfig does
-      const parsed = JSON.parse(text);
-      _map = parsed.connections;
-      const manifest = {
-        loadText(manifestText: string) {
-          _manifest = JSON.parse(manifestText);
-        },
-        get buildManifest() {
-          return _manifest;
-        },
-      };
-      const instance = {
-        get connectionMap(): Record<string, ConnectionConfigEntry> | undefined {
-          return _map;
-        },
-        set connectionMap(m: Record<string, ConnectionConfigEntry>) {
-          _map = m;
-          _cachedConnections = undefined;
-          connectionMapsSet.push(m);
-        },
-        get connections(): LookupConnection<Connection> {
-          if (!_cachedConnections) {
-            const cache = new Map<string, Promise<Connection>>();
-            _cachedConnections = {
-              lookupConnection: (name: string): Promise<Connection> => {
-                let promise = cache.get(name);
-                if (!promise) {
-                  promise = mockConnectionsLookup
-                    .lookupConnection(name)
-                    .then(conn => {
-                      if (_onConnectionCreated) {
-                        _onConnectionCreated(name, conn);
-                      }
-                      return conn;
-                    });
-                  cache.set(name, promise);
-                }
-                return promise;
-              },
-            };
-          }
-          return _cachedConnections;
-        },
-        set onConnectionCreated(
-          cb: ((name: string, conn: Connection) => void) | undefined
-        ) {
-          _onConnectionCreated = cb;
-        },
-        async close() {},
-        get manifest() {
-          return manifest;
-        },
-        get virtualMap() {
-          return undefined;
-        },
-      };
-      return instance;
-    }),
-    createConnectionsFromConfig: jest
-      .fn()
-      .mockImplementation(
-        (
-          _config: unknown,
-          onCreated?: (name: string, conn: Connection) => void
-        ) => {
-          const cache = new Map<string, Promise<Connection>>();
-          return {
-            lookupConnection: (name: string): Promise<Connection> => {
-              let promise = cache.get(name);
-              if (!promise) {
-                promise = mockConnectionsLookup
-                  .lookupConnection(name)
-                  .then(conn => {
-                    if (onCreated) onCreated(name, conn);
-                    return conn;
-                  });
-                cache.set(name, promise);
-              }
-              return promise;
-            },
-            async close() {},
-          };
-        }
-      ),
-    Manifest: jest.fn().mockImplementation(() => {
-      let _buildManifest = {};
-      return {
-        loadText(text: string) {
-          const parsed = JSON.parse(text);
-          _buildManifest = parsed;
-        },
-        get buildManifest() {
-          return _buildManifest;
-        },
-      };
-    }),
-    getRegisteredConnectionTypes: jest.fn().mockReturnValue([]),
-    getConnectionProperties: jest.fn(),
+    discoverConfig: jest.fn(
+      async (startURL: URL, ceilingURL: URL, _urlReader: URLReader) => {
+        discoverCalledWith.push({startURL, ceilingURL});
+        return mockDiscoverResult;
+      }
+    ),
   };
 });
 
-const MockMalloyConfig = MalloyConfig as jest.MockedClass<typeof MalloyConfig>;
-const mockGetRegisteredConnectionTypes =
-  getRegisteredConnectionTypes as jest.MockedFunction<
-    typeof getRegisteredConnectionTypes
-  >;
-const mockGetConnectionProperties =
-  getConnectionProperties as jest.MockedFunction<
-    typeof getConnectionProperties
-  >;
+function makeMockConfig(overrides?: {
+  connections?: LookupConnection<Connection>;
+  configURL?: string;
+}): MalloyConfig {
+  const mockConn = {name: 'mock'} as unknown as Connection;
+  const connections = overrides?.connections ?? {
+    lookupConnection: jest.fn(async () => mockConn),
+  };
+  const overlayData: Record<string, Record<string, string>> = {};
+  if (overrides?.configURL) {
+    overlayData['config'] = {configURL: overrides.configURL};
+  }
+  let _connections = connections;
+  return {
+    get connections() {
+      return _connections;
+    },
+    wrapConnections(
+      wrapper: (
+        base: LookupConnection<Connection>
+      ) => LookupConnection<Connection>
+    ) {
+      _connections = wrapper(_connections);
+    },
+    releaseConnections: jest.fn(async () => {}),
+    readOverlay(name: string, ...path: string[]): unknown {
+      let current: unknown = overlayData[name];
+      for (const key of path) {
+        if (typeof current !== 'object' || current === null) return undefined;
+        current = (current as Record<string, unknown>)[key];
+      }
+      return current;
+    },
+    log: [],
+  } as unknown as MalloyConfig;
+}
 
-function makeMockFactory(
-  findMalloyConfigImpl?: (
-    fileURL: URL,
-    workspaceRoots: string[],
-    globalConfigDirectory?: string
-  ) => MalloyConfigResult | undefined
-): ConnectionFactory {
-  const factory: ConnectionFactory = {
-    reset: jest.fn(),
-    getWorkingDirectory: jest.fn((url: URL) => {
-      const path = url.pathname;
-      const lastSlash = path.lastIndexOf('/');
-      return lastSlash >= 0 ? path.substring(0, lastSlash) : path;
+function makeMockFactory(): ConnectionFactory {
+  return {};
+}
+
+function makePostProcessFactory(): ConnectionFactory & {
+  postProcessCalls: Array<{conn: Connection; workingDir: string}>;
+} {
+  const calls: Array<{conn: Connection; workingDir: string}> = [];
+  return {
+    postProcessConnection(conn: Connection, workingDir: string) {
+      calls.push({conn, workingDir});
+    },
+    postProcessCalls: calls,
+  };
+}
+
+function makeMockURLReader(files: Record<string, string> = {}): URLReader {
+  return {
+    readURL: jest.fn(async (url: URL) => {
+      const key = url.toString();
+      if (key in files) return files[key];
+      throw new Error(`File not found: ${key}`);
     }),
   };
-  if (findMalloyConfigImpl) {
-    factory.findMalloyConfig = findMalloyConfigImpl;
-  }
-  return factory;
 }
 
-function makeMockLookup(): LookupConnection<Connection> {
-  return {
-    lookupConnection: jest.fn().mockResolvedValue({} as Connection),
-  };
-}
-
-describe('malloy-config.json support', () => {
+describe('CommonConnectionManager', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    connectionMapsSet = [];
-    mockConnectionsLookup = makeMockLookup();
+    mockDiscoverResult = null;
+    discoverCalledWith = [];
+    // Restore the default mock implementation (clearAllMocks wipes it)
+    const {discoverConfig: mockedDiscover} =
+      jest.requireMock('@malloydata/malloy');
+    (mockedDiscover as jest.Mock).mockImplementation(
+      async (startURL: URL, ceilingURL: URL) => {
+        discoverCalledWith.push({startURL, ceilingURL});
+        return mockDiscoverResult;
+      }
+    );
   });
 
-  describe('config file discovery', () => {
-    it('returns merged lookup when findMalloyConfig finds a config file (default merged mode)', async () => {
-      const mockConn = {name: 'mydb'} as unknown as Connection;
-      mockConnectionsLookup = {
-        lookupConnection: jest.fn().mockResolvedValue(mockConn),
-      };
-      const factory = makeMockFactory(() => ({
-        configText: '{"connections": {"mydb": {"is": "duckdb"}}}',
-        configDir: '/project',
-      }));
+  describe('three-level resolution', () => {
+    it('level 1: uses discovered config when available', async () => {
+      const mockConfig = makeMockConfig();
+      mockDiscoverResult = mockConfig;
 
-      const manager = new CommonConnectionManager(factory);
-      manager.setConnectionsConfig({});
-      const result = manager.getConnectionLookup(
+      const manager = new CommonConnectionManager(makeMockFactory());
+      manager.setURLReader(makeMockURLReader());
+      manager.setWorkspaceRoots(['file:///project/']);
+
+      const config = await manager.getConfigForFile(
         new URL('file:///project/test.malloy')
       );
-
-      // Lookup resolves connections (config + settings merged, wrapped with cache)
-      const conn = await result.lookupConnection('mydb');
-      expect(conn).toBe(mockConn);
-      // MalloyConfig should have been constructed with the config text
-      expect(MockMalloyConfig).toHaveBeenCalledWith(
-        '{"connections": {"mydb": {"is": "duckdb"}}}'
+      expect(config).toBe(mockConfig);
+      expect(discoverCalledWith).toHaveLength(1);
+      expect(discoverCalledWith[0].startURL.toString()).toBe(
+        'file:///project/test.malloy'
       );
     });
 
-    it('passes fileURL, workspaceRoots, and globalConfigDirectory to findMalloyConfig', () => {
-      const findMalloyConfig = jest.fn().mockReturnValue(undefined);
-      const factory = makeMockFactory(findMalloyConfig);
+    it('level 2: uses global config when no project config found', async () => {
+      mockDiscoverResult = null;
 
-      const manager = new CommonConnectionManager(factory);
-      manager.setWorkspaceRoots(['/workspace']);
-      manager.setConnectionsConfig({});
+      const globalConfigUrl =
+        'file:///home/user/.config/malloy/malloy-config.json';
+      const globalConfigText = JSON.stringify({
+        connections: {mydb: {is: 'duckdb'}},
+      });
 
-      const fileURL = new URL('file:///workspace/src/test.malloy');
-      manager.getConnectionLookup(fileURL);
-
-      expect(findMalloyConfig).toHaveBeenCalledWith(
-        fileURL,
-        ['/workspace'],
-        ''
+      const manager = new CommonConnectionManager(makeMockFactory(), {
+        expandHome: (p: string) => p.replace(/^~/, '/home/user'),
+      });
+      manager.setURLReader(
+        makeMockURLReader({[globalConfigUrl]: globalConfigText})
       );
-    });
-
-    it('passes globalConfigDirectory to findMalloyConfig', () => {
-      const findMalloyConfig = jest.fn().mockReturnValue(undefined);
-      const factory = makeMockFactory(findMalloyConfig);
-
-      const manager = new CommonConnectionManager(factory);
-      manager.setWorkspaceRoots(['/workspace']);
+      manager.setWorkspaceRoots(['file:///project/']);
       manager.setGlobalConfigDirectory('~/.config/malloy');
-      manager.setConnectionsConfig({});
 
-      const fileURL = new URL('file:///workspace/src/test.malloy');
-      manager.getConnectionLookup(fileURL);
-
-      expect(findMalloyConfig).toHaveBeenCalledWith(
-        fileURL,
-        ['/workspace'],
-        '~/.config/malloy'
-      );
-    });
-  });
-
-  describe('fallback to VS Code settings', () => {
-    it('falls back when no findMalloyConfig method exists', () => {
-      const factory = makeMockFactory(); // no findMalloyConfig
-      const manager = new CommonConnectionManager(factory);
-      manager.setConnectionsConfig({});
-
-      const result = manager.getConnectionLookup(
+      const config = await manager.getConfigForFile(
         new URL('file:///project/test.malloy')
       );
-
-      // Should return a settings-based lookup, not a MergedConnectionLookup
-      expect(result).not.toBeInstanceOf(MergedConnectionLookup);
+      // Should have a MalloyConfig (not the discovered one, which is null)
+      expect(config).toBeDefined();
+      expect(config).not.toBe(mockDiscoverResult);
     });
 
-    it('falls back when findMalloyConfig returns undefined', () => {
-      const factory = makeMockFactory(() => undefined);
-      const manager = new CommonConnectionManager(factory);
-      manager.setConnectionsConfig({});
+    it('level 3: falls back to defaults when no config files found', async () => {
+      mockDiscoverResult = null;
 
-      const result = manager.getConnectionLookup(
+      const manager = new CommonConnectionManager(makeMockFactory());
+      manager.setURLReader(makeMockURLReader());
+      manager.setWorkspaceRoots(['file:///project/']);
+
+      const config = await manager.getConfigForFile(
         new URL('file:///project/test.malloy')
       );
-
-      // Should return a settings-based lookup, not a MergedConnectionLookup
-      expect(result).not.toBeInstanceOf(MergedConnectionLookup);
+      // Should return a MalloyConfig with includeDefaultConnections
+      expect(config).toBeDefined();
     });
-  });
 
-  describe('error handling', () => {
-    it('falls back gracefully on invalid JSON', () => {
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+    it('level 1 takes priority over level 2', async () => {
+      const discoveredConfig = makeMockConfig();
+      mockDiscoverResult = discoveredConfig;
 
-      const factory = makeMockFactory(() => ({
-        configText: '{bad json',
-        configDir: '/project',
-      }));
+      const manager = new CommonConnectionManager(makeMockFactory(), {
+        expandHome: (p: string) => p.replace(/^~/, '/home/user'),
+      });
+      manager.setURLReader(
+        makeMockURLReader({
+          'file:///home/user/.config/malloy/malloy-config.json':
+            '{"connections":{}}',
+        })
+      );
+      manager.setWorkspaceRoots(['file:///project/']);
+      manager.setGlobalConfigDirectory('~/.config/malloy');
 
-      const manager = new CommonConnectionManager(factory);
-      manager.setConnectionsConfig({});
-
-      const result = manager.getConnectionLookup(
+      const config = await manager.getConfigForFile(
         new URL('file:///project/test.malloy')
       );
-
-      // Should return a settings-based lookup, not a MergedConnectionLookup
-      expect(result).not.toBeInstanceOf(MergedConnectionLookup);
-      expect(warnSpy).toHaveBeenCalledWith(
-        expect.stringContaining('/project'),
-        expect.any(Error)
-      );
-
-      warnSpy.mockRestore();
+      // Should use the discovered config, not the global one
+      expect(config).toBe(discoveredConfig);
     });
   });
 
   describe('caching', () => {
-    it('does not re-parse config when text has not changed', () => {
-      const factory = makeMockFactory(() => ({
-        configText: '{}',
-        configDir: '/project',
-      }));
+    it('caches config per workspace folder', async () => {
+      const mockConfig = makeMockConfig();
+      mockDiscoverResult = mockConfig;
 
-      const manager = new CommonConnectionManager(factory);
+      const manager = new CommonConnectionManager(makeMockFactory());
+      manager.setURLReader(makeMockURLReader());
+      manager.setWorkspaceRoots(['file:///project/']);
 
-      const url = new URL('file:///project/test.malloy');
-      manager.getConnectionLookup(url);
-      const callsAfterFirst = MockMalloyConfig.mock.calls.length;
-
-      manager.getConnectionLookup(url);
-      // No new MalloyConfig instances on second call (cached)
-      expect(MockMalloyConfig.mock.calls.length).toBe(callsAfterFirst);
-    });
-
-    it('re-parses config when text changes', () => {
-      let configText = '{"v":1}';
-      const factory = makeMockFactory(() => ({
-        configText,
-        configDir: '/project',
-      }));
-
-      const manager = new CommonConnectionManager(factory);
-      const url = new URL('file:///project/test.malloy');
-
-      manager.getConnectionLookup(url);
-      const callsAfterFirst = MockMalloyConfig.mock.calls.length;
-
-      configText = '{"v":2}';
-      manager.getConnectionLookup(url);
-      // Config text changed, so new MalloyConfig instances created
-      expect(MockMalloyConfig.mock.calls.length).toBeGreaterThan(
-        callsAfterFirst
+      const config1 = await manager.getConfigForFile(
+        new URL('file:///project/a.malloy')
       );
-    });
-
-    it('creates separate config lookups for files in different directories', () => {
-      const factory = makeMockFactory(() => ({
-        configText: '{}',
-        configDir: '/project',
-      }));
-
-      const manager = new CommonConnectionManager(factory);
-
-      manager.getConnectionLookup(new URL('file:///project/src/a.malloy'));
-      const callsAfterFirst = MockMalloyConfig.mock.calls.length;
-
-      manager.getConnectionLookup(new URL('file:///project/lib/b.malloy'));
-      // Different directory → new config parse (with different workingDir)
-      expect(MockMalloyConfig.mock.calls.length).toBeGreaterThan(
-        callsAfterFirst
+      const config2 = await manager.getConfigForFile(
+        new URL('file:///project/sub/b.malloy')
       );
+      // Same discovered config identity → same config (cached)
+      expect(config1).toBe(config2);
+      // discoverConfig called twice (different directories), but both
+      // resolve to the same cached MalloyConfig via identity key
+      expect(discoverCalledWith).toHaveLength(2);
     });
 
-    it('shares config lookup for files in the same directory', () => {
-      const factory = makeMockFactory(() => ({
-        configText: '{}',
-        configDir: '/project',
-      }));
-
-      const manager = new CommonConnectionManager(factory);
-
-      manager.getConnectionLookup(new URL('file:///project/src/a.malloy'));
-      const callsAfterFirst = MockMalloyConfig.mock.calls.length;
-
-      manager.getConnectionLookup(new URL('file:///project/src/b.malloy'));
-      // Same directory reuses cached config
-      expect(MockMalloyConfig.mock.calls.length).toBe(callsAfterFirst);
-    });
-
-    it('picks up newly created config file', async () => {
-      let hasConfig = false;
-      const mockConn = {name: 'duckdb'} as unknown as Connection;
-      mockConnectionsLookup = {
-        lookupConnection: jest.fn().mockResolvedValue(mockConn),
-      };
-      const factory = makeMockFactory(() =>
-        hasConfig ? {configText: '{}', configDir: '/project'} : undefined
-      );
-
-      const manager = new CommonConnectionManager(factory);
-      manager.setConnectionsConfig({});
-      const url = new URL('file:///project/test.malloy');
-
-      // No config file yet — falls back to settings, should still resolve
-      const result1 = manager.getConnectionLookup(url);
-      const conn1 = await result1.lookupConnection('duckdb');
-      expect(conn1).toBe(mockConn);
-
-      // Config file appears — should still resolve (now via merged lookup)
-      hasConfig = true;
-      const result2 = manager.getConnectionLookup(url);
-      const conn2 = await result2.lookupConnection('duckdb');
-      expect(conn2).toBe(mockConn);
-    });
-  });
-
-  describe('cache clearing', () => {
-    it('clearConfigCaches causes re-parse on next access', () => {
-      const factory = makeMockFactory(() => ({
-        configText: '{}',
-        configDir: '/project',
-      }));
-
-      const manager = new CommonConnectionManager(factory);
-      const url = new URL('file:///project/test.malloy');
-
-      manager.getConnectionLookup(url);
-      const callsAfterFirst = MockMalloyConfig.mock.calls.length;
-
-      manager.clearConfigCaches();
-      manager.getConnectionLookup(url);
-      // Re-parsed because cache was cleared
-      expect(MockMalloyConfig.mock.calls.length).toBeGreaterThan(
-        callsAfterFirst
-      );
-    });
-
-    it('setConnectionsConfig clears config caches', () => {
-      const factory = makeMockFactory(() => ({
-        configText: '{}',
-        configDir: '/project',
-      }));
-
-      const manager = new CommonConnectionManager(factory);
-      const url = new URL('file:///project/test.malloy');
-
-      manager.getConnectionLookup(url);
-      const callsAfterFirst = MockMalloyConfig.mock.calls.length;
-
-      manager.setConnectionsConfig({});
-      manager.getConnectionLookup(url);
-      // Re-parsed because setConnectionsConfig clears caches
-      expect(MockMalloyConfig.mock.calls.length).toBeGreaterThan(
-        callsAfterFirst
-      );
-    });
-  });
-
-  describe('getConfigForFile manifest propagation', () => {
-    it('returns previously resolved config for a file even if later discovery fails', () => {
-      let callCount = 0;
-      const factory = makeMockFactory(() => {
-        callCount += 1;
-        if (callCount === 1) {
-          return {
-            configText: '{}',
-            configDir: '/project',
-            manifestText: JSON.stringify({id1: {tableName: 't1'}}),
-          };
+    it('nested configs in the same workspace get separate cache entries', async () => {
+      // Two config files at different levels: root and sub/
+      // Give them distinct configURLs so the cache keys differ
+      const rootConfig = makeMockConfig({
+        configURL: 'file:///project/malloy-config.json',
+      });
+      const subConfig = makeMockConfig({
+        configURL: 'file:///project/sub/malloy-config.json',
+      });
+      const {discoverConfig: mockedDiscover} =
+        jest.requireMock('@malloydata/malloy');
+      (mockedDiscover as jest.Mock).mockImplementation(
+        async (startURL: URL, ceilingURL: URL) => {
+          discoverCalledWith.push({startURL, ceilingURL});
+          // Files under sub/ discover subConfig; others discover rootConfig
+          if (startURL.toString().includes('/sub/')) {
+            return subConfig;
+          }
+          return rootConfig;
         }
-        return undefined;
-      });
+      );
 
-      const manager = new CommonConnectionManager(factory);
-      const url = new URL('file:///project/test.malloy');
-      manager.getConnectionLookup(url);
+      const manager = new CommonConnectionManager(makeMockFactory());
+      manager.setURLReader(makeMockURLReader());
+      manager.setWorkspaceRoots(['file:///project/']);
 
-      // Should return the already-resolved config from cache mapping, not
-      // trigger a second discovery failure.
-      const config = manager.getConfigForFile(url);
-      expect(config).toBeDefined();
-      expect(config?.manifest.buildManifest).toEqual({id1: {tableName: 't1'}});
-    });
-    it('returns config with parsed manifest data when manifest exists', () => {
-      const manifestText = JSON.stringify({
-        abc123: {tableName: 'cached_mySource_abc123'},
-      });
-      const factory = makeMockFactory(() => ({
-        configText: '{}',
-        configDir: '/project',
-        manifestText,
-      }));
+      const configRoot = await manager.getConfigForFile(
+        new URL('file:///project/query.malloy')
+      );
+      const configSub = await manager.getConfigForFile(
+        new URL('file:///project/sub/query.malloy')
+      );
 
-      const manager = new CommonConnectionManager(factory);
-      const url = new URL('file:///project/test.malloy');
-      manager.getConnectionLookup(url);
-
-      const config = manager.getConfigForFile(url);
-      expect(config).toBeDefined();
-      expect(config?.manifest.buildManifest).toEqual({
-        abc123: {tableName: 'cached_mySource_abc123'},
-      });
+      // Different configs because they discovered different config files
+      expect(configRoot).not.toBe(configSub);
     });
 
-    it('returns undefined when no config file exists', () => {
-      const factory = makeMockFactory(() => undefined);
+    it('invalidateCache clears the cache', async () => {
+      const mockConfig = makeMockConfig();
+      mockDiscoverResult = mockConfig;
 
-      const manager = new CommonConnectionManager(factory);
-      const url = new URL('file:///project/test.malloy');
-      manager.getConnectionLookup(url);
+      const manager = new CommonConnectionManager(makeMockFactory());
+      manager.setURLReader(makeMockURLReader());
+      manager.setWorkspaceRoots(['file:///project/']);
 
-      expect(manager.getConfigForFile(url)).toBeUndefined();
+      await manager.getConfigForFile(new URL('file:///project/a.malloy'));
+      expect(discoverCalledWith).toHaveLength(1);
+
+      manager.notifyConfigFileChanged();
+
+      const newConfig = makeMockConfig();
+      mockDiscoverResult = newConfig;
+      await manager.getConfigForFile(new URL('file:///project/a.malloy'));
+      expect(discoverCalledWith).toHaveLength(2);
     });
 
-    it('returns empty manifest when no manifest file exists', () => {
-      const factory = makeMockFactory(() => ({
-        configText: '{}',
-        configDir: '/project',
-        // manifestText is undefined
-      }));
+    it('calls releaseConnections on invalidation', async () => {
+      const mockConfig = makeMockConfig();
+      mockDiscoverResult = mockConfig;
 
-      const manager = new CommonConnectionManager(factory);
-      const url = new URL('file:///project/test.malloy');
-      manager.getConnectionLookup(url);
+      const manager = new CommonConnectionManager(makeMockFactory());
+      manager.setURLReader(makeMockURLReader());
+      manager.setWorkspaceRoots(['file:///project/']);
 
-      expect(manager.getConfigForFile(url)?.manifest.buildManifest).toEqual({});
-    });
+      await manager.getConfigForFile(new URL('file:///project/a.malloy'));
+      manager.notifyConfigFileChanged();
 
-    it('refreshes cached config manifest when manifest text changes', () => {
-      let manifestText = JSON.stringify({id1: {tableName: 't1'}});
-      const factory = makeMockFactory(() => ({
-        configText: '{}',
-        configDir: '/project',
-        manifestText,
-      }));
-
-      const manager = new CommonConnectionManager(factory);
-      const url = new URL('file:///project/test.malloy');
-      manager.getConnectionLookup(url);
-
-      expect(manager.getConfigForFile(url)?.manifest.buildManifest).toEqual({
-        id1: {tableName: 't1'},
-      });
-
-      manifestText = JSON.stringify({id2: {tableName: 't2'}});
-      manager.getConnectionLookup(url);
-
-      expect(manager.getConfigForFile(url)?.manifest.buildManifest).toEqual({
-        id2: {tableName: 't2'},
-      });
-    });
-
-    it('clears cached config manifest when manifest file is deleted', () => {
-      let manifestText: string | undefined = JSON.stringify({
-        id1: {tableName: 't1'},
-      });
-      const factory = makeMockFactory(() => ({
-        configText: '{}',
-        configDir: '/project',
-        manifestText,
-      }));
-
-      const manager = new CommonConnectionManager(factory);
-      const url = new URL('file:///project/test.malloy');
-      manager.getConnectionLookup(url);
-
-      expect(manager.getConfigForFile(url)?.manifest.buildManifest).toEqual({
-        id1: {tableName: 't1'},
-      });
-
-      // Manifest file deleted — manifestText becomes undefined
-      manifestText = undefined;
-      manager.getConnectionLookup(url);
-
-      expect(manager.getConfigForFile(url)?.manifest.buildManifest).toEqual({});
-    });
-
-    it('clearConfigCaches clears cached config instances', () => {
-      const factory = makeMockFactory(() => ({
-        configText: '{}',
-        configDir: '/project',
-        manifestText: JSON.stringify({id1: {tableName: 't1'}}),
-      }));
-
-      const manager = new CommonConnectionManager(factory);
-      const url = new URL('file:///project/test.malloy');
-      manager.getConnectionLookup(url);
-      const configBefore = manager.getConfigForFile(url);
-      expect(configBefore).toBeDefined();
-
-      manager.clearConfigCaches();
-
-      const configAfter = manager.getConfigForFile(url);
-      expect(configAfter).toBeDefined();
-      expect(configAfter).not.toBe(configBefore);
+      expect(mockConfig.releaseConnections).toHaveBeenCalled();
     });
   });
 
-  describe('projectConnectionsOnly', () => {
-    it('returns config lookup when projectConnectionsOnly is set and config exists', async () => {
-      const mockConn = {} as Connection;
-      mockConnectionsLookup = {
-        lookupConnection: jest.fn().mockResolvedValue(mockConn),
-      };
+  describe('workspace folder resolution', () => {
+    it('picks the longest matching workspace root', async () => {
+      mockDiscoverResult = makeMockConfig();
 
-      const factory = makeMockFactory(() => ({
-        configText: '{}',
-        configDir: '/project',
-      }));
-
-      const manager = new CommonConnectionManager(factory);
-      manager.setProjectConnectionsOnly(true);
-
-      const result = manager.getConnectionLookup(
-        new URL('file:///project/test.malloy')
-      );
-
-      // The lookup is wrapped to track connections, so check it delegates correctly
-      const conn = await result.lookupConnection('test');
-      expect(conn).toBe(mockConn);
-      expect(mockConnectionsLookup.lookupConnection).toHaveBeenCalledWith(
-        'test'
-      );
-    });
-
-    it('rejects lookups when projectConnectionsOnly is set and no config exists', async () => {
-      const factory = makeMockFactory(() => undefined);
-
-      const manager = new CommonConnectionManager(factory);
-      manager.setProjectConnectionsOnly(true);
-
-      const lookup = manager.getConnectionLookup(
-        new URL('file:///project/test.malloy')
-      );
-
-      await expect(lookup.lookupConnection('mydb')).rejects.toThrow(
-        /projectConnectionsOnly/
-      );
-    });
-
-    it('ignores settings connections when projectConnectionsOnly is set', async () => {
-      const factory = makeMockFactory(() => undefined);
-
-      const manager = new CommonConnectionManager(factory);
-      manager.setConnectionsConfig({mydb: {is: 'duckdb'}});
-      manager.setProjectConnectionsOnly(true);
-
-      const lookup = manager.getConnectionLookup(
-        new URL('file:///project/test.malloy')
-      );
-
-      // mydb is in settings but should be unreachable
-      await expect(lookup.lookupConnection('mydb')).rejects.toThrow(
-        /projectConnectionsOnly/
-      );
-    });
-
-    it('ignores default connections when projectConnectionsOnly is set', async () => {
-      const factory = makeMockFactory(() => undefined);
-
-      const manager = new CommonConnectionManager(factory);
-      // duckdb would normally resolve as a default connection
-      manager.setConnectionsConfig({duckdb: {is: 'duckdb'}});
-      manager.setProjectConnectionsOnly(true);
-
-      const lookup = manager.getConnectionLookup(
-        new URL('file:///project/test.malloy')
-      );
-
-      await expect(lookup.lookupConnection('duckdb')).rejects.toThrow(
-        /projectConnectionsOnly/
-      );
-    });
-
-    it('does not pass globalConfigDirectory when projectConnectionsOnly is set', () => {
-      const findMalloyConfig = jest.fn().mockReturnValue(undefined);
-      const factory = makeMockFactory(findMalloyConfig);
-
-      const manager = new CommonConnectionManager(factory);
-      manager.setGlobalConfigDirectory('~/.config/malloy');
-      manager.setProjectConnectionsOnly(true);
-
-      const url = new URL('file:///project/test.malloy');
-      manager.getConnectionLookup(url);
-
-      expect(findMalloyConfig).toHaveBeenCalledWith(expect.any(URL), [], '');
-    });
-
-    it('passes globalConfigDirectory when projectConnectionsOnly is not set', () => {
-      const findMalloyConfig = jest.fn().mockReturnValue(undefined);
-      const factory = makeMockFactory(findMalloyConfig);
-
-      const manager = new CommonConnectionManager(factory);
-      manager.setGlobalConfigDirectory('~/.config/malloy');
-      manager.setConnectionsConfig({});
-
-      const url = new URL('file:///project/test.malloy');
-      manager.getConnectionLookup(url);
-
-      expect(findMalloyConfig).toHaveBeenCalledWith(
-        expect.any(URL),
-        [],
-        '~/.config/malloy'
-      );
-    });
-
-    it('returns working lookup when config exists (default behavior)', async () => {
-      const mockConn = {name: 'mydb'} as unknown as Connection;
-      mockConnectionsLookup = {
-        lookupConnection: jest.fn().mockResolvedValue(mockConn),
-      };
-      const factory = makeMockFactory(() => ({
-        configText: '{}',
-        configDir: '/project',
-      }));
-
-      const manager = new CommonConnectionManager(factory);
-      manager.setConnectionsConfig({});
-
-      const result = manager.getConnectionLookup(
-        new URL('file:///project/test.malloy')
-      );
-
-      // Config + settings both exist → merged lookup (wrapped with cache)
-      const conn = await result.lookupConnection('mydb');
-      expect(conn).toBe(mockConn);
-    });
-
-    it('falls back to settings when no config exists (default behavior)', () => {
-      const factory = makeMockFactory(() => undefined);
-
-      const manager = new CommonConnectionManager(factory);
-      manager.setConnectionsConfig({});
-
-      const result = manager.getConnectionLookup(
-        new URL('file:///project/test.malloy')
-      );
-
-      // Should return a settings-based lookup, not a MergedConnectionLookup
-      expect(result).not.toBeInstanceOf(MergedConnectionLookup);
-    });
-  });
-
-  describe('default connections from registry', () => {
-    it('includes registered types as default connections', () => {
-      mockGetRegisteredConnectionTypes.mockReturnValue(['duckdb', 'postgres']);
-
-      const factory = makeMockFactory(() => undefined);
-      const manager = new CommonConnectionManager(factory);
-      manager.setConnectionsConfig({}); // empty user config
-
-      // Trigger lazy creation of settings lookup
-      manager.getConnectionLookup(new URL('file:///project/test.malloy'));
-
-      // The merged config should include defaults from the registry plus md alias
-      expect(connectionMapsSet).toContainEqual(
-        expect.objectContaining({
-          duckdb: {is: 'duckdb'},
-          postgres: {is: 'postgres'},
-          md: {is: 'duckdb', databasePath: 'md:'},
-        })
-      );
-    });
-
-    it('user settings override defaults with the same name', () => {
-      mockGetRegisteredConnectionTypes.mockReturnValue(['duckdb']);
-
-      const factory = makeMockFactory(() => undefined);
-      const manager = new CommonConnectionManager(factory);
-      manager.setConnectionsConfig({
-        duckdb: {is: 'duckdb', workingDirectory: '/data'},
-      });
-
-      // Trigger lazy creation of settings lookup
-      manager.getConnectionLookup(new URL('file:///project/test.malloy'));
-
-      expect(connectionMapsSet).toContainEqual(
-        expect.objectContaining({
-          duckdb: {is: 'duckdb', workingDirectory: '/data'},
-        })
-      );
-    });
-
-    it('always includes md (MotherDuck) alias', () => {
-      mockGetRegisteredConnectionTypes.mockReturnValue([]);
-
-      const factory = makeMockFactory(() => undefined);
-      const manager = new CommonConnectionManager(factory);
-      manager.setConnectionsConfig({});
-
-      // Trigger lazy creation of settings lookup
-      manager.getConnectionLookup(new URL('file:///project/test.malloy'));
-
-      expect(connectionMapsSet).toContainEqual(
-        expect.objectContaining({
-          md: {is: 'duckdb', databasePath: 'md:'},
-        })
-      );
-    });
-  });
-
-  describe('working directory injection', () => {
-    it('calls getWorkingDirectory with the file URL', () => {
-      const factory = makeMockFactory(() => undefined);
-      const manager = new CommonConnectionManager(factory);
-      manager.setConnectionsConfig({});
-
-      const fileURL = new URL('file:///project/src/test.malloy');
-      manager.getConnectionLookup(fileURL);
-
-      expect(factory.getWorkingDirectory).toHaveBeenCalledWith(fileURL);
-    });
-
-    it('injects workingDirectory for types that support it (config file path)', () => {
-      mockGetConnectionProperties.mockImplementation((typeName: string) => {
-        if (typeName === 'duckdb') {
-          return [
-            {
-              name: 'workingDirectory',
-              displayName: 'Working Directory',
-              type: 'string',
-            },
-          ];
-        }
-        return undefined;
-      });
-
-      const factory = makeMockFactory(() => ({
-        configText: '{"connections": {"mydb": {"is": "duckdb"}}}',
-        configDir: '/project',
-      }));
-
-      const manager = new CommonConnectionManager(factory);
-      manager.setConnectionsConfig({});
-
-      manager.getConnectionLookup(new URL('file:///project/src/test.malloy'));
-
-      // connectionMap should have workingDirectory injected
-      expect(connectionMapsSet).toContainEqual({
-        mydb: {is: 'duckdb', workingDirectory: '/project/src'},
-      });
-    });
-
-    it('preserves explicit workingDirectory in config (does not override)', () => {
-      mockGetConnectionProperties.mockImplementation((typeName: string) => {
-        if (typeName === 'duckdb') {
-          return [
-            {
-              name: 'workingDirectory',
-              displayName: 'Working Directory',
-              type: 'string',
-            },
-          ];
-        }
-        return undefined;
-      });
-
-      const factory = makeMockFactory(() => ({
-        configText:
-          '{"connections": {"mydb": {"is": "duckdb", "workingDirectory": "/custom/dir"}}}',
-        configDir: '/project',
-      }));
-
-      const manager = new CommonConnectionManager(factory);
-      manager.setConnectionsConfig({});
-
-      manager.getConnectionLookup(new URL('file:///project/src/test.malloy'));
-
-      // Explicit workingDirectory should be preserved
-      expect(connectionMapsSet).toContainEqual({
-        mydb: {is: 'duckdb', workingDirectory: '/custom/dir'},
-      });
-    });
-
-    it('files in different directories get different config cache entries', () => {
-      mockGetConnectionProperties.mockImplementation((typeName: string) => {
-        if (typeName === 'duckdb') {
-          return [
-            {
-              name: 'workingDirectory',
-              displayName: 'Working Directory',
-              type: 'string',
-            },
-          ];
-        }
-        return undefined;
-      });
-
-      const factory = makeMockFactory(() => ({
-        configText: '{"connections": {"mydb": {"is": "duckdb"}}}',
-        configDir: '/project',
-      }));
-
-      const manager = new CommonConnectionManager(factory);
-      manager.setConnectionsConfig({});
-
-      manager.getConnectionLookup(new URL('file:///project/src/test.malloy'));
-      manager.getConnectionLookup(new URL('file:///project/lib/other.malloy'));
-
-      // Each directory gets separate connection map with its own workingDirectory
-      expect(connectionMapsSet).toContainEqual({
-        mydb: {is: 'duckdb', workingDirectory: '/project/src'},
-      });
-      expect(connectionMapsSet).toContainEqual({
-        mydb: {is: 'duckdb', workingDirectory: '/project/lib'},
-      });
-    });
-
-    it('does not inject workingDirectory for types that do not support it', () => {
-      // getConnectionProperties returns no workingDirectory property
-      mockGetConnectionProperties.mockReturnValue([
-        {name: 'host', displayName: 'Host', type: 'string'},
+      const manager = new CommonConnectionManager(makeMockFactory());
+      manager.setURLReader(makeMockURLReader());
+      manager.setWorkspaceRoots([
+        'file:///workspace/',
+        'file:///workspace/packages/sub/',
       ]);
 
-      const factory = makeMockFactory(() => ({
-        configText: '{"connections": {"mydb": {"is": "postgres"}}}',
-        configDir: '/project',
-      }));
-
-      const manager = new CommonConnectionManager(factory);
-      manager.setConnectionsConfig({});
-
-      manager.getConnectionLookup(new URL('file:///project/src/test.malloy'));
-
-      // Config file connection map should not have workingDirectory
-      expect(connectionMapsSet).toContainEqual({
-        mydb: {is: 'postgres'},
-      });
+      await manager.getConfigForFile(
+        new URL('file:///workspace/packages/sub/test.malloy')
+      );
+      expect(discoverCalledWith[0].ceilingURL.toString()).toBe(
+        'file:///workspace/packages/sub/'
+      );
     });
 
-    it('injects workingDirectory into settings lookup (non-resolver path)', () => {
-      mockGetRegisteredConnectionTypes.mockReturnValue(['duckdb']);
-      mockGetConnectionProperties.mockImplementation((typeName: string) => {
-        if (typeName === 'duckdb') {
-          return [
-            {
-              name: 'workingDirectory',
-              displayName: 'Working Directory',
-              type: 'string',
-            },
-          ];
-        }
-        return undefined;
-      });
+    it('falls back to file parent when outside any workspace', async () => {
+      mockDiscoverResult = makeMockConfig();
 
-      const factory = makeMockFactory(() => undefined); // no config file
-      const manager = new CommonConnectionManager(factory);
-      manager.setConnectionsConfig({});
+      const manager = new CommonConnectionManager(makeMockFactory());
+      manager.setURLReader(makeMockURLReader());
+      manager.setWorkspaceRoots(['file:///project/']);
 
-      manager.getConnectionLookup(new URL('file:///project/src/test.malloy'));
-
-      // The settings lookup should have workingDirectory injected
-      expect(connectionMapsSet).toContainEqual(
-        expect.objectContaining({
-          duckdb: {is: 'duckdb', workingDirectory: '/project/src'},
-        })
+      await manager.getConfigForFile(new URL('file:///other/test.malloy'));
+      expect(discoverCalledWith[0].ceilingURL.toString()).toBe(
+        'file:///other/'
       );
     });
   });
 
-  describe('MergedConnectionLookup', () => {
-    it('uses primary when it succeeds', async () => {
-      const primary: LookupConnection<Connection> = {
-        lookupConnection: jest.fn().mockResolvedValue({name: 'from-config'}),
-      };
-      const fallback: LookupConnection<Connection> = {
-        lookupConnection: jest.fn().mockResolvedValue({name: 'from-settings'}),
-      };
+  describe('settings wrapper', () => {
+    it('settings connections are available at level 3', async () => {
+      mockDiscoverResult = null;
 
-      const merged = new MergedConnectionLookup(primary, fallback);
-      const result = await merged.lookupConnection('mydb');
+      const manager = new CommonConnectionManager(makeMockFactory());
+      manager.setURLReader(makeMockURLReader());
+      manager.setWorkspaceRoots(['file:///project/']);
+      manager.setSecretResolver(async () => undefined);
+      manager.setConnectionsConfig({
+        mydb: {is: 'duckdb'},
+      });
 
-      expect(result).toEqual({name: 'from-config'});
-      expect(fallback.lookupConnection).not.toHaveBeenCalled();
-    });
-
-    it('falls back to secondary when primary fails', async () => {
-      const primary: LookupConnection<Connection> = {
-        lookupConnection: jest
-          .fn()
-          .mockRejectedValue(new Error('not found in config')),
-      };
-      const fallback: LookupConnection<Connection> = {
-        lookupConnection: jest.fn().mockResolvedValue({name: 'from-settings'}),
-      };
-
-      const merged = new MergedConnectionLookup(primary, fallback);
-      const result = await merged.lookupConnection('mydb');
-
-      expect(result).toEqual({name: 'from-settings'});
-    });
-
-    it('throws when both primary and fallback fail', async () => {
-      const primary: LookupConnection<Connection> = {
-        lookupConnection: jest
-          .fn()
-          .mockRejectedValue(new Error('not in config')),
-      };
-      const fallback: LookupConnection<Connection> = {
-        lookupConnection: jest
-          .fn()
-          .mockRejectedValue(new Error('not in settings')),
-      };
-
-      const merged = new MergedConnectionLookup(primary, fallback);
-      await expect(merged.lookupConnection('mydb')).rejects.toThrow(
-        'not in settings'
+      const lookup = await manager.getConnectionLookup(
+        new URL('file:///project/test.malloy')
       );
+      // The settings wrapper will try to create a sub-MalloyConfig
+      // We can't fully test connection creation without the registry,
+      // but we can verify the lookup is returned
+      expect(lookup).toBeDefined();
+    });
+
+    it('settings do NOT leak into level 1 (discovered config)', async () => {
+      const discoveredLookup: LookupConnection<Connection> = {
+        lookupConnection: jest.fn(async (name: string) => {
+          throw new Error(`Connection '${name}' not found in config`);
+        }),
+      };
+      const mockConfig = makeMockConfig({connections: discoveredLookup});
+      mockDiscoverResult = mockConfig;
+
+      const manager = new CommonConnectionManager(makeMockFactory());
+      manager.setURLReader(makeMockURLReader());
+      manager.setWorkspaceRoots(['file:///project/']);
+      manager.setSecretResolver(async () => undefined);
+      manager.setConnectionsConfig({
+        settingsdb: {is: 'postgres'},
+      });
+
+      const lookup = await manager.getConnectionLookup(
+        new URL('file:///project/test.malloy')
+      );
+      // The settings wrapper should NOT be installed for discovered configs
+      await expect(lookup.lookupConnection('settingsdb')).rejects.toThrow();
+    });
+  });
+
+  describe('postProcess wrapper', () => {
+    it('calls postProcessConnection with workspace folder URL on lookup', async () => {
+      // Use a mock config that returns a connection from lookupConnection
+      const mockConn = {name: 'duckdb'} as unknown as Connection;
+      const mockConfig = makeMockConfig({
+        connections: {
+          lookupConnection: jest.fn(async () => mockConn),
+        },
+      });
+      mockDiscoverResult = mockConfig;
+
+      const factory = makePostProcessFactory();
+      const manager = new CommonConnectionManager(factory);
+      manager.setURLReader(makeMockURLReader());
+      manager.setWorkspaceRoots(['file:///project/']);
+
+      const lookup = await manager.getConnectionLookup(
+        new URL('file:///project/nested/deep/test.malloy')
+      );
+      await lookup.lookupConnection('duckdb');
+
+      // postProcess should receive the workspace folder URL, NOT
+      // the file's parent directory
+      expect(factory.postProcessCalls).toHaveLength(1);
+      expect(factory.postProcessCalls[0].workingDir).toBe('file:///project/');
+      expect(factory.postProcessCalls[0].conn).toBe(mockConn);
+    });
+
+    it('uses different working dirs for different workspace folders', async () => {
+      // Return a fresh config per call so wrapConnections isn't double-applied
+      const {discoverConfig: mockedDiscover} =
+        jest.requireMock('@malloydata/malloy');
+      (mockedDiscover as jest.Mock).mockImplementation(async () =>
+        makeMockConfig()
+      );
+
+      const factory = makePostProcessFactory();
+      const manager = new CommonConnectionManager(factory);
+      manager.setURLReader(makeMockURLReader());
+      manager.setWorkspaceRoots([
+        'file:///workspace-a/',
+        'file:///workspace-b/',
+      ]);
+
+      const lookupA = await manager.getConnectionLookup(
+        new URL('file:///workspace-a/test.malloy')
+      );
+      await lookupA.lookupConnection('db');
+
+      // Need a fresh config for workspace-b since discovery is per-folder
+      const lookupB = await manager.getConnectionLookup(
+        new URL('file:///workspace-b/test.malloy')
+      );
+      await lookupB.lookupConnection('db');
+
+      expect(factory.postProcessCalls).toHaveLength(2);
+      expect(factory.postProcessCalls[0].workingDir).toBe(
+        'file:///workspace-a/'
+      );
+      expect(factory.postProcessCalls[1].workingDir).toBe(
+        'file:///workspace-b/'
+      );
+    });
+
+    it('postProcess runs on discovered config connections too', async () => {
+      const mockConn = {name: 'pg'} as unknown as Connection;
+      mockDiscoverResult = makeMockConfig({
+        connections: {
+          lookupConnection: jest.fn(async () => mockConn),
+        },
+      });
+
+      const factory = makePostProcessFactory();
+      const manager = new CommonConnectionManager(factory);
+      manager.setURLReader(makeMockURLReader());
+      manager.setWorkspaceRoots(['file:///project/']);
+
+      const lookup = await manager.getConnectionLookup(
+        new URL('file:///project/test.malloy')
+      );
+      await lookup.lookupConnection('pg');
+
+      expect(factory.postProcessCalls).toHaveLength(1);
+      expect(factory.postProcessCalls[0].workingDir).toBe('file:///project/');
+    });
+  });
+
+  describe('DuckDB working directory', () => {
+    it('discoverConfig ceiling is workspace root, not file directory', async () => {
+      mockDiscoverResult = null;
+
+      const manager = new CommonConnectionManager(makeMockFactory());
+      manager.setURLReader(makeMockURLReader());
+      manager.setWorkspaceRoots(['file:///project/']);
+
+      // File is in a subdirectory
+      await manager.getConfigForFile(
+        new URL('file:///project/models/nested/query.malloy')
+      );
+
+      // discoverConfig should have been called with the workspace root
+      // as ceiling — NOT the file's parent directory
+      expect(discoverCalledWith).toHaveLength(1);
+      expect(discoverCalledWith[0].ceilingURL.toString()).toBe(
+        'file:///project/'
+      );
+      // The startURL is the file itself (discovery walks up from here)
+      expect(discoverCalledWith[0].startURL.toString()).toBe(
+        'file:///project/models/nested/query.malloy'
+      );
+    });
+
+    it('two files in different subdirs share the same workspace-root-anchored config', async () => {
+      mockDiscoverResult = makeMockConfig();
+
+      const manager = new CommonConnectionManager(makeMockFactory());
+      manager.setURLReader(makeMockURLReader());
+      manager.setWorkspaceRoots(['file:///project/']);
+
+      const configA = await manager.getConfigForFile(
+        new URL('file:///project/models/a.malloy')
+      );
+      const configB = await manager.getConfigForFile(
+        new URL('file:///project/queries/b.malloy')
+      );
+
+      // Same discovered config identity → same cached config
+      expect(configA).toBe(configB);
+      // discoverConfig called twice (different directories), but both
+      // discover the same config and share the cached entry
+      expect(discoverCalledWith).toHaveLength(2);
+    });
+
+    it('multi-root: files in separate roots get separate configs', async () => {
+      // Each call to getConfigForFile in a different workspace folder
+      // should produce a separate config with its own rootDirectory
+      const {discoverConfig: mockedDiscover} =
+        jest.requireMock('@malloydata/malloy');
+      (mockedDiscover as jest.Mock).mockImplementation(
+        async (startURL: URL, ceilingURL: URL) => {
+          discoverCalledWith.push({startURL, ceilingURL});
+          return makeMockConfig();
+        }
+      );
+
+      const manager = new CommonConnectionManager(makeMockFactory());
+      manager.setURLReader(makeMockURLReader());
+      manager.setWorkspaceRoots(['file:///project-a/', 'file:///project-b/']);
+
+      const configA = await manager.getConfigForFile(
+        new URL('file:///project-a/test.malloy')
+      );
+      const configB = await manager.getConfigForFile(
+        new URL('file:///project-b/test.malloy')
+      );
+
+      // Different configs
+      expect(configA).not.toBe(configB);
+      // discoverConfig called twice with different ceilings
+      expect(discoverCalledWith[0].ceilingURL.toString()).toBe(
+        'file:///project-a/'
+      );
+      expect(discoverCalledWith[1].ceilingURL.toString()).toBe(
+        'file:///project-b/'
+      );
+    });
+  });
+
+  describe('global config', () => {
+    it('skips global config when expandHome/pathToFileURL not available (browser)', async () => {
+      mockDiscoverResult = null;
+
+      const manager = new CommonConnectionManager(makeMockFactory());
+      // No hostAdapter → no expandHome or pathToFileURL
+      manager.setURLReader(
+        makeMockURLReader({
+          'file:///home/user/.config/malloy/malloy-config.json':
+            '{"connections":{}}',
+        })
+      );
+      manager.setWorkspaceRoots(['file:///project/']);
+      manager.setGlobalConfigDirectory('~/.config/malloy');
+
+      // Should fall through to level 3 (defaults)
+      const config = await manager.getConfigForFile(
+        new URL('file:///project/test.malloy')
+      );
+      expect(config).toBeDefined();
+      // discoverConfig was called (and returned null), but no global config read
+    });
+
+    it('reads global config when expandHome and pathToFileURL are available (Node)', async () => {
+      mockDiscoverResult = null;
+
+      const globalUrl = 'file:///home/user/.config/malloy/malloy-config.json';
+      const manager = new CommonConnectionManager(makeMockFactory(), {
+        expandHome: (p: string) => p.replace(/^~/, '/home/user'),
+        pathToFileURL: (p: string) => new URL(`file://${p}`),
+      });
+      manager.setURLReader(
+        makeMockURLReader({
+          [globalUrl]: JSON.stringify({connections: {mydb: {is: 'duckdb'}}}),
+        })
+      );
+      manager.setWorkspaceRoots(['file:///project/']);
+      manager.setGlobalConfigDirectory('~/.config/malloy');
+
+      const config = await manager.getConfigForFile(
+        new URL('file:///project/test.malloy')
+      );
+      expect(config).toBeDefined();
+    });
+  });
+
+  describe('getConnectionLookup and getConfigForFile consistency', () => {
+    it('both return from the same cached config', async () => {
+      mockDiscoverResult = makeMockConfig();
+
+      const manager = new CommonConnectionManager(makeMockFactory());
+      manager.setURLReader(makeMockURLReader());
+      manager.setWorkspaceRoots(['file:///project/']);
+
+      const url = new URL('file:///project/test.malloy');
+      const config = await manager.getConfigForFile(url);
+      const lookup = await manager.getConnectionLookup(url);
+      expect(lookup).toBe(config.connections);
+    });
+  });
+
+  describe('getEffectiveConfigSource', () => {
+    it('returns defaults when no config files exist', async () => {
+      mockDiscoverResult = null;
+
+      const manager = new CommonConnectionManager(makeMockFactory());
+      manager.setURLReader(makeMockURLReader());
+      manager.setWorkspaceRoots(['file:///project/']);
+
+      const result = await manager.getEffectiveConfigSource(
+        new URL('file:///project/test.malloy')
+      );
+      expect(result.source).toBe('defaults');
+      expect(result.configFileUri).toBeUndefined();
+    });
+
+    it('returns discovered when a project config exists', async () => {
+      mockDiscoverResult = makeMockConfig({
+        configURL: 'file:///project/malloy-config.json',
+      });
+
+      const manager = new CommonConnectionManager(makeMockFactory());
+      manager.setURLReader(makeMockURLReader());
+      manager.setWorkspaceRoots(['file:///project/']);
+
+      const result = await manager.getEffectiveConfigSource(
+        new URL('file:///project/test.malloy')
+      );
+      expect(result.source).toBe('discovered');
+      expect(result.configFileUri).toBe('file:///project/malloy-config.json');
     });
   });
 });
 
 describe('isSecretKeyReference', () => {
-  it('returns true for {secretKey: string}', () => {
-    expect(isSecretKeyReference({secretKey: 'connections.mydb.password'})).toBe(
-      true
-    );
-  });
-
-  it('returns false for plain string', () => {
-    expect(isSecretKeyReference('hello')).toBe(false);
-  });
-
-  it('returns false for {env: string}', () => {
-    expect(isSecretKeyReference({env: 'MY_VAR'})).toBe(false);
-  });
-
-  it('returns false for null', () => {
-    expect(isSecretKeyReference(null)).toBe(false);
-  });
-
-  it('returns false for number', () => {
-    expect(isSecretKeyReference(42)).toBe(false);
-  });
-
-  it('returns false for object with non-string secretKey', () => {
+  it('identifies secret key references', () => {
+    expect(isSecretKeyReference({secretKey: 'my-secret'})).toBe(true);
     expect(isSecretKeyReference({secretKey: 123})).toBe(false);
+    expect(isSecretKeyReference('plain string')).toBe(false);
+    expect(isSecretKeyReference(null)).toBe(false);
+    expect(isSecretKeyReference(undefined)).toBe(false);
+    expect(isSecretKeyReference({env: 'VAR'})).toBe(false);
   });
 });
 
-describe('SettingsConnectionLookup', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    connectionMapsSet = [];
-    mockConnectionsLookup = makeMockLookup();
-  });
-
-  it('resolves {secretKey} values via the resolver', async () => {
-    const mockConnection = {name: 'mydb'} as unknown as Connection;
-    mockConnectionsLookup = {
-      lookupConnection: jest.fn().mockResolvedValue(mockConnection),
-    };
-
-    const resolver = jest.fn().mockResolvedValue('s3cret');
-    const config: Record<string, ConnectionConfigEntry> = {
-      mydb: {
-        is: 'postgres',
-        host: 'localhost',
-        password: {secretKey: 'connections.mydb.password'} as unknown as string,
-      },
-    };
-
-    const lookup = new SettingsConnectionLookup(config, resolver);
-    const result = await lookup.lookupConnection('mydb');
-
-    expect(result).toBe(mockConnection);
-    expect(resolver).toHaveBeenCalledWith('connections.mydb.password');
-    // Verify the resolved config has the secret
-    expect(connectionMapsSet).toContainEqual({
-      mydb: {is: 'postgres', host: 'localhost', password: 's3cret'},
-    });
-  });
-
-  it('passes through string and {env} values unchanged', async () => {
-    const resolver = jest.fn();
-    const config: Record<string, ConnectionConfigEntry> = {
-      mydb: {
-        is: 'postgres',
-        host: 'localhost',
-        port: 5432 as unknown as string,
-        password: {env: 'PG_PASSWORD'} as unknown as string,
-      },
-    };
-
-    const lookup = new SettingsConnectionLookup(config, resolver);
-    await lookup.lookupConnection('mydb');
-
-    // resolver should NOT be called — no {secretKey} values
-    expect(resolver).not.toHaveBeenCalled();
-    expect(connectionMapsSet).toContainEqual({
-      mydb: {
-        is: 'postgres',
-        host: 'localhost',
-        port: 5432,
-        password: {env: 'PG_PASSWORD'},
-      },
-    });
-  });
-
-  it('drops {secretKey} when resolver returns undefined', async () => {
-    const resolver = jest.fn().mockResolvedValue(undefined);
-    const config: Record<string, ConnectionConfigEntry> = {
-      mydb: {
-        is: 'postgres',
-        host: 'localhost',
-        password: {secretKey: 'connections.mydb.password'} as unknown as string,
-      },
-    };
-
-    const lookup = new SettingsConnectionLookup(config, resolver);
-    await lookup.lookupConnection('mydb');
-
-    expect(resolver).toHaveBeenCalledWith('connections.mydb.password');
-    // password should be omitted since resolver returned undefined
-    expect(connectionMapsSet).toContainEqual({
-      mydb: {is: 'postgres', host: 'localhost'},
-    });
-  });
-
-  it('throws for unknown connection name', async () => {
-    const resolver = jest.fn();
-    const config: Record<string, ConnectionConfigEntry> = {
-      mydb: {is: 'duckdb'},
-    };
-
-    const lookup = new SettingsConnectionLookup(config, resolver);
-    await expect(lookup.lookupConnection('unknown')).rejects.toThrow(
-      "No connection named 'unknown'"
-    );
-  });
-});
-
-describe('CommonConnectionManager with secretResolver', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    connectionMapsSet = [];
-    mockConnectionsLookup = makeMockLookup();
-  });
-
-  it('uses SettingsConnectionLookup when secretResolver is set', async () => {
-    const mockConn = {name: 'duckdb'} as unknown as Connection;
-    mockConnectionsLookup = {
-      lookupConnection: jest.fn().mockResolvedValue(mockConn),
-    };
-
-    const resolver = jest.fn().mockResolvedValue('resolved');
-    const factory = makeMockFactory();
-    const manager = new CommonConnectionManager(factory);
-    manager.setSecretResolver(resolver);
-    manager.setConnectionsConfig({mydb: {is: 'duckdb'}});
-
-    const lookup = manager.getConnectionLookup(
-      new URL('file:///project/test.malloy')
-    );
-
-    // The lookup is wrapped for caching, but should still resolve connections
-    // via SettingsConnectionLookup (which uses the secret resolver)
-    const conn = await lookup.lookupConnection('mydb');
-    expect(conn).toBe(mockConn);
-  });
-
-  it('uses MalloyConfig directly when no secretResolver is set', () => {
-    const factory = makeMockFactory();
-    const manager = new CommonConnectionManager(factory);
-    // No setSecretResolver call
-    manager.setConnectionsConfig({mydb: {is: 'duckdb'}});
-
-    const lookup = manager.getConnectionLookup(
-      new URL('file:///project/test.malloy')
-    );
-
-    // Should NOT be SettingsConnectionLookup
-    expect(lookup).not.toBeInstanceOf(SettingsConnectionLookup);
-    // MalloyConfig is used to create the connections
-    expect(connectionMapsSet.length).toBeGreaterThan(0);
-  });
-});
-
-describe('postProcessConnection', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    connectionMapsSet = [];
-    mockConnectionsLookup = makeMockLookup();
-  });
-
-  it('calls postProcessConnection on connections from settings lookup', async () => {
-    const mockConn = {name: 'duckdb'} as unknown as Connection;
-    mockConnectionsLookup = {
-      lookupConnection: jest.fn().mockResolvedValue(mockConn),
-    };
-
-    const postProcess = jest.fn();
-    const factory = makeMockFactory();
-    factory.postProcessConnection = postProcess;
-
-    const manager = new CommonConnectionManager(factory);
-    manager.setConnectionsConfig({});
-
-    const lookup = manager.getConnectionLookup(
-      new URL('file:///project/src/test.malloy')
-    );
-    const conn = await lookup.lookupConnection('duckdb');
-
-    expect(conn).toBe(mockConn);
-    expect(postProcess).toHaveBeenCalledWith(mockConn, '/project/src');
-
-    // Second call returns cached connection; postProcess is NOT called again
-    const conn2 = await lookup.lookupConnection('duckdb');
-    expect(conn2).toBe(mockConn);
-    expect(postProcess).toHaveBeenCalledTimes(1);
-  });
-
-  it('calls postProcessConnection on connections from config file lookup', async () => {
-    const mockConn = {name: 'mydb'} as unknown as Connection;
-    mockConnectionsLookup = {
-      lookupConnection: jest.fn().mockResolvedValue(mockConn),
-    };
-
-    const postProcess = jest.fn();
-    const factory = makeMockFactory(() => ({
-      configText: '{"connections": {"mydb": {"is": "duckdb"}}}',
-      configDir: '/project',
-    }));
-    factory.postProcessConnection = postProcess;
-
-    const manager = new CommonConnectionManager(factory);
-    manager.setConnectionsConfig({});
-
-    const lookup = manager.getConnectionLookup(
-      new URL('file:///project/src/test.malloy')
-    );
-    const conn = await lookup.lookupConnection('mydb');
-
-    expect(conn).toBe(mockConn);
-    expect(postProcess).toHaveBeenCalledWith(mockConn, '/project/src');
-  });
-
-  it('calls postProcessConnection on connections in projectConnectionsOnly mode', async () => {
-    const mockConn = {name: 'mydb'} as unknown as Connection;
-    mockConnectionsLookup = {
-      lookupConnection: jest.fn().mockResolvedValue(mockConn),
-    };
-
-    const postProcess = jest.fn();
-    const factory = makeMockFactory(() => ({
-      configText: '{"connections": {"mydb": {"is": "duckdb"}}}',
-      configDir: '/project',
-    }));
-    factory.postProcessConnection = postProcess;
-
-    const manager = new CommonConnectionManager(factory);
-    manager.setProjectConnectionsOnly(true);
-
-    const lookup = manager.getConnectionLookup(
-      new URL('file:///project/src/test.malloy')
-    );
-    const conn = await lookup.lookupConnection('mydb');
-
-    expect(conn).toBe(mockConn);
-    expect(postProcess).toHaveBeenCalledWith(mockConn, '/project/src');
-  });
-
-  it('does not wrap lookup when postProcessConnection is not defined', async () => {
-    const mockConn = {name: 'duckdb'} as unknown as Connection;
-    mockConnectionsLookup = {
-      lookupConnection: jest.fn().mockResolvedValue(mockConn),
-    };
-
-    const factory = makeMockFactory(); // no postProcessConnection
-    const manager = new CommonConnectionManager(factory);
-    manager.setConnectionsConfig({});
-
-    const lookup = manager.getConnectionLookup(
-      new URL('file:///project/src/test.malloy')
-    );
-    const conn = await lookup.lookupConnection('duckdb');
-
-    expect(conn).toBe(mockConn);
-  });
-
-  it('caches connections within a single lookup result', async () => {
-    const mockConn = {name: 'duckdb'} as unknown as Connection;
-    mockConnectionsLookup = {
-      lookupConnection: jest.fn().mockResolvedValue(mockConn),
-    };
-
-    const factory = makeMockFactory();
-    const manager = new CommonConnectionManager(factory);
-    manager.setConnectionsConfig({});
-
-    const lookup = manager.getConnectionLookup(
-      new URL('file:///project/src/test.malloy')
-    );
-
-    const conn1 = await lookup.lookupConnection('duckdb');
-    const conn2 = await lookup.lookupConnection('duckdb');
-
-    // Same object must be returned (cached)
-    expect(conn1).toBe(conn2);
-    // The underlying lookup should only be called once
-    expect(mockConnectionsLookup.lookupConnection).toHaveBeenCalledTimes(1);
-  });
-});
-
-describe('NodeConnectionFactory.findMalloyConfig', () => {
-  let tmpDir: string;
-  let factory: NodeConnectionFactory;
-
-  beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'malloy-test-'));
-    factory = new NodeConnectionFactory();
-  });
-
-  afterEach(() => {
-    fs.rmSync(tmpDir, {recursive: true, force: true});
-  });
-
-  it('finds config at workspace root', () => {
-    const configContent = '{"connections":{}}';
-    fs.writeFileSync(path.join(tmpDir, 'malloy-config.json'), configContent);
-    fs.mkdirSync(path.join(tmpDir, 'src'), {recursive: true});
-
-    const fileURL = pathToFileURL(path.join(tmpDir, 'src', 'test.malloy'));
-    const result = factory.findMalloyConfig(fileURL, [tmpDir]);
-
-    expect(result).toBeDefined();
-    expect(result!.configText).toBe(configContent);
-    expect(result!.configDir).toBe(tmpDir);
-  });
-
-  it('finds config in intermediate directory (walk up)', () => {
-    // Config in src/ (intermediate), NOT in workspace root
-    const srcDir = path.join(tmpDir, 'src');
-    fs.mkdirSync(srcDir, {recursive: true});
-    fs.mkdirSync(path.join(srcDir, 'models'), {recursive: true});
-    const configContent = '{"connections":{}}';
-    fs.writeFileSync(path.join(srcDir, 'malloy-config.json'), configContent);
-
-    const fileURL = pathToFileURL(path.join(srcDir, 'models', 'test.malloy'));
-    const result = factory.findMalloyConfig(fileURL, [tmpDir]);
-
-    expect(result).toBeDefined();
-    expect(result!.configText).toBe(configContent);
-    expect(result!.configDir).toBe(srcDir);
-  });
-
-  it('nearest config wins over workspace root config', () => {
-    const srcDir = path.join(tmpDir, 'src');
-    fs.mkdirSync(srcDir, {recursive: true});
-
-    const rootConfig = '{"connections":{"db":{"is":"postgres"}}}';
-    const nearConfig = '{"connections":{"db":{"is":"duckdb"}}}';
-    fs.writeFileSync(path.join(tmpDir, 'malloy-config.json'), rootConfig);
-    fs.writeFileSync(path.join(srcDir, 'malloy-config.json'), nearConfig);
-
-    const fileURL = pathToFileURL(path.join(srcDir, 'test.malloy'));
-    const result = factory.findMalloyConfig(fileURL, [tmpDir]);
-
-    expect(result).toBeDefined();
-    expect(result!.configText).toBe(nearConfig);
-    expect(result!.configDir).toBe(srcDir);
-  });
-
-  it('does not walk above workspace root', () => {
-    // Config exists ABOVE the workspace root — should not be found
-    const workspaceRoot = path.join(tmpDir, 'workspace');
-    fs.mkdirSync(path.join(workspaceRoot, 'src'), {recursive: true});
-    fs.writeFileSync(
-      path.join(tmpDir, 'malloy-config.json'),
-      '{"connections":{"db":{"is":"duckdb"}}}'
-    );
-
-    const fileURL = pathToFileURL(
-      path.join(workspaceRoot, 'src', 'test.malloy')
-    );
-    const result = factory.findMalloyConfig(fileURL, [workspaceRoot]);
-
-    expect(result).toBeUndefined();
-  });
-
-  it('uses file directory when no workspace roots', () => {
-    const fileDir = path.join(tmpDir, 'myproject');
-    fs.mkdirSync(fileDir, {recursive: true});
-    const configContent = '{"connections":{"db":{}}}';
-    fs.writeFileSync(path.join(fileDir, 'malloy-config.json'), configContent);
-
-    const fileURL = pathToFileURL(path.join(fileDir, 'test.malloy'));
-    const result = factory.findMalloyConfig(fileURL, []);
-
-    expect(result).toBeDefined();
-    expect(result!.configText).toBe(configContent);
-    expect(result!.configDir).toBe(fileDir);
-  });
-
-  it('returns undefined when no config exists', () => {
-    fs.mkdirSync(path.join(tmpDir, 'src'), {recursive: true});
-
-    const fileURL = pathToFileURL(path.join(tmpDir, 'src', 'test.malloy'));
-    const result = factory.findMalloyConfig(fileURL, [tmpDir]);
-
-    expect(result).toBeUndefined();
-  });
-
-  it('falls back to global config directory when no workspace config', () => {
-    const globalDir = path.join(tmpDir, 'global');
-    fs.mkdirSync(globalDir, {recursive: true});
-    const configContent = '{"connections":{"db":{"is":"duckdb"}}}';
-    fs.writeFileSync(path.join(globalDir, 'malloy-config.json'), configContent);
-    fs.mkdirSync(path.join(tmpDir, 'workspace', 'src'), {recursive: true});
-
-    const fileURL = pathToFileURL(
-      path.join(tmpDir, 'workspace', 'src', 'test.malloy')
-    );
-    const result = factory.findMalloyConfig(
-      fileURL,
-      [path.join(tmpDir, 'workspace')],
-      globalDir
-    );
-
-    expect(result).toBeDefined();
-    expect(result!.configText).toBe(configContent);
-    expect(result!.configDir).toBe(globalDir);
-  });
-
-  it('workspace config takes priority over global config directory', () => {
-    const globalDir = path.join(tmpDir, 'global');
-    fs.mkdirSync(globalDir, {recursive: true});
-    fs.writeFileSync(
-      path.join(globalDir, 'malloy-config.json'),
-      '{"connections":{"db":{"is":"postgres"}}}'
-    );
-
-    const workspaceContent = '{"connections":{"db":{"is":"duckdb"}}}';
-    fs.writeFileSync(path.join(tmpDir, 'malloy-config.json'), workspaceContent);
-    fs.mkdirSync(path.join(tmpDir, 'src'), {recursive: true});
-
-    const fileURL = pathToFileURL(path.join(tmpDir, 'src', 'test.malloy'));
-    const result = factory.findMalloyConfig(fileURL, [tmpDir], globalDir);
-
-    expect(result).toBeDefined();
-    expect(result!.configText).toBe(workspaceContent);
-    expect(result!.configDir).toBe(tmpDir);
-  });
-
-  it('handles multi-root workspaces with different configs', () => {
-    const rootA = path.join(tmpDir, 'project_a');
-    const rootB = path.join(tmpDir, 'project_b');
-    fs.mkdirSync(rootA, {recursive: true});
-    fs.mkdirSync(rootB, {recursive: true});
-
-    fs.writeFileSync(
-      path.join(rootA, 'malloy-config.json'),
-      '{"connections":{"db":{"is":"duckdb"}}}'
-    );
-    fs.writeFileSync(
-      path.join(rootB, 'malloy-config.json'),
-      '{"connections":{"db":{"is":"postgres"}}}'
-    );
-
-    const roots = [rootA, rootB];
-
-    const resultA = factory.findMalloyConfig(
-      pathToFileURL(path.join(rootA, 'test.malloy')),
-      roots
-    );
-    const resultB = factory.findMalloyConfig(
-      pathToFileURL(path.join(rootB, 'test.malloy')),
-      roots
-    );
-
-    expect(resultA).toBeDefined();
-    expect(resultB).toBeDefined();
-    expect(resultA!.configDir).toBe(rootA);
-    expect(resultB!.configDir).toBe(rootB);
-    expect(resultA!.configText).not.toBe(resultB!.configText);
-  });
-
-  it('returns manifestText when manifest file exists at default path', () => {
-    fs.writeFileSync(
-      path.join(tmpDir, 'malloy-config.json'),
-      '{"connections":{}}'
-    );
-    const manifestDir = path.join(tmpDir, 'MANIFESTS');
-    fs.mkdirSync(manifestDir, {recursive: true});
-    const manifestContent = '{"abc123":{"tableName":"cached_table"}}';
-    fs.writeFileSync(
-      path.join(manifestDir, 'malloy-manifest.json'),
-      manifestContent
-    );
-
-    const fileURL = pathToFileURL(path.join(tmpDir, 'test.malloy'));
-    const result = factory.findMalloyConfig(fileURL, [tmpDir]);
-
-    expect(result).toBeDefined();
-    expect(result!.manifestText).toBe(manifestContent);
-  });
-
-  it('reads manifest from custom manifestPath', () => {
-    fs.writeFileSync(
-      path.join(tmpDir, 'malloy-config.json'),
-      '{"connections":{},"manifestPath":"custom"}'
-    );
-    const manifestDir = path.join(tmpDir, 'custom');
-    fs.mkdirSync(manifestDir, {recursive: true});
-    const manifestContent = '{"def456":{"tableName":"other_table"}}';
-    fs.writeFileSync(
-      path.join(manifestDir, 'malloy-manifest.json'),
-      manifestContent
-    );
-
-    const fileURL = pathToFileURL(path.join(tmpDir, 'test.malloy'));
-    const result = factory.findMalloyConfig(fileURL, [tmpDir]);
-
-    expect(result).toBeDefined();
-    expect(result!.manifestText).toBe(manifestContent);
-  });
-
-  it('finds config when file URL uses vscode-notebook-cell: scheme', () => {
-    const configContent = '{"connections":{}}';
-    fs.writeFileSync(path.join(tmpDir, 'malloy-config.json'), configContent);
-
-    // Simulate a notebook cell URI: vscode-notebook-cell:///path/to/file.malloynb#W5sODI=
-    const notebookPath = path.join(tmpDir, 'notebook.malloynb');
-    const cellURL = new URL(`vscode-notebook-cell://${notebookPath}#W5sODI=`);
-    const result = factory.findMalloyConfig(cellURL, [tmpDir]);
-
-    expect(result).toBeDefined();
-    expect(result!.configText).toBe(configContent);
-    expect(result!.configDir).toBe(tmpDir);
-  });
-
-  it('returns undefined manifestText when no manifest file exists', () => {
-    fs.writeFileSync(
-      path.join(tmpDir, 'malloy-config.json'),
-      '{"connections":{}}'
-    );
-
-    const fileURL = pathToFileURL(path.join(tmpDir, 'test.malloy'));
-    const result = factory.findMalloyConfig(fileURL, [tmpDir]);
-
-    expect(result).toBeDefined();
-    expect(result!.manifestText).toBeUndefined();
+describe('getDefaultConnectionTypes', () => {
+  it('returns a name→type mapping', () => {
+    const defaults = CommonConnectionManager.getDefaultConnectionTypes();
+    expect(typeof defaults).toBe('object');
+    // md alias should map to duckdb
+    expect(defaults['md']).toBe('duckdb');
   });
 });

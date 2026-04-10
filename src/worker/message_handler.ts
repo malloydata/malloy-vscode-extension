@@ -42,7 +42,7 @@ import {RpcFileHandler} from './file_handler';
 import {FileHandler} from '../common/types/file_handler';
 import {ProgressType} from 'vscode-jsonrpc';
 import {errorMessage} from '../common/errors';
-import {getDefaultConnections} from '../common/connection_manager';
+import {CommonConnectionManager} from '../common/connection_manager';
 import {compileQuery} from './compile_query';
 
 export class MessageHandler implements WorkerMessageHandler {
@@ -53,6 +53,11 @@ export class MessageHandler implements WorkerMessageHandler {
     isBrowser = false
   ) {
     this.fileHandler = new RpcFileHandler(this);
+
+    // Wire URLReader so the connection manager can use discoverConfig
+    if (connectionManager instanceof CommonConnectionManager) {
+      connectionManager.setURLReader(this.fileHandler);
+    }
 
     this.onRequest('malloy/compile', ({documentMeta, query}) =>
       compileQuery(this.fileHandler, connectionManager, documentMeta, query)
@@ -78,6 +83,12 @@ export class MessageHandler implements WorkerMessageHandler {
       return '';
     });
 
+    this.onRequest('malloy/invalidateConnectionCache', async () => {
+      if (connectionManager instanceof CommonConnectionManager) {
+        connectionManager.notifyConfigFileChanged();
+      }
+    });
+
     this.onRequest('malloy/getConnectionTypeInfo', async () => {
       const types = getRegisteredConnectionTypes();
       const typeDisplayNames: Record<string, string> = {};
@@ -96,11 +107,8 @@ export class MessageHandler implements WorkerMessageHandler {
           fileFilters: p.fileFilters,
         }));
       }
-      const defaults = getDefaultConnections();
-      const defaultConnections: Record<string, string> = {};
-      for (const [name, entry] of Object.entries(defaults)) {
-        defaultConnections[name] = entry.is;
-      }
+      const defaultConnections =
+        CommonConnectionManager.getDefaultConnectionTypes();
       return {
         registeredTypes: types,
         typeDisplayNames,

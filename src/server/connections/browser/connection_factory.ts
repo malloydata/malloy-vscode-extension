@@ -15,19 +15,6 @@ export class WebConnectionFactory implements ConnectionFactory {
 
   constructor(private client: GenericConnection) {}
 
-  reset() {
-    // No-op: connections are now created fresh per-operation via the registry.
-  }
-
-  getWorkingDirectory(url: URL): string {
-    try {
-      const baseUrl = new URL('.', url);
-      return baseUrl.toString();
-    } catch {
-      return url.toString();
-    }
-  }
-
   postProcessConnection(conn: Connection, workingDir: string): void {
     if (this.registeredConnections.has(conn)) return;
     if (!(conn instanceof DuckDBWASMConnection)) return;

@@ -13,9 +13,9 @@ jest.mock('@malloydata/malloy', () => {
   };
 });
 
-import {getDefaultConnections} from '../../src/common/connection_manager';
+import {CommonConnectionManager} from '../../src/common/connection_manager';
 
-describe('getDefaultConnections', () => {
+describe('getDefaultConnectionTypes', () => {
   afterEach(() => {
     mockRegisteredTypes = [];
   });
@@ -23,10 +23,10 @@ describe('getDefaultConnections', () => {
   it('browser: aliases duckdb to duckdb_wasm when only wasm is registered', () => {
     mockRegisteredTypes = ['duckdb_wasm'];
 
-    const defaults = getDefaultConnections();
+    const defaults = CommonConnectionManager.getDefaultConnectionTypes();
 
     expect(defaults).toEqual({
-      duckdb: {is: 'duckdb_wasm'},
+      duckdb: 'duckdb_wasm',
     });
     // No md alias in browser
     expect(defaults['md']).toBeUndefined();
@@ -35,29 +35,29 @@ describe('getDefaultConnections', () => {
   it('node: creates one entry per type plus md alias', () => {
     mockRegisteredTypes = ['duckdb', 'postgres', 'bigquery'];
 
-    const defaults = getDefaultConnections();
+    const defaults = CommonConnectionManager.getDefaultConnectionTypes();
 
-    expect(defaults['duckdb']).toEqual({is: 'duckdb'});
-    expect(defaults['postgres']).toEqual({is: 'postgres'});
-    expect(defaults['bigquery']).toEqual({is: 'bigquery'});
-    expect(defaults['md']).toEqual({is: 'duckdb', databasePath: 'md:'});
+    expect(defaults['duckdb']).toEqual('duckdb');
+    expect(defaults['postgres']).toEqual('postgres');
+    expect(defaults['bigquery']).toEqual('bigquery');
+    expect(defaults['md']).toEqual('duckdb');
   });
 
   it('node: includes md alias even with only duckdb registered', () => {
     mockRegisteredTypes = ['duckdb'];
 
-    const defaults = getDefaultConnections();
+    const defaults = CommonConnectionManager.getDefaultConnectionTypes();
 
-    expect(defaults['duckdb']).toEqual({is: 'duckdb'});
-    expect(defaults['md']).toEqual({is: 'duckdb', databasePath: 'md:'});
+    expect(defaults['duckdb']).toEqual('duckdb');
+    expect(defaults['md']).toEqual('duckdb');
   });
 
   it('returns empty when nothing is registered', () => {
     mockRegisteredTypes = [];
 
-    const defaults = getDefaultConnections();
+    const defaults = CommonConnectionManager.getDefaultConnectionTypes();
 
     // No wasm, no duckdb — falls through to node path with empty loop
-    expect(defaults).toEqual({md: {is: 'duckdb', databasePath: 'md:'}});
+    expect(defaults).toEqual({md: 'duckdb'});
   });
 });

@@ -34,7 +34,6 @@ import {
   DidChangeConfigurationParams,
 } from 'vscode-languageserver';
 import debounce from 'lodash/debounce';
-import {URI} from 'vscode-uri';
 
 import {TextDocument} from 'vscode-languageserver-textdocument';
 import {
@@ -62,6 +61,13 @@ export const initServer = (
 ) => {
   connectionManager.setSecretResolver(async (key: string) => {
     return connection.sendRequest('malloy/getSecret', {key});
+  });
+
+  // Build a URLReader that routes through the extension host via malloy/fetch
+  connectionManager.setURLReader({
+    readURL: async (url: URL): Promise<string> => {
+      return connection.sendRequest('malloy/fetch', {uri: url.toString()});
+    },
   });
 
   const documents = new TextDocuments(TextDocument);
@@ -98,7 +104,7 @@ export const initServer = (
 
     if (params.workspaceFolders) {
       connectionManager.setWorkspaceRoots(
-        params.workspaceFolders.map(f => URI.parse(f.uri).fsPath)
+        params.workspaceFolders.map(f => f.uri)
       );
     }
 
@@ -288,13 +294,25 @@ export const initServer = (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const settings = (change?.settings as any)?.malloy ?? {};
     connectionManager.setConnectionsConfig(settings.connectionMap ?? {});
-    connectionManager.setProjectConnectionsOnly(
-      settings.projectConnectionsOnly ?? false
-    );
     connectionManager.setGlobalConfigDirectory(
       settings.globalConfigDirectory ?? ''
     );
     haveConnectionsBeenSet = true;
+    translateCache.deleteAllModels();
+    documents.all().forEach(debouncedDiagnoseDocument);
+  });
+
+  // Return the effective config source for a file (used by sidebar)
+  connection.onRequest(
+    'malloy/getEffectiveConfigSource',
+    async ({fileUri}: {fileUri: string}) => {
+      return connectionManager.getEffectiveConfigSource(new URL(fileUri));
+    }
+  );
+
+  // Handle config file invalidation from the extension host
+  connection.onRequest('malloy/invalidateConnectionCache', () => {
+    connectionManager.notifyConfigFileChanged();
     translateCache.deleteAllModels();
     documents.all().forEach(debouncedDiagnoseDocument);
   });
