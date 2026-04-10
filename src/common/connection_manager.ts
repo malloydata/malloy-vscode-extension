@@ -1,24 +1,6 @@
 /*
- * Copyright 2023 Google LLC
- *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files
- * (the "Software"), to deal in the Software without restriction,
- * including without limitation the rights to use, copy, modify, merge,
- * publish, distribute, sublicense, and/or sell copies of the Software,
- * and to permit persons to whom the Software is furnished to do so,
- * subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
- * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
- * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
- * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
- * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * Copyright Contributors to the Malloy project
+ * SPDX-License-Identifier: MIT
  */
 
 import {
@@ -26,9 +8,12 @@ import {
   ConnectionConfigEntry,
   LookupConnection,
   MalloyConfig,
+  URLReader,
+  discoverConfig,
+  contextOverlay,
   getRegisteredConnectionTypes,
-  getConnectionProperties,
 } from '@malloydata/malloy';
+import type {ConfigOverlays} from '@malloydata/malloy'; // eslint-disable-line no-duplicate-imports
 import {UnresolvedConnectionConfigEntry} from './types/connection_manager_types';
 import {ConnectionFactory} from './connections/types';
 
@@ -46,165 +31,64 @@ export function isSecretKeyReference(
 }
 
 /**
- * Build default connections from the registry.
- *
- * - **Browser** (`duckdb_wasm` registered, `duckdb` not): returns a single
- *   `duckdb` connection backed by the wasm type.
- * - **Node**: one `{is: typeName}` entry per registered type, plus the
- *   legacy `md` (MotherDuck) alias.
+ * Host-specific operations that differ between Node and browser.
  */
-export function getDefaultConnections(): Record<string, ConnectionConfigEntry> {
-  const registeredTypes = getRegisteredConnectionTypes();
+export interface HostAdapter {
+  /** Expand ~ to home directory. Node: os.homedir(); browser: undefined. */
+  expandHome?(path: string): string;
+  /** Convert a filesystem path to a file:// URL. Node: url.pathToFileURL(); browser: undefined. */
+  pathToFileURL?(path: string): URL;
+}
 
-  // Browser: only duckdb_wasm is available — alias it as 'duckdb'
-  if (
-    registeredTypes.includes('duckdb_wasm') &&
-    !registeredTypes.includes('duckdb')
-  ) {
-    return {duckdb: {is: 'duckdb_wasm'}};
-  }
-
-  // Node: one entry per registered type + md (MotherDuck) alias
-  const defaults: Record<string, ConnectionConfigEntry> = {};
-  for (const typeName of registeredTypes) {
-    defaults[typeName] = {is: typeName};
-  }
-  defaults['md'] = {is: 'duckdb', databasePath: 'md:'};
-  return defaults;
+interface CachedConfig {
+  config: MalloyConfig;
+  source: 'discovered' | 'global' | 'defaults';
+  configURL?: URL;
 }
 
 /**
- * Inject `workingDirectory` into connection config entries whose registered
- * type supports it, unless the entry already sets it explicitly.
+ * Returns true if `ancestor` is a prefix of (or equal to) `descendant` in URL space.
  */
-function injectWorkingDirectory(
-  connections: Record<string, ConnectionConfigEntry>,
-  workingDir: string
-): Record<string, ConnectionConfigEntry> {
-  const result = {...connections};
-  for (const [name, entry] of Object.entries(result)) {
-    if (entry['workingDirectory'] !== undefined) continue;
-    const props = getConnectionProperties(entry.is);
-    if (props?.some(p => p.name === 'workingDirectory')) {
-      result[name] = {...entry, workingDirectory: workingDir};
-    }
-  }
-  return result;
-}
-
-export class MergedConnectionLookup implements LookupConnection<Connection> {
-  constructor(
-    private primary: LookupConnection<Connection>,
-    private fallback: LookupConnection<Connection>
-  ) {}
-
-  async lookupConnection(name: string): Promise<Connection> {
-    try {
-      return await this.primary.lookupConnection(name);
-    } catch {
-      return await this.fallback.lookupConnection(name);
-    }
-  }
-}
-
-export class SettingsConnectionLookup implements LookupConnection<Connection> {
-  private cache = new Map<string, Promise<Connection>>();
-
-  constructor(
-    private config: Record<string, UnresolvedConnectionConfigEntry>,
-    private secretResolver: SecretResolver,
-    private workingDirectory?: string,
-    private postProcess?: (conn: Connection, workingDir: string) => void
-  ) {}
-
-  lookupConnection(name: string): Promise<Connection> {
-    let promise = this.cache.get(name);
-    if (!promise) {
-      promise = this.createConnection(name);
-      this.cache.set(name, promise);
-    }
-    return promise;
-  }
-
-  private async createConnection(name: string): Promise<Connection> {
-    const entry = this.config[name];
-    if (!entry) throw new Error(`No connection named '${name}'`);
-
-    const resolved = await this.resolveEntry(entry);
-
-    // Inject workingDirectory if the type supports it and entry doesn't set it
-    if (this.workingDirectory && resolved['workingDirectory'] === undefined) {
-      const props = getConnectionProperties(resolved.is);
-      if (props?.some(p => p.name === 'workingDirectory')) {
-        resolved['workingDirectory'] = this.workingDirectory;
-      }
-    }
-
-    const config = new MalloyConfig('{"connections":{}}');
-    config.connectionMap = {[name]: resolved};
-    const conn = await config.connections.lookupConnection(name);
-    if (this.postProcess && this.workingDirectory) {
-      this.postProcess(conn, this.workingDirectory);
-    }
-    return conn;
-  }
-
-  private async resolveEntry(
-    entry: UnresolvedConnectionConfigEntry
-  ): Promise<ConnectionConfigEntry> {
-    const resolved: ConnectionConfigEntry = {is: entry.is};
-    for (const [key, value] of Object.entries(entry)) {
-      if (key === 'is') continue;
-      if (isSecretKeyReference(value)) {
-        const secret = await this.secretResolver(value.secretKey);
-        if (secret !== undefined) {
-          resolved[key] = secret;
-        }
-      } else {
-        resolved[key] = value;
-      }
-    }
-    return resolved;
-  }
+function isAncestor(ancestor: URL, descendant: URL): boolean {
+  const a = ancestor.toString();
+  const d = descendant.toString();
+  return d === a || d.startsWith(a.endsWith('/') ? a : a + '/');
 }
 
 export class CommonConnectionManager {
   currentRowLimit = 50;
-  workspaceRoots: string[] = [];
-  private projectConnectionsOnly = false;
+  private workspaceRoots: URL[] = [];
   private globalConfigDirectory = '';
   private secretResolver: SecretResolver | undefined;
+  private urlReader: URLReader | undefined;
+  private hostAdapter: HostAdapter;
 
-  /** Merged settings config (defaults + user) for lazy per-directory lookups. */
-  private mergedSettingsConfig:
-    | Record<string, UnresolvedConnectionConfigEntry>
-    | undefined;
-  /** Cached per-workingDir settings lookups (non-resolver path only). */
-  private settingsLookupsByDir: Record<string, LookupConnection<Connection>> =
-    {};
   /** New-format settings config (for tree view / config manager). */
   private settingsConfig:
     | Record<string, UnresolvedConnectionConfigEntry>
     | undefined;
 
-  // Cache: cacheKey -> MalloyConfig (handles connection caching + lifecycle)
-  private configCache: Record<
-    string,
-    {config: MalloyConfig; configText: string; manifestText?: string}
-  > = {};
-  // Mapping: fileURL.toString() -> config cache key, populated by resolveConfigForFile
-  private fileConfigKey: Record<string, string> = {};
+  /** Config cache: identity-key → CachedConfig */
+  private configCache = new Map<string, CachedConfig>();
+  /** Fast-path index: file-directory URL → config-cache key */
+  private directoryIndex = new Map<string, string>();
 
-  constructor(private connectionFactory: ConnectionFactory) {}
+  constructor(
+    private connectionFactory: ConnectionFactory,
+    hostAdapter?: HostAdapter
+  ) {
+    this.hostAdapter = hostAdapter ?? {};
+  }
 
-  public setProjectConnectionsOnly(value: boolean): void {
-    this.projectConnectionsOnly = value;
+  public setURLReader(reader: URLReader): void {
+    this.urlReader = reader;
+    this.invalidateCache();
   }
 
   public setGlobalConfigDirectory(dir: string): void {
     if (this.globalConfigDirectory !== dir) {
       this.globalConfigDirectory = dir;
-      this.clearConfigCaches();
+      this.invalidateCache();
     }
   }
 
@@ -212,137 +96,11 @@ export class CommonConnectionManager {
     this.secretResolver = resolver;
   }
 
-  public setWorkspaceRoots(roots: string[]): void {
-    this.workspaceRoots = roots;
-  }
-
-  public clearConfigCaches(): void {
-    for (const entry of Object.values(this.configCache)) {
-      entry.config.close().catch(err => {
-        console.warn('Error closing config connections:', err);
-      });
-    }
-    this.configCache = {};
-    this.settingsLookupsByDir = {};
-    this.fileConfigKey = {};
-  }
-
-  private resolveConfigForFile(
-    fileURL: URL,
-    workingDir: string
-  ): MalloyConfig | undefined {
-    if (!this.connectionFactory.findMalloyConfig) {
-      return undefined;
-    }
-
-    const globalDir = this.projectConnectionsOnly
-      ? ''
-      : this.globalConfigDirectory;
-    const result = this.connectionFactory.findMalloyConfig(
-      fileURL,
-      this.workspaceRoots,
-      globalDir
+  public setWorkspaceRoots(roots: (URL | string)[]): void {
+    this.workspaceRoots = roots.map(r =>
+      typeof r === 'string' ? new URL(r.endsWith('/') ? r : r + '/') : r
     );
-
-    if (!result) {
-      return undefined;
-    }
-
-    // Cache key includes working directory so files in different directories
-    // get separate connection instances with correct workingDirectory.
-    const cacheKey = `${result.configDir}::${workingDir}`;
-    this.fileConfigKey[fileURL.toString()] = cacheKey;
-    // Return cached config if the config text hasn't changed.
-    // Manifest can change independently; keep the same config and refresh
-    // only the embedded manifest when needed.
-    const cached = this.configCache[cacheKey];
-    if (cached && cached.configText === result.configText) {
-      if (cached.manifestText !== result.manifestText) {
-        cached.config.manifest.loadText(result.manifestText ?? '{}');
-        cached.manifestText = result.manifestText;
-      }
-      return cached.config;
-    }
-
-    // Close connections from the previous config before replacing
-    if (cached) {
-      cached.config.close().catch(err => {
-        console.warn('Error closing config connections:', err);
-      });
-    }
-
-    // Parse and create MalloyConfig with connection caching + postProcess
-    try {
-      const config = new MalloyConfig(result.configText);
-      const map = injectWorkingDirectory(
-        config.connectionMap ?? {},
-        workingDir
-      );
-      config.connectionMap = map;
-
-      const postProcess = this.connectionFactory.postProcessConnection?.bind(
-        this.connectionFactory
-      );
-      if (postProcess) {
-        config.onConnectionCreated = (_name, conn) =>
-          postProcess(conn, workingDir);
-      }
-      config.manifest.loadText(result.manifestText ?? '{}');
-
-      this.configCache[cacheKey] = {
-        config,
-        configText: result.configText,
-        manifestText: result.manifestText,
-      };
-      return config;
-    } catch (error) {
-      console.warn(
-        `Failed to parse malloy-config.json in ${result.configDir}:`,
-        error
-      );
-      return undefined;
-    }
-  }
-
-  public getConnectionLookup(fileURL: URL): LookupConnection<Connection> {
-    const workingDir = this.connectionFactory.getWorkingDirectory(fileURL);
-    const config = this.resolveConfigForFile(fileURL, workingDir);
-    const configLookup = config?.connections;
-
-    if (this.projectConnectionsOnly) {
-      return (
-        configLookup ?? {
-          lookupConnection: (name: string) =>
-            Promise.reject(
-              new Error(
-                `No connection '${name}' found in config file (projectConnectionsOnly is enabled)`
-              )
-            ),
-        }
-      );
-    }
-
-    // Merged: config file takes precedence, settings as fallback.
-    // Both sides handle their own caching and postProcessConnection
-    // internally, so no outer wrapLookup is needed.
-    const settingsLookup = this.getSettingsLookup(workingDir);
-    if (configLookup && settingsLookup) {
-      return new MergedConnectionLookup(configLookup, settingsLookup);
-    }
-    return configLookup ?? settingsLookup ?? this.emptyLookup();
-  }
-
-  /** Return the cached MalloyConfig for a file, if one exists. */
-  public getConfigForFile(fileURL: URL): MalloyConfig | undefined {
-    const existingKey = this.fileConfigKey[fileURL.toString()];
-    if (existingKey) {
-      const cached = this.configCache[existingKey];
-      if (cached) {
-        return cached.config;
-      }
-    }
-    const workingDir = this.connectionFactory.getWorkingDirectory(fileURL);
-    return this.resolveConfigForFile(fileURL, workingDir);
+    this.invalidateCache();
   }
 
   public setCurrentRowLimit(rowLimit: number): void {
@@ -366,69 +124,340 @@ export class CommonConnectionManager {
   public setConnectionsConfig(
     connectionsConfig: Record<string, UnresolvedConnectionConfigEntry>
   ): void {
-    this.connectionFactory.reset();
-    this.clearConfigCaches();
-
     this.settingsConfig = connectionsConfig;
-
-    // Merge defaults under user connections (user entries take precedence)
-    this.mergedSettingsConfig = {
-      ...getDefaultConnections(),
-      ...connectionsConfig,
-    };
-    this.settingsLookupsByDir = {};
+    this.invalidateCache();
   }
 
-  private getSettingsLookup(
-    workingDir: string
-  ): LookupConnection<Connection> | undefined {
-    if (!this.mergedSettingsConfig) return undefined;
+  /**
+   * Notify that a config file has changed. Clears all cached configs.
+   */
+  public notifyConfigFileChanged(): void {
+    this.invalidateCache();
+  }
 
-    const postProcess = this.connectionFactory.postProcessConnection?.bind(
-      this.connectionFactory
-    );
+  public async getConnectionLookup(
+    fileURL: URL
+  ): Promise<LookupConnection<Connection>> {
+    const entry = await this.resolveConfigForFile(fileURL);
+    return entry.config.connections;
+  }
 
-    if (this.secretResolver) {
-      // Lazy resolution: secrets are resolved at lookupConnection() time.
-      // SettingsConnectionLookup caches connections internally by name,
-      // so repeated lookupConnection() calls return the same Connection.
-      return new SettingsConnectionLookup(
-        this.mergedSettingsConfig,
-        this.secretResolver,
-        workingDir,
-        postProcess
-      );
+  public async getConfigForFile(fileURL: URL): Promise<MalloyConfig> {
+    const entry = await this.resolveConfigForFile(fileURL);
+    return entry.config;
+  }
+
+  /**
+   * Returns the effective config source for a file. Used by the sidebar
+   * to avoid reimplementing discovery.
+   */
+  public async getEffectiveConfigSource(fileURL: URL): Promise<{
+    source: 'discovered' | 'global' | 'defaults';
+    configFileUri?: string;
+  }> {
+    const entry = await this.resolveConfigForFile(fileURL);
+    return {
+      source: entry.source,
+      configFileUri: entry.configURL?.toString(),
+    };
+  }
+
+  // --- Private implementation ---
+
+  private invalidateCache(): void {
+    for (const entry of this.configCache.values()) {
+      entry.config.releaseConnections().catch(err => {
+        console.warn('Error releasing config connections:', err);
+      });
+    }
+    this.configCache.clear();
+    this.directoryIndex.clear();
+  }
+
+  private workspaceFolderFor(fileURL: URL): URL {
+    // Pick the longest matching workspaceRoot prefix.
+    const candidates = this.workspaceRoots
+      .filter(r => isAncestor(r, fileURL))
+      .sort((a, b) => b.toString().length - a.toString().length);
+    // Fall back to the file's parent directory for files outside any workspace.
+    return candidates[0] ?? new URL('.', fileURL);
+  }
+
+  private async resolveConfigForFile(fileURL: URL): Promise<CachedConfig> {
+    const workspaceFolder = this.workspaceFolderFor(fileURL);
+    const fileDir = new URL('.', fileURL).toString();
+
+    // Fast path: check directory index
+    const indexedKey = this.directoryIndex.get(fileDir);
+    if (indexedKey !== undefined) {
+      const cached = this.configCache.get(indexedKey);
+      if (cached) return cached;
+      // Index entry stale — clear it and re-resolve
+      this.directoryIndex.delete(fileDir);
     }
 
-    // No resolver (e.g., browser) — create connections eagerly, cached per dir.
-    // MalloyConfig caches connections internally; we cache the lookup per dir.
-    const cached = this.settingsLookupsByDir[workingDir];
-    if (cached) return cached;
+    // Level 1 — discovery (project config)
+    const discovered = await this.tryDiscovery(fileURL, workspaceFolder);
+    if (discovered) {
+      // Cache key by config identity: manifestURL distinguishes different
+      // config files within the same workspace (nested configs).
+      const identityKey = `discovered:${workspaceFolder}:${
+        discovered.configURL?.toString() ?? ''
+      }`;
 
-    const map = injectWorkingDirectory(
-      this.mergedSettingsConfig as Record<string, ConnectionConfigEntry>,
-      workingDir
-    );
-    try {
-      const config = new MalloyConfig('{"connections":{}}');
-      config.connectionMap = map;
-      if (postProcess) {
-        config.onConnectionCreated = (_name, conn) =>
-          postProcess(conn, workingDir);
+      const existing = this.configCache.get(identityKey);
+      if (existing) {
+        this.directoryIndex.set(fileDir, identityKey);
+        return existing;
       }
-      const lookup = config.connections;
-      this.settingsLookupsByDir[workingDir] = lookup;
-      return lookup;
-    } catch (error) {
-      console.warn('Failed to create connections from settings config:', error);
+
+      this.applyWrappers(discovered.config, {
+        applySettings: false,
+        workspaceFolder,
+      });
+      const entry: CachedConfig = {
+        config: discovered.config,
+        source: 'discovered',
+        configURL: discovered.configURL,
+      };
+      this.configCache.set(identityKey, entry);
+      this.directoryIndex.set(fileDir, identityKey);
+      return entry;
+    }
+
+    // Levels 2 & 3 don't vary by file within a workspace — key by folder.
+    const fallbackKey = `fallback:${workspaceFolder}`;
+    const existingFallback = this.configCache.get(fallbackKey);
+    if (existingFallback) {
+      this.directoryIndex.set(fileDir, fallbackKey);
+      return existingFallback;
+    }
+
+    // Level 2 — global config
+    if (this.globalConfigDirectory) {
+      const global = await this.tryGlobalConfig(workspaceFolder);
+      if (global) {
+        this.applyWrappers(global.config, {
+          applySettings: false,
+          workspaceFolder,
+        });
+        const entry: CachedConfig = {
+          config: global.config,
+          source: 'global',
+          configURL: global.configURL,
+        };
+        this.configCache.set(fallbackKey, entry);
+        this.directoryIndex.set(fileDir, fallbackKey);
+        return entry;
+      }
+    }
+
+    // Level 3 — settings + defaults
+    const built = this.buildSettingsAndDefaultsConfig(workspaceFolder);
+    this.applyWrappers(built.config, {
+      applySettings: true,
+      workspaceFolder,
+    });
+    const entry: CachedConfig = {
+      config: built.config,
+      source: 'defaults',
+    };
+    this.configCache.set(fallbackKey, entry);
+    this.directoryIndex.set(fileDir, fallbackKey);
+    return entry;
+  }
+
+  private async tryDiscovery(
+    fileURL: URL,
+    workspaceFolder: URL
+  ): Promise<{config: MalloyConfig; configURL?: URL} | undefined> {
+    if (!this.urlReader) return undefined;
+    try {
+      const config = await discoverConfig(
+        fileURL,
+        workspaceFolder,
+        this.urlReader
+      );
+      if (!config) return undefined;
+      const rawURL = config.readOverlay('config', 'configURL');
+      const configURL =
+        typeof rawURL === 'string' ? new URL(rawURL) : undefined;
+      return {config, configURL};
+    } catch (err) {
+      console.warn(`Malloy config discovery failed near ${fileURL}:`, err);
       return undefined;
     }
   }
 
-  private emptyLookup(): LookupConnection<Connection> {
-    return {
-      lookupConnection: (name: string) =>
-        Promise.reject(new Error(`No connection '${name}' configured`)),
+  private async tryGlobalConfig(
+    workspaceFolder: URL
+  ): Promise<{config: MalloyConfig; configURL?: URL} | undefined> {
+    if (!this.urlReader) return undefined;
+    if (!this.hostAdapter.expandHome || !this.hostAdapter.pathToFileURL) {
+      return undefined;
+    }
+
+    const expandedDir = this.hostAdapter.expandHome(this.globalConfigDirectory);
+    if (!expandedDir) return undefined;
+
+    // Convert the filesystem path to a proper file:// URL via the host adapter.
+    // This handles Windows drive letters, spaces, and other characters correctly.
+    let dirUrl = this.hostAdapter.pathToFileURL(
+      expandedDir.endsWith('/') || expandedDir.endsWith('\\')
+        ? expandedDir
+        : expandedDir + '/'
+    );
+    // Ensure trailing slash for directory URL
+    if (!dirUrl.href.endsWith('/')) {
+      dirUrl = new URL(dirUrl.href + '/');
+    }
+    const globalConfigURL = new URL('malloy-config.json', dirUrl);
+
+    let text: string;
+    try {
+      const result = await this.urlReader.readURL(globalConfigURL);
+      text = typeof result === 'string' ? result : result.contents;
+    } catch {
+      return undefined;
+    }
+
+    let pojo: object;
+    try {
+      pojo = JSON.parse(text);
+    } catch (err) {
+      console.warn(
+        `Malloy global config invalid JSON at ${globalConfigURL}:`,
+        err
+      );
+      return undefined;
+    }
+
+    const overlays: ConfigOverlays = {
+      config: contextOverlay({
+        rootDirectory: workspaceFolder.toString(),
+        configURL: globalConfigURL.toString(),
+      }),
     };
+    return {
+      config: new MalloyConfig(pojo, overlays),
+      configURL: globalConfigURL,
+    };
+  }
+
+  private buildSettingsAndDefaultsConfig(workspaceFolder: URL): {
+    config: MalloyConfig;
+    configURL?: undefined;
+  } {
+    const overlays: ConfigOverlays = {
+      config: contextOverlay({
+        rootDirectory: workspaceFolder.toString(),
+      }),
+    };
+    const config = new MalloyConfig(
+      {includeDefaultConnections: true},
+      overlays
+    );
+    return {config};
+  }
+
+  private applyWrappers(
+    config: MalloyConfig,
+    opts: {applySettings: boolean; workspaceFolder: URL}
+  ): void {
+    // 1. Settings layer — only at level 3.
+    if (opts.applySettings && this.settingsConfig && this.secretResolver) {
+      this.installSettingsWrapper(config, opts.workspaceFolder);
+    }
+
+    // 2. postProcess layer — runs on every connection, regardless of source.
+    const postProcess = this.connectionFactory.postProcessConnection?.bind(
+      this.connectionFactory
+    );
+    if (postProcess) {
+      const workingDir = opts.workspaceFolder.toString();
+      config.wrapConnections(base => ({
+        lookupConnection: async (name: string): Promise<Connection> => {
+          const conn = await base.lookupConnection(name);
+          postProcess(conn, workingDir);
+          return conn;
+        },
+      }));
+    }
+  }
+
+  private installSettingsWrapper(
+    config: MalloyConfig,
+    workspaceFolder: URL
+  ): void {
+    const settings = this.settingsConfig!;
+    const resolver = this.secretResolver!;
+    const settingsCache = new Map<string, Promise<Connection>>();
+    const workspaceFolderStr = workspaceFolder.toString();
+
+    const resolveSettingsConnection = (name: string): Promise<Connection> => {
+      let p = settingsCache.get(name);
+      if (p) return p;
+      p = (async () => {
+        const entry = settings[name];
+        if (!entry) throw new Error(`No settings connection '${name}'`);
+
+        const resolved: ConnectionConfigEntry = {is: entry.is};
+        for (const [k, v] of Object.entries(entry)) {
+          if (k === 'is') continue;
+          if (isSecretKeyReference(v)) {
+            const secret = await resolver(v.secretKey);
+            if (secret !== undefined) {
+              resolved[k] = secret;
+            }
+          } else {
+            resolved[k] = v;
+          }
+        }
+
+        const sub = new MalloyConfig(
+          {connections: {[name]: resolved}},
+          {
+            config: contextOverlay({rootDirectory: workspaceFolderStr}),
+          }
+        );
+        return sub.connections.lookupConnection(name);
+      })();
+      settingsCache.set(name, p);
+      return p;
+    };
+
+    config.wrapConnections(base => ({
+      lookupConnection: async (name: string): Promise<Connection> => {
+        // Settings take priority over defaults at level 3
+        if (settings[name]) {
+          return resolveSettingsConnection(name);
+        }
+        return base.lookupConnection(name);
+      },
+    }));
+  }
+
+  /**
+   * Build default connections info from the registry. Used by the
+   * getConnectionTypeInfo handler to populate the sidebar.
+   */
+  static getDefaultConnectionTypes(): Record<string, string> {
+    const registeredTypes = getRegisteredConnectionTypes();
+
+    // Browser: only duckdb_wasm is available — alias it as 'duckdb'
+    if (
+      registeredTypes.includes('duckdb_wasm') &&
+      !registeredTypes.includes('duckdb')
+    ) {
+      return {duckdb: 'duckdb_wasm'};
+    }
+
+    // Node: one entry per registered type + md (MotherDuck) alias
+    const defaults: Record<string, string> = {};
+    for (const typeName of registeredTypes) {
+      defaults[typeName] = typeName;
+    }
+    defaults['md'] = 'duckdb';
+    return defaults;
   }
 }

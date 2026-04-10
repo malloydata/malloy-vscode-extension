@@ -48,7 +48,10 @@ jest.mock(
         path: p,
         toString: () => `file://${p}`,
       }),
-      parse: (s: string) => ({scheme: 'file', fsPath: s, toString: () => s}),
+      parse: (s: string) => {
+        const path = s.startsWith('file://') ? s.slice(7) : s;
+        return {scheme: 'file', fsPath: path, path, toString: () => s};
+      },
       joinPath: (base: any, ...segments: string[]) => {
         // Resolve '..' segments to mimic real Uri.joinPath
         const parts = (base.fsPath || base.path).split('/');
@@ -83,6 +86,7 @@ jest.mock(
         return mockActiveTextEditor;
       },
       onDidChangeActiveTextEditor: mockOnDidChangeActiveTextEditor,
+      onDidChangeActiveNotebookEditor: jest.fn(() => ({dispose: jest.fn()})),
     },
   }),
   {virtual: true}
@@ -186,14 +190,6 @@ function setupWorkspaceWithConfig(
   filePath?: string,
   configDir?: string
 ): void {
-  const folder = {
-    uri: {
-      scheme: 'file',
-      fsPath: workspaceRoot,
-      path: workspaceRoot,
-      toString: () => `file://${workspaceRoot}`,
-    },
-  };
   const activeFilePath = filePath ?? `${workspaceRoot}/test.malloy`;
   mockActiveTextEditor = {
     document: {
@@ -205,7 +201,6 @@ function setupWorkspaceWithConfig(
       },
     },
   };
-  mockGetWorkspaceFolder.mockReturnValue(folder);
 
   if (configJson) {
     const expectedConfigDir = configDir ?? workspaceRoot;
@@ -219,6 +214,17 @@ function setupWorkspaceWithConfig(
   } else {
     mockReadFile.mockRejectedValue(new Error('File not found'));
   }
+}
+
+/**
+ * Inject a mock configSourceResolver that returns the given source/URI.
+ */
+function setupResolver(
+  provider: ConnectionsProvider,
+  source: 'discovered' | 'global' | 'defaults',
+  configFileUri?: string
+): void {
+  provider.setConfigSourceResolver(async () => ({source, configFileUri}));
 }
 
 function clearActiveEditor(): void {
@@ -327,20 +333,23 @@ describe('ConnectionsProvider', () => {
   });
 
   describe('config file connections', () => {
-    it('shows config group when config file exists for active file', async () => {
-      setupWorkspaceWithConfig(
-        '/workspace',
-        JSON.stringify({
-          connections: {
-            mydb: {is: 'duckdb'},
-            analytics: {is: 'bigquery'},
-          },
-        })
-      );
+    it('shows config group when resolver finds a discovered config', async () => {
+      const configJson = JSON.stringify({
+        connections: {
+          mydb: {is: 'duckdb'},
+          analytics: {is: 'bigquery'},
+        },
+      });
+      setupWorkspaceWithConfig('/workspace', configJson);
       mockAsRelativePath.mockReturnValue('malloy-config.json');
 
       const manager = makeMockConfigManager();
       const provider = new ConnectionsProvider(makeMockContext(), manager);
+      setupResolver(
+        provider,
+        'discovered',
+        'file:///workspace/malloy-config.json'
+      );
       const groups = (await provider.getChildren()) as ConnectionGroupItem[];
 
       const configGroup = groups.find(
@@ -364,6 +373,11 @@ describe('ConnectionsProvider', () => {
 
       const manager = makeMockConfigManager();
       const provider = new ConnectionsProvider(makeMockContext(), manager);
+      setupResolver(
+        provider,
+        'discovered',
+        'file:///workspace/malloy-config.json'
+      );
       const groups = (await provider.getChildren()) as ConnectionGroupItem[];
 
       const configGroup = groups.find(
@@ -379,6 +393,11 @@ describe('ConnectionsProvider', () => {
 
       const manager = makeMockConfigManager();
       const provider = new ConnectionsProvider(makeMockContext(), manager);
+      setupResolver(
+        provider,
+        'discovered',
+        'file:///workspace/malloy-config.json'
+      );
       const groups = (await provider.getChildren()) as ConnectionGroupItem[];
 
       const configGroup = groups.find(
@@ -387,7 +406,8 @@ describe('ConnectionsProvider', () => {
       expect(configGroup).toBeUndefined();
     });
 
-    it('finds config in intermediate directory via walk-up', async () => {
+    it('config path comes from resolver, not walk-up', async () => {
+      // Resolver points at an intermediate directory's config
       setupWorkspaceWithConfig(
         '/workspace',
         JSON.stringify({connections: {mydb: {is: 'duckdb'}}}),
@@ -398,6 +418,11 @@ describe('ConnectionsProvider', () => {
 
       const manager = makeMockConfigManager();
       const provider = new ConnectionsProvider(makeMockContext(), manager);
+      setupResolver(
+        provider,
+        'discovered',
+        'file:///workspace/src/malloy-config.json'
+      );
       const groups = (await provider.getChildren()) as ConnectionGroupItem[];
 
       const configGroup = groups.find(
@@ -423,8 +448,8 @@ describe('ConnectionsProvider', () => {
     });
   });
 
-  describe('shadowing', () => {
-    it('settings connection shows (shadowed) when config has same name', async () => {
+  describe('config file authority', () => {
+    it('config file hides settings and defaults groups', async () => {
       setupWorkspaceWithConfig(
         '/workspace',
         JSON.stringify({connections: {mydb: {is: 'duckdb'}}})
@@ -438,42 +463,33 @@ describe('ConnectionsProvider', () => {
       });
 
       const provider = new ConnectionsProvider(makeMockContext(), manager);
-      const groups = (await provider.getChildren()) as ConnectionGroupItem[];
-
-      const settingsGroup = groups.find(
-        g => g.contextValue === 'connectionGroup.settings'
-      )!;
-      const mydbItem = settingsGroup.children.find(c => c.label === 'mydb')!;
-      expect(mydbItem.description).toContain('(shadowed)');
-
-      const otherItem = settingsGroup.children.find(c => c.label === 'other')!;
-      expect(otherItem.description).not.toContain('(shadowed)');
-    });
-
-    it('config connection names hide defaults', async () => {
-      setupWorkspaceWithConfig(
-        '/workspace',
-        JSON.stringify({connections: {duckdb: {is: 'duckdb'}}})
+      setupResolver(
+        provider,
+        'discovered',
+        'file:///workspace/malloy-config.json'
       );
-
-      const manager = makeMockConfigManager();
-      const provider = new ConnectionsProvider(makeMockContext(), manager);
       injectTypes(provider);
       const groups = (await provider.getChildren()) as ConnectionGroupItem[];
+
+      // Config group is present
+      const configGroup = groups.find(
+        g => g.contextValue === 'connectionGroup.config'
+      );
+      expect(configGroup).toBeDefined();
+
+      // Settings and Defaults are hidden when config file is authoritative
+      const settingsGroup = groups.find(
+        g => g.contextValue === 'connectionGroup.settings'
+      );
+      expect(settingsGroup).toBeUndefined();
 
       const defaultsGroup = groups.find(
         g => g.contextValue === 'connectionGroup.defaults'
       );
-      if (defaultsGroup) {
-        const names = defaultsGroup.children.map(c => c.label);
-        expect(names).not.toContain('duckdb');
-      }
+      expect(defaultsGroup).toBeUndefined();
     });
-  });
 
-  describe('projectConnectionsOnly', () => {
-    it('hides settings and defaults when projectConnectionsOnly is true', async () => {
-      setupMalloyConfig({projectConnectionsOnly: true});
+    it('global config also hides settings and defaults', async () => {
       setupWorkspaceWithConfig(
         '/workspace',
         JSON.stringify({connections: {mydb: {is: 'duckdb'}}})
@@ -486,16 +502,17 @@ describe('ConnectionsProvider', () => {
       });
 
       const provider = new ConnectionsProvider(makeMockContext(), manager);
+      setupResolver(provider, 'global', 'file:///workspace/malloy-config.json');
+      injectTypes(provider);
       const groups = (await provider.getChildren()) as ConnectionGroupItem[];
 
-      expect(groups).toHaveLength(1);
-      expect(groups[0].contextValue).toBe('connectionGroup.config');
+      const settingsGroup = groups.find(
+        g => g.contextValue === 'connectionGroup.settings'
+      );
+      expect(settingsGroup).toBeUndefined();
     });
 
-    it('returns empty when projectConnectionsOnly and no config files', async () => {
-      setupMalloyConfig({projectConnectionsOnly: true});
-      clearActiveEditor();
-
+    it('settings and defaults shown when no config file (defaults source)', async () => {
       const manager = makeMockConfigManager({
         getConnectionsConfig: jest.fn().mockReturnValue({
           mydb: {is: 'duckdb'},
@@ -503,9 +520,19 @@ describe('ConnectionsProvider', () => {
       });
 
       const provider = new ConnectionsProvider(makeMockContext(), manager);
-      const groups = await provider.getChildren();
+      setupResolver(provider, 'defaults');
+      injectTypes(provider);
+      const groups = (await provider.getChildren()) as ConnectionGroupItem[];
 
-      expect(groups).toHaveLength(0);
+      const settingsGroup = groups.find(
+        g => g.contextValue === 'connectionGroup.settings'
+      );
+      expect(settingsGroup).toBeDefined();
+
+      const defaultsGroup = groups.find(
+        g => g.contextValue === 'connectionGroup.defaults'
+      );
+      expect(defaultsGroup).toBeDefined();
     });
   });
 
@@ -582,6 +609,11 @@ describe('ConnectionsProvider', () => {
 
       const manager = makeMockConfigManager();
       const provider = new ConnectionsProvider(makeMockContext(), manager);
+      setupResolver(
+        provider,
+        'discovered',
+        'file:///workspace/malloy-config.json'
+      );
       const groups = (await provider.getChildren()) as ConnectionGroupItem[];
 
       const configGroup = groups.find(

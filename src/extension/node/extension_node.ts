@@ -74,6 +74,11 @@ export async function activate(context: vscode.ExtensionContext) {
     connectionConfigManager
   );
 
+  // Wire up the sidebar to ask the language server for config resolution
+  connectionsTree.setConfigSourceResolver(async fileUri =>
+    client.sendRequest('malloy/getEffectiveConfigSource', {fileUri})
+  );
+
   MALLOY_EXTENSION_STATE.setHomeUri(vscode.Uri.file(os.homedir()));
 
   context.subscriptions.push(

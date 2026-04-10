@@ -129,11 +129,9 @@ const runMSQLCell = async (
     documentMeta: {uri},
   } = query;
   const url = new URL(uri);
-  const connections = connectionManager.getConnectionLookup(url);
-  const config = connectionManager.getConfigForFile(url);
-  const runtime = config
-    ? new Runtime({urlReader, connections, config})
-    : new Runtime({urlReader, connections});
+  const config = await connectionManager.getConfigForFile(url);
+  const connections = config.connections;
+  const runtime = new Runtime({urlReader, config});
   const allBegin = Date.now();
   const compileBegin = allBegin;
   sendMessage({
@@ -287,7 +285,6 @@ export const runQuery = async (
 
   try {
     const url = new URL(uri);
-    const connections = connectionManager.getConnectionLookup(url);
     let cellData: CellData | null = null;
     let currentCell: Cell | null = null;
     let isMalloySql = false;
@@ -326,17 +323,11 @@ export const runQuery = async (
       return;
     }
 
-    const config = connectionManager.getConfigForFile(url);
-    const runtime = config
-      ? new Runtime({
-          urlReader: fileHandler,
-          connections,
-          config,
-        })
-      : new Runtime({
-          urlReader: fileHandler,
-          connections,
-        });
+    const config = await connectionManager.getConfigForFile(url);
+    const runtime = new Runtime({
+      urlReader: fileHandler,
+      config,
+    });
     const allBegin = Date.now();
     const compileBegin = allBegin;
     sendMessage({

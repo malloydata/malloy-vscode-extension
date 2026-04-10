@@ -53,6 +53,11 @@ export async function activate(context: vscode.ExtensionContext) {
     context,
     connectionConfigManager
   );
+  // Wire up the sidebar to ask the language server for config resolution
+  connectionsTree.setConfigSourceResolver(async fileUri =>
+    client.sendRequest('malloy/getEffectiveConfigSource', {fileUri})
+  );
+
   context.subscriptions.push(
     connectionsTree,
     vscode.window.registerTreeDataProvider('malloyConnections', connectionsTree)

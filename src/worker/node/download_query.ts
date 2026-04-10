@@ -60,18 +60,11 @@ export async function downloadQuery(
   cancellationToken.onCancellationRequested(() => {
     abortController.abort();
   });
-  const connections = connectionManager.getConnectionLookup(url);
-  const config = connectionManager.getConfigForFile(url);
-  const runtime = config
-    ? new Runtime({
-        urlReader: fileHandler,
-        connections,
-        config,
-      })
-    : new Runtime({
-        urlReader: fileHandler,
-        connections,
-      });
+  const config = await connectionManager.getConfigForFile(url);
+  const runtime = new Runtime({
+    urlReader: fileHandler,
+    config,
+  });
 
   sendMessage({
     status: QueryDownloadStatus.Compiling,

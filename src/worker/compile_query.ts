@@ -19,18 +19,11 @@ export const compileQuery = async (
 ): Promise<ModelDef | undefined> => {
   const {uri} = documentMeta;
   const url = new URL(uri);
-  const connectionLookup = connectionManager.getConnectionLookup(url);
-  const config = connectionManager.getConfigForFile(url);
-  const runtime = config
-    ? new Runtime({
-        urlReader: fileHandler,
-        connections: connectionLookup,
-        config,
-      })
-    : new Runtime({
-        urlReader: fileHandler,
-        connections: connectionLookup,
-      });
+  const config = await connectionManager.getConfigForFile(url);
+  const runtime = new Runtime({
+    urlReader: fileHandler,
+    config,
+  });
 
   let workspaceFolders: string[] = [];
   if (url.protocol === 'untitled:') {

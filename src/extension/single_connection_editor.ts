@@ -18,11 +18,7 @@ import {isSecretKeyReference} from '../common/connection_manager';
 import {getMalloyConfig} from './utils/config';
 import {WorkerConnection} from './worker_connection';
 import {errorMessage} from '../common/errors';
-import {
-  ConnectionConfigEntry,
-  isValueRef,
-  resolveValue,
-} from '@malloydata/malloy';
+import {ConnectionConfigEntry} from '@malloydata/malloy';
 import {ConnectionTypeInfoResponse} from '../common/types/worker_message_types';
 
 export class SingleConnectionPanel {
@@ -208,14 +204,23 @@ export class SingleConnectionPanel {
     for (const prop of properties) {
       const rawValue = entry[prop.name];
       if (rawValue === undefined) continue;
-      if (isValueRef(rawValue)) {
-        const resolved = resolveValue(rawValue);
-        if (resolved !== undefined) {
-          values[prop.name] = resolved;
+      if (
+        typeof rawValue === 'object' &&
+        rawValue !== null &&
+        'env' in rawValue &&
+        typeof (rawValue as {env: string}).env === 'string'
+      ) {
+        const envVal = process.env[(rawValue as {env: string}).env];
+        if (envVal !== undefined) {
+          values[prop.name] = envVal;
         }
-      } else if (typeof rawValue !== 'object') {
+      } else if (
+        typeof rawValue === 'string' ||
+        typeof rawValue === 'number' ||
+        typeof rawValue === 'boolean'
+      ) {
         values[prop.name] = rawValue;
-      } else if (prop.type === 'json') {
+      } else if (rawValue !== undefined && prop.type === 'json') {
         values[prop.name] = JSON.stringify(rawValue);
       }
     }

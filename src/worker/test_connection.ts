@@ -43,8 +43,7 @@ export async function testConnectionEntry(
   name: string,
   entry: ConnectionConfigEntry
 ): Promise<void> {
-  const config = new MalloyConfig('{"connections":{}}');
-  config.connectionMap = {[name]: entry};
+  const config = new MalloyConfig({connections: {[name]: entry}});
   const lookup = config.connections;
   const connection = await lookup.lookupConnection(name);
   if (!isTestable(connection)) {
