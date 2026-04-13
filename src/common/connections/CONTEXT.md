@@ -2,7 +2,7 @@
 
 Durable reference for how a Malloy file ends up with a set of live connections when a query runs. The path is complex enough — and crosses `src/common/`, `src/server/connections/`, and `src/extension/` — that it deserves one end-to-end explanation.
 
-The core `MalloyConfig` API this builds on has its design-of-record in `~/ctx/cx/malloy-config-design.md`.
+The core `MalloyConfig` API this builds on has its design-of-record in `~/ctx/cx/malloy-config-design.md`. User-facing reference (config file format, overlay references, embedding) lives in the malloy repo at `packages/malloy/src/doc/configuration.md`.
 
 ## The Core API: `MalloyConfig`
 
@@ -28,19 +28,32 @@ Key pieces the extension leans on:
 
 1. **Discovered (project) config.** `discoverConfig(fileURL, workspaceFolder, urlReader)`. The workspace folder is the ceiling.
 2. **Global config.** `<globalConfigDirectory>/malloy-config.json`, if the setting is set and no project config was found. The `config` overlay still gets `rootDirectory: workspaceFolder` — DuckDB's anchor is always the workspace.
-3. **Settings + defaults.** `new MalloyConfig({includeDefaultConnections: true}, overlays)` — the registry fabricates one entry per backend type. Settings-based connections (`connectionMap`) are layered on top via `wrapConnections`.
+3. **Settings + defaults.** Settings-based connections (`connectionMap`) are translated into the config POJO alongside `includeDefaultConnections: true`, so the registry fabricates one entry per backend type not already declared. Secret references in settings entries resolve through a scoped `secret` overlay (see below).
 
-## Wrapper Layering
+## Settings via the `secret` Overlay (Level 3)
 
-`CommonConnectionManager.applyWrappers` installs two wrappers on every `MalloyConfig` after construction:
+Settings connections live in VS Code's `malloy.connectionMap` setting. Sensitive values are stored in SecretStorage; the settings POJO holds `{secretKey: "connections.<uuid>.<field>"}` references in their place.
 
-1. **Settings wrapper (level 3 only).** For each name in the settings `connectionMap`, the wrapper resolves `{secretKey: "..."}` references via a `SecretResolver` (implemented by the extension host over RPC against VS Code SecretStorage), then constructs a one-entry sub-`MalloyConfig` to turn the resolved POJO into a live `Connection`. Settings names take priority over defaults at level 3.
+At level-3 construction, `CommonConnectionManager`:
 
-   *Why a wrapper and not an overlay?* Core overlays are synchronous (`(path) => unknown`), but SecretStorage is only reachable via async RPC from the server. The wrapper is where `await` can live. If core ever grows async overlays, the wrapper collapses into a registered `secret` overlay.
+1. Translates each settings entry by rewriting `{secretKey: X}` as `{secret: X}` — the standard overlay-reference shape.
+2. Merges those entries into the POJO alongside `includeDefaultConnections: true`.
+3. Registers a `secret` overlay backed by a `SecretResolver` (extension-host RPC against SecretStorage).
 
-2. **`postProcessConnection` wrapper (all levels).** Called once per cached connection. Node's factory is a no-op; the browser's `WebConnectionFactory` uses this to register a `remoteTableCallback` on `DuckDBWASMConnection` instances, routing file fetches through the extension host's `malloy/fetchBinaryFile` RPC. Without this hook, DuckDB WASM queries fail to find CSV/Parquet files because files registered during schema fetch live in a different database than SQL execution.
+Core then resolves the references at connection-lookup time using the same machinery as `{env: ...}`.
 
-Wrappers are pure decoration — the underlying `LookupConnection` from core still does the real work.
+**The `secret` overlay is scoped to level 3 only.** It is deliberately *not* registered when constructing a `MalloyConfig` from a discovered or global `malloy-config.json`. Two reasons:
+
+- **Portability** — a config file that references VS Code SecretStorage wouldn't work under the CLI or Publisher, and we don't want to invite non-portable shared configs.
+- **Exfiltration** — if a committed config could reference `{secret: ...}` anywhere, it becomes a read-any-secret channel (e.g. `host: {secret: "gh-token"}` sends the token to whatever server ends up in logs, UI, outbound connections). Scoping the overlay to the internal settings translation keeps that vector closed.
+
+The general rule for any future host-private overlay (session, user attributes, OS keychain) is the same: only register it on POJOs the host itself controls end-to-end. Config-file-sourced POJOs should only see overlays whose values are safe to reference from anywhere.
+
+## Post-Process Wrapper (All Levels)
+
+`CommonConnectionManager.applyWrappers` installs one wrapper on every `MalloyConfig` after construction: the `postProcessConnection` hook. It's called once per cached connection. Node's factory is a no-op; the browser's `WebConnectionFactory` uses this to register a `remoteTableCallback` on `DuckDBWASMConnection` instances, routing file fetches through the extension host's `malloy/fetchBinaryFile` RPC. Without this hook, DuckDB WASM queries fail to find CSV/Parquet files because files registered during schema fetch live in a different database than SQL execution.
+
+The wrapper is pure decoration — the underlying `LookupConnection` from core still does the real work.
 
 ## Caching
 
@@ -96,7 +109,7 @@ The `malloy/getConnectionTypeInfo` LSP request bridges the extension host (which
 ```
 
 - `is` identifies the backend type.
-- Single-key objects like `{env: "NAME"}` are overlay references. Built-in overlays wired by VS Code: `env` (process env vars, desktop-only) and `config` (host context — `rootDirectory`, `configURL`). No `secret` overlay is registered today; settings-connection secrets flow through the settings wrapper (see below), not the overlay system.
+- Single-key objects like `{env: "NAME"}` are overlay references. Overlays visible to a `malloy-config.json`: `env` (process env vars; desktop-only) and `config` (host context — `rootDirectory`, `configURL`). **No `secret` overlay is visible to config files** — see [Settings via the `secret` Overlay](#settings-via-the-secret-overlay-level-3) for why.
 - `includeDefaultConnections` (default `false`): when true, the registry fabricates one entry per backend type not already declared. Level 3 always sets this; levels 1 and 2 leave it to the config author.
 - `malloy-config-local.json` sits alongside `malloy-config.json` for developer-specific credentials. Core's discovery merges `connections` by name (local wins); other top-level sections from the local file replace the shared file wholesale.
 

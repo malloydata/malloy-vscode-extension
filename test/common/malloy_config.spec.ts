@@ -13,6 +13,7 @@ import {
   Connection,
   MalloyConfig,
   URLReader,
+  registerConnectionType,
 } from '@malloydata/malloy';
 
 // --- Mock discoverConfig ---
@@ -362,6 +363,117 @@ describe('CommonConnectionManager', () => {
       );
       // The settings wrapper should NOT be installed for discovered configs
       await expect(lookup.lookupConnection('settingsdb')).rejects.toThrow();
+    });
+  });
+
+  describe('secret overlay key validation', () => {
+    // Register a minimal connection type with a secret-typed property so
+    // we can observe whether the SecretResolver is actually called. The
+    // factory stashes the resolved config on the connection for assertions.
+    beforeAll(() => {
+      registerConnectionType('secrettest', {
+        displayName: 'Secret Test',
+        factory: async config =>
+          ({name: config.name, _config: config}) as unknown as Connection,
+        properties: [
+          {
+            name: 'token',
+            displayName: 'Token',
+            type: 'password',
+            optional: true,
+          },
+        ],
+      });
+    });
+
+    async function runLookup(secretKey: string): Promise<{
+      askedFor: string[];
+      resolvedToken: unknown;
+    }> {
+      mockDiscoverResult = null;
+      const askedFor: string[] = [];
+      const manager = new CommonConnectionManager(makeMockFactory());
+      manager.setURLReader(makeMockURLReader());
+      manager.setWorkspaceRoots(['file:///project/']);
+      manager.setSecretResolver(async key => {
+        askedFor.push(key);
+        return 'resolved-value';
+      });
+      manager.setConnectionsConfig({
+        mydb: {is: 'secrettest', token: {secretKey}},
+      });
+      const lookup = await manager.getConnectionLookup(
+        new URL('file:///project/test.malloy')
+      );
+      const conn = (await lookup.lookupConnection('mydb')) as Connection & {
+        _config: Record<string, unknown>;
+      };
+      return {askedFor, resolvedToken: conn._config['token']};
+    }
+
+    it('resolves keys matching connections.<uuid>.<field>', async () => {
+      const {askedFor, resolvedToken} = await runLookup(
+        'connections.abc-123.token'
+      );
+      expect(askedFor).toEqual(['connections.abc-123.token']);
+      expect(resolvedToken).toBe('resolved-value');
+    });
+
+    it('resolves legacy-migrated keys using connection name as id', async () => {
+      // connection_migration.ts writes `connections.${entry.id ?? name}.${field}`
+      // — pre-UUID entries land here with a non-UUID identifier.
+      const {askedFor, resolvedToken} = await runLookup(
+        'connections.my_db.token'
+      );
+      expect(askedFor).toEqual(['connections.my_db.token']);
+      expect(resolvedToken).toBe('resolved-value');
+    });
+
+    it('resolves legacy-migrated keys with spaces or unicode in the name', async () => {
+      // Connection names were never restricted — the migrated key may
+      // contain anything short of the `.` delimiter.
+      const {askedFor, resolvedToken} = await runLookup(
+        'connections.My DB (prod).token'
+      );
+      expect(askedFor).toEqual(['connections.My DB (prod).token']);
+      expect(resolvedToken).toBe('resolved-value');
+    });
+
+    it('silently drops keys that do not match the pattern', async () => {
+      const {askedFor, resolvedToken} = await runLookup('random-other-key');
+      expect(askedFor).toEqual([]);
+      expect(resolvedToken).toBeUndefined();
+    });
+
+    it('silently drops keys with extra path segments', async () => {
+      const {askedFor, resolvedToken} = await runLookup(
+        'connections.abc-123.token.extra'
+      );
+      expect(askedFor).toEqual([]);
+      expect(resolvedToken).toBeUndefined();
+    });
+
+    it('silently drops multi-segment overlay paths', async () => {
+      // Malloy overlays receive path arrays; our convention is a single
+      // string key. Reach into the private overlay factory to exercise
+      // it directly — translation at the settings layer only ever emits
+      // single-string references, so this guards against a future caller
+      // (or a hand-authored config, had we scoped the overlay wider)
+      // passing a multi-segment path.
+      const askedFor: string[] = [];
+      const manager = new CommonConnectionManager(makeMockFactory());
+      manager.setSecretResolver(async key => {
+        askedFor.push(key);
+        return 'resolved-value';
+      });
+      const overlay = (
+        manager as unknown as {secretOverlay: () => (p: string[]) => unknown}
+      ).secretOverlay();
+      expect(
+        await overlay(['connections.abc-123.token', 'extra'])
+      ).toBeUndefined();
+      expect(await overlay([])).toBeUndefined();
+      expect(askedFor).toEqual([]);
     });
   });
 
