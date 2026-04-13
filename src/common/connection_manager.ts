@@ -13,11 +13,23 @@ import {
   contextOverlay,
   getRegisteredConnectionTypes,
 } from '@malloydata/malloy';
-import type {ConfigOverlays} from '@malloydata/malloy'; // eslint-disable-line no-duplicate-imports
+import type {ConfigOverlays, Overlay} from '@malloydata/malloy'; // eslint-disable-line no-duplicate-imports
 import {UnresolvedConnectionConfigEntry} from './types/connection_manager_types';
 import {ConnectionFactory} from './connections/types';
 
 export type SecretResolver = (key: string) => Promise<string | undefined>;
+
+/**
+ * Storage convention for settings-connection secrets:
+ * `connections.<id>.<fieldName>`. The `<id>` is typically a UUID but
+ * legacy-migrated entries may use the connection's name instead (see
+ * `connection_migration.ts` — `entry.id ?? name`), and connection names
+ * have never been restricted — they may contain spaces, unicode, etc.
+ * So the id segment accepts anything short of the `.` delimiter. The
+ * `connections.` prefix is the real boundary: it stops the overlay from
+ * being coaxed into reading unrelated VS Code secrets.
+ */
+const SECRET_KEY_PATTERN = /^connections\.[^.]+\.[A-Za-z_][A-Za-z0-9_]*$/;
 
 export function isSecretKeyReference(
   value: unknown
@@ -28,6 +40,31 @@ export function isSecretKeyReference(
     'secretKey' in value &&
     typeof (value as Record<string, unknown>)['secretKey'] === 'string'
   );
+}
+
+/**
+ * Translate settings entries into a POJO suitable for MalloyConfig.
+ * Converts VS Code's internal `{secretKey: "..."}` storage shape into
+ * the standard `{secret: "..."}` overlay-reference shape, so the `secret`
+ * overlay resolves them the same way malloy-config.json references do.
+ */
+function translateSettingsEntries(
+  settings: Record<string, UnresolvedConnectionConfigEntry>
+): Record<string, ConnectionConfigEntry> {
+  const out: Record<string, ConnectionConfigEntry> = {};
+  for (const [name, entry] of Object.entries(settings)) {
+    const translated: ConnectionConfigEntry = {is: entry.is};
+    for (const [k, v] of Object.entries(entry)) {
+      if (k === 'is') continue;
+      if (isSecretKeyReference(v)) {
+        translated[k] = {secret: v.secretKey};
+      } else {
+        translated[k] = v;
+      }
+    }
+    out[name] = translated;
+  }
+  return out;
 }
 
 /**
@@ -211,10 +248,7 @@ export class CommonConnectionManager {
         return existing;
       }
 
-      this.applyWrappers(discovered.config, {
-        applySettings: false,
-        workspaceFolder,
-      });
+      this.applyWrappers(discovered.config, {workspaceFolder});
       const entry: CachedConfig = {
         config: discovered.config,
         source: 'discovered',
@@ -237,10 +271,7 @@ export class CommonConnectionManager {
     if (this.globalConfigDirectory) {
       const global = await this.tryGlobalConfig(workspaceFolder);
       if (global) {
-        this.applyWrappers(global.config, {
-          applySettings: false,
-          workspaceFolder,
-        });
+        this.applyWrappers(global.config, {workspaceFolder});
         const entry: CachedConfig = {
           config: global.config,
           source: 'global',
@@ -254,10 +285,7 @@ export class CommonConnectionManager {
 
     // Level 3 — settings + defaults
     const built = this.buildSettingsAndDefaultsConfig(workspaceFolder);
-    this.applyWrappers(built.config, {
-      applySettings: true,
-      workspaceFolder,
-    });
+    this.applyWrappers(built.config, {workspaceFolder});
     const entry: CachedConfig = {
       config: built.config,
       source: 'defaults',
@@ -279,7 +307,7 @@ export class CommonConnectionManager {
         this.urlReader
       );
       if (!config) return undefined;
-      const rawURL = config.readOverlay('config', 'configURL');
+      const rawURL = await config.readOverlay('config', 'configURL');
       const configURL =
         typeof rawURL === 'string' ? new URL(rawURL) : undefined;
       return {config, configURL};
@@ -287,6 +315,37 @@ export class CommonConnectionManager {
       console.warn(`Malloy config discovery failed near ${fileURL}:`, err);
       return undefined;
     }
+  }
+
+  /**
+   * The `secret` overlay — only wired at level 3, where VS Code
+   * translates stored settings entries into a MalloyConfig POJO. Shared
+   * malloy-config.json files must not have this overlay in scope, for
+   * two reasons:
+   *
+   * 1. Portability — a config that references SecretStorage wouldn't
+   *    work under the CLI or Publisher.
+   * 2. Exfiltration — a committed config could reference an arbitrary
+   *    secret key as any connection property (e.g. `host: {secret: ...}`),
+   *    turning the config file into a channel that reads secrets out to
+   *    wherever that property ends up (network, logs, UI).
+   *
+   * Returns `undefined` if no secret resolver has been installed.
+   */
+  private secretOverlay(): Overlay | undefined {
+    const resolver = this.secretResolver;
+    if (!resolver) return undefined;
+    return async (path: string[]) => {
+      // Only resolve single-segment paths matching the storage convention
+      // used by the connection editor: `connections.<id>.<fieldName>`.
+      // Any other shape (multi-segment path, non-matching key) silently
+      // returns undefined — the reference drops like any other overlay
+      // miss, and an attacker can't coax the overlay into reading an
+      // unrelated VS Code secret.
+      if (path.length !== 1) return undefined;
+      if (!SECRET_KEY_PATTERN.test(path[0])) return undefined;
+      return await resolver(path[0]);
+    };
   }
 
   private async tryGlobalConfig(
@@ -353,23 +412,23 @@ export class CommonConnectionManager {
         rootDirectory: workspaceFolder.toString(),
       }),
     };
-    const config = new MalloyConfig(
-      {includeDefaultConnections: true},
-      overlays
-    );
+    const secret = this.secretOverlay();
+    if (secret) overlays['secret'] = secret;
+    const pojo: {
+      includeDefaultConnections: boolean;
+      connections?: Record<string, ConnectionConfigEntry>;
+    } = {includeDefaultConnections: true};
+    if (this.settingsConfig) {
+      pojo.connections = translateSettingsEntries(this.settingsConfig);
+    }
+    const config = new MalloyConfig(pojo, overlays);
     return {config};
   }
 
   private applyWrappers(
     config: MalloyConfig,
-    opts: {applySettings: boolean; workspaceFolder: URL}
+    opts: {workspaceFolder: URL}
   ): void {
-    // 1. Settings layer — only at level 3.
-    if (opts.applySettings && this.settingsConfig && this.secretResolver) {
-      this.installSettingsWrapper(config, opts.workspaceFolder);
-    }
-
-    // 2. postProcess layer — runs on every connection, regardless of source.
     const postProcess = this.connectionFactory.postProcessConnection?.bind(
       this.connectionFactory
     );
@@ -383,58 +442,6 @@ export class CommonConnectionManager {
         },
       }));
     }
-  }
-
-  private installSettingsWrapper(
-    config: MalloyConfig,
-    workspaceFolder: URL
-  ): void {
-    const settings = this.settingsConfig!;
-    const resolver = this.secretResolver!;
-    const settingsCache = new Map<string, Promise<Connection>>();
-    const workspaceFolderStr = workspaceFolder.toString();
-
-    const resolveSettingsConnection = (name: string): Promise<Connection> => {
-      let p = settingsCache.get(name);
-      if (p) return p;
-      p = (async () => {
-        const entry = settings[name];
-        if (!entry) throw new Error(`No settings connection '${name}'`);
-
-        const resolved: ConnectionConfigEntry = {is: entry.is};
-        for (const [k, v] of Object.entries(entry)) {
-          if (k === 'is') continue;
-          if (isSecretKeyReference(v)) {
-            const secret = await resolver(v.secretKey);
-            if (secret !== undefined) {
-              resolved[k] = secret;
-            }
-          } else {
-            resolved[k] = v;
-          }
-        }
-
-        const sub = new MalloyConfig(
-          {connections: {[name]: resolved}},
-          {
-            config: contextOverlay({rootDirectory: workspaceFolderStr}),
-          }
-        );
-        return sub.connections.lookupConnection(name);
-      })();
-      settingsCache.set(name, p);
-      return p;
-    };
-
-    config.wrapConnections(base => ({
-      lookupConnection: async (name: string): Promise<Connection> => {
-        // Settings take priority over defaults at level 3
-        if (settings[name]) {
-          return resolveSettingsConnection(name);
-        }
-        return base.lookupConnection(name);
-      },
-    }));
   }
 
   /**
