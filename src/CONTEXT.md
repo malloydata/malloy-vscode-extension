@@ -34,6 +34,7 @@ Code in `common/` is imported by all three domains. It must:
 ## Child Contexts
 
 - [common/CONTEXT.md](common/CONTEXT.md) — Shared types and connection management
+- [common/connections/CONTEXT.md](common/connections/CONTEXT.md) — Full connection architecture (cross-cutting)
 - [server/CONTEXT.md](server/CONTEXT.md) — Language server
 - [extension/CONTEXT.md](extension/CONTEXT.md) — Extension host
 - [extension/notebook/CONTEXT.md](extension/notebook/CONTEXT.md) — Malloy notebooks

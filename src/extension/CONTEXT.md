@@ -47,3 +47,7 @@ The connection editor (`webviews/connection_editor_page/GenericConnectionForm.ts
 ## Child Contexts
 
 - [notebook/CONTEXT.md](notebook/CONTEXT.md) — Malloy notebook support
+
+## See Also
+
+- [../common/connections/CONTEXT.md](../common/connections/CONTEXT.md) — Full connection architecture (config resolution, MalloyConfig lifecycle, editor/migration/sidebar wiring)
