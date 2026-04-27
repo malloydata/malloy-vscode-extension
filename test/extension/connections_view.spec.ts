@@ -293,6 +293,61 @@ describe('ConnectionsProvider', () => {
       expect(names).not.toContain('bigquery');
     });
 
+    it('default name remains shown when a settings entry has the same is-type but a different name', async () => {
+      // Invariant: a default named X exists iff no settings entry is *named*
+      // X. The settings entry's `is` type is irrelevant to defaults filtering
+      // — what the user sees in the sidebar must match what they can use.
+      //
+      // Concrete case: settings has `dankdb: {is: 'duckdb'}`. The default
+      // `duckdb` (and `md`, the MotherDuck alias also typed duckdb) must
+      // still appear, because no settings entry is *named* `duckdb` or `md`.
+      // Runtime fabrication must mirror this — `duckdb.sql(...)` should
+      // resolve via the fabricated default even when `dankdb` exists.
+      const manager = makeMockConfigManager({
+        getConnectionsConfig: jest.fn().mockReturnValue({
+          dankdb: {is: 'duckdb'},
+        }),
+      });
+
+      const provider = new ConnectionsProvider(makeMockContext(), manager);
+      injectTypes(provider);
+      const groups = (await provider.getChildren()) as ConnectionGroupItem[];
+
+      const defaultsGroup = groups.find(
+        g => g.contextValue === 'connectionGroup.defaults'
+      );
+      expect(defaultsGroup).toBeDefined();
+      const names = defaultsGroup!.children.map(c => c.label);
+      expect(names).toContain('duckdb');
+      expect(names).toContain('md');
+      expect(names).not.toContain('dankdb');
+    });
+
+    it('default name disappears only when a settings entry is named after it', async () => {
+      // Same invariant, the other direction: naming a settings entry exactly
+      // `duckdb` (regardless of its `is` type) hides the default `duckdb`.
+      // Even pointing it at a different backend (`is: 'postgres'`) must still
+      // hide the default — the user named it `duckdb`, so they own that name.
+      const manager = makeMockConfigManager({
+        getConnectionsConfig: jest.fn().mockReturnValue({
+          duckdb: {is: 'postgres', host: 'localhost'},
+        }),
+      });
+
+      const provider = new ConnectionsProvider(makeMockContext(), manager);
+      injectTypes(provider);
+      const groups = (await provider.getChildren()) as ConnectionGroupItem[];
+
+      const defaultsGroup = groups.find(
+        g => g.contextValue === 'connectionGroup.defaults'
+      );
+      expect(defaultsGroup).toBeDefined();
+      const names = defaultsGroup!.children.map(c => c.label);
+      expect(names).not.toContain('duckdb');
+      // postgres default still shown — name `postgres` isn't taken.
+      expect(names).toContain('postgres');
+    });
+
     it('hides defaults group when all types are overridden', async () => {
       const manager = makeMockConfigManager({
         getConnectionsConfig: jest.fn().mockReturnValue({
