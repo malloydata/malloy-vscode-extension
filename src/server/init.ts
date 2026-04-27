@@ -219,6 +219,7 @@ export const initServer = (
     const {uri} = event.document;
     ejectIfUnused(uri);
     delete debouncedDiagnoseDocuments[uri];
+    void connection.sendDiagnostics({uri, diagnostics: []});
   });
 
   connection.onDocumentSymbol(handler => {
