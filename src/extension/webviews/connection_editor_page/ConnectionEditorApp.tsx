@@ -15,6 +15,7 @@ import {
 } from '../../../common/types/message_types';
 import {VsCodeApi} from '../vscode_wrapper';
 import {GenericConnectionForm} from './GenericConnectionForm';
+import {applyValueChange} from './value_change';
 
 export interface ConnectionEditorAppProps {
   vscode: VsCodeApi<SingleConnectionMessage, void>;
@@ -160,7 +161,7 @@ export const ConnectionEditorApp = ({vscode}: ConnectionEditorAppProps) => {
     propName: string,
     value: string | number | boolean
   ) => {
-    setValues(prev => ({...prev, [propName]: value}));
+    setValues(prev => applyValueChange(prev, propName, value));
   };
 
   return (

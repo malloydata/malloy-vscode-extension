@@ -223,6 +223,7 @@ export interface ConnectionPropertyInfo {
   default?: string | number | boolean | {[source: string]: string | string[]};
   description?: string;
   fileFilters?: Record<string, string[]>;
+  advanced?: boolean;
 }
 
 export interface SingleConnectionMessageAppReady {

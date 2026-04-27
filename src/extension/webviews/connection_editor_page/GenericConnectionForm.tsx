@@ -63,6 +63,14 @@ export const GenericConnectionForm = ({
   const jsonErrors = validateJsonProperties(properties, values);
   const isValid = name.trim() !== '' && !nameError && jsonErrors.size === 0;
 
+  const basicProperties = properties.filter(p => !p.advanced);
+  const advancedProperties = properties.filter(p => p.advanced);
+  const advancedSetCount = advancedProperties.filter(p => {
+    const v = values[p.name];
+    return v !== undefined && v !== '';
+  }).length;
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+
   return (
     <FormContainer>
       <FormHeader>
@@ -84,7 +92,7 @@ export const GenericConnectionForm = ({
 
       <VSCodeDivider />
 
-      {properties.map(prop => (
+      {basicProperties.map(prop => (
         <PropertyField
           key={prop.name}
           property={prop}
@@ -94,6 +102,36 @@ export const GenericConnectionForm = ({
           readonly={isReadonly}
         />
       ))}
+
+      {advancedProperties.length > 0 && (
+        <AdvancedSection>
+          <AdvancedToggle
+            type="button"
+            onClick={() => setAdvancedOpen(o => !o)}
+            aria-expanded={advancedOpen}
+          >
+            <Caret open={advancedOpen}>▶</Caret>
+            Advanced
+            {advancedSetCount > 0 && (
+              <CountBadge>{advancedSetCount} set</CountBadge>
+            )}
+          </AdvancedToggle>
+          {advancedOpen && (
+            <AdvancedContent>
+              {advancedProperties.map(prop => (
+                <PropertyField
+                  key={prop.name}
+                  property={prop}
+                  value={values[prop.name]}
+                  onChange={value => onValueChange(prop.name, value)}
+                  onRequestFile={onRequestFile}
+                  readonly={isReadonly}
+                />
+              ))}
+            </AdvancedContent>
+          )}
+        </AdvancedSection>
+      )}
 
       <VSCodeDivider />
 
@@ -214,19 +252,54 @@ const PropertyField = ({
   const placeholder = property.optional ? 'Optional' : undefined;
 
   switch (property.type) {
-    case 'boolean':
+    case 'boolean': {
+      const isSet = value === true || value === false;
+      if (isReadonly) {
+        return (
+          <InlineField>
+            <InlineLabel>{property.displayName}</InlineLabel>
+            <InlineControl>
+              {isSet ? (
+                <VSCodeCheckbox checked={value === true} disabled />
+              ) : (
+                <SecretIndicator>Not set</SecretIndicator>
+              )}
+            </InlineControl>
+          </InlineField>
+        );
+      }
       return (
         <InlineField>
           <InlineLabel>{property.displayName}</InlineLabel>
           <InlineControl>
-            <VSCodeCheckbox
-              checked={value === true}
-              onChange={e => onChange(inputChecked(e))}
-              disabled={isReadonly}
-            />
+            <ButtonRow>
+              {/* Unset transitions isSet from true to false, which flips
+                  this key and forces React to unmount and remount the
+                  checkbox. Without the remount, React would just update
+                  `checked` from true to false on the existing element, and
+                  FAST's <vscode-checkbox> emits `change` on every property
+                  mutation — that echo would land back in onChange and
+                  resurrect the value as `false`. A fresh mount sets
+                  `checked` from undefined, which FAST treats as initial
+                  state and does not emit. */}
+              <VSCodeCheckbox
+                key={isSet ? 'set' : 'unset'}
+                checked={value === true}
+                onChange={e => onChange(inputChecked(e))}
+              />
+              {property.optional && isSet && (
+                <VSCodeButton
+                  appearance="secondary"
+                  onClick={() => onChange('')}
+                >
+                  Unset
+                </VSCodeButton>
+              )}
+            </ButtonRow>
           </InlineControl>
         </InlineField>
       );
+    }
 
     case 'password':
     case 'secret':
@@ -305,6 +378,10 @@ const PropertyField = ({
               value={value !== undefined ? String(value) : ''}
               onInput={e => {
                 const v = inputValue(e);
+                if (v === '') {
+                  onChange('');
+                  return;
+                }
                 const num = Number(v);
                 onChange(isNaN(num) ? v : num);
               }}
@@ -650,6 +727,57 @@ const TextArea = styled.textarea`
   &:focus {
     outline: 1px solid var(--vscode-focusBorder);
   }
+`;
+
+const AdvancedSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
+const AdvancedToggle = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 4px 0;
+  cursor: pointer;
+  color: var(--vscode-foreground);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--vscode-font-family);
+  text-align: left;
+  &:focus {
+    outline: 1px solid var(--vscode-focusBorder);
+  }
+`;
+
+const Caret = styled.span<{open: boolean}>`
+  display: inline-block;
+  font-size: 10px;
+  transition: transform 0.1s ease;
+  transform: rotate(${p => (p.open ? '90deg' : '0deg')});
+`;
+
+const CountBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  background: var(--vscode-badge-background);
+  color: var(--vscode-badge-foreground);
+  border-radius: 10px;
+  padding: 1px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+`;
+
+const AdvancedContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-left: 12px;
+  border-left: 2px solid var(--vscode-input-border);
 `;
 
 const SecretIndicator = styled.span`
