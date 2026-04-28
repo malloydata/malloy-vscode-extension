@@ -564,6 +564,76 @@ describe('CommonConnectionManager', () => {
     });
   });
 
+  describe('factory default connections', () => {
+    // Stand-in for the browser's `duckdb_wasm`: a registered type the
+    // factory exposes under a friendlier name (`aliasdb`), mirroring how
+    // the web factory presents `duckdb_wasm` as `duckdb`. The factory
+    // function tags each instance with `_type` so we can assert which
+    // backend the resolver landed on.
+    beforeAll(() => {
+      registerConnectionType('aliastarget', {
+        displayName: 'Alias Target',
+        factory: async config =>
+          ({name: config.name, _type: 'aliastarget'}) as unknown as Connection,
+        properties: [],
+      });
+      registerConnectionType('overridetarget', {
+        displayName: 'Override Target',
+        factory: async config =>
+          ({
+            name: config.name,
+            _type: 'overridetarget',
+          }) as unknown as Connection,
+        properties: [],
+      });
+    });
+
+    const factory: ConnectionFactory = {
+      getDefaultConnections: () => ({aliasdb: 'aliastarget'}),
+    };
+
+    it('runtime resolves connection lookups under the factory-declared name', async () => {
+      const manager = new CommonConnectionManager(factory);
+      manager.setURLReader(makeMockURLReader());
+      manager.setWorkspaceRoots(['file:///project/']);
+
+      const lookup = await manager.getConnectionLookup(
+        new URL('file:///project/test.malloy')
+      );
+      const conn = (await lookup.lookupConnection('aliasdb')) as Connection & {
+        _type: string;
+      };
+      expect(conn._type).toBe('aliastarget');
+      expect(conn.name).toBe('aliasdb');
+    });
+
+    it('user settings override the factory default', async () => {
+      const manager = new CommonConnectionManager(factory);
+      manager.setURLReader(makeMockURLReader());
+      manager.setWorkspaceRoots(['file:///project/']);
+      manager.setConnectionsConfig({
+        aliasdb: {is: 'overridetarget'},
+      });
+
+      const lookup = await manager.getConnectionLookup(
+        new URL('file:///project/test.malloy')
+      );
+      const conn = (await lookup.lookupConnection('aliasdb')) as Connection & {
+        _type: string;
+      };
+      expect(conn._type).toBe('overridetarget');
+    });
+
+    it('sidebar default list is exactly what the factory declared', () => {
+      const defaults = new CommonConnectionManager(
+        factory
+      ).getDefaultConnectionTypes();
+      // Factory list is authoritative — registry-derived entries are not
+      // mixed in, so neither `aliastarget` nor `md` show up.
+      expect(defaults).toEqual({aliasdb: 'aliastarget'});
+    });
+  });
+
   describe('DuckDB working directory', () => {
     it('discoverConfig ceiling is workspace root, not file directory', async () => {
       mockDiscoverResult = null;
@@ -752,9 +822,8 @@ describe('isSecretKeyReference', () => {
 
 describe('getDefaultConnectionTypes', () => {
   it('returns a name→type mapping', () => {
-    const defaults = CommonConnectionManager.getDefaultConnectionTypes();
+    const manager = new CommonConnectionManager({});
+    const defaults = manager.getDefaultConnectionTypes();
     expect(typeof defaults).toBe('object');
-    // md alias should map to duckdb
-    expect(defaults['md']).toBe('duckdb');
   });
 });

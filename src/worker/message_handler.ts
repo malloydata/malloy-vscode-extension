@@ -109,7 +109,9 @@ export class MessageHandler implements WorkerMessageHandler {
         }));
       }
       const defaultConnections =
-        CommonConnectionManager.getDefaultConnectionTypes();
+        connectionManager instanceof CommonConnectionManager
+          ? connectionManager.getDefaultConnectionTypes()
+          : {};
       return {
         registeredTypes: types,
         typeDisplayNames,

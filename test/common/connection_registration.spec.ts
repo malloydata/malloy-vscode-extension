@@ -14,50 +14,74 @@ jest.mock('@malloydata/malloy', () => {
 });
 
 import {CommonConnectionManager} from '../../src/common/connection_manager';
+import {ConnectionFactory} from '../../src/common/connections/types';
+
+const nodeFactory: ConnectionFactory = {};
+const browserFactory: ConnectionFactory = {
+  getDefaultConnections: () => ({duckdb: 'duckdb_wasm'}),
+};
 
 describe('getDefaultConnectionTypes', () => {
   afterEach(() => {
     mockRegisteredTypes = [];
   });
 
-  it('browser: aliases duckdb to duckdb_wasm when only wasm is registered', () => {
+  it('browser: factory list is authoritative — only `duckdb` shown, no md', () => {
     mockRegisteredTypes = ['duckdb_wasm'];
 
-    const defaults = CommonConnectionManager.getDefaultConnectionTypes();
+    const defaults = new CommonConnectionManager(
+      browserFactory
+    ).getDefaultConnectionTypes();
 
-    expect(defaults).toEqual({
-      duckdb: 'duckdb_wasm',
-    });
-    // No md alias in browser
+    expect(defaults).toEqual({duckdb: 'duckdb_wasm'});
+    // The bare `duckdb_wasm` type isn't surfaced — the factory speaks for it.
+    expect(defaults['duckdb_wasm']).toBeUndefined();
+    // MotherDuck isn't supported on WASM, so no md alias.
     expect(defaults['md']).toBeUndefined();
   });
 
-  it('node: creates one entry per type plus md alias', () => {
+  it('node: one entry per registered type plus md alias', () => {
     mockRegisteredTypes = ['duckdb', 'postgres', 'bigquery'];
 
-    const defaults = CommonConnectionManager.getDefaultConnectionTypes();
+    const defaults = new CommonConnectionManager(
+      nodeFactory
+    ).getDefaultConnectionTypes();
 
-    expect(defaults['duckdb']).toEqual('duckdb');
-    expect(defaults['postgres']).toEqual('postgres');
-    expect(defaults['bigquery']).toEqual('bigquery');
-    expect(defaults['md']).toEqual('duckdb');
+    expect(defaults['duckdb']).toBe('duckdb');
+    expect(defaults['postgres']).toBe('postgres');
+    expect(defaults['bigquery']).toBe('bigquery');
+    expect(defaults['md']).toBe('duckdb');
   });
 
-  it('node: includes md alias even with only duckdb registered', () => {
+  it('node: includes md alias when only duckdb is registered', () => {
     mockRegisteredTypes = ['duckdb'];
 
-    const defaults = CommonConnectionManager.getDefaultConnectionTypes();
+    const defaults = new CommonConnectionManager(
+      nodeFactory
+    ).getDefaultConnectionTypes();
 
-    expect(defaults['duckdb']).toEqual('duckdb');
-    expect(defaults['md']).toEqual('duckdb');
+    expect(defaults['duckdb']).toBe('duckdb');
+    expect(defaults['md']).toBe('duckdb');
   });
 
-  it('returns empty when nothing is registered', () => {
+  it('node: no md alias when duckdb is not registered', () => {
+    mockRegisteredTypes = ['postgres'];
+
+    const defaults = new CommonConnectionManager(
+      nodeFactory
+    ).getDefaultConnectionTypes();
+
+    expect(defaults).toEqual({postgres: 'postgres'});
+    expect(defaults['md']).toBeUndefined();
+  });
+
+  it('returns empty when nothing is registered and factory is silent', () => {
     mockRegisteredTypes = [];
 
-    const defaults = CommonConnectionManager.getDefaultConnectionTypes();
+    const defaults = new CommonConnectionManager(
+      nodeFactory
+    ).getDefaultConnectionTypes();
 
-    // No wasm, no duckdb — falls through to node path with empty loop
-    expect(defaults).toEqual({md: 'duckdb'});
+    expect(defaults).toEqual({});
   });
 });
