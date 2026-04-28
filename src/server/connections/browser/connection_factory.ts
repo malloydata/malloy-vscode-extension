@@ -10,10 +10,21 @@ import {ConnectionFactory} from '../../../common/connections/types';
 import {GenericConnection} from '../../../common/types/worker_message_types';
 import {errorMessage} from '../../../common/errors';
 
+// Browser ships only DuckDB-WASM; expose it under the friendlier `duckdb`
+// name that malloy samples write, and don't advertise `md` (MotherDuck
+// isn't supported on the WASM build).
+const DEFAULT_CONNECTIONS: Readonly<Record<string, string>> = Object.freeze({
+  duckdb: 'duckdb_wasm',
+});
+
 export class WebConnectionFactory implements ConnectionFactory {
   private registeredConnections = new WeakSet<Connection>();
 
   constructor(private client: GenericConnection) {}
+
+  getDefaultConnections(): Record<string, string> {
+    return {...DEFAULT_CONNECTIONS};
+  }
 
   postProcessConnection(conn: Connection, workingDir: string): void {
     if (this.registeredConnections.has(conn)) return;

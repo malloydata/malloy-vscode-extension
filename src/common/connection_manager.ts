@@ -38,7 +38,7 @@ export function isSecretKeyReference(
     typeof value === 'object' &&
     value !== null &&
     'secretKey' in value &&
-    typeof (value as Record<string, unknown>)['secretKey'] === 'string'
+    typeof value['secretKey'] === 'string'
   );
 }
 
@@ -414,12 +414,24 @@ export class CommonConnectionManager {
     };
     const secret = this.secretOverlay();
     if (secret) overlays['secret'] = secret;
+    const connections: Record<string, ConnectionConfigEntry> = {};
+    // Factory-provided defaults (e.g. browser exposes duckdb_wasm as `duckdb`)
+    // come first so that user settings can override them.
+    const factoryDefaults = this.connectionFactory.getDefaultConnections?.();
+    if (factoryDefaults) {
+      for (const [name, type] of Object.entries(factoryDefaults)) {
+        connections[name] = {is: type};
+      }
+    }
+    if (this.settingsConfig) {
+      Object.assign(connections, translateSettingsEntries(this.settingsConfig));
+    }
     const pojo: {
       includeDefaultConnections: boolean;
       connections?: Record<string, ConnectionConfigEntry>;
     } = {includeDefaultConnections: true};
-    if (this.settingsConfig) {
-      pojo.connections = translateSettingsEntries(this.settingsConfig);
+    if (Object.keys(connections).length > 0) {
+      pojo.connections = connections;
     }
     const config = new MalloyConfig(pojo, overlays);
     return {config};
@@ -445,26 +457,23 @@ export class CommonConnectionManager {
   }
 
   /**
-   * Build default connections info from the registry. Used by the
-   * getConnectionTypeInfo handler to populate the sidebar.
+   * Default connections for the sidebar. When the factory declares its own
+   * default list (e.g. the browser advertises `duckdb_wasm` only as
+   * `duckdb`), that list is authoritative. Otherwise: one entry per
+   * registered type plus the `md → duckdb` MotherDuck alias.
    */
-  static getDefaultConnectionTypes(): Record<string, string> {
-    const registeredTypes = getRegisteredConnectionTypes();
-
-    // Browser: only duckdb_wasm is available — alias it as 'duckdb'
-    if (
-      registeredTypes.includes('duckdb_wasm') &&
-      !registeredTypes.includes('duckdb')
-    ) {
-      return {duckdb: 'duckdb_wasm'};
+  getDefaultConnectionTypes(): Record<string, string> {
+    const factoryDefaults = this.connectionFactory.getDefaultConnections?.();
+    if (factoryDefaults) {
+      return {...factoryDefaults};
     }
-
-    // Node: one entry per registered type + md (MotherDuck) alias
     const defaults: Record<string, string> = {};
-    for (const typeName of registeredTypes) {
+    for (const typeName of getRegisteredConnectionTypes()) {
       defaults[typeName] = typeName;
     }
-    defaults['md'] = 'duckdb';
+    if (defaults['duckdb']) {
+      defaults['md'] = 'duckdb';
+    }
     return defaults;
   }
 }
