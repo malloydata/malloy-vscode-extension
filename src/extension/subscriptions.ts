@@ -69,6 +69,7 @@ import {noAwait} from '../util/no_await';
 import {openComposer} from './commands/open_composer';
 import {showSchemaCommand} from './commands/show_schema';
 import {DocumentMetadata} from '../common/types/query_spec';
+import {registerMalloyFormatter} from './malloy_formatter';
 
 function getNewClientId(): string {
   return uuid();
@@ -292,6 +293,9 @@ export const setupSubscriptions = async (
     configWatcher.onDidChange(onConfigFileChange),
     configWatcher.onDidDelete(onConfigFileChange)
   );
+
+  // Document formatter
+  registerMalloyFormatter(context);
 
   // Notebooks
   activateNotebookSerializer(context);
