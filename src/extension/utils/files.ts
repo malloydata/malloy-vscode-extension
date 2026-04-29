@@ -51,6 +51,32 @@ const fixNotebookUri = (uri: vscode.Uri) => {
 };
 
 /**
+ * Resolves a `vscode-notebook-cell:` Uri to the live cell's TextDocument.
+ *
+ * The Malloy compiler walks cell URLs across `loadModel`/`extendModel` to
+ * chain a notebook's cells into one model. `fetchFile` MUST resolve those
+ * cell URLs back to per-cell text — falling through to `workspace.fs.readFile`
+ * reads the whole notebook container and breaks any definition that crosses
+ * cell boundaries. See `src/extension/notebook/CONTEXT.md` ("Cell URI Scheme")
+ * and the regression test in `test/extension/files.spec.ts`.
+ *
+ * Distinct from `fixNotebookUri`, which rewrites a cell Uri to a file Uri for
+ * binary/container reads — do not consolidate.
+ */
+const notebookCellDocument = (uri: vscode.Uri) => {
+  if (uri.scheme !== 'vscode-notebook-cell') {
+    return undefined;
+  }
+
+  const notebook = vscode.workspace.notebookDocuments.find(
+    notebook => notebook.uri.path === uri.path
+  );
+  return notebook
+    ?.getCells()
+    .find(cell => cell.document.uri.fragment === uri.fragment)?.document;
+};
+
+/**
  * Fetches the text contents of a Uri for the Malloy compiler. For most Uri
  * types this means either from the open file cache, or from VS Code's
  * file system.
@@ -69,6 +95,11 @@ export async function fetchFile(uriString: string): Promise<string> {
     } else {
       throw new Error(`Unable to fetch ${uriString}: ${response.statusText}`);
     }
+  }
+
+  const cellDocument = notebookCellDocument(uri);
+  if (cellDocument) {
+    return cellDocument.getText();
   }
 
   const openDocument = openFiles.find(

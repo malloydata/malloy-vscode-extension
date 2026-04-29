@@ -92,6 +92,37 @@ function isAncestor(ancestor: URL, descendant: URL): boolean {
   return d === a || d.startsWith(a.endsWith('/') ? a : a + '/');
 }
 
+/**
+ * Normalize a `vscode-notebook-cell:` URI to the underlying notebook file's
+ * URI for purposes of config resolution and workspace lookup.
+ *
+ * Cell URIs are not real file URIs. When `discoverConfig` walks up looking
+ * for `malloy-config.json`, it URL-joins the filename onto each parent
+ * directory — and the join preserves the `vscode-notebook-cell:` scheme,
+ * producing URLs like `vscode-notebook-cell:/.../malloy-config.json` that
+ * nothing knows how to serve. The notebook is then treated as if no
+ * project config existed, which silently breaks every connection-using
+ * cell. Tests live in `test/common/connection_manager.spec.ts`.
+ *
+ * The notebook file shares the cell's path; we borrow the scheme from a
+ * matching workspace root (covers desktop `file:` and web `vscode-vfs:`)
+ * and fall back to `file:` outside any workspace.
+ */
+export function notebookCellToFileURL(
+  fileURL: URL,
+  workspaceRoots: URL[]
+): URL {
+  if (fileURL.protocol !== 'vscode-notebook-cell:') {
+    return fileURL;
+  }
+  const root = workspaceRoots.find(r => {
+    const rootPath = r.pathname.endsWith('/') ? r.pathname : r.pathname + '/';
+    return fileURL.pathname.startsWith(rootPath);
+  });
+  const scheme = root?.protocol ?? 'file:';
+  return new URL(`${scheme}//${fileURL.host}${fileURL.pathname}`);
+}
+
 export class CommonConnectionManager {
   currentRowLimit = 50;
   private workspaceRoots: URL[] = [];
@@ -221,6 +252,7 @@ export class CommonConnectionManager {
   }
 
   private async resolveConfigForFile(fileURL: URL): Promise<CachedConfig> {
+    fileURL = notebookCellToFileURL(fileURL, this.workspaceRoots);
     const workspaceFolder = this.workspaceFolderFor(fileURL);
     const fileDir = new URL('.', fileURL).toString();
 
