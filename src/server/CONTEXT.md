@@ -28,7 +28,7 @@ Document lifecycle:
 - `translateWithCache(uri)` — compiles Malloy to validated model, caches by URI
 - Creates ephemeral `Runtime` per operation with connection lookups
 - Tracks import dependency graph for cascading invalidation
-- Notebook support: chains cell models (`vscode-notebook-cell:` URIs)
+- Notebook support: `createModelMaterializer` chains cell models (`loadModel` then `extendModel` over every prior code cell). Full mechanism documented in `src/extension/notebook/CONTEXT.md` ("How Cell Chaining Works").
 - `translateWithTruncatedCache()` — partial compilation for fast schema completions
 
 ### `parse_cache.ts` — Syntax Parse Cache

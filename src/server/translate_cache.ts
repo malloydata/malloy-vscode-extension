@@ -178,6 +178,10 @@ export class TranslateCache {
       }
       const cellData = await this.getCellData(new URL(uri));
       const importBaseURL = new URL(cellData.baseUri);
+      const malloyCells = cellData.cells.filter(c => c.languageId === 'malloy');
+      this.connection.console.info(
+        `createModelMaterializer ${prettyUri} chaining ${malloyCells.length} malloy cell(s)`
+      );
       for (const cell of cellData.cells) {
         if (cell.languageId === 'malloy') {
           const url = new URL(cell.uri);
@@ -343,6 +347,17 @@ export class TranslateCache {
         refreshSchemaCache
       );
       const model = await modelMaterializer?.getModel();
+      if (model?.problems?.length) {
+        this.connection.console.info(
+          `translateWithCache ${prettyUri} model has ${
+            model.problems.length
+          } problem(s); first problem at ${
+            model.problems[0].at?.url
+              ? prettyLogUri(model.problems[0].at.url)
+              : '(no url)'
+          }: ${model.problems[0].message}`
+        );
+      }
       this.connection.console.info(
         `translateWithCache ${prettyUri} end in ${prettyTime(
           performance.now() - t0

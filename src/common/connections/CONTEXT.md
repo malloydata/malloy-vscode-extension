@@ -26,6 +26,8 @@ Key pieces the extension leans on:
 
 `CommonConnectionManager.resolveConfigForFile(fileURL)` picks one of three levels for each file. **First match wins — no merging between levels.** The presence of a config file is the trust boundary: with a config file, settings connections do not leak in.
 
+> **Cell URIs are normalized first.** `resolveConfigForFile` runs `notebookCellToFileURL` (in `connection_manager.ts`) on the input URL before any of the levels below. Cell URIs (`vscode-notebook-cell:`) are not real file URIs — `discoverConfig` URL-joins `malloy-config.json` onto each parent directory, and the join preserves the cell scheme, producing URLs nothing can serve. Skip this normalization and every notebook falls through to the defaults-only fallback (level 3 minus settings) — connections from `malloy-config.json` quietly disappear, and the symptom shows up as the notebook chain failing ("cell N can't see definitions from cell K"). Regression test: `test/common/connection_manager.spec.ts`.
+
 1. **Discovered (project) config.** `discoverConfig(fileURL, workspaceFolder, urlReader)`. The workspace folder is the ceiling.
 2. **Global config.** `<globalConfigDirectory>/malloy-config.json`, if the setting is set and no project config was found. The `config` overlay still gets `rootDirectory: workspaceFolder` — DuckDB's anchor is always the workspace.
 3. **Settings + defaults.** Settings-based connections (`connectionMap`) are translated into the config POJO alongside `includeDefaultConnections: true`, so the registry fabricates one entry per backend type not already declared. Secret references in settings entries resolve through a scoped `secret` overlay (see below).
