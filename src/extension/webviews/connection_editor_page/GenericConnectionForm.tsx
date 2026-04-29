@@ -404,8 +404,8 @@ const PropertyField = ({
                 typeof value === 'string'
                   ? value
                   : value !== undefined
-                  ? String(value)
-                  : ''
+                    ? String(value)
+                    : ''
               }
               onInput={e => onChange(inputValue(e))}
               placeholder={placeholder}

@@ -79,8 +79,8 @@ export async function getMalloyDiagnostics(
       problem.severity === 'warn'
         ? DiagnosticSeverity.Warning
         : problem.severity === 'debug'
-        ? DiagnosticSeverity.Information
-        : DiagnosticSeverity.Error;
+          ? DiagnosticSeverity.Information
+          : DiagnosticSeverity.Error;
 
     const uri = problem.at ? problem.at.url : document.uri;
 

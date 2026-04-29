@@ -30,8 +30,8 @@ export function setRenderDiagnostics(
       log.severity === 'warn'
         ? vscode.DiagnosticSeverity.Warning
         : log.severity === 'info' || log.severity === 'debug'
-        ? vscode.DiagnosticSeverity.Information
-        : vscode.DiagnosticSeverity.Error;
+          ? vscode.DiagnosticSeverity.Information
+          : vscode.DiagnosticSeverity.Error;
 
     const hasLocation =
       log.url && (log.range.start.line > 0 || log.range.start.character > 0);

@@ -51,7 +51,7 @@ export const MalloyRenderer = ({postMessage, result}: MalloyRendererProps) => {
   useEffect(() => {
     if (result) {
       const malloyResult = API.util.wrapResult(result);
-      new HTMLView(document)
+      void new HTMLView(document)
         .render(malloyResult, {
           dataStyles: {},
           isDrillingEnabled: true,

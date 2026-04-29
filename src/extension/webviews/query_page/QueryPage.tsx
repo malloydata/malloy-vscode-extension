@@ -144,8 +144,8 @@ export function QueryPage({vscode}: QueryPageProps) {
           {
             const {schema} = message;
             setProgressMessage('');
-            setSchema(schema.map(json => Explore.fromJSON(json))),
-              setResultKind(ResultKind.SCHEMA);
+            setSchema(schema.map(json => Explore.fromJSON(json)));
+            setResultKind(ResultKind.SCHEMA);
             setAvailableKinds([ResultKind.SCHEMA]);
           }
           break;

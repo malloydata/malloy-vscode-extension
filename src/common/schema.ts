@@ -56,10 +56,10 @@ export function exploreSubtype(explore: Explore) {
       relationship === JoinRelationship.ManyToOne
         ? 'many_to_one'
         : relationship === JoinRelationship.OneToMany
-        ? 'one_to_many'
-        : JoinRelationship.OneToOne
-        ? 'one_to_one'
-        : 'base';
+          ? 'one_to_many'
+          : JoinRelationship.OneToOne
+            ? 'one_to_one'
+            : 'base';
   } else {
     subtype = 'base';
   }
@@ -173,7 +173,7 @@ export const getTypeLabelFromStructDef = (structDef: StructDef): string => {
       return `${getTypeLabelFromTypeDef(typeDef.elementTypeDef)}[]`;
     }
     if (typeDef.type === 'sql native' && typeDef.rawType) {
-      `${typeDef.type} (${typeDef.rawType})`;
+      return `${typeDef.type} (${typeDef.rawType})`;
     }
     return typeDef.type;
   };

@@ -88,11 +88,9 @@ export interface MessageTestEntry {
   entry: ConnectionConfigEntry;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface MessageGetConnectionTypeInfo {}
+export type MessageGetConnectionTypeInfo = Record<string, never>;
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface MessageInvalidateConnectionCache {}
+export type MessageInvalidateConnectionCache = Record<string, never>;
 
 export interface ConnectionTypeInfoResponse {
   registeredTypes: string[];
