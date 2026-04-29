@@ -27,7 +27,6 @@ export const errorMessage = (error: unknown): string => {
     message = error.message;
   } else if (typeof error === 'string') {
     message = error;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } else if (error && typeof error === 'object') {
     // Handle case when its an instance of Error but it is not detecting it
     // as such, or LSP ResponseError objects with data/message fields.

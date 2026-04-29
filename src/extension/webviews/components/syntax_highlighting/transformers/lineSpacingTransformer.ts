@@ -25,8 +25,8 @@ const getLineSpacingTransformer: GetTransformer = ({
         ...(Array.isArray(node.properties['style'])
           ? node.properties['style']
           : typeof node.properties['style'] === 'string'
-          ? [node.properties['style']]
-          : []),
+            ? [node.properties['style']]
+            : []),
       ];
 
       styled.push(`line-height: ${LINE_SPACING_MAP[lineSpacing]};`);

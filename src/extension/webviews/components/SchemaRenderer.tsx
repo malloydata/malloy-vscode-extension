@@ -90,8 +90,8 @@ function bucketFields(fields: Field[]) {
         explores.push(field);
       } else if (type === 'query') {
         queries.push(field);
-      } else {
-        dimensions.push(field) && !isFieldHidden(field);
+      } else if (!isFieldHidden(field)) {
+        dimensions.push(field);
       }
     }
   }

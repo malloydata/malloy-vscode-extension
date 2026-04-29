@@ -61,7 +61,8 @@ function getQueryCostStats({queryCostBytes, isEstimate}: QueryCost): string {
   )}`;
 }
 
-class MalloyNotebookCellStatusBarItem extends vscode.NotebookCellStatusBarItem {}
+class MalloyNotebookCellStatusBarItem
+  extends vscode.NotebookCellStatusBarItem {}
 
 class MalloyNotebookCellStatusBarItemProvider
   implements vscode.NotebookCellStatusBarItemProvider

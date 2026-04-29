@@ -128,7 +128,7 @@ export function DownloadForm({
     };
 
     if (!canStream) {
-      buildDownloadHref();
+      void buildDownloadHref();
     }
   }, [canStream, createTextBlob, href, onClose]);
 

@@ -65,7 +65,7 @@ export async function getMalloyDefinitionReference(
       }
     }
     return [];
-  } catch (error) {
+  } catch {
     // TODO It's probably possible to get some references from a model that has errors;
     //      maybe the Model api should not throw an error if there are errors, but just
     //      make them available via `.errors` or something.

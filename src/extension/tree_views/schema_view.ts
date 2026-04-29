@@ -60,10 +60,9 @@ const unknownIcon = 'unknown.svg';
 const sqlDatabaseIcon = 'sql-database.svg';
 const recordIcon = 'data-type-json.svg';
 
-export class SchemaProvider
-  implements
-    vscode.TreeDataProvider<ArrayItem | ExploreItem | FieldItem | RecordItem>
-{
+export class SchemaProvider implements vscode.TreeDataProvider<
+  ArrayItem | ExploreItem | FieldItem | RecordItem
+> {
   private readonly resultCache: Map<string, ExploreItem[]>;
   private previousKey: string | undefined;
   private refreshSchemaCache = false;
@@ -109,7 +108,7 @@ export class SchemaProvider
       );
       const explores = model.explores.map(explore => Explore.fromJSON(explore));
       return explores.sort(exploresByName);
-    } catch (error) {
+    } catch {
       return undefined;
     }
   }
