@@ -20,7 +20,8 @@ Key pieces the extension leans on:
 - **`contextOverlay({rootDirectory, configURL})`** — host context injected as the `config` overlay so DuckDB's `workingDirectory: {default: {config: 'rootDirectory'}}` default resolves correctly.
 - **`config.wrapConnections(wrapper)`** — in-place decoration of the connection lookup. Used to layer settings and post-processing on top of the core lookup.
 - **`config.readOverlay(name, ...path)`** — inspect the overlays that resolved this config (e.g. to recover the matched `configURL` after discovery).
-- **`config.releaseConnections()`** — closes every connection the lookup has handed out.
+- **`config.shutdown('close' | 'idle')`** — walks the cached connections and runs the corresponding lifecycle hook on each. `'close'` (terminal) makes the connection unusable; `'idle'` (reversible) releases backend-held resources (e.g. DuckDB closes the file lock) but leaves the connection logically valid — the next op transparently reattaches and the per-connection `schemaCache` survives. Backends without an `idle()` override get a no-op default.
+- **`config.releaseConnections()`** — deprecated alias for `shutdown('close')`. Kept for the existing `invalidateCache` call site; new code uses `shutdown(...)`.
 
 ## The Three Resolution Levels
 
@@ -64,7 +65,22 @@ The wrapper is pure decoration — the underlying `LookupConnection` from core s
 - `configCache`: identity-key → `CachedConfig`. Identity is either `discovered:<workspace>:<configURL>` (so nested configs within one workspace get distinct entries) or `fallback:<workspace>` (levels 2 and 3 don't vary by file within a workspace).
 - `directoryIndex`: file-directory URL → identity-key. Fast path for repeated lookups of files in the same directory.
 
-Any change to workspace roots, global config directory, settings, or a watched `malloy-config.json` calls `invalidateCache()`, which calls `releaseConnections()` on every cached `MalloyConfig` before clearing both maps. This is the only shutdown signal connections get — hence the care around invalidation events.
+Any change to workspace roots, global config directory, settings, or a watched `malloy-config.json` calls `invalidateCache()`, which calls `releaseConnections()` (= `shutdown('close')`) on every cached `MalloyConfig` before clearing both maps. This is the only **terminal** shutdown signal connections get — hence the care around invalidation events.
+
+## Per-Operation Idle (Lock Release)
+
+VS Code is a long-running host that, without help, would hold backend resources for the entire session. For DuckDB this means the OS file lock — making it impossible to run a CLI persistence build (or any second writer) against the same database while VS Code is open.
+
+The fix is decoupled lifetimes: `MalloyConfig` owns connection lifetime; `Runtime` is a per-operation borrower. After every operation the host calls `runtime.shutdown('idle')` in a `finally` block, which delegates to `config.shutdown('idle')`. For DuckDB this closes the underlying `DuckDBInstance` (releasing the file lock) but leaves the `DuckDBConnection` object alive with its schema cache intact; the next op reattaches lazily via `init()`. For other backends `idle()` is a default no-op.
+
+Call sites use the `idleRuntime(runtime)` helper from `src/util/idle_runtime.ts`, which wraps `runtime.shutdown('idle')` in a try/catch + `console.warn` so a shutdown failure can't mask the operation's result. Sites:
+
+- `src/worker/run_query.ts` — `runMSQLCell` (notebook malloy-sql cells) and the `runQuery` regular path
+- `src/worker/compile_query.ts` — compile-only path
+- `src/worker/node/download_query.ts` — download/export path
+- `src/server/translate_cache.ts` — every call site of the private `makeRuntime` factory (3: `translateWithTruncatedCache` and both branches of `translateWithCache`)
+
+`invalidateCache()` (above) deliberately keeps `releaseConnections()` (= terminal close) — config-file changes mean the connection identity itself is gone, not idle.
 
 ## Connection Factory
 

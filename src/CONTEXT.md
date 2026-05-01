@@ -10,7 +10,7 @@ src/
 └── worker/      Worker process (query execution, connection testing)
 ```
 
-`util/` contains a single `no_await.ts` helper for fire-and-forget promises.
+`util/` contains small async helpers: `no_await.ts` (fire-and-forget promises) and `idle_runtime.ts` (defensive `runtime.shutdown('idle')` used in `finally` blocks at every Runtime construction site so DuckDB's file lock is released between operations — full picture in `common/connections/CONTEXT.md` "Per-Operation Idle").
 
 ## Communication Between Domains
 

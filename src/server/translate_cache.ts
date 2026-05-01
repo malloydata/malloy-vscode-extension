@@ -37,6 +37,7 @@ import {BuildModelRequest, CellData} from '../common/types/file_handler';
 import {MalloySQLSQLParser} from '@malloydata/malloy-sql';
 import {FetchModelMessage} from '../common/types/message_types';
 import {fixLogRange} from '../common/malloy_sql';
+import {idleRuntime} from '../util/idle_runtime';
 import {
   prettyTime,
   prettyLogUri,
@@ -269,22 +270,26 @@ export class TranslateCache {
       // new runs preempt the current fetch
       const fileURL = new URL(uri);
       const runtime = await this.makeRuntime(fileURL, urlReader);
-      const modelMaterializer = await this.createModelMaterializer(
-        uri,
-        runtime,
-        false
-      );
-      const model = await modelMaterializer?.getModel();
-      if (model) {
-        this.truncatedCache.set(uri, {
-          model,
-          exploreCount,
-        });
+      try {
+        const modelMaterializer = await this.createModelMaterializer(
+          uri,
+          runtime,
+          false
+        );
+        const model = await modelMaterializer?.getModel();
+        if (model) {
+          this.truncatedCache.set(uri, {
+            model,
+            exploreCount,
+          });
+        }
+        this.connection.console.info(
+          `translateWithTruncatedCache ${prettyUri} miss`
+        );
+        return model;
+      } finally {
+        await idleRuntime(runtime);
       }
-      this.connection.console.info(
-        `translateWithTruncatedCache ${prettyUri} miss`
-      );
-      return model;
     }
     return undefined;
   }
@@ -305,65 +310,71 @@ export class TranslateCache {
     if (languageId === 'malloy-sql') {
       const parse = MalloySQLSQLParser.parse(text, uri);
       const runtime = await this.makeRuntime(fileURL, urlReader);
+      try {
+        const modelMaterializer = await this.createModelMaterializer(
+          uri,
+          runtime,
+          refreshSchemaCache
+        );
 
-      const modelMaterializer = await this.createModelMaterializer(
-        uri,
-        runtime,
-        refreshSchemaCache
-      );
-
-      for (const malloyQuery of parse.embeddedMalloyQueries) {
-        if (!modelMaterializer) {
-          throw new Error('Missing model definition');
-        }
-        try {
-          await modelMaterializer.getQuery(`run:\n${malloyQuery.query}`);
-        } catch (e) {
-          // some errors come from Runtime stuff
-          if (e instanceof MalloyError) {
-            e.problems.forEach(log => {
-              // "run:\n" adds a line, so we subtract the line here
-              fixLogRange(uri, malloyQuery, log, -1);
-            });
+        for (const malloyQuery of parse.embeddedMalloyQueries) {
+          if (!modelMaterializer) {
+            throw new Error('Missing model definition');
           }
+          try {
+            await modelMaterializer.getQuery(`run:\n${malloyQuery.query}`);
+          } catch (e) {
+            // some errors come from Runtime stuff
+            if (e instanceof MalloyError) {
+              e.problems.forEach(log => {
+                // "run:\n" adds a line, so we subtract the line here
+                fixLogRange(uri, malloyQuery, log, -1);
+              });
+            }
 
-          throw e;
+            throw e;
+          }
         }
-      }
 
-      const model = await modelMaterializer?.getModel();
-      this.connection.console.info(
-        `translateWithCache ${prettyUri} end in ${prettyTime(
-          performance.now() - t0
-        )}s`
-      );
-      return model;
+        const model = await modelMaterializer?.getModel();
+        this.connection.console.info(
+          `translateWithCache ${prettyUri} end in ${prettyTime(
+            performance.now() - t0
+          )}s`
+        );
+        return model;
+      } finally {
+        await idleRuntime(runtime);
+      }
     } else {
       const runtime = await this.makeRuntime(fileURL, urlReader);
-
-      const modelMaterializer = await this.createModelMaterializer(
-        uri,
-        runtime,
-        refreshSchemaCache
-      );
-      const model = await modelMaterializer?.getModel();
-      if (model?.problems?.length) {
-        this.connection.console.info(
-          `translateWithCache ${prettyUri} model has ${
-            model.problems.length
-          } problem(s); first problem at ${
-            model.problems[0].at?.url
-              ? prettyLogUri(model.problems[0].at.url)
-              : '(no url)'
-          }: ${model.problems[0].message}`
+      try {
+        const modelMaterializer = await this.createModelMaterializer(
+          uri,
+          runtime,
+          refreshSchemaCache
         );
+        const model = await modelMaterializer?.getModel();
+        if (model?.problems?.length) {
+          this.connection.console.info(
+            `translateWithCache ${prettyUri} model has ${
+              model.problems.length
+            } problem(s); first problem at ${
+              model.problems[0].at?.url
+                ? prettyLogUri(model.problems[0].at.url)
+                : '(no url)'
+            }: ${model.problems[0].message}`
+          );
+        }
+        this.connection.console.info(
+          `translateWithCache ${prettyUri} end in ${prettyTime(
+            performance.now() - t0
+          )}`
+        );
+        return model;
+      } finally {
+        await idleRuntime(runtime);
       }
-      this.connection.console.info(
-        `translateWithCache ${prettyUri} end in ${prettyTime(
-          performance.now() - t0
-        )}`
-      );
-      return model;
     }
   }
 }

@@ -47,6 +47,7 @@ import {Cell, CellData, FileHandler} from '../common/types/file_handler';
 import {CancellationToken, ProgressType} from 'vscode-jsonrpc';
 import {errorMessage} from '../common/errors';
 import {fixLogRange} from '../common/malloy_sql';
+import {idleRuntime} from '../util/idle_runtime';
 import {noAwait} from '../util/no_await';
 
 interface StructDefSuccess {
@@ -132,132 +133,136 @@ const runMSQLCell = async (
   const config = await connectionManager.getConfigForFile(url);
   const connections = config.connections;
   const runtime = new Runtime({urlReader, config});
-  const allBegin = Date.now();
-  const compileBegin = allBegin;
-  sendMessage({
-    status: QueryRunStatus.Compiling,
-  });
-
-  const modelMaterializer = await createModelMaterializer(
-    uri,
-    runtime,
-    cellData,
-    workspaceFolders
-  );
-
-  const connectionName = computeConnectionName(cellData);
-  const parsed = MalloySQLSQLParser.parse(currentCell.text, currentCell.uri);
-
-  let compiledStatement = currentCell.text;
-  const dialect = 'unknown';
-
-  for (const malloyQuery of parsed.embeddedMalloyQueries) {
-    if (!modelMaterializer) {
-      throw new Error('Missing model definition');
-    }
-    try {
-      const runnable = modelMaterializer.loadQuery(
-        `\nrun: ${malloyQuery.query}`
-      );
-      const generatedSQL = await runnable.getSQL();
-
-      compiledStatement = compiledStatement.replace(
-        malloyQuery.text,
-        `(${generatedSQL})`
-      );
-    } catch (e) {
-      if (e instanceof MalloyError) {
-        let message = 'Error: ';
-        e.problems.forEach(log => {
-          message += fixLogRange(uri, malloyQuery, log);
-        });
-        throw new MalloyError(message, e.problems);
-      }
-      throw e;
-    }
-  }
-
-  if (cancellationToken.isCancellationRequested) return;
-
-  console.info(compiledStatement);
-
-  sendMessage({
-    status: QueryRunStatus.Compiled,
-    sql: compiledStatement,
-    dialect,
-    showSQLOnly,
-  });
-
-  if (showSQLOnly) {
+  try {
+    const allBegin = Date.now();
+    const compileBegin = allBegin;
     sendMessage({
-      status: QueryRunStatus.EstimatedCost,
-      queryCostBytes: undefined,
-      schema: [],
+      status: QueryRunStatus.Compiling,
     });
+
+    const modelMaterializer = await createModelMaterializer(
+      uri,
+      runtime,
+      cellData,
+      workspaceFolders
+    );
+
+    const connectionName = computeConnectionName(cellData);
+    const parsed = MalloySQLSQLParser.parse(currentCell.text, currentCell.uri);
+
+    let compiledStatement = currentCell.text;
+    const dialect = 'unknown';
+
+    for (const malloyQuery of parsed.embeddedMalloyQueries) {
+      if (!modelMaterializer) {
+        throw new Error('Missing model definition');
+      }
+      try {
+        const runnable = modelMaterializer.loadQuery(
+          `\nrun: ${malloyQuery.query}`
+        );
+        const generatedSQL = await runnable.getSQL();
+
+        compiledStatement = compiledStatement.replace(
+          malloyQuery.text,
+          `(${generatedSQL})`
+        );
+      } catch (e) {
+        if (e instanceof MalloyError) {
+          let message = 'Error: ';
+          e.problems.forEach(log => {
+            message += fixLogRange(uri, malloyQuery, log);
+          });
+          throw new MalloyError(message, e.problems);
+        }
+        throw e;
+      }
+    }
+
+    if (cancellationToken.isCancellationRequested) return;
+
+    console.info(compiledStatement);
+
+    sendMessage({
+      status: QueryRunStatus.Compiled,
+      sql: compiledStatement,
+      dialect,
+      showSQLOnly,
+    });
+
+    if (showSQLOnly) {
+      sendMessage({
+        status: QueryRunStatus.EstimatedCost,
+        queryCostBytes: undefined,
+        schema: [],
+      });
+      return;
+    }
+
+    const runBegin = Date.now();
+    sendMessage({
+      status: QueryRunStatus.Running,
+      sql: compiledStatement,
+      dialect,
+    });
+
+    const connection = await connections.lookupConnection(connectionName);
+
+    const abortController = new AbortController();
+    cancellationToken.onCancellationRequested(() => {
+      abortController.abort();
+    });
+
+    const sqlResults = await connection.runSQL(compiledStatement, {
+      abortSignal: abortController.signal,
+    });
+
+    if (cancellationToken.isCancellationRequested) return;
+
+    // rendering is nice if we can do it. try to get a structdef for the last query,
+    // and if we get one, return Result object for rendering
+    const sql = compiledStatement
+      .replaceAll(/^--[^\n]*$/gm, '') // Remove comments
+      .replace(/;\s*$/, ''); // Remove trailing `;`
+    const structDefAttempt = await connection.fetchSchemaForSQLStruct(
+      {
+        selectStr: sql,
+        connection: connection.name,
+      },
+      {}
+    );
+
+    if (cancellationToken.isCancellationRequested) return;
+
+    const queryResult = fakeMalloyResult(
+      structDefAttempt,
+      compiledStatement,
+      sqlResults,
+      connectionName
+    );
+
+    // Calculate execution times.
+    const runFinish = Date.now();
+    const compileTime = elapsedTime(compileBegin, runBegin);
+    const runTime = elapsedTime(runBegin, runFinish);
+    const totalTime = elapsedTime(allBegin, runFinish);
+
+    sendMessage({
+      status: QueryRunStatus.Done,
+      name,
+      resultJson: queryResult.toJSON(),
+      canDownloadStream: false,
+      stats: {
+        compileTime,
+        runTime,
+        totalTime,
+      },
+    });
+
     return;
+  } finally {
+    await idleRuntime(runtime);
   }
-
-  const runBegin = Date.now();
-  sendMessage({
-    status: QueryRunStatus.Running,
-    sql: compiledStatement,
-    dialect,
-  });
-
-  const connection = await connections.lookupConnection(connectionName);
-
-  const abortController = new AbortController();
-  cancellationToken.onCancellationRequested(() => {
-    abortController.abort();
-  });
-
-  const sqlResults = await connection.runSQL(compiledStatement, {
-    abortSignal: abortController.signal,
-  });
-
-  if (cancellationToken.isCancellationRequested) return;
-
-  // rendering is nice if we can do it. try to get a structdef for the last query,
-  // and if we get one, return Result object for rendering
-  const sql = compiledStatement
-    .replaceAll(/^--[^\n]*$/gm, '') // Remove comments
-    .replace(/;\s*$/, ''); // Remove trailing `;`
-  const structDefAttempt = await connection.fetchSchemaForSQLStruct(
-    {
-      selectStr: sql,
-      connection: connection.name,
-    },
-    {}
-  );
-
-  if (cancellationToken.isCancellationRequested) return;
-
-  const queryResult = fakeMalloyResult(
-    structDefAttempt,
-    compiledStatement,
-    sqlResults,
-    connectionName
-  );
-
-  // Calculate execution times.
-  const runFinish = Date.now();
-  const compileTime = elapsedTime(compileBegin, runBegin);
-  const runTime = elapsedTime(runBegin, runFinish);
-  const totalTime = elapsedTime(allBegin, runFinish);
-
-  sendMessage({
-    status: QueryRunStatus.Done,
-    name,
-    resultJson: queryResult.toJSON(),
-    canDownloadStream: false,
-    stats: {
-      compileTime,
-      runTime,
-      totalTime,
-    },
-  });
-
-  return;
 };
 
 export const runQuery = async (
@@ -328,125 +333,129 @@ export const runQuery = async (
       urlReader: fileHandler,
       config,
     });
-    const allBegin = Date.now();
-    const compileBegin = allBegin;
-    sendMessage({
-      status: QueryRunStatus.Compiling,
-    });
+    try {
+      const allBegin = Date.now();
+      const compileBegin = allBegin;
+      sendMessage({
+        status: QueryRunStatus.Compiling,
+      });
 
-    const runnable = await createRunnable(
-      query,
-      runtime,
-      cellData,
-      workspaceFolders
-    );
-
-    if (showSchemaOnly) {
-      const modelMaterializer = await createModelMaterializer(
-        uri,
+      const runnable = await createRunnable(
+        query,
         runtime,
         cellData,
         workspaceFolders
       );
-      const model = await modelMaterializer?.getModel();
-      if (model) {
-        if (query.type === 'file' && query.exploreName) {
-          sendMessage({
-            status: QueryRunStatus.Schema,
-            schema: model.explores
-              .filter(explore => explore.name === query.exploreName)
-              .map(explore => explore.toJSON()),
-          });
-        } else {
-          sendMessage({
-            status: QueryRunStatus.Schema,
-            schema: model.explores.map(explore => explore.toJSON()),
-          });
+
+      if (showSchemaOnly) {
+        const modelMaterializer = await createModelMaterializer(
+          uri,
+          runtime,
+          cellData,
+          workspaceFolders
+        );
+        const model = await modelMaterializer?.getModel();
+        if (model) {
+          if (query.type === 'file' && query.exploreName) {
+            sendMessage({
+              status: QueryRunStatus.Schema,
+              schema: model.explores
+                .filter(explore => explore.name === query.exploreName)
+                .map(explore => explore.toJSON()),
+            });
+          } else {
+            sendMessage({
+              status: QueryRunStatus.Schema,
+              schema: model.explores.map(explore => explore.toJSON()),
+            });
+          }
         }
+        return;
       }
-      return;
-    }
 
-    const preparedQuery = await runnable.getPreparedQuery();
-    const preparedResult = await runnable.getPreparedResult();
+      const preparedQuery = await runnable.getPreparedQuery();
+      const preparedResult = await runnable.getPreparedResult();
 
-    // Set the row limit to the limit provided in the final stage of the query, if present
-    const rowLimit = preparedResult.resultExplore.limit;
-    const dialect = preparedQuery.dialect;
+      // Set the row limit to the limit provided in the final stage of the query, if present
+      const rowLimit = preparedResult.resultExplore.limit;
+      const dialect = preparedQuery.dialect;
 
-    const sql = preparedResult.sql;
-    if (cancellationToken.isCancellationRequested) return;
-    console.info(sql);
+      const sql = preparedResult.sql;
+      if (cancellationToken.isCancellationRequested) return;
+      console.info(sql);
 
-    sendMessage({
-      status: QueryRunStatus.Compiled,
-      sql,
-      dialect,
-      showSQLOnly,
-    });
-
-    if (showSQLOnly) {
-      const schema: SerializedExplore[] = [];
-      schema.push(preparedResult.resultExplore.toJSON());
-      const estimatedRunStats = await runnable.estimateQueryCost();
       sendMessage({
-        status: QueryRunStatus.EstimatedCost,
-        queryCostBytes: estimatedRunStats?.queryCostBytes,
-        schema,
+        status: QueryRunStatus.Compiled,
+        sql,
+        dialect,
+        showSQLOnly,
       });
-      return;
-    }
 
-    const runBegin = Date.now();
-    sendMessage({
-      status: QueryRunStatus.Running,
-      sql,
-      dialect,
-    });
+      if (showSQLOnly) {
+        const schema: SerializedExplore[] = [];
+        schema.push(preparedResult.resultExplore.toJSON());
+        const estimatedRunStats = await runnable.estimateQueryCost();
+        sendMessage({
+          status: QueryRunStatus.EstimatedCost,
+          queryCostBytes: estimatedRunStats?.queryCostBytes,
+          schema,
+        });
+        return;
+      }
 
-    let sourceRefWithMetadata = undefined;
-    const {sourceExplore} = preparedResult;
-    if (sourceExplore?.sourceStructDef) {
-      const {name, sourceStructDef} = sourceExplore;
-      // a query might not live in the same file as the source; pull location from the source
-      const {type, location, annotation} = sourceStructDef;
-      const sourceComponentInfos = sourceExplore.getSourceComponents();
+      const runBegin = Date.now();
+      sendMessage({
+        status: QueryRunStatus.Running,
+        sql,
+        dialect,
+      });
 
-      sourceRefWithMetadata = {
-        type,
+      let sourceRefWithMetadata = undefined;
+      const {sourceExplore} = preparedResult;
+      if (sourceExplore?.sourceStructDef) {
+        const {name, sourceStructDef} = sourceExplore;
+        // a query might not live in the same file as the source; pull location from the source
+        const {type, location, annotation} = sourceStructDef;
+        const sourceComponentInfos = sourceExplore.getSourceComponents();
+
+        sourceRefWithMetadata = {
+          type,
+          name,
+          location,
+          annotation,
+          sourceComponentInfos,
+        };
+      }
+
+      const queryResult = await runnable.run({
+        rowLimit,
+        abortSignal,
+        clientMetadata: {sourceRefWithMetadata},
+      });
+      if (cancellationToken.isCancellationRequested) return;
+
+      // Calculate execution times.
+      const runFinish = Date.now();
+      const compileTime = elapsedTime(compileBegin, runBegin);
+      const runTime = elapsedTime(runBegin, runFinish);
+      const totalTime = elapsedTime(allBegin, runFinish);
+
+      sendMessage({
         name,
-        location,
-        annotation,
-        sourceComponentInfos,
-      };
+        status: QueryRunStatus.Done,
+        resultJson: queryResult.toJSON(),
+        canDownloadStream: !isBrowser,
+        defaultTab,
+        profilingUrl: queryResult.profilingUrl,
+        stats: {
+          compileTime,
+          runTime,
+          totalTime,
+        },
+      });
+    } finally {
+      await idleRuntime(runtime);
     }
-
-    const queryResult = await runnable.run({
-      rowLimit,
-      abortSignal,
-      clientMetadata: {sourceRefWithMetadata},
-    });
-    if (cancellationToken.isCancellationRequested) return;
-
-    // Calculate execution times.
-    const runFinish = Date.now();
-    const compileTime = elapsedTime(compileBegin, runBegin);
-    const runTime = elapsedTime(runBegin, runFinish);
-    const totalTime = elapsedTime(allBegin, runFinish);
-
-    sendMessage({
-      name,
-      status: QueryRunStatus.Done,
-      resultJson: queryResult.toJSON(),
-      canDownloadStream: !isBrowser,
-      defaultTab,
-      profilingUrl: queryResult.profilingUrl,
-      stats: {
-        compileTime,
-        runTime,
-        totalTime,
-      },
-    });
   } catch (error) {
     if (cancellationToken.isCancellationRequested) {
       console.info('Cancelled request generated error', error);
