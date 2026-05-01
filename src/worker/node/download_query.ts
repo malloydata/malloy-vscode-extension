@@ -36,6 +36,7 @@ import {
   QueryDownloadMessage,
   QueryDownloadStatus,
 } from '../../common/types/message_types';
+import {idleRuntime} from '../../util/idle_runtime';
 import {noAwait} from '../../util/no_await';
 
 export async function downloadQuery(
@@ -65,53 +66,56 @@ export async function downloadQuery(
     urlReader: fileHandler,
     config,
   });
-
-  sendMessage({
-    status: QueryDownloadStatus.Compiling,
-  });
-
-  let cellData: CellData | null = null;
-  if (uri.startsWith('vscode-notebook-cell:')) {
-    cellData = await fileHandler.fetchCellData(uri);
-  }
-  let workspaceFolders: string[] = [];
-  if (uri.startsWith('untitled:')) {
-    workspaceFolders = await fileHandler.fetchWorkspaceFolders(uri);
-  }
-  const runnable = await createRunnable(
-    query,
-    runtime,
-    cellData,
-    workspaceFolders
-  );
-
-  sendMessage({
-    status: QueryDownloadStatus.Running,
-  });
-
-  console.info(`Downloading ${uri} to ${downloadUri} `);
-  const writeStream = fs.createWriteStream(fileURLToPath(downloadUri));
   try {
-    const writer =
-      downloadOptions.format === 'json'
-        ? new JSONWriter(writeStream)
-        : new CSVWriter(writeStream);
-    const rowLimit =
-      typeof downloadOptions.amount === 'number'
-        ? downloadOptions.amount
-        : undefined;
-    console.info(
-      `Downloading ${
-        typeof rowLimit === 'undefined' ? 'unlimited' : rowLimit
-      } rows`
-    );
-    const rowStream = runnable.runStream({
-      rowLimit,
-      abortSignal: abortController.signal,
+    sendMessage({
+      status: QueryDownloadStatus.Compiling,
     });
-    await writer.process(rowStream);
+
+    let cellData: CellData | null = null;
+    if (uri.startsWith('vscode-notebook-cell:')) {
+      cellData = await fileHandler.fetchCellData(uri);
+    }
+    let workspaceFolders: string[] = [];
+    if (uri.startsWith('untitled:')) {
+      workspaceFolders = await fileHandler.fetchWorkspaceFolders(uri);
+    }
+    const runnable = await createRunnable(
+      query,
+      runtime,
+      cellData,
+      workspaceFolders
+    );
+
+    sendMessage({
+      status: QueryDownloadStatus.Running,
+    });
+
+    console.info(`Downloading ${uri} to ${downloadUri} `);
+    const writeStream = fs.createWriteStream(fileURLToPath(downloadUri));
+    try {
+      const writer =
+        downloadOptions.format === 'json'
+          ? new JSONWriter(writeStream)
+          : new CSVWriter(writeStream);
+      const rowLimit =
+        typeof downloadOptions.amount === 'number'
+          ? downloadOptions.amount
+          : undefined;
+      console.info(
+        `Downloading ${
+          typeof rowLimit === 'undefined' ? 'unlimited' : rowLimit
+        } rows`
+      );
+      const rowStream = runnable.runStream({
+        rowLimit,
+        abortSignal: abortController.signal,
+      });
+      await writer.process(rowStream);
+    } finally {
+      writeStream.close();
+    }
+    console.info(`Finished downloading ${uri} to ${downloadUri} `);
   } finally {
-    writeStream.close();
+    await idleRuntime(runtime);
   }
-  console.info(`Finished downloading ${uri} to ${downloadUri} `);
 }
