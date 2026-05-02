@@ -193,6 +193,38 @@ export const initServer = (
 
   documents.onDidChangeContent(change => {
     debouncedDiagnoseDocument(change.document);
+
+    // Re-diagnose sibling cells of the same notebook. The notebook-aggregated
+    // diagnostics published to the .malloynb file URI are built from whatever
+    // cell URIs appear in the current diagnose call's map; without this
+    // fan-out, an error in cell B that became valid because the user edited
+    // cell A stays in the Problems pane until cell B is itself edited.
+    // Translate cache's `dependentsOf` is supposed to catch this, but its
+    // hash-comparison heuristic for "later cell in the same notebook" is
+    // unreliable because cell URI fragments aren't lexicographically ordered
+    // by notebook position. Brute-forcing all siblings keeps it simple.
+    // Cycle-safe: this fan-out only fires from didChangeContent; the
+    // sibling re-diagnose calls don't re-enter this handler.
+    if (change.document.uri.startsWith('vscode-notebook-cell:')) {
+      let url: URL;
+      try {
+        url = new URL(change.document.uri);
+      } catch {
+        return;
+      }
+      for (const otherDoc of documents.all()) {
+        if (otherDoc.uri === change.document.uri) continue;
+        if (!otherDoc.uri.startsWith('vscode-notebook-cell:')) continue;
+        let otherUrl: URL;
+        try {
+          otherUrl = new URL(otherDoc.uri);
+        } catch {
+          continue;
+        }
+        if (otherUrl.pathname !== url.pathname) continue;
+        debouncedDiagnoseDocument(otherDoc);
+      }
+    }
   });
 
   function ejectIfUnused(uri: string) {
