@@ -560,6 +560,7 @@
   "dependencies": {
     "@duckdb/node-api": "^1.5.0-r.1",
     "@malloydata/db-bigquery": "0.0.390",
+    "@malloydata/db-duckdb": "0.0.390",
     "@malloydata/db-mysql": "0.0.390",
     "@malloydata/db-postgres": "0.0.390",
     "@malloydata/db-publisher": "0.0.390",
