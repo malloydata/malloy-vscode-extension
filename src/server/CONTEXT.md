@@ -26,7 +26,7 @@ Document lifecycle:
 
 ### `translate_cache.ts` — Model Compilation Cache
 - `translateWithCache(uri)` — compiles Malloy to validated model, caches by URI
-- Creates an ephemeral `Runtime` per operation via the private `makeRuntime` factory; each call site wraps the operation in a `try`/`finally` and calls `idleRuntime(runtime)` on the way out so DuckDB releases its file lock between language-server compiles. See `src/common/connections/CONTEXT.md` ("Per-Operation Idle").
+- Creates an ephemeral `Runtime` per operation via the private `makeRuntime` factory; each call site wraps the operation in a `try`/`finally` and calls `idleRuntime(runtime)` on the way out — the "op done" boundary the connection layer uses for cleanup. For DuckDB with `shareable: true` configured (malloy ≥ 0.0.391), this is where the file lock is released between language-server compiles; under the default mode it's effectively a no-op for the lock. See `src/common/connections/CONTEXT.md` ("Per-Operation Idle").
 - Tracks import dependency graph for cascading invalidation
 - Notebook support: `createModelMaterializer` chains cell models (`loadModel` then `extendModel` over every prior code cell). Full mechanism documented in `src/extension/notebook/CONTEXT.md` ("How Cell Chaining Works").
 - `translateWithTruncatedCache()` — partial compilation for fast schema completions

@@ -10,7 +10,7 @@ src/
 └── worker/      Worker process (query execution, connection testing)
 ```
 
-`util/` contains small async helpers: `no_await.ts` (fire-and-forget promises) and `idle_runtime.ts` (defensive `runtime.shutdown('idle')` used in `finally` blocks at every Runtime construction site so DuckDB's file lock is released between operations — full picture in `common/connections/CONTEXT.md` "Per-Operation Idle").
+`util/` contains small async helpers: `no_await.ts` (fire-and-forget promises) and `idle_runtime.ts` (defensive `runtime.shutdown('idle')` used in `finally` blocks at every Runtime construction site — the "op done" boundary the connection layer uses for cleanup. For DuckDB with `shareable: true` configured (malloy ≥ 0.0.391), this is where the file lock is released between operations; under the default `shareable: false` it's effectively a no-op for the lock. Full picture in `common/connections/CONTEXT.md` "Per-Operation Idle").
 
 ## Communication Between Domains
 
