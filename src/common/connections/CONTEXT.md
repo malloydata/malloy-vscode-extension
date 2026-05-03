@@ -67,11 +67,19 @@ The wrapper is pure decoration — the underlying `LookupConnection` from core s
 
 Any change to workspace roots, global config directory, settings, or a watched `malloy-config.json` calls `invalidateCache()`, which calls `releaseConnections()` (= `shutdown('close')`) on every cached `MalloyConfig` before clearing both maps. This is the only **terminal** shutdown signal connections get — hence the care around invalidation events.
 
-## Per-Operation Idle (Lock Release)
+## Per-Operation Idle (the host's "op done" boundary)
 
-VS Code is a long-running host that, without help, would hold backend resources for the entire session. For DuckDB this means the OS file lock — making it impossible to run a CLI persistence build (or any second writer) against the same database while VS Code is open.
+VS Code is a long-running host. Backends that hold expensive per-operation state (DuckDB's OS file lock being the canonical example) need a way to be told "the operation completed; if you have anything to release, now's the time." Malloy's contract for that is `runtime.shutdown('idle')`, which delegates to `config.shutdown('idle')` and ultimately to each cached connection's `idle()` method.
 
-The fix is decoupled lifetimes: `MalloyConfig` owns connection lifetime; `Runtime` is a per-operation borrower. After every operation the host calls `runtime.shutdown('idle')` in a `finally` block, which delegates to `config.shutdown('idle')`. For DuckDB this closes the underlying `DuckDBInstance` (releasing the file lock) but leaves the `DuckDBConnection` object alive with its schema cache intact; the next op reattaches lazily via `init()`. For other backends `idle()` is a default no-op.
+The host's job is to call it, every time, in a `finally` block at every Runtime construction site. The connection's job is to do whatever's appropriate at the idle boundary.
+
+What `idle()` actually does varies by backend and by user config:
+
+- **DuckDB with `shareable: true`** (per-connection in `malloy-config.json`, malloy ≥ 0.0.391): `idle()` runs `DETACH` against the attached database file, releasing the OS `fcntl` lock. The next op transparently reattaches via `setupOnce()`. The C++ Connection itself is never torn down — schema cache and other connection-level state survive. This is the mode that makes VS Code + `malloy-cli` work on the same DuckDB file simultaneously.
+- **DuckDB with `shareable: false`** (default): `idle()` is effectively a no-op for the lock. The lock is held for the connection's lifetime, same as it always was. Faster per-op, but blocks other tools from using the file.
+- **Other backends**: `idle()` is a default no-op. Backends without expensive per-op state don't need this hook.
+
+The `shareable` choice belongs to the user, per-connection in `malloy-config.json` — host code does not (and should not) override it. See [the malloy 0.0.391 PR](https://github.com/malloydata/malloy/pull/2795) for the design.
 
 Call sites use the `idleRuntime(runtime)` helper from `src/util/idle_runtime.ts`, which wraps `runtime.shutdown('idle')` in a try/catch + `console.warn` so a shutdown failure can't mask the operation's result. Sites:
 
@@ -79,6 +87,8 @@ Call sites use the `idleRuntime(runtime)` helper from `src/util/idle_runtime.ts`
 - `src/worker/compile_query.ts` — compile-only path
 - `src/worker/node/download_query.ts` — download/export path
 - `src/server/translate_cache.ts` — every call site of the private `makeRuntime` factory (3: `translateWithTruncatedCache` and both branches of `translateWithCache`)
+
+These call sites are load-bearing for `shareable: true` users — without them the host never signals "op done" to the connection, so `DETACH` never fires and the lock stays held until terminal close. Don't remove the `try`/`finally` wrapping when refactoring.
 
 `invalidateCache()` (above) deliberately keeps `releaseConnections()` (= terminal close) — config-file changes mean the connection identity itself is gone, not idle.
 
@@ -130,6 +140,11 @@ The `malloy/getConnectionTypeInfo` LSP request bridges the extension host (which
 - Single-key objects like `{env: "NAME"}` are overlay references. Overlays visible to a `malloy-config.json`: `env` (process env vars; desktop-only) and `config` (host context — `rootDirectory`, `configURL`). **No `secret` overlay is visible to config files** — see [Settings via the `secret` Overlay](#settings-via-the-secret-overlay-level-3) for why.
 - `includeDefaultConnections` (default `false`): when true, the registry fabricates one entry per backend type not already declared. Level 3 always sets this; levels 1 and 2 leave it to the config author.
 - `malloy-config-local.json` sits alongside `malloy-config.json` for developer-specific credentials. Core's discovery merges `connections` by name (local wins); other top-level sections from the local file replace the shared file wholesale.
+
+### DuckDB-specific properties
+
+- **`shareable: true`** (malloy ≥ 0.0.391, default `false`): releases the database file's OS lock between malloy operations so other tools (e.g. `malloy-cli build` in the integrated terminal, the `duckdb` CLI) can use the same file while malloy is running. Adds ~50ms per operation. The lock is released at the host's `idle()` boundary (see [Per-Operation Idle](#per-operation-idle-the-hosts-op-done-boundary) above), so `shareable: true` is only effective in hosts that wire idle correctly — VS Code does. Silently a no-op for `:memory:` and remote schemes (MotherDuck etc.); the normalized config records `effectiveShareable: false` in those cases.
+- **`readOnly: true`**: opens the database in read-only mode. Composes correctly with `shareable: true` — under shareable mode, `readOnly` applies to the attached real file via `(READ_ONLY)` on the ATTACH, while the in-memory primary stays writable for malloy's internal scratch state.
 
 ## Settings
 

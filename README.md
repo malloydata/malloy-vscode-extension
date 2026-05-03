@@ -1,5 +1,5 @@
 # Malloy
-Malloy is an open source language for describing data relationships and transformations. It is both a semantic modeling language and a querying language that runs queries against a relational database. Malloy currently supports BigQuery, Postgres, and DuckDB. 
+Malloy is an open source language for describing data relationships and transformations. It is both a semantic modeling language and a querying language that runs queries against a relational database. Malloy supports every database connection registered by the core `@malloydata/malloy` library — at the time of writing that includes BigQuery, Postgres, MySQL, Snowflake, MotherDuck, DuckDB, Presto, and Trino. The list grows with each release; the live set is whatever shows up in the connection editor in your installed version.
 
 We've built a Visual Studio Code extension to facilitate building Malloy data models, querying and transforming data, and creating simple visualizations and dashboards.
 
