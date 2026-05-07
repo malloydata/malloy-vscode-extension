@@ -38,6 +38,7 @@ import {
 } from '../common/types/worker_message_types';
 
 import {
+  GivenInfo,
   QueryMessageStatus,
   QueryRunStatus,
 } from '../common/types/message_types';
@@ -273,8 +274,15 @@ export const runQuery = async (
   messageRun: MessageRun,
   cancellationToken: CancellationToken
 ): Promise<void> => {
-  const {defaultTab, name, panelId, query, showSQLOnly, showSchemaOnly} =
-    messageRun;
+  const {
+    defaultTab,
+    givens,
+    name,
+    panelId,
+    query,
+    showSQLOnly,
+    showSchemaOnly,
+  } = messageRun;
 
   const sendMessage = (message: QueryMessageStatus) => {
     console.debug('sendMessage', panelId, message.status);
@@ -374,7 +382,27 @@ export const runQuery = async (
       }
 
       const preparedQuery = await runnable.getPreparedQuery();
-      const preparedResult = await runnable.getPreparedResult();
+
+      // Sent before compile/run so the editor is reachable when the
+      // run itself fails (e.g. a required given with no value).
+      const givenInfos: GivenInfo[] = [];
+      for (const [givenName, given] of preparedQuery.givens) {
+        givenInfos.push({
+          name: givenName,
+          kind: given.type.type,
+          hasDefault: given.default !== undefined,
+          currentValue: givens?.[givenName],
+        });
+      }
+      if (givenInfos.length > 0) {
+        sendMessage({
+          status: QueryRunStatus.Givens,
+          panelId,
+          givens: givenInfos,
+        });
+      }
+
+      const preparedResult = await runnable.getPreparedResult({givens});
 
       // Set the row limit to the limit provided in the final stage of the query, if present
       const rowLimit = preparedResult.resultExplore.limit;
@@ -431,6 +459,7 @@ export const runQuery = async (
         rowLimit,
         abortSignal,
         clientMetadata: {sourceRefWithMetadata},
+        givens,
       });
       if (cancellationToken.isCancellationRequested) return;
 
