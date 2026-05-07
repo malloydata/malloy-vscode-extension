@@ -157,6 +157,7 @@ export function QueryPage({vscode}: QueryPageProps) {
           break;
         case QueryRunStatus.Error:
           setError(message.error);
+          setProgressMessage('');
           break;
         case QueryRunStatus.Compiled:
           if (message.showSQLOnly) {
