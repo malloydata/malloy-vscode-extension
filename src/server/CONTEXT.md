@@ -42,7 +42,7 @@ Fast parsing without compilation. Used by hover, symbols, lenses, completions.
 |-----------|---------|-------------------|
 | `completions/` | Autocomplete (keywords + schema fields) | Partial (truncated) |
 | `diagnostics/` | Error/warning reporting | Yes |
-| `hover/` | Hover documentation | No (parse only) |
+| `hover/` | Hover documentation + reference info (givens, fields, sources) | Parse for keyword docs; compile for references |
 | `definitions/` | Go-to-definition, import navigation | Yes |
 | `symbols/` | Document outline / symbol tree | No (parse only) |
 | `lenses/` | Run buttons, table links (CodeLens) | Yes |

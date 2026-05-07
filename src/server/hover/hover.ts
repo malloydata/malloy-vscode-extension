@@ -59,23 +59,19 @@ export const getHover = async (
             value,
           },
         };
-      } else if (context.type === 'model_property') {
-        const model = await translateCache.translateWithCache(
-          document.uri,
-          document.languageId
-        );
-        const importLocation = model?.getImport(position);
-        if (importLocation) {
-          return getImportHover(translateCache, documents, importLocation);
+      }
+      const model = await translateCache.translateWithCache(
+        document.uri,
+        document.languageId
+      );
+      if (model) {
+        if (context.type === 'model_property') {
+          const importLocation = model.getImport(position);
+          if (importLocation) {
+            return getImportHover(translateCache, documents, importLocation);
+          }
         }
-
-        return null;
-      } else {
-        const model = await translateCache.translateWithCache(
-          document.uri,
-          document.languageId
-        );
-        const reference = model?.getReference(position);
+        const reference = model.getReference(position);
         if (reference) {
           return getReferenceHover(translateCache, documents, reference);
         }
@@ -139,11 +135,15 @@ function bulletedList(
 function getReferenceHover(
   _translateCache: TranslateCache,
   _documents: TextDocuments<TextDocument>,
-  {text, definition}: DocumentReference
+  reference: DocumentReference
 ) {
-  const tags = annotationToTaglines(definition.annotation).join('');
+  const tags = annotationToTaglines(reference.definition.annotation).join('');
+  const defaultPart =
+    reference.type === 'givenReference' && reference.definition.defaultText
+      ? ` is ${reference.definition.defaultText}`
+      : '';
   const markdown = `\`\`\`
-${tags}${text}: ${definition.type}
+${tags}${reference.text}: ${reference.definition.type}${defaultPart}
 \`\`\``;
   const contents: MarkupContent = {
     kind: MarkupKind.Markdown,
