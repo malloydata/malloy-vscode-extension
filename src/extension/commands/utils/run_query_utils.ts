@@ -24,7 +24,7 @@
 import * as vscode from 'vscode';
 
 import {MALLOY_EXTENSION_STATE, RunState} from '../../state';
-import {Result} from '@malloydata/malloy';
+import {GivenValue, Result} from '@malloydata/malloy';
 import {
   QueryMessageStatus,
   QueryRunStatus,
@@ -53,6 +53,34 @@ export interface RunMalloyQueryOptions {
   showSchemaOnly?: boolean;
   withWebview?: boolean;
   defaultTab?: string;
+  givens?: Record<string, GivenValue>;
+}
+
+/** Args needed to invoke `runMalloyQuery` again on the same panel. */
+interface PanelRerunState {
+  context: vscode.ExtensionContext;
+  worker: WorkerConnection;
+  query: QuerySpec;
+  name: string;
+  options: RunMalloyQueryOptions;
+}
+
+const panelRerunStates: Map<string, PanelRerunState> = new Map();
+
+export function getPanelRerunState(
+  panelId: string
+): PanelRerunState | undefined {
+  return panelRerunStates.get(panelId);
+}
+
+/**
+ * Forward a `RunCommand` message from the webview to the VS Code command
+ * bus. Several phase handlers attach this — give them one place to call.
+ */
+function dispatchRunCommand(panelId: string, message: QueryMessageStatus) {
+  if (message.status !== QueryRunStatus.RunCommand) return;
+  MALLOY_EXTENSION_STATE.setActiveWebviewPanelId(panelId);
+  noAwait(vscode.commands.executeCommand(message.command, ...message.args));
 }
 
 /**
@@ -125,8 +153,12 @@ export async function runMalloyQuery(
   const showSQLOnly = options.showSQLOnly ?? false;
   const showSchemaOnly = options.showSchemaOnly ?? false;
   const withWebview = options.withWebview ?? true;
-  const {defaultTab} = options;
+  const {defaultTab, givens} = options;
   const queryLine = MALLOY_EXTENSION_STATE.getActivePosition()?.line ?? 0;
+
+  if (withWebview) {
+    panelRerunStates.set(panelId, {context, worker, query, name, options});
+  }
 
   return new Promise((resolve, reject) => {
     const cancellationTokenSource = new CancellationTokenSource();
@@ -166,6 +198,9 @@ export async function runMalloyQuery(
         query.documentMeta
       );
       subscriptions.push(showSchemaTreeViewWhenFocused(current.panel, panelId));
+      current.panel.onDidDispose(() => {
+        panelRerunStates.delete(panelId);
+      });
     }
 
     worker
@@ -178,6 +213,7 @@ export async function runMalloyQuery(
           showSQLOnly,
           showSchemaOnly,
           defaultTab,
+          givens,
         },
         cancellationTokenSource.token
       )
@@ -229,20 +265,19 @@ export async function runMalloyQuery(
         case QueryRunStatus.Schema:
           {
             progress?.report({increment: 100, message: 'Complete'});
-            current?.messages.onReceiveMessage(message => {
-              if (message.status === QueryRunStatus.RunCommand) {
-                MALLOY_EXTENSION_STATE.setActiveWebviewPanelId(panelId);
-                noAwait(
-                  vscode.commands.executeCommand(
-                    message.command,
-                    ...message.args
-                  )
-                );
-              }
-            });
+            current?.messages.onReceiveMessage(message =>
+              dispatchRunCommand(panelId, message)
+            );
             unsubscribe();
             resolve(undefined);
           }
+          break;
+        case QueryRunStatus.Givens:
+          // Attach now so the editor's Run button works even if the
+          // run errors out before reaching Done.
+          current?.messages.onReceiveMessage(message =>
+            dispatchRunCommand(panelId, message)
+          );
           break;
         case QueryRunStatus.EstimatedCost:
           {
@@ -268,6 +303,7 @@ export async function runMalloyQuery(
             progress?.report({increment: 100, message: 'Rendering'});
 
             current?.messages.onReceiveMessage(message => {
+              dispatchRunCommand(panelId, message);
               if (message.status === QueryRunStatus.StartDownload) {
                 noAwait(
                   queryDownload(
@@ -277,14 +313,6 @@ export async function runMalloyQuery(
                     queryResult,
                     panelId,
                     name
-                  )
-                );
-              } else if (message.status === QueryRunStatus.RunCommand) {
-                MALLOY_EXTENSION_STATE.setActiveWebviewPanelId(panelId);
-                noAwait(
-                  vscode.commands.executeCommand(
-                    message.command,
-                    ...message.args
                   )
                 );
               } else if (message.status === QueryRunStatus.RenderLogs) {

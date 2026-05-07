@@ -62,6 +62,7 @@ import {
 } from '../common/types/worker_message_types';
 import {BaseLanguageClient} from 'vscode-languageclient';
 import {WorkerConnection} from './worker_connection';
+import {rerunWithGivensCommand} from './commands/rerun_with_givens';
 import {runQueryAtCursorCommand} from './commands/run_query_at_cursor';
 import {showSchemaFileCommand} from './commands/show_schema_file';
 import {noAwait} from '../util/no_await';
@@ -129,6 +130,13 @@ export const setupSubscriptions = async (
   context.subscriptions.push(
     vscode.commands.registerCommand('malloy.runQueryAtCursor', () =>
       runQueryAtCursorCommand(client)
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      'malloy.rerunWithGivens',
+      rerunWithGivensCommand
     )
   );
 

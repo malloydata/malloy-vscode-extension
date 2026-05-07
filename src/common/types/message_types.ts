@@ -22,6 +22,7 @@
  */
 
 import {
+  GivenValue,
   ModelDef,
   NamedQueryDef,
   ResultJSON,
@@ -60,6 +61,21 @@ export enum QueryRunStatus {
   RunCommand = 'run-command',
   Schema = 'schema',
   RenderLogs = 'render-logs',
+  Givens = 'givens',
+}
+
+/**
+ * Serialized given metadata sent from worker → webview. Stripped down
+ * from the foundation API's `Given` so it can cross the postMessage
+ * boundary (no `Expr` default nodes, no methods).
+ */
+export interface GivenInfo {
+  name: string;
+  /** `GivenTypeDef.type` — 'string', 'number', 'array', etc. */
+  kind: string;
+  hasDefault: boolean;
+  /** The value last supplied for this given, if any. */
+  currentValue?: GivenValue;
 }
 
 export enum QueryMessageType {
@@ -74,7 +90,10 @@ export interface QueryMessageStartDownload {
 export interface QueryMessageRunCommand {
   status: QueryRunStatus.RunCommand;
   command: string;
-  args: string[];
+  /** Forwarded as-is to `vscode.commands.executeCommand`. Typed `unknown`
+   *  because some commands (e.g. `malloy.rerunWithGivens`) take object
+   *  args alongside strings. */
+  args: unknown[];
 }
 
 interface QueryMessageStatusCompiling {
@@ -115,6 +134,12 @@ export interface QueryMessageRenderLogs {
   logs: Malloy.LogMessage[];
 }
 
+interface QueryMessageStatusGivens {
+  status: QueryRunStatus.Givens;
+  panelId: string;
+  givens: GivenInfo[];
+}
+
 interface QueryMessageStatusDone {
   status: QueryRunStatus.Done;
   name: string;
@@ -150,7 +175,8 @@ export type QueryMessageStatus =
   | QueryMessageStatusDone
   | QueryMessageStatusStableDone
   | QueryMessageStatusSchema
-  | QueryMessageRenderLogs;
+  | QueryMessageRenderLogs
+  | QueryMessageStatusGivens;
 
 interface QueryMessageAppReady {
   type: QueryMessageType.AppReady;

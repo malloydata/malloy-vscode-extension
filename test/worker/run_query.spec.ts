@@ -84,6 +84,7 @@ describe('runQuery', () => {
     const getPreparedQuery = jest.fn(async () => ({
       dialect: 'duckdb',
       preparedResult: {sql: 'SELECT from_preparedQuery_preparedResult'},
+      givens: new Map(),
     }));
 
     mockedCreateRunnable.mockResolvedValue({

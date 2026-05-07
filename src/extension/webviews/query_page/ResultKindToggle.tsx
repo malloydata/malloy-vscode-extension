@@ -15,6 +15,7 @@ export enum ResultKind {
   PREVIEW = 'preview',
   SQL = 'sql',
   SCHEMA = 'schema',
+  GIVENS = 'givens',
 }
 
 export const resultKindFromString = (kind?: string) => {
@@ -31,6 +32,8 @@ export const resultKindFromString = (kind?: string) => {
       return ResultKind.SQL;
     case 'schema':
       return ResultKind.SCHEMA;
+    case 'givens':
+      return ResultKind.GIVENS;
   }
 
   return undefined;

@@ -31,7 +31,7 @@ import {
 import {ConnectionPropertyInfo, QueryDownloadOptions} from './message_types';
 import {CellData} from './file_handler';
 import {DocumentMetadata, QuerySpec} from './query_spec';
-import {ConnectionConfigEntry, ModelDef} from '@malloydata/malloy';
+import {ConnectionConfigEntry, GivenValue, ModelDef} from '@malloydata/malloy';
 
 /*
  * Incoming messages
@@ -49,6 +49,7 @@ export interface MessageRun {
   showSQLOnly: boolean;
   showSchemaOnly: boolean;
   defaultTab?: string;
+  givens?: Record<string, GivenValue>;
 }
 
 export interface MessageFetch {

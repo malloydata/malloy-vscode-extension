@@ -12,6 +12,7 @@ import {
   API,
   Explore,
   Field,
+  GivenValue,
   NamedQueryDef,
   QueryField,
   Result,
@@ -23,6 +24,7 @@ import {
 } from '@malloydata/render';
 
 import {
+  GivenInfo,
   QueryDownloadCopyData,
   QueryDownloadOptions,
   QueryMessageStatus,
@@ -48,6 +50,7 @@ import {DownloadButton} from './DownloadButton';
 import {ErrorPanel} from '../components/ErrorPanel';
 import {CodeContainer} from '../components/CodeContainer';
 import {DOMElement} from '../components/DOMElement';
+import {GivensEditor} from './GivensEditor';
 
 interface Results {
   canDownloadStream?: boolean;
@@ -81,6 +84,17 @@ export function QueryPage({vscode}: QueryPageProps) {
   const [costEstimate, setCostEstimate] = useState<CostEstimate>({});
   const [schema, setSchema] = useState<Explore[]>();
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [givens, setGivens] = useState<GivenInfo[]>([]);
+  const [givensPanelId, setGivensPanelId] = useState<string | undefined>(
+    undefined
+  );
+
+  // On error, surface the editor so a missing-given run isn't a dead end.
+  useEffect(() => {
+    if (error && givens.length > 0) {
+      setResultKind(ResultKind.GIVENS);
+    }
+  }, [error, givens.length]);
 
   useEffect(() => {
     const updateDarkMode = () => {
@@ -104,6 +118,18 @@ export function QueryPage({vscode}: QueryPageProps) {
     [vscode]
   );
 
+  const runWithGivens = useCallback(
+    (values: Record<string, GivenValue>) => {
+      if (!givensPanelId) return;
+      vscode.postMessage({
+        status: QueryRunStatus.RunCommand,
+        command: 'malloy.rerunWithGivens',
+        args: [givensPanelId, values],
+      });
+    },
+    [givensPanelId, vscode]
+  );
+
   const onMessage = useCallback(
     (event: MessageEvent<QueryMessageStatus>) => {
       const message = event.data;
@@ -114,7 +140,17 @@ export function QueryPage({vscode}: QueryPageProps) {
           setError('');
           setResults({});
           setAvailableKinds([]);
+          setGivens([]);
           setProgressMessage('Compiling');
+          break;
+        case QueryRunStatus.Givens:
+          setGivens(message.givens);
+          setGivensPanelId(message.panelId);
+          setAvailableKinds(prev =>
+            prev.includes(ResultKind.GIVENS)
+              ? prev
+              : [...prev, ResultKind.GIVENS]
+          );
           break;
         case QueryRunStatus.Running:
           setProgressMessage('Running');
@@ -168,21 +204,20 @@ export function QueryPage({vscode}: QueryPageProps) {
             defaultKind === ResultKind.PREVIEW ||
             defaultKind === ResultKind.SCHEMA;
 
-          if (isPreview) {
-            setAvailableKinds([
-              ResultKind.SCHEMA,
-              ResultKind.PREVIEW,
-              ResultKind.METADATA,
-            ]);
-          } else {
-            setAvailableKinds([
-              ResultKind.HTML,
-              ResultKind.JSON,
-              ResultKind.METADATA,
-              ResultKind.SCHEMA,
-              ResultKind.SQL,
-            ]);
-          }
+          const baseKinds = isPreview
+            ? [ResultKind.SCHEMA, ResultKind.PREVIEW, ResultKind.METADATA]
+            : [
+                ResultKind.HTML,
+                ResultKind.JSON,
+                ResultKind.METADATA,
+                ResultKind.SCHEMA,
+                ResultKind.SQL,
+              ];
+          setAvailableKinds(prev =>
+            prev.includes(ResultKind.GIVENS)
+              ? [...baseKinds, ResultKind.GIVENS]
+              : baseKinds
+          );
           const result = Result.fromJSON(resultJson);
           const {data, sql} = result;
 
@@ -335,7 +370,9 @@ export function QueryPage({vscode}: QueryPageProps) {
     }
   };
 
-  if (error) {
+  // With a Givens editor to show, fall through to the tabbed layout
+  // so the user can fix values and re-run.
+  if (error && givens.length === 0) {
     return (
       <StyledContainer>
         <ErrorPanel message={error} />
@@ -424,6 +461,12 @@ export function QueryPage({vscode}: QueryPageProps) {
               onFieldClick={onFieldClick}
               onQueryClick={onQueryClick}
             />
+          </div>
+        ) : null}
+        {resultKind === ResultKind.GIVENS && givens.length > 0 ? (
+          <div className="scroll">
+            {error ? <div className="error-banner">{error}</div> : null}
+            <GivensEditor givens={givens} onRun={runWithGivens} />
           </div>
         ) : null}
         {resultKind === ResultKind.SQL && results.sql ? (
@@ -536,6 +579,18 @@ const StyledContainer = styled.div`
     background-color: var(--vscode-statusBarItem-warningBackground);
     font-size: 12px;
     padding: 5px;
+  }
+  .error-banner {
+    color: var(--vscode-errorForeground);
+    background-color: var(
+      --vscode-inputValidation-errorBackground,
+      transparent
+    );
+    border: 1px solid var(--vscode-errorForeground);
+    font-size: 12px;
+    padding: 6px 10px;
+    margin: 8px 12px 0;
+    white-space: pre-wrap;
   }
 `;
 
