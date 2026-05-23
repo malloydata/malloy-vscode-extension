@@ -29,7 +29,11 @@ import {
   TextDocuments,
 } from 'vscode-languageserver';
 import {TextDocument} from 'vscode-languageserver-textdocument';
-import {Annotation, DocumentLocation, Model} from '@malloydata/malloy';
+import {
+  DocumentLocation,
+  Model,
+  annotationToTaglines,
+} from '@malloydata/malloy';
 
 import {COMPLETION_DOCS} from '../../common/completion_docs';
 import {parseWithCache} from '../parse_cache';
@@ -137,6 +141,9 @@ function getReferenceHover(
   _documents: TextDocuments<TextDocument>,
   reference: DocumentReference
 ) {
+  // annotationToTaglines is @deprecated in malloy; the no-prefix form is
+  // still the right call when we hold a raw Annotation (no Taggable entity).
+  // Switch to the Annotations view once it's exported from malloy.
   const tags = annotationToTaglines(reference.definition.annotation).join('');
   const defaultPart =
     reference.type === 'givenReference' && reference.definition.defaultText
@@ -152,26 +159,4 @@ ${tags}${reference.text}: ${reference.definition.type}${defaultPart}
   return {
     contents,
   };
-}
-
-type NoteArray = Annotation['notes'];
-
-function annotationToTaglines(
-  annote: Annotation | undefined,
-  prefix?: RegExp
-): string[] {
-  annote ||= {};
-  const tagLines = annote.inherits
-    ? annotationToTaglines(annote.inherits, prefix)
-    : [];
-  function prefixed(na: NoteArray | undefined): string[] {
-    const ret: string[] = [];
-    for (const n of na || []) {
-      if (prefix === undefined || n.text.match(prefix)) {
-        ret.push(n.text);
-      }
-    }
-    return ret;
-  }
-  return tagLines.concat(prefixed(annote.blockNotes), prefixed(annote.notes));
 }
