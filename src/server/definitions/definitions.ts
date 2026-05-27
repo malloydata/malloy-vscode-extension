@@ -38,8 +38,8 @@ export async function getMalloyDefinitionReference(
     if (!model) {
       return [];
     }
-    const reference = model.getReference(position);
-    const location = reference?.definition.location;
+    const reference = model.referenceAt(position);
+    const location = reference?.definitionLocation;
     if (location) {
       return [
         {
