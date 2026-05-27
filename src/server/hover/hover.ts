@@ -29,7 +29,7 @@ import {
   TextDocuments,
 } from 'vscode-languageserver';
 import {TextDocument} from 'vscode-languageserver-textdocument';
-import {Annotation, DocumentLocation, Model} from '@malloydata/malloy';
+import {DocumentLocation, Model, Reference} from '@malloydata/malloy';
 
 import {COMPLETION_DOCS} from '../../common/completion_docs';
 import {parseWithCache} from '../parse_cache';
@@ -37,7 +37,6 @@ import {TranslateCache} from '../translate_cache';
 
 // TODO: export from Malloy
 type ImportLocation = Exclude<ReturnType<Model['getImport']>, undefined>;
-type DocumentReference = Exclude<ReturnType<Model['getReference']>, undefined>;
 
 export const getHover = async (
   document: TextDocument,
@@ -71,7 +70,7 @@ export const getHover = async (
             return getImportHover(translateCache, documents, importLocation);
           }
         }
-        const reference = model.getReference(position);
+        const reference = model.referenceAt(position);
         if (reference) {
           return getReferenceHover(translateCache, documents, reference);
         }
@@ -135,15 +134,15 @@ function bulletedList(
 function getReferenceHover(
   _translateCache: TranslateCache,
   _documents: TextDocuments<TextDocument>,
-  reference: DocumentReference
+  reference: Reference
 ) {
-  const tags = annotationToTaglines(reference.definition.annotation).join('');
+  const tags = reference.annotations.texts().join('');
   const defaultPart =
-    reference.type === 'givenReference' && reference.definition.defaultText
-      ? ` is ${reference.definition.defaultText}`
+    reference.kind === 'given' && reference.defaultText
+      ? ` is ${reference.defaultText}`
       : '';
   const markdown = `\`\`\`
-${tags}${reference.text}: ${reference.definition.type}${defaultPart}
+${tags}${reference.text}: ${reference.definitionType}${defaultPart}
 \`\`\``;
   const contents: MarkupContent = {
     kind: MarkupKind.Markdown,
@@ -152,26 +151,4 @@ ${tags}${reference.text}: ${reference.definition.type}${defaultPart}
   return {
     contents,
   };
-}
-
-type NoteArray = Annotation['notes'];
-
-function annotationToTaglines(
-  annote: Annotation | undefined,
-  prefix?: RegExp
-): string[] {
-  annote ||= {};
-  const tagLines = annote.inherits
-    ? annotationToTaglines(annote.inherits, prefix)
-    : [];
-  function prefixed(na: NoteArray | undefined): string[] {
-    const ret: string[] = [];
-    for (const n of na || []) {
-      if (prefix === undefined || n.text.match(prefix)) {
-        ret.push(n.text);
-      }
-    }
-    return ret;
-  }
-  return tagLines.concat(prefixed(annote.blockNotes), prefixed(annote.notes));
 }
