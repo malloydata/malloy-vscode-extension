@@ -16,9 +16,17 @@ jobs:
           node-version: '24.x'
       - name: Install and test
         run: |
-          npm ci --loglevel error
-          npm run build
+          set -x
+          echo "::group::node/npm versions"; node -v; npm -v; echo "::endgroup::"
+          echo "=== START npm ci $(date -u +%H:%M:%S) ==="
+          timeout 600 npm ci --foreground-scripts --no-audit --no-fund --timing
+          echo "=== END npm ci rc=$? $(date -u +%H:%M:%S) ==="
+          echo "=== START build $(date -u +%H:%M:%S) ==="
+          timeout 600 npm run build
+          echo "=== END build rc=$? $(date -u +%H:%M:%S) ==="
+          echo "=== START test $(date -u +%H:%M:%S) ==="
           npm run test
+          echo "=== END test rc=$? $(date -u +%H:%M:%S) ==="
       - name: Start dbus
         run: |
           sudo service dbus start
