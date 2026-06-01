@@ -16,7 +16,7 @@ jest.mock('../../src/worker/create_runnable', () => ({
 }));
 
 jest.mock('@malloydata/malloy', () => ({
-  Runtime: jest.fn().mockImplementation(() => ({})),
+  Runtime: jest.fn().mockImplementation(() => ({shutdown: jest.fn()})),
   MalloyError: class MalloyError extends Error {
     problems: unknown[];
     constructor(message: string, problems: unknown[] = []) {
