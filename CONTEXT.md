@@ -54,6 +54,26 @@ Four config sources (highest priority first):
 
 See `DEVELOPING.md` for full setup instructions.
 
+## Copyright
+
+Every source file carries this header (shown in TS/JS comment style;
+equivalent comment styles are used for other languages):
+
+```
+/*
+ * Copyright Contributors to the Malloy project
+ * SPDX-License-Identifier: MIT
+ */
+```
+
+**Do not copy the header from a neighboring file.** Most existing files were
+created when the project used a longer Google MIT header; the short SPDX form
+above is what every *new* file must use. Always use the exact block above,
+regardless of what the rest of the directory looks like.
+
+This same header is also recorded in the root [`LICENSE`](LICENSE) file, in its
+"SOURCE FILE HEADER" section.
+
 ## Child Contexts
 
 - [src/CONTEXT.md](src/CONTEXT.md) — Source code domains and communication
