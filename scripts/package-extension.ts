@@ -22,7 +22,7 @@
  */
 
 import {doBuild} from './build_common';
-import {outDir, Target} from './constants';
+import {hostTarget, outDir, Target} from './constants';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as semver from 'semver';
@@ -33,7 +33,12 @@ export async function doPackage(
   version?: string,
   preRelease = false
 ): Promise<string> {
-  await doBuild(false, target);
+  // Native binaries are fetched per-target (see fetchDuckDB), so a package must
+  // commit to a concrete platform. Default to this machine's target rather than
+  // emit an untargeted .vsix that ships only the host binary and breaks on
+  // every other platform.
+  const packageTarget = target ?? hostTarget();
+  await doBuild(false, packageTarget);
 
   // vsce uses package.json as a manifest, and has no way to pass in a version - it only reads
   // version info from package.json. This is annoying for many reasons, but particularly for
@@ -48,9 +53,7 @@ export async function doPackage(
 
   const packagePath = path.join(
     outDir,
-    target
-      ? `malloy-vscode-${target}-${version}.vsix`
-      : `malloy-vscode-${version}.vsix`
+    `malloy-vscode-${packageTarget}-${version}.vsix`
   );
 
   try {
@@ -63,7 +66,7 @@ export async function doPackage(
       githubBranch: 'main',
       preRelease,
       useYarn: false,
-      target,
+      target: packageTarget,
       packagePath,
     });
   } finally {
