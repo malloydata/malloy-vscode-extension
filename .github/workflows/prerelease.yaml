@@ -21,6 +21,9 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: '24.x'
+          # This repo uses npm; the packageManager field declares yarn, which
+          # v5's default cache auto-detects and then fails on (no yarn.lock).
+          package-manager-cache: false
       - name: Publish
         run: |
           set -euxo pipefail
