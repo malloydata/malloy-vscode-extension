@@ -30,6 +30,7 @@ import {
   SerializedExplore,
   StructDef,
 } from '@malloydata/malloy';
+import {mkModelDef} from '@malloydata/malloy/internal';
 import {MalloySQLSQLParser} from '@malloydata/malloy-sql';
 
 import {
@@ -83,14 +84,7 @@ const fakeMalloyResult = (
       sourceExplore: '',
       sourceFilters: [],
     },
-    {
-      name: 'empty_model',
-      exports: [],
-      contents: {},
-      queryList: [],
-      dependencies: {},
-      sourceRegistry: {},
-    }
+    mkModelDef('empty_model')
   );
 };
 
