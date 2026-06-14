@@ -3,11 +3,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-import {
-  createHighlighterCore,
-  HighlighterCore,
-  LanguageRegistration,
-} from '@shikijs/core';
+import {createHighlighterCore, HighlighterCore} from '@shikijs/core';
 import lightPlus from '@shikijs/themes/light-plus';
 import darkPlus from '@shikijs/themes/dark-plus';
 import sql from '@shikijs/langs/sql';
@@ -47,7 +43,7 @@ function getHighlighter() {
         name: 'malloy',
         embeddedLangs: ['sql'],
         ...MALLOY_GRAMMAR,
-      } as LanguageRegistration,
+      },
     ],
     engine: createJavaScriptRegexEngine(),
   });
