@@ -54,6 +54,15 @@ Four config sources (highest priority first):
 
 See `DEVELOPING.md` for full setup instructions.
 
+### Dependency Updates
+
+`npm run malloy-update` bumps `@malloydata/*`, then runs two guards against
+native-binary breakage that otherwise only surfaces in CI (see each script's
+header for the full why):
+
+- **`sync-duckdb`** — re-pins `@duckdb/node-api` to match `@malloydata/db-duckdb`. This pin isn't imported by any source file; it only drives packaging of DuckDB's native binary into the `.vsix`, so **don't remove it** as dead.
+- **`check-native`** — fails if `package-lock.json` gained a native package (lockfile entry with `os`/`cpu` or `hasInstallScript`) absent from `scripts/approved-native-deps.json`. esbuild can't bundle `.node` files, so a floated-in native dep breaks the build. Pin the dep (locally or upstream in malloy), or run `npm run approve-native` to accept it.
+
 ## Copyright
 
 Every source file carries this header (shown in TS/JS comment style;
