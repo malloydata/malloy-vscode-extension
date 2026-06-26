@@ -4,11 +4,63 @@
  */
 
 import * as semver from 'semver';
-import {readFileSync} from 'fs';
+import {appendFileSync, readFileSync} from 'fs';
 import {publishVSIX} from '@vscode/vsce';
 import {doPackage} from './package-extension';
 import {publishOvsx} from './publish-ovsx';
-import {Targets} from './constants';
+import {Target, Targets} from './constants';
+
+const MARKETPLACE_URL =
+  'https://marketplace.visualstudio.com/items?itemName=malloydata.malloy-vscode';
+const OPEN_VSX_URL = 'https://open-vsx.org/extension/malloydata/malloy-vscode';
+
+type PublishStatus = 'published' | 'failed' | 'skipped';
+
+interface TargetResult {
+  target: Target;
+  marketplace: PublishStatus;
+  openVsx: PublishStatus;
+}
+
+const STATUS_CELL: Record<PublishStatus, string> = {
+  published: '✅ published',
+  failed: '❌ failed',
+  skipped: '⏭️ skipped',
+};
+
+/**
+ * Append a publish summary (VS Code Marketplace + Open VSX) to the GitHub
+ * Actions run page. No-op when not running in Actions (GITHUB_STEP_SUMMARY
+ * unset), so local publishes are unaffected.
+ */
+function writePublishSummary(
+  versionCode: string,
+  preRelease: boolean,
+  results: Array<TargetResult>
+): void {
+  const summaryFile = process.env['GITHUB_STEP_SUMMARY'];
+  if (!summaryFile || results.length === 0) return;
+
+  const lines = [
+    '## 🛍️ VS Code Extension Publish',
+    '',
+    `- **Version**: \`${versionCode}\``,
+    `- **Channel**: ${preRelease ? 'pre-release' : 'release'}`,
+    `- **VS Code Marketplace**: [malloydata.malloy-vscode](${MARKETPLACE_URL})`,
+    `- **Open VSX**: [malloydata.malloy-vscode](${OPEN_VSX_URL})`,
+    '',
+    '| Target | VS Code Marketplace | Open VSX |',
+    '| --- | --- | --- |',
+    ...results.map(
+      r =>
+        `| \`${r.target}\` | ${STATUS_CELL[r.marketplace]} | ${
+          STATUS_CELL[r.openVsx]
+        } |`
+    ),
+    '',
+  ];
+  appendFileSync(summaryFile, lines.join('\n') + '\n');
+}
 
 /**
  * @returns Array of version bits. [major, minor, patch]
@@ -77,19 +129,48 @@ async function doPublish(version: string) {
   );
   console.log(`Pre-release: ${preRelease}`);
 
-  for (const target of Targets) {
-    const packagePath = await doPackage(target, versionCode, preRelease);
+  const results: Array<TargetResult> = [];
+  try {
+    for (const target of Targets) {
+      const packagePath = await doPackage(target, versionCode, preRelease);
 
-    await retry(() =>
-      publishVSIX(packagePath, {
-        githubBranch: 'main',
-        preRelease: preRelease,
-        useYarn: false,
-        pat: process.env['VSCE_PAT'],
-      })
-    );
+      // Push first and mutate in place, so the summary reflects partial
+      // progress (e.g. Marketplace done, Open VSX still pending) if a publish
+      // throws and aborts the loop.
+      const result: TargetResult = {
+        target,
+        marketplace: 'skipped',
+        openVsx: 'skipped',
+      };
+      results.push(result);
 
-    await retry(() => publishOvsx(packagePath, target, preRelease));
+      try {
+        await retry(() =>
+          publishVSIX(packagePath, {
+            githubBranch: 'main',
+            preRelease: preRelease,
+            useYarn: false,
+            pat: process.env['VSCE_PAT'],
+          })
+        );
+        result.marketplace = 'published';
+      } catch (error) {
+        result.marketplace = 'failed';
+        throw error;
+      }
+
+      try {
+        await retry(() => publishOvsx(packagePath, target, preRelease));
+        result.openVsx = 'published';
+      } catch (error) {
+        result.openVsx = 'failed';
+        throw error;
+      }
+    }
+  } finally {
+    // Record results even on a mid-loop failure, so the run page shows exactly
+    // which targets made it to each store before things broke.
+    writePublishSummary(versionCode, preRelease, results);
   }
 }
 
