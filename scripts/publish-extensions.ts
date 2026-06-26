@@ -4,11 +4,52 @@
  */
 
 import * as semver from 'semver';
-import {readFileSync} from 'fs';
+import {appendFileSync, readFileSync} from 'fs';
 import {publishVSIX} from '@vscode/vsce';
 import {doPackage} from './package-extension';
 import {publishOvsx} from './publish-ovsx';
-import {Targets} from './constants';
+import {Target, Targets} from './constants';
+
+const MARKETPLACE_URL =
+  'https://marketplace.visualstudio.com/items?itemName=malloydata.malloy-vscode';
+
+interface MarketplaceResult {
+  target: Target;
+  status: 'published' | 'failed';
+}
+
+/**
+ * Append a VS Code Marketplace (Microsoft store) publish summary to the GitHub
+ * Actions run page. No-op when not running in Actions (GITHUB_STEP_SUMMARY
+ * unset), so local publishes are unaffected.
+ */
+function writeMarketplaceSummary(
+  versionCode: string,
+  preRelease: boolean,
+  results: Array<MarketplaceResult>
+): void {
+  const summaryFile = process.env['GITHUB_STEP_SUMMARY'];
+  if (!summaryFile || results.length === 0) return;
+
+  const lines = [
+    '## 🛍️ VS Code Marketplace Publish',
+    '',
+    `- **Version**: \`${versionCode}\``,
+    `- **Channel**: ${preRelease ? 'pre-release' : 'release'}`,
+    `- **Extension**: [malloydata.malloy-vscode](${MARKETPLACE_URL})`,
+    '',
+    '| Target | Result |',
+    '| --- | --- |',
+    ...results.map(
+      r =>
+        `| \`${r.target}\` | ${
+          r.status === 'published' ? '✅ published' : '❌ failed'
+        } |`
+    ),
+    '',
+  ];
+  appendFileSync(summaryFile, lines.join('\n') + '\n');
+}
 
 /**
  * @returns Array of version bits. [major, minor, patch]
@@ -77,19 +118,32 @@ async function doPublish(version: string) {
   );
   console.log(`Pre-release: ${preRelease}`);
 
-  for (const target of Targets) {
-    const packagePath = await doPackage(target, versionCode, preRelease);
+  const marketplaceResults: Array<MarketplaceResult> = [];
+  try {
+    for (const target of Targets) {
+      const packagePath = await doPackage(target, versionCode, preRelease);
 
-    await retry(() =>
-      publishVSIX(packagePath, {
-        githubBranch: 'main',
-        preRelease: preRelease,
-        useYarn: false,
-        pat: process.env['VSCE_PAT'],
-      })
-    );
+      try {
+        await retry(() =>
+          publishVSIX(packagePath, {
+            githubBranch: 'main',
+            preRelease: preRelease,
+            useYarn: false,
+            pat: process.env['VSCE_PAT'],
+          })
+        );
+        marketplaceResults.push({target, status: 'published'});
+      } catch (error) {
+        marketplaceResults.push({target, status: 'failed'});
+        throw error;
+      }
 
-    await retry(() => publishOvsx(packagePath, target, preRelease));
+      await retry(() => publishOvsx(packagePath, target, preRelease));
+    }
+  } finally {
+    // Record the Microsoft store results even on a mid-loop failure, so the
+    // run page shows exactly which targets made it out before things broke.
+    writeMarketplaceSummary(versionCode, preRelease, marketplaceResults);
   }
 }
 
