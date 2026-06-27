@@ -42,10 +42,9 @@ function writePublishSummary(
   if (!summaryFile || results.length === 0) return;
 
   const lines = [
-    '## 🛍️ VS Code Extension Publish',
+    `## 🛍️ VS Code ${preRelease ? 'Pre-Release' : 'Release'} Extension Publish`,
     '',
     `- **Version**: \`${versionCode}\``,
-    `- **Channel**: ${preRelease ? 'pre-release' : 'release'}`,
     `- **VS Code Marketplace**: [malloydata.malloy-vscode](${MARKETPLACE_URL})`,
     `- **Open VSX**: [malloydata.malloy-vscode](${OPEN_VSX_URL})`,
     '',
