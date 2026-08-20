@@ -111,6 +111,15 @@ const trinoProperties = [
     type: 'text',
     optional: true,
   },
+  // Overlay-only: the config file can name an overlay, never hold the value.
+  {
+    name: 'authClient',
+    displayName: 'Auth Client',
+    type: 'opaque',
+    source: 'overlay',
+    optional: true,
+    description: 'Not settable from the UI; supplied by the host.',
+  },
 ];
 
 const mockTypeInfo = {
@@ -344,6 +353,27 @@ describe('SingleConnectionPanel', () => {
 
       const loadMsg = getMessages(panel).postMessage.mock.calls[0][0];
       expect(loadMsg.readonly).toBe(true);
+    });
+
+    it('does not build a display value for an overlay-only property', async () => {
+      const panel = makePanel();
+      await panel.viewConfigConnection(
+        'cfg_trino',
+        {
+          is: 'trino',
+          server: 'http://localhost',
+          authClient: {tenantAuth: 'acme'} as any,
+        },
+        'file:///config/malloy-config.json'
+      );
+
+      const loadMsg = getMessages(panel).postMessage.mock.calls[0][0];
+      expect(loadMsg.values.authClient).toBeUndefined();
+      // The property still travels to the webview, which hides it on `source`.
+      expect(
+        loadMsg.properties.find((p: {name: string}) => p.name === 'authClient')
+          .source
+      ).toBe('overlay');
     });
 
     it('resolves {env} value references', async () => {

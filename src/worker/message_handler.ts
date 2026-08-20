@@ -88,6 +88,7 @@ export class MessageHandler implements WorkerMessageHandler {
           description: p.description,
           fileFilters: p.fileFilters,
           advanced: p.advanced,
+          source: p.source,
         }));
       }
       const defaultConnections =
