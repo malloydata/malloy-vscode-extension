@@ -232,6 +232,13 @@ export interface ConnectionPropertyInfo {
   description?: string;
   fileFilters?: Record<string, string[]>;
   advanced?: boolean;
+  /**
+   * Where the property's value may come from. `'overlay'` means only a host
+   * overlay can supply it — the config file can name one, but never hold the
+   * value — so no form control can produce a legal value and the editor hides
+   * the property.
+   */
+  source?: 'literal' | 'overlay';
 }
 
 export interface SingleConnectionMessageAppReady {

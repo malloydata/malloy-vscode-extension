@@ -13,6 +13,7 @@ import {
 } from '@vscode/webview-ui-toolkit/react';
 import styled from 'styled-components';
 import {ConnectionPropertyInfo} from '../../../common/types/message_types';
+import {editableProperties} from './editable_properties';
 
 interface GenericConnectionFormProps {
   name: string;
@@ -57,14 +58,16 @@ export const GenericConnectionForm = ({
   testStatus,
   testError,
 }: GenericConnectionFormProps) => {
+  const shownProperties = editableProperties(properties);
+
   const nameError = isReadonly
     ? null
     : validateName(name, existingNames, registeredTypes, typeName);
-  const jsonErrors = validateJsonProperties(properties, values);
+  const jsonErrors = validateJsonProperties(shownProperties, values);
   const isValid = name.trim() !== '' && !nameError && jsonErrors.size === 0;
 
-  const basicProperties = properties.filter(p => !p.advanced);
-  const advancedProperties = properties.filter(p => p.advanced);
+  const basicProperties = shownProperties.filter(p => !p.advanced);
+  const advancedProperties = shownProperties.filter(p => p.advanced);
   const advancedSetCount = advancedProperties.filter(p => {
     const v = values[p.name];
     return v !== undefined && v !== '';

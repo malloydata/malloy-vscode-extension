@@ -202,6 +202,10 @@ export class SingleConnectionPanel {
     // Build values from the entry — resolve {env: "VAR"} references
     const values: Record<string, string | number | boolean> = {};
     for (const prop of properties) {
+      // An overlay-only property's authored value is a reference to an
+      // overlay, not a value — there is nothing to display, and the form
+      // hides the property. Skip it so both paths agree.
+      if (prop.source === 'overlay') continue;
       const rawValue = entry[prop.name];
       if (rawValue === undefined) continue;
       if (
