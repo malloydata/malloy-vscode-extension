@@ -1,10 +1,19 @@
-name: Publish Pre-Release Extension
+name: Publish Extension
 
 on:
   push:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      kind:
+        description: 'What to publish'
+        type: choice
+        options:
+          - pre-release
+          - release
+        default: pre-release
+
 jobs:
   test:
     uses: './.github/workflows/test.yaml'
@@ -13,6 +22,11 @@ jobs:
     needs:
       - test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Lets the job request the identity token the Marketplace exchanges for
+      # a publishing credential.
+      id-token: write
     steps:
       - uses: actions/checkout@v5
         with:
@@ -28,8 +42,9 @@ jobs:
         run: |
           set -euxo pipefail
           npm ci --loglevel error
-          npm run publish-extensions pre-release
+          npm run publish-extensions "$PUBLISH_VERSION"
     env:
       CI: true
-      VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      # A push to main has no inputs, so it publishes a pre-release.
+      PUBLISH_VERSION: ${{ inputs.kind == 'release' && 'patch' || 'pre-release' }}
       OVSX_TOKEN: ${{ secrets.OVSX_TOKEN }}
