@@ -10,6 +10,11 @@ jobs:
     needs:
       - test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Lets the job request the identity token the Marketplace exchanges for
+      # a publishing credential.
+      id-token: write
     steps:
       - uses: actions/checkout@v5
         with:
@@ -28,5 +33,4 @@ jobs:
           npm run publish-extensions patch
     env:
       CI: true
-      VSCE_PAT: ${{ secrets.VSCE_PAT }}
       OVSX_TOKEN: ${{ secrets.OVSX_TOKEN }}
