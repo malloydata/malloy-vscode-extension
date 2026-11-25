@@ -17,6 +17,12 @@ import {generateDisclaimer} from './license_disclaimer';
 
 const DEFINITIONS: Record<string, string> = {
   'process.env.NODE_DEBUG': 'false', // TODO this is a hack because some package we include assumed process.env exists :(
+  // snowflake-sdk's minicore is a telemetry-only native binary that esbuild
+  // can't bundle; disabling it skips the failed load and its error telemetry.
+  'process.env.SNOWFLAKE_DISABLE_MINICORE': '"1"',
+  // It also probes cloud metadata endpoints and AWS STS at module load for
+  // telemetry; turn that off too.
+  'process.env.SNOWFLAKE_DISABLE_PLATFORM_DETECTION': '"true"',
 };
 
 // const ENV_PASSTHROUGH = ['GA_API_SECRET', 'GA_MEASUREMENT_ID'];
